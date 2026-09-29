@@ -1,0 +1,26 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: digital-signage-backend
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${POSTGRES_DB:digital_signage}
+    username: ${POSTGRES_USER:signage}
+    password: ${POSTGRES_PASSWORD:changeme}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-secret-change-me-before-any-real-deploy-0123456789}
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}
+  admin:
+    name: ${ADMIN_NAME:Administrador}
+    email: ${ADMIN_EMAIL:admin@digitalsignage.local}
+    password: ${ADMIN_PASSWORD:changeme}

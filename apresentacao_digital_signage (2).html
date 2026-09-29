@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projeto Digital Signage — Proposta Conceitual</title>
+<style>
+:root{
+  --bg:#07111f; --panel:#0d1b2e; --panel2:#10233c; --line:#223a5b;
+  --text:#edf4ff; --muted:#9eb2cc; --accent:#4f8cff; --green:#36d399;
+  --orange:#ffb454; --red:#fb7185; --purple:#a78bfa;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 20% 0,#132d52 0,#07111f 38%,#050b14 100%);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;overflow:hidden}
+.deck{height:100vh;width:100vw;position:relative}
+.slide{display:none;height:100%;padding:6vh 8vw 10vh;animation:fade .35s ease}
+.slide.active{display:flex;flex-direction:column;justify-content:center}
+@keyframes fade{from{opacity:.2;transform:translateX(18px)}to{opacity:1;transform:none}}
+.eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:3px;font-size:12px;font-weight:700;margin-bottom:14px}
+h1{font-size:clamp(42px,6vw,86px);line-height:1.02;margin:0 0 20px;max-width:1000px}
+h2{font-size:clamp(32px,4vw,58px);margin:0 0 18px;line-height:1.08}
+h3{margin:0 0 8px;font-size:20px}
+p{font-size:clamp(16px,1.5vw,22px);line-height:1.55;color:var(--muted);max-width:1050px}
+strong{color:white}
+.grid{display:grid;gap:18px;margin-top:24px}
+.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{background:linear-gradient(145deg,rgba(18,42,71,.9),rgba(9,23,40,.92));border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:0 18px 50px rgba(0,0,0,.18)}
+.card p{font-size:15px;margin:0}.icon{font-size:34px;margin-bottom:12px}
+.hero{max-width:900px}.subtitle{font-size:clamp(18px,2vw,28px)}
+.badge{display:inline-block;border:1px solid var(--line);background:#0a1728;border-radius:999px;padding:8px 13px;color:#b9cdf0;font-size:13px;margin:5px 5px 0 0}
+.arch{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:28px}
+.node{min-width:150px;text-align:center;padding:18px 15px;border-radius:16px;background:var(--panel2);border:1px solid var(--line)}
+.arrow{color:var(--accent);font-size:30px}
+.list{display:grid;gap:11px;margin-top:18px}
+.item{display:flex;gap:12px;align-items:flex-start;background:rgba(13,27,46,.55);padding:12px 15px;border-radius:12px;border-left:3px solid var(--accent);color:#c8d6e9}
+.number{color:var(--accent);font-weight:800;min-width:28px}
+.table{width:100%;border-collapse:collapse;margin-top:18px;font-size:15px}.table th,.table td{padding:14px;border-bottom:1px solid var(--line);text-align:left}.table th{color:#9eb2cc}.online{color:var(--green)}.offline{color:var(--red)}
+.phone{width:260px;border:8px solid #1d2c40;border-radius:28px;background:#06101d;padding:15px;margin:auto;box-shadow:0 20px 60px #0008}.screen{border-radius:18px;background:linear-gradient(150deg,#163a69,#0b1828);padding:16px;min-height:410px}.screen .mini{background:#112945;border-radius:12px;padding:12px;margin:10px 0;color:#dce9fa;font-size:12px}
+.tv{border:9px solid #192a3f;border-radius:14px;background:#050a10;padding:16px;max-width:650px;margin:10px auto}.tvscreen{height:270px;background:linear-gradient(135deg,#355d9a,#162845 45%,#4f8cff);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;text-align:center}.stand{width:160px;height:16px;background:#192a3f;margin:auto;border-radius:0 0 8px 8px}.base{width:280px;height:10px;background:#192a3f;margin:auto;border-radius:10px}
+.controls{position:fixed;bottom:0;left:0;width:100%;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;background:linear-gradient(transparent,#030811 35%);z-index:10}.controls button{border:1px solid var(--line);background:#10233c;color:white;border-radius:12px;padding:11px 18px;font-size:15px;cursor:pointer}.controls button:hover{background:#19375d}.progress{position:fixed;top:0;left:0;height:4px;background:var(--accent);transition:.3s}.counter{color:#8fa7c7;font-size:14px}.hint{font-size:12px;color:#637998}
+.timeline{display:flex;gap:0;margin-top:25px}.phase{flex:1;padding:20px;border:1px solid var(--line);background:#0c1c30}.phase:first-child{border-radius:16px 0 0 16px}.phase:last-child{border-radius:0 16px 16px 0}.phase b{display:block;color:var(--accent);margin-bottom:8px}
+.highlight{color:var(--green)}
+@media(max-width:850px){.grid.two,.grid.three,.grid.four{grid-template-columns:1fr}.slide{padding:7vh 7vw 12vh;overflow:auto}.arch{gap:8px}.arrow{transform:rotate(90deg)}.timeline{flex-direction:column}.phase{border-radius:0!important}.tvscreen{height:180px}}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<section class="slide active">
+  <div class="eyebrow">Proposta de Projeto</div>
+  <h1>Plataforma de<br><span style="color:var(--accent)">Digital Signage</span></h1>
+  <p class="subtitle hero">Uma solução centralizada para transformar TVs e telas em pontos inteligentes de divulgação, publicidade e comunicação.</p>
+  <div style="margin-top:25px">
+    <span class="badge">📺 Gestão de telas</span><span class="badge">☁️ Controle remoto</span><span class="badge">🎥 Mídias e campanhas</span><span class="badge">📊 Monitoramento</span><span class="badge">📡 Funcionamento offline</span>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">01 — O problema</div>
+  <h2>Como transformar várias TVs em uma rede de divulgação?</h2>
+  <div class="grid three">
+    <div class="card"><div class="icon">📺</div><h3>Telas distribuídas</h3><p>TVs instaladas em diferentes lojas, unidades, ambientes ou cidades.</p></div>
+    <div class="card"><div class="icon">🎯</div><h3>Conteúdo direcionado</h3><p>Nem toda publicidade deve aparecer em todas as telas.</p></div>
+    <div class="card"><div class="icon">⚙️</div><h3>Gestão centralizada</h3><p>Alterações feitas em um único painel, sem precisar visitar cada local.</p></div>
+  </div>
+  <p style="margin-top:30px"><strong>Objetivo:</strong> criar um ecossistema onde o administrador controla remotamente <strong>o que, onde e quando</strong> cada conteúdo será exibido.</p>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">02 — A solução</div>
+  <h2>Dois componentes principais</h2>
+  <div class="grid two">
+    <div class="card"><div class="icon">🖥️</div><h3>Painel Administrativo</h3><p>Sistema web responsivo para cadastrar pontos, TVs, mídias, playlists, campanhas e acompanhar o status da operação.</p></div>
+    <div class="card"><div class="icon">▶️</div><h3>Player de Divulgação</h3><p>Aplicativo instalado no dispositivo conectado à TV, responsável por baixar, armazenar e reproduzir o conteúdo.</p></div>
+  </div>
+  <div class="arch"><div class="node">👤 Administrador<br><small>Painel Web</small></div><div class="arrow">→</div><div class="node">☁️ Plataforma<br><small>API + Regras</small></div><div class="arrow">→</div><div class="node">📦 Player<br><small>Sincronização</small></div><div class="arrow">→</div><div class="node">📺 Tela<br><small>Exibição</small></div></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">03 — Possibilidades de hardware</div>
+  <h2>Como fazer o conteúdo chegar à TV?</h2>
+  <div class="grid three">
+    <div class="card"><div class="icon">🌐</div><h3>Navegador da Smart TV</h3><p><strong>Menor custo inicial.</strong> Abre um player web diretamente na TV. Indicado para protótipos ou ambientes controlados.</p><p style="margin-top:10px;color:var(--orange)">⚠ Limitações variam por fabricante.</p></div>
+    <div class="card"><div class="icon">📱</div><h3>App na Smart TV</h3><p>Aplicativo específico para sistemas compatíveis, como Android/Google TV.</p><p style="margin-top:10px;color:var(--green)">✓ Melhor controle e experiência.</p></div>
+    <div class="card"><div class="icon">📦</div><h3>TV + Player externo</h3><p>Android TV Box / Google TV conectado via HDMI. A TV passa a funcionar como tela.</p><p style="margin-top:10px;color:var(--green)">★ Recomendado para padronização.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Recomendação técnica</div>
+  <h2>Padronizar o dispositivo Player</h2>
+  <div class="arch">
+    <div class="node">📺 Qualquer TV<br><small>Smart ou convencional</small></div><div class="arrow">+</div>
+    <div class="node" style="border-color:var(--accent)">📦 Android / Google TV Box<br><small>Hardware homologado</small></div><div class="arrow">→</div>
+    <div class="node">▶️ Nosso Player<br><small>App dedicado</small></div>
+  </div>
+  <div class="grid two" style="margin-top:35px">
+    <div class="card"><h3>Por que?</h3><div class="list"><div class="item">✓ Mesmo comportamento em todas as instalações</div><div class="item">✓ Menos dependência da marca da TV</div><div class="item">✓ Instalação e suporte padronizados</div></div></div>
+    <div class="card"><h3>Resultado</h3><p>A solução deixa de depender de Samsung, LG, TCL ou outro fabricante. A inteligência fica concentrada no Player.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">04 — Instalação</div>
+  <h2>Ativação simples de um novo ponto</h2>
+  <div class="timeline">
+    <div class="phase"><b>01</b>Instalar o Player no dispositivo.</div>
+    <div class="phase"><b>02</b>Abrir o aplicativo na TV.</div>
+    <div class="phase"><b>03</b>Player exibe um código único.</div>
+    <div class="phase"><b>04</b>Administrador vincula o código no painel.</div>
+    <div class="phase"><b>05</b>Conteúdo sincronizado automaticamente.</div>
+  </div>
+  <div class="grid two" style="margin-top:28px">
+    <div class="phone"><div class="screen"><div style="text-align:center;margin-top:60px"><div style="font-size:45px">📺</div><h3>SISTEMA PLAYER</h3><p style="font-size:13px">Código de ativação</p><div style="font-size:34px;letter-spacing:5px;color:#fff;margin:22px">8F32A9</div><p style="font-size:12px">Aguardando ativação...</p></div></div></div>
+    <div class="card"><h3>No painel administrativo</h3><div class="mini"></div><div class="list"><div class="item"><span class="number">1.</span>Informar código de ativação</div><div class="item"><span class="number">2.</span>Nomear: “TV Recepção”</div><div class="item"><span class="number">3.</span>Vincular ao local</div><div class="item"><span class="number">4.</span>Selecionar programação</div></div></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">05 — Gestão dos pontos</div>
+  <h2>Visão completa de todos os locais</h2>
+  <div class="grid two">
+    <div class="card"><h3>Estrutura hierárquica</h3><div class="list">
+      <div class="item">🏢 Empresa</div><div class="item">　└ 📍 Loja Centro</div><div class="item">　　　└ 📺 TV Entrada</div><div class="item">　　　└ 📺 TV Caixa</div><div class="item">　└ 📍 Loja Shopping</div><div class="item">　　　└ 📺 TV 01</div>
+    </div></div>
+    <div class="card"><h3>Status em tempo real</h3>
+      <table class="table"><tr><th>Dispositivo</th><th>Local</th><th>Status</th></tr>
+      <tr><td>TV Entrada</td><td>Centro</td><td class="online">● Online</td></tr>
+      <tr><td>TV Caixa</td><td>Centro</td><td class="online">● Online</td></tr>
+      <tr><td>TV 01</td><td>Shopping</td><td class="offline">● Offline</td></tr></table>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">06 — Biblioteca de conteúdo</div>
+  <h2>Upload e organização das divulgações</h2>
+  <div class="grid four">
+    <div class="card"><div class="icon">🖼️</div><h3>Imagens</h3><p>JPG, PNG, WEBP</p></div>
+    <div class="card"><div class="icon">🎬</div><h3>Vídeos</h3><p>MP4 e formatos compatíveis</p></div>
+    <div class="card"><div class="icon">📱</div><h3>QR Codes</h3><p>Integração com campanhas</p></div>
+    <div class="card"><div class="icon">🌐</div><h3>Conteúdo web</h3><p>Possibilidade futura</p></div>
+  </div>
+  <div class="card" style="margin-top:25px"><h3>Exemplo: Biblioteca</h3><div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:15px"><span class="badge">🖼️ Promoção Verão.jpg</span><span class="badge">🎬 Vídeo Institucional.mp4</span><span class="badge">🖼️ Oferta Produto A.jpg</span><span class="badge">🎬 Campanha X.mp4</span></div></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">07 — Playlists e campanhas</div>
+  <h2>O administrador define a sequência de exibição</h2>
+  <div class="grid two">
+    <div class="card"><h3>Playlist: Loja Centro</h3><div class="list"><div class="item"><span class="number">01</span>🖼️ Promoção A <span style="margin-left:auto;color:var(--muted)">10s</span></div><div class="item"><span class="number">02</span>🎬 Vídeo Institucional <span style="margin-left:auto;color:var(--muted)">30s</span></div><div class="item"><span class="number">03</span>🖼️ Promoção B <span style="margin-left:auto;color:var(--muted)">10s</span></div><div class="item"><span class="number">04</span>🖼️ Informativo <span style="margin-left:auto;color:var(--muted)">10s</span></div></div></div>
+    <div class="tv"><div class="tvscreen">PROMOÇÃO<br>PRODUTO X</div><div class="stand"></div><div class="base"></div></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">08 — Segmentação</div>
+  <h2>Qual publicidade aparece em qual ponto?</h2>
+  <div class="grid three">
+    <div class="card"><div class="icon">📺</div><h3>Individual</h3><p>Selecionar uma TV específica.</p></div>
+    <div class="card"><div class="icon">📍</div><h3>Por Local</h3><p>Aplicar uma campanha a todas as TVs de uma unidade.</p></div>
+    <div class="card"><div class="icon">👥</div><h3>Por Grupo</h3><p>Ex.: todas as lojas, região sul ou categoria específica.</p></div>
+  </div>
+  <div class="card" style="margin-top:25px"><h3>Exemplo de campanha</h3><p><strong>Campanha:</strong> Black Friday &nbsp; | &nbsp; <strong>Período:</strong> 01/11 a 30/11 &nbsp; | &nbsp; <strong>Destino:</strong> 24 TVs selecionadas</p></div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">09 — Agendamento inteligente</div>
+  <h2>Conteúdo certo, no horário certo</h2>
+  <div class="timeline">
+    <div class="phase"><b>08:00 — 12:00</b>Playlist Manhã</div>
+    <div class="phase"><b>12:00 — 14:00</b>Campanha Almoço</div>
+    <div class="phase"><b>14:00 — 18:00</b>Playlist Tarde</div>
+    <div class="phase"><b>18:00 — 22:00</b>Playlist Noite</div>
+  </div>
+  <div class="grid two" style="margin-top:25px">
+    <div class="card"><h3>Por período</h3><p>Uma campanha pode começar e terminar automaticamente em datas definidas.</p></div>
+    <div class="card"><h3>Por prioridade</h3><p>Campanhas especiais podem receber maior frequência ou substituir temporariamente a programação normal.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">10 — Confiabilidade</div>
+  <h2>A TV não pode parar se a internet cair</h2>
+  <div class="arch"><div class="node">☁️ Servidor</div><div class="arrow">↓</div><div class="node">⬇️ Download</div><div class="arrow">↓</div><div class="node" style="border-color:var(--green)">💾 Cache Local</div><div class="arrow">↓</div><div class="node">▶️ Reprodução</div></div>
+  <div class="grid three" style="margin-top:35px">
+    <div class="card"><h3>Internet ativa</h3><p>Player sincroniza novas campanhas e baixa os arquivos.</p></div>
+    <div class="card"><h3>Internet caiu</h3><p>Player continua reproduzindo o último conteúdo disponível.</p></div>
+    <div class="card"><h3>Internet voltou</h3><p>Sincronização automática sem intervenção humana.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">11 — Monitoramento</div>
+  <h2>Saiba o que acontece em cada tela</h2>
+  <div class="grid four">
+    <div class="card"><div class="icon">🟢</div><h3>Online</h3><p>Última comunicação e disponibilidade.</p></div>
+    <div class="card"><div class="icon">▶️</div><h3>Em exibição</h3><p>Conteúdo reproduzido no momento.</p></div>
+    <div class="card"><div class="icon">📜</div><h3>Histórico</h3><p>Registro de campanhas executadas.</p></div>
+    <div class="card"><div class="icon">⚠️</div><h3>Alertas</h3><p>Identificação de dispositivos offline.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">12 — Arquitetura proposta</div>
+  <h2>Uma plataforma escalável</h2>
+  <div class="arch">
+    <div class="node">🖥️<br><b>Painel Web</b><br><small>Angular + TypeScript</small></div><div class="arrow">→</div>
+    <div class="node">⚙️<br><b>Backend</b><br><small>Java + Spring Boot</small></div><div class="arrow">→</div>
+    <div class="node">📺<br><b>Player</b><br><small>Android / Google TV</small></div>
+  </div>
+  <div class="grid three" style="margin-top:30px">
+    <div class="card"><h3>PostgreSQL</h3><p>Usuários, locais, dispositivos, campanhas e configurações.</p></div>
+    <div class="card"><h3>Object Storage</h3><p>Armazenamento escalável para imagens e vídeos.</p></div>
+    <div class="card"><h3>WebSocket + API</h3><p>Atualizações rápidas e sincronização dos Players.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">13 — Roadmap</div>
+  <h2>Desenvolvimento por etapas</h2>
+  <div class="timeline">
+    <div class="phase"><b>MVP</b>TVs, mídias, playlists, Player, cache e status.</div>
+    <div class="phase"><b>Gestão</b>Locais, grupos, campanhas e agendamentos.</div>
+    <div class="phase"><b>Analytics</b>Logs, relatórios e comprovação de exibição.</div>
+    <div class="phase"><b>Evolução</b>Layouts, QR Code e conteúdo dinâmico.</div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">14 — MVP proposto</div>
+  <h2>Primeira versão funcional</h2>
+  <div class="grid three">
+    <div class="card"><h3>🖥️ Painel</h3><div class="list"><div class="item">Login</div><div class="item">Pontos e dispositivos</div><div class="item">Upload de mídia</div><div class="item">Playlists</div><div class="item">Status online/offline</div></div></div>
+    <div class="card"><h3>▶️ Player</h3><div class="list"><div class="item">Código de ativação</div><div class="item">Download automático</div><div class="item">Cache offline</div><div class="item">Imagens e vídeos</div><div class="item">Heartbeat</div></div></div>
+    <div class="card"><h3>⚙️ Plataforma</h3><div class="list"><div class="item">API segura</div><div class="item">Banco de dados</div><div class="item">Armazenamento de mídia</div><div class="item">Sincronização</div><div class="item">Escalabilidade</div></div></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Conclusão</div>
+  <h1>Uma rede de telas.<br><span style="color:var(--accent)">Um único controle.</span></h1>
+  <p class="subtitle">A proposta cria uma base tecnológica para transformar pontos físicos de divulgação em uma rede digital centralizada, escalável e gerenciável remotamente.</p>
+  <div class="grid three" style="margin-top:30px">
+    <div class="card"><h3>📺 Hardware flexível</h3><p>Compatível com estratégia baseada em TVs + Players.</p></div>
+    <div class="card"><h3>🎯 Gestão centralizada</h3><p>Controle individual, por local ou grupos.</p></div>
+    <div class="card"><h3>📈 Evolutivo</h3><p>Base preparada para crescer até uma plataforma comercial completa.</p></div>
+  </div>
+  <p style="margin-top:35px;color:var(--green)"><strong>Recomendação inicial:</strong> validar o MVP e homologar um modelo de Player antes da implantação em escala.</p>
+</section>
+
+<div class="progress" id="progress"></div>
+<div class="controls">
+  <button onclick="prev()">← Anterior</button>
+  <div><span class="counter" id="counter"></span><div class="hint">Use ← → ou Espaço para navegar</div></div>
+  <button onclick="next()">Próximo →</button>
+</div>
+</div>
+<script>
+const slides=[...document.querySelectorAll('.slide')]; let current=0;
+function render(){
+ slides.forEach((s,i)=>s.classList.toggle('active',i===current));
+ document.getElementById('counter').textContent=`${current+1} / ${slides.length}`;
+ document.getElementById('progress').style.width=`${((current+1)/slides.length)*100}%`;
+}
+function next(){current=Math.min(current+1,slides.length-1);render()}
+function prev(){current=Math.max(current-1,0);render()}
+document.addEventListener('keydown',e=>{
+ if(['ArrowRight',' ','PageDown'].includes(e.key)){e.preventDefault();next()}
+ if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();prev()}
+ if(e.key==='Home'){current=0;render()}
+ if(e.key==='End'){current=slides.length-1;render()}
+});
+let sx=0; document.addEventListener('touchstart',e=>sx=e.changedTouches[0].screenX);
+document.addEventListener('touchend',e=>{const d=e.changedTouches[0].screenX-sx;if(Math.abs(d)>50)d<0?next():prev()});
+render();
+</script>
+</body></html>

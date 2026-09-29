@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digital Signage — Protótipo do Painel</title>
+<style>
+:root{--bg:#f5f7fb;--panel:#fff;--line:#e6eaf1;--text:#172033;--muted:#6d7788;--blue:#3563e9;--blue2:#eef3ff;--green:#19a66a;--red:#e05263;--orange:#e89a32;--sidebar:#111a2c}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}.side{background:var(--sidebar);color:#fff;padding:24px 14px;position:sticky;top:0;height:100vh}
+.brand{font-weight:800;font-size:20px;padding:5px 12px 30px}.brand span{color:#7da2ff}.nav-title{font-size:10px;color:#71809b;letter-spacing:1.5px;margin:20px 12px 8px}
+.nav{display:flex;flex-direction:column;gap:4px}.nav button{border:0;background:none;color:#aeb9cc;text-align:left;padding:12px;border-radius:9px;font-size:14px;cursor:pointer}.nav button:hover,.nav button.active{background:#223250;color:#fff}.side-footer{position:absolute;bottom:22px;left:24px;color:#7f8da4;font-size:12px}
+main{padding:28px 34px;overflow:hidden}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}.crumb{color:var(--muted);font-size:13px}.user{display:flex;align-items:center;gap:10px}.avatar{width:36px;height:36px;border-radius:50%;background:#dbe5ff;color:var(--blue);display:grid;place-items:center;font-weight:bold}
+.view{display:none}.view.active{display:block}.head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.head h1{margin:0;font-size:28px}.head p{margin:7px 0;color:var(--muted)}
+button.primary{background:var(--blue);color:#fff;border:0;padding:11px 16px;border-radius:8px;font-weight:600;cursor:pointer}button.secondary{background:#fff;border:1px solid var(--line);padding:10px 14px;border-radius:8px;cursor:pointer;color:#435066}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.stat,.card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px;box-shadow:0 3px 12px rgba(23,32,51,.025)}.stat .n{font-size:28px;font-weight:800;margin-top:8px}.label{color:var(--muted);font-size:13px}.up{color:var(--green);font-size:12px}
+.grid{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;margin-top:18px}.card h3{margin:0 0 14px;font-size:16px}.map{height:300px;border-radius:10px;background:linear-gradient(135deg,#eef3f5,#e2ebe7);position:relative;overflow:hidden}.map:before{content:"";position:absolute;inset:-40px;background:repeating-linear-gradient(30deg,transparent 0 42px,#d4dfdc 43px 45px,transparent 46px 90px);opacity:.55}.pin{position:absolute;background:#fff;border:1px solid #d9e0e8;border-radius:8px;padding:8px 10px;font-size:12px;box-shadow:0 5px 15px #0001}.pin b{color:var(--blue)}.pin:before{content:"📺 ";}.p1{top:25%;left:25%}.p2{top:52%;left:58%}.p3{top:67%;left:18%}.p4{top:22%;left:70%}
+table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;color:var(--muted);font-weight:500;border-bottom:1px solid var(--line);padding:9px 5px}td{padding:12px 5px;border-bottom:1px solid #f0f2f6}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}.on{background:var(--green)}.off{background:var(--red)}.warn{background:var(--orange)}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px}.search{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;min-width:280px}
+.device-grid,.media-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.device{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer}.device:hover{border-color:#a8baf7}.device-top{display:flex;justify-content:space-between}.tv-icon{font-size:28px}.device small{color:var(--muted)}.status{font-size:12px;padding:4px 8px;border-radius:20px}.status.online{background:#e8f8f1;color:var(--green)}.status.offline{background:#ffedf0;color:var(--red)}
+.media{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}.thumb{height:125px;background:linear-gradient(135deg,#315fcf,#7ea0ff);display:grid;place-items:center;color:#fff;font-size:34px}.thumb.t2{background:linear-gradient(135deg,#f1a03d,#e6584f)}.thumb.t3{background:linear-gradient(135deg,#31a888,#88d1a0)}.media-info{padding:12px}.media-info small{color:var(--muted)}
+.playlist-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}.playlist-items .row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px;margin-bottom:8px}.drag{color:#aab2c0}.duration{margin-left:auto;color:var(--muted)}.assign{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px}.check{padding:10px 0;border-bottom:1px solid #edf0f4}
+.modal{position:fixed;inset:0;background:#07101c88;display:none;align-items:center;justify-content:center;padding:20px;z-index:5}.modal.show{display:flex}.modal-box{background:#fff;border-radius:16px;padding:24px;width:min(520px,100%)}.modal-box h2{margin-top:0}.field{margin:12px 0}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}.field input,.field select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+@media(max-width:950px){.app{grid-template-columns:70px 1fr}.side{padding:18px 8px}.brand{font-size:0;padding:5px 8px 25px}.brand:after{content:"DS";font-size:18px}.nav button{font-size:0;text-align:center}.nav button:first-letter{font-size:18px}.nav-title,.side-footer{display:none}.stats,.device-grid,.media-grid{grid-template-columns:repeat(2,1fr)}.grid,.playlist-layout{grid-template-columns:1fr}main{padding:20px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+ <div class="brand">DIGITAL <span>SIGNAGE</span></div>
+ <div class="nav-title">VISÃO GERAL</div>
+ <nav class="nav">
+  <button class="active" data-view="dashboard">▦ Dashboard</button>
+  <button data-view="devices">📺 Dispositivos</button>
+  <button data-view="media">🖼 Biblioteca</button>
+  <button data-view="playlists">☷ Playlists</button>
+  <button data-view="campaigns">🎯 Campanhas</button>
+ </nav>
+ <div class="nav-title">ORGANIZAÇÃO</div>
+ <nav class="nav"><button data-view="locations">📍 Pontos & Locais</button><button data-view="reports">📊 Relatórios</button><button data-view="settings">⚙ Configurações</button></nav>
+ <div class="side-footer">Protótipo conceitual<br>v0.1</div>
+</aside>
+
+<main>
+ <div class="top"><div class="crumb" id="crumb">Visão geral / Dashboard</div><div class="user"><span class="label">Administrador</span><div class="avatar">MS</div></div></div>
+
+ <section class="view active" id="dashboard">
+  <div class="head"><div><h1>Dashboard</h1><p>Visão geral da rede de divulgação.</p></div><button class="primary" onclick="showModal()">+ Adicionar dispositivo</button></div>
+  <div class="stats"><div class="stat"><div class="label">Total de telas</div><div class="n">47</div><div class="up">↑ 3 este mês</div></div><div class="stat"><div class="label">Online agora</div><div class="n">43</div><div class="up">91,5% da rede</div></div><div class="stat"><div class="label">Offline</div><div class="n">4</div><div style="color:var(--red);font-size:12px">Requer atenção</div></div><div class="stat"><div class="label">Campanhas ativas</div><div class="n">12</div><div class="label">Em execução</div></div></div>
+  <div class="grid">
+   <div class="card"><h3>📍 Rede de pontos</h3><div class="map"><div class="pin p1"><b>Loja Centro</b><br>8 telas online</div><div class="pin p2"><b>Shopping</b><br>12 telas online</div><div class="pin p3"><b>Zona Sul</b><br>1 offline</div><div class="pin p4"><b>Loja Norte</b><br>5 telas online</div></div></div>
+   <div class="card"><h3>Atividade recente</h3><div class="check">🟢 TV Entrada sincronizada <small class="label">agora</small></div><div class="check">🎯 Campanha Black Friday publicada</div><div class="check">⚠ TV Shopping 03 ficou offline</div><div class="check">🖼 Nova mídia adicionada</div></div>
+  </div>
+  <div class="card" style="margin-top:18px"><h3>Dispositivos com atenção necessária</h3><table><tr><th>Dispositivo</th><th>Local</th><th>Último contato</th><th>Status</th></tr><tr><td>TV Shopping 03</td><td>Shopping</td><td>2h atrás</td><td><span class="dot off"></span>Offline</td></tr><tr><td>TV Zona Sul 02</td><td>Zona Sul</td><td>45 min atrás</td><td><span class="dot warn"></span>Sem sincronizar</td></tr></table></div>
+ </section>
+
+ <section class="view" id="devices">
+  <div class="head"><div><h1>Dispositivos</h1><p>Gerencie todas as telas e Players conectados.</p></div><button class="primary" onclick="showModal()">+ Novo dispositivo</button></div>
+  <div class="toolbar"><input class="search" placeholder="🔍 Buscar dispositivo ou local"><button class="secondary">Filtros ▾</button><button class="secondary">Grupo: Todos ▾</button></div>
+  <div class="device-grid">
+   <div class="device"><div class="device-top"><span class="tv-icon">📺</span><span class="status online">● Online</span></div><h3>TV Entrada</h3><small>📍 Loja Centro</small><p class="label">Playlist: Institucional + Promoções</p><small>Última sincronização: agora</small></div>
+   <div class="device"><div class="device-top"><span class="tv-icon">📺</span><span class="status online">● Online</span></div><h3>TV Caixa 01</h3><small>📍 Loja Centro</small><p class="label">Playlist: Ofertas do Dia</p><small>Reproduzindo: Oferta Produto X</small></div>
+   <div class="device"><div class="device-top"><span class="tv-icon">📺</span><span class="status offline">● Offline</span></div><h3>TV Shopping 03</h3><small>📍 Shopping</small><p class="label">Playlist: Campanha Shopping</p><small>Último contato: 2h atrás</small></div>
+  </div>
+ </section>
+
+ <section class="view" id="media">
+  <div class="head"><div><h1>Biblioteca de Mídia</h1><p>Imagens e vídeos disponíveis para campanhas.</p></div><button class="primary" onclick="alert('Protótipo: aqui seria aberto o upload de arquivos.')">+ Enviar mídia</button></div>
+  <div class="toolbar"><input class="search" placeholder="🔍 Buscar mídia"><button class="secondary">Tipo: Todos ▾</button></div>
+  <div class="media-grid">
+   <div class="media"><div class="thumb">PROMOÇÃO<br><small style="font-size:13px">PRODUTO X</small></div><div class="media-info"><b>Promoção Produto X.jpg</b><br><small>Imagem • 1920×1080</small></div></div>
+   <div class="media"><div class="thumb t2">▶</div><div class="media-info"><b>Vídeo Institucional.mp4</b><br><small>Vídeo • 00:30</small></div></div>
+   <div class="media"><div class="thumb t3">OFERTA<br>DO DIA</div><div class="media-info"><b>Oferta do Dia.png</b><br><small>Imagem • 1920×1080</small></div></div>
+  </div>
+ </section>
+
+ <section class="view" id="playlists">
+  <div class="head"><div><h1>Playlist: Loja Centro</h1><p>Defina a ordem e duração dos conteúdos.</p></div><button class="primary" onclick="alert('Protótipo: alterações seriam publicadas e sincronizadas com as telas.')">Publicar alterações</button></div>
+  <div class="playlist-layout">
+   <div class="playlist-items"><div class="card"><h3>Sequência de reprodução</h3>
+    <div class="row"><span class="drag">⠿</span><b>01</b> 🖼️ Promoção Produto X <span class="duration">10 segundos</span></div>
+    <div class="row"><span class="drag">⠿</span><b>02</b> 🎬 Vídeo Institucional <span class="duration">30 segundos</span></div>
+    <div class="row"><span class="drag">⠿</span><b>03</b> 🖼️ Oferta do Dia <span class="duration">10 segundos</span></div>
+    <button class="secondary" style="margin-top:10px">+ Adicionar conteúdo</button>
+   </div></div>
+   <div class="assign"><h3>Aplicar em</h3><div class="check">☑ Grupo: Loja Centro (8 telas)</div><div class="check">☑ TV Entrada</div><div class="check">☑ TV Caixa 01</div><div class="check">☐ TV Shopping 01</div><div class="check">☐ TV Shopping 02</div><p class="label">Alterações serão sincronizadas automaticamente.</p></div>
+  </div>
+ </section>
+
+ <section class="view" id="campaigns">
+  <div class="head"><div><h1>Campanhas</h1><p>Controle publicidade por período, horário e público.</p></div><button class="primary">+ Criar campanha</button></div>
+  <div class="card"><table><tr><th>Campanha</th><th>Período</th><th>Destinos</th><th>Status</th></tr><tr><td><b>Black Friday 2026</b></td><td>01/11 — 30/11</td><td>24 telas</td><td><span class="status online">Ativa</span></td></tr><tr><td><b>Oferta de Almoço</b></td><td>Todos os dias • 11h-14h</td><td>12 telas</td><td><span class="status online">Ativa</span></td></tr><tr><td><b>Institucional</b></td><td>Contínua</td><td>47 telas</td><td><span class="status online">Ativa</span></td></tr></table></div>
+ </section>
+
+ <section class="view" id="locations"><div class="head"><div><h1>Pontos & Locais</h1><p>Organize a rede por empresa, unidade e região.</p></div><button class="primary">+ Novo local</button></div><div class="grid"><div class="card"><h3>Estrutura</h3><div class="check">🏢 Empresa</div><div class="check">　📍 Loja Centro — 8 telas</div><div class="check">　📍 Shopping — 12 telas</div><div class="check">　📍 Zona Sul — 7 telas</div><div class="check">　📍 Loja Norte — 20 telas</div></div><div class="card"><h3>Resumo</h3><p class="label">47 dispositivos distribuídos em 4 pontos de divulgação.</p></div></div></section>
+ <section class="view" id="reports"><div class="head"><div><h1>Relatórios</h1><p>Histórico e indicadores de reprodução.</p></div><button class="primary">Exportar relatório</button></div><div class="stats"><div class="stat"><div class="label">Execuções hoje</div><div class="n">8.462</div></div><div class="stat"><div class="label">Disponibilidade</div><div class="n">99,2%</div></div><div class="stat"><div class="label">Conteúdos ativos</div><div class="n">36</div></div><div class="stat"><div class="label">Dados registrados</div><div class="n">1,2 GB</div></div></div></section>
+ <section class="view" id="settings"><div class="head"><div><h1>Configurações</h1><p>Preferências gerais da plataforma.</p></div></div><div class="card"><h3>Configurações gerais</h3><div class="check">☑ Notificar quando dispositivo ficar offline</div><div class="check">☑ Sincronização automática de campanhas</div><div class="check">☑ Manter reprodução offline usando cache local</div></div></section>
+</main></div>
+
+<div class="modal" id="modal"><div class="modal-box"><h2>Adicionar dispositivo</h2><p class="label">Vincule um novo Player à plataforma utilizando o código exibido na TV.</p><div class="field"><label>Código de ativação</label><input placeholder="Ex.: 8F32A9"></div><div class="field"><label>Nome do dispositivo</label><input placeholder="Ex.: TV Recepção"></div><div class="field"><label>Local</label><select><option>Loja Centro</option><option>Shopping</option><option>Zona Sul</option></select></div><div class="actions"><button class="secondary" onclick="hideModal()">Cancelar</button><button class="primary" onclick="activate()">Ativar dispositivo</button></div></div></div>
+<script>
+const buttons=document.querySelectorAll('.nav button'),views=document.querySelectorAll('.view');
+buttons.forEach(b=>b.onclick=()=>{buttons.forEach(x=>x.classList.remove('active'));b.classList.add('active');views.forEach(v=>v.classList.remove('active'));document.getElementById(b.dataset.view).classList.add('active');document.getElementById('crumb').textContent='Painel / '+b.textContent.trim();});
+function showModal(){document.getElementById('modal').classList.add('show')}function hideModal(){document.getElementById('modal').classList.remove('show')}function activate(){hideModal();alert('Dispositivo ativado com sucesso! Em um sistema real, ele receberia sua configuração e playlist automaticamente.')}
+</script>
+</body></html>
