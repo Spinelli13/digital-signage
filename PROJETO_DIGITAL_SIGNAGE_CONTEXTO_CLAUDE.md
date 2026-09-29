@@ -882,26 +882,28 @@ Não implementar no MVP:
 
 A IA deve seguir aproximadamente esta ordem:
 
-1. Estrutura do repositório.
-2. Backend Spring Boot mínimo.
-3. `GET /health`.
-4. PostgreSQL.
-5. Migrations.
-6. Autenticação.
-7. CRUD de dispositivos.
-8. Biblioteca de mídia.
-9. Playlists.
-10. Endpoint de configuração do Player.
-11. Player mínimo.
-12. Ativação.
-13. Download/cache.
-14. Reprodução.
-15. Heartbeat.
-16. Integração painel ↔ Player.
-17. Teste sem internet.
-18. Teste após reinicialização.
-19. Deploy inicial.
-20. Só depois iniciar expansão.
+1. [x] Estrutura do repositório.
+2. [x] Backend Spring Boot mínimo.
+3. [x] `GET /health`.
+4. [x] PostgreSQL.
+5. [x] Migrations.
+6. [x] Autenticação.
+7. [x] CRUD de dispositivos.
+8. [x] Biblioteca de mídia.
+9. [x] Playlists.
+10. [x] Endpoint de configuração do Player.
+11. [x] Player mínimo (compilado e validado — instalação em hardware real ainda pendente).
+12. [ ] Ativação.
+13. [ ] Download/cache.
+14. [ ] Reprodução.
+15. [ ] Heartbeat.
+16. [ ] Integração painel ↔ Player.
+17. [ ] Teste sem internet.
+18. [ ] Teste após reinicialização.
+19. [ ] Deploy inicial.
+20. [ ] Só depois iniciar expansão.
+
+Detalhes de cada etapa concluída (decisões tomadas, bugs encontrados e corrigidos) ficam em [docs/DECISIONS.md](./docs/DECISIONS.md).
 
 ---
 
