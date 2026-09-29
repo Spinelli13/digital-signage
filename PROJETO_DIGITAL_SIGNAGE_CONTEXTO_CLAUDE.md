@@ -845,7 +845,7 @@ Não implementar no MVP:
 - [x] login funciona.
 - [x] dispositivo pode ser criado.
 - [ ] ativação por código funciona.
-- [ ] mídia pode ser cadastrada.
+- [x] mídia pode ser cadastrada.
 - [ ] playlist pode ser criada.
 - [ ] playlist pode ser associada.
 - [ ] Player consegue buscar configuração.

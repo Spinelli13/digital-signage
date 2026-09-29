@@ -15,6 +15,10 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: 300MB
+      max-request-size: 300MB
 
 app:
   jwt:
@@ -24,3 +28,5 @@ app:
     name: ${ADMIN_NAME:Administrador}
     email: ${ADMIN_EMAIL:admin@digitalsignage.local}
     password: ${ADMIN_PASSWORD:changeme}
+  storage:
+    local-path: ${STORAGE_LOCAL_PATH:./data/media}

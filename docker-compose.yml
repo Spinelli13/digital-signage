@@ -30,11 +30,15 @@ services:
       ADMIN_NAME: ${ADMIN_NAME}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      STORAGE_LOCAL_PATH: /data/media
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - media_data:/data/media
 
 volumes:
   postgres_data:
+  media_data:
