@@ -119,6 +119,10 @@ public class Device {
 		return currentPlaylistId;
 	}
 
+	public void setCurrentPlaylistId(Long currentPlaylistId) {
+		this.currentPlaylistId = currentPlaylistId;
+	}
+
 	public long getConfigVersion() {
 		return configVersion;
 	}

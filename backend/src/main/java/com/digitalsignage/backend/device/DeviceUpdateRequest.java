@@ -5,5 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 public record DeviceUpdateRequest(
 		@NotBlank String name,
 		String location,
-		String status) {
+		String status,
+		Long currentPlaylistId) {
 }

@@ -5,6 +5,7 @@ import java.util.NoSuchElementException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.digitalsignage.backend.playlist.Playlist;
+import com.digitalsignage.backend.playlist.PlaylistRepository;
+
 import jakarta.validation.Valid;
 
 @RestController
@@ -22,9 +26,11 @@ import jakarta.validation.Valid;
 public class DeviceController {
 
 	private final DeviceRepository deviceRepository;
+	private final PlaylistRepository playlistRepository;
 
-	public DeviceController(DeviceRepository deviceRepository) {
+	public DeviceController(DeviceRepository deviceRepository, PlaylistRepository playlistRepository) {
 		this.deviceRepository = deviceRepository;
+		this.playlistRepository = playlistRepository;
 	}
 
 	@GetMapping
@@ -54,7 +60,42 @@ public class DeviceController {
 			device.setStatus(DeviceStatus.valueOf(request.status().toUpperCase()).name());
 		}
 
+		if (request.currentPlaylistId() != null) {
+			Playlist playlist = playlistRepository.findById(request.currentPlaylistId())
+					.orElseThrow(() -> new NoSuchElementException(
+							"Playlist não encontrada: " + request.currentPlaylistId()));
+			device.setCurrentPlaylistId(playlist.getId());
+		}
+
 		return DeviceResponse.from(deviceRepository.save(device));
+	}
+
+	@GetMapping("/{id}/config")
+	@Transactional(readOnly = true)
+	public PlayerConfigResponse config(@PathVariable Long id) {
+		Device device = findOrThrow(id);
+
+		if (device.getCurrentPlaylistId() == null) {
+			return new PlayerConfigResponse(device.getId(), null, 0, List.of());
+		}
+
+		Playlist playlist = playlistRepository.findById(device.getCurrentPlaylistId())
+				.orElseThrow(() -> new NoSuchElementException(
+						"Playlist não encontrada: " + device.getCurrentPlaylistId()));
+
+		List<PlayerConfigMediaItem> items = playlist.getItems().stream()
+				.map(item -> new PlayerConfigMediaItem(
+						item.getMedia().getId(),
+						item.getMedia().getName(),
+						item.getMedia().getType(),
+						"/api/v1/media/" + item.getMedia().getId() + "/file",
+						item.getMedia().getChecksum(),
+						item.getMedia().getFileSize(),
+						item.getPosition(),
+						item.getDurationSeconds()))
+				.toList();
+
+		return new PlayerConfigResponse(device.getId(), playlist.getId(), playlist.getConfigVersion(), items);
 	}
 
 	@DeleteMapping("/{id}")

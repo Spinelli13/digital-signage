@@ -11,6 +11,7 @@ public record DeviceResponse(
 		boolean online,
 		Instant lastSeenAt,
 		String playerVersion,
+		Long currentPlaylistId,
 		long configVersion,
 		Instant createdAt,
 		Instant updatedAt) {
@@ -30,6 +31,7 @@ public record DeviceResponse(
 				online,
 				device.getLastSeenAt(),
 				device.getPlayerVersion(),
+				device.getCurrentPlaylistId(),
 				device.getConfigVersion(),
 				device.getCreatedAt(),
 				device.getUpdatedAt());
