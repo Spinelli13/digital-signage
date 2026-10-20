@@ -1,9 +1,10 @@
 import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 
 import { ConfigService } from '../core/config.service';
-import { Device, Playlist, ReleaseInfo } from '../core/models';
+import { Device, DeviceGroup, Location, Playlist, ReleaseInfo } from '../core/models';
 import { DevicesPage } from './devices.page';
 
 const API = 'http://api.test/api/v1';
@@ -23,7 +24,10 @@ const device = (overrides: Partial<Device> = {}): Device => ({
   id: 1,
   name: 'TV Recepção',
   location: 'Térreo',
+  locationId: 3,
   status: 'ACTIVE',
+  connection: 'ONLINE',
+  groupIds: [],
   online: true,
   lastSeenAt: '2026-10-20T10:00:00Z',
   playerVersion: '0.3.0',
@@ -44,22 +48,73 @@ const playlist = (id: number): Playlist => ({
   updatedAt: '',
 });
 
+const location = (id: number, name: string): Location => ({
+  id,
+  name,
+  description: null,
+  deviceCount: 1,
+  onlineCount: 1,
+  createdAt: '',
+  updatedAt: '',
+});
+
+const group = (id: number, name: string): DeviceGroup => ({
+  id,
+  name,
+  description: null,
+  deviceCount: 1,
+  onlineCount: 1,
+  deviceIds: [],
+  createdAt: '',
+  updatedAt: '',
+});
+
+const LOCATIONS = [location(3, 'Térreo'), location(4, 'Loja Centro')];
+const GROUPS = [group(10, 'Recepções'), group(11, 'Vitrines')];
+
+/** Um <select> "de mentira": o painel lê o valor escolhido e o devolve ao título. */
+const selectEvent = (value: string) => ({ target: { value } }) as unknown as Event;
+
+function setup(queryParams: Record<string, string> = {}) {
+  TestBed.configureTestingModule({
+    providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
+      provideRouter([]),
+      { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(queryParams) } } },
+    ],
+  });
+  const config = TestBed.inject(ConfigService);
+  config.apiBaseUrl = 'http://api.test';
+  config.downloadsUrl = DOWNLOADS;
+  const backend = TestBed.inject(HttpTestingController);
+  const page = TestBed.createComponent(DevicesPage).componentInstance;
+  return { page, backend };
+}
+
+/** Responde às quatro consultas que a tela refaz a cada atualização. */
+function flushRefresh(backend: HttpTestingController, devices: Device[] = [device()]): TestRequest {
+  const list = backend.expectOne((r) => r.url === `${API}/devices`);
+  list.flush(devices);
+  backend.expectOne(`${API}/playlists`).flush([playlist(7), playlist(8)]);
+  backend.expectOne(`${API}/locations`).flush(LOCATIONS);
+  backend.expectOne(`${API}/groups`).flush(GROUPS);
+  return list;
+}
+
+function start(page: DevicesPage, backend: HttpTestingController, devices: Device[] = [device()]): TestRequest {
+  page.ngOnInit();
+  backend.expectOne(`${DOWNLOADS}/releases.json`).flush({ releases: [release('0.3.0')] });
+  return flushRefresh(backend, devices);
+}
+
 describe('DevicesPage — playlist assignment', () => {
   let page: DevicesPage;
   let backend: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
-    TestBed.inject(ConfigService).apiBaseUrl = 'http://api.test';
-    backend = TestBed.inject(HttpTestingController);
-
-    TestBed.inject(ConfigService).downloadsUrl = DOWNLOADS;
-
-    page = TestBed.createComponent(DevicesPage).componentInstance;
-    page.ngOnInit();
-    backend.expectOne(`${DOWNLOADS}/releases.json`).flush({ releases: [release('0.3.0')] });
-    backend.expectOne(`${API}/devices`).flush([device()]);
-    backend.expectOne(`${API}/playlists`).flush([playlist(7), playlist(8)]);
+    ({ page, backend } = setup());
+    start(page, backend);
   });
 
   afterEach(() => backend.verify());
@@ -78,27 +133,18 @@ describe('DevicesPage — playlist assignment', () => {
     expect(request.request.method).toBe('DELETE');
     request.flush(device({ currentPlaylistId: null }));
 
-    // depois de remover, a lista é recarregada
-    backend.expectOne(`${API}/devices`).flush([device({ currentPlaylistId: null })]);
-    backend.expectOne(`${API}/playlists`).flush([playlist(7), playlist(8)]);
+    flushRefresh(backend, [device({ currentPlaylistId: null })]);
   });
 
-  it('switches to another playlist with a PUT that keeps name and location', () => {
+  it('switches to another playlist with a PUT that sends only the name and the playlist', () => {
     page.assignPlaylist(device(), 8);
 
     const request = backend.expectOne(`${API}/devices/1`);
     expect(request.request.method).toBe('PUT');
-    expect(request.request.body).toEqual({ name: 'TV Recepção', location: 'Térreo', currentPlaylistId: 8 });
+    // local e grupos ficam de fora: ausente significa "não mudar"
+    expect(request.request.body).toEqual({ name: 'TV Recepção', currentPlaylistId: 8 });
     request.flush(device({ currentPlaylistId: 8 }));
-    backend.expectOne(`${API}/devices`).flush([device({ currentPlaylistId: 8 })]);
-    backend.expectOne(`${API}/playlists`).flush([playlist(7), playlist(8)]);
-  });
-
-  it('does nothing when the chosen playlist is already the current one', () => {
-    page.assignPlaylist(device(), 7);
-
-    backend.expectNone(`${API}/devices/1`);
-    backend.expectNone(`${API}/devices/1/playlist`);
+    flushRefresh(backend, [device({ currentPlaylistId: 8 })]);
   });
 
   it('asks one TV to check for a Player update and confirms to the user', () => {
@@ -108,7 +154,7 @@ describe('DevicesPage — playlist assignment', () => {
     expect(request.request.method).toBe('POST');
     request.flush(device());
 
-    expect(page.notice()).toContain('TV Recepção');
+    expect(page.notice.text()).toContain('TV Recepção');
   });
 
   it('asks every active TV and says how many were reached', () => {
@@ -118,19 +164,435 @@ describe('DevicesPage — playlist assignment', () => {
     expect(request.request.method).toBe('POST');
     request.flush({ requested: 3 });
 
-    expect(page.notice()).toContain('3 TV(s)');
+    expect(page.notice.text()).toContain('3 TV(s)');
   });
 
   it('tells the user when there is no active TV to ask', () => {
     page.updateAll();
     backend.expectOne(`${API}/devices/update-check`).flush({ requested: 0 });
 
-    expect(page.notice()).toBe('Nenhuma TV ativa para avisar.');
+    expect(page.notice.text()).toBe('Nenhuma TV ativa para avisar.');
+  });
+
+  it('does nothing when the chosen playlist is already the current one', () => {
+    page.assignPlaylist(device(), 7);
+
+    backend.expectNone(`${API}/devices/1`);
+    backend.expectNone(`${API}/devices/1/playlist`);
   });
 
   it('does nothing when "Nenhuma playlist" is chosen for a device that has none', () => {
     page.assignPlaylist(device({ currentPlaylistId: null }), null);
 
     backend.expectNone(`${API}/devices/1/playlist`);
+  });
+
+  it('only changes the status, keeping the rest of the TV as it is', () => {
+    page.setStatus(device(), 'disabled');
+
+    const request = backend.expectOne(`${API}/devices/1`);
+    expect(request.request.body).toEqual({ name: 'TV Recepção', status: 'disabled' });
+    request.flush(device({ status: 'DISABLED', connection: 'DISABLED' }));
+    flushRefresh(backend);
+  });
+
+  it('shows the group names of each TV', () => {
+    expect(page.groupsOf(device({ groupIds: [11, 10, 99] })).map((g) => g.name)).toEqual(['Recepções', 'Vitrines']);
+  });
+});
+
+describe('DevicesPage — filters', () => {
+  let page: DevicesPage;
+  let backend: HttpTestingController;
+
+  beforeEach(() => {
+    ({ page, backend } = setup());
+    start(page, backend);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    backend.verify();
+  });
+
+  function nextList(): TestRequest {
+    return backend.expectOne((r) => r.url === `${API}/devices`);
+  }
+
+  it('asks the server for the chosen connection state', () => {
+    page.setConnection('OFFLINE');
+
+    const request = nextList();
+    expect(request.request.params.get('connection')).toBe('OFFLINE');
+    request.flush([]);
+    backend.expectOne(`${API}/playlists`).flush([]);
+    backend.expectOne(`${API}/locations`).flush(LOCATIONS);
+    backend.expectOne(`${API}/groups`).flush(GROUPS);
+    expect(page.filtersActive()).toBe(true);
+  });
+
+  it('filters by location, including the TVs without a location', () => {
+    page.setLocationFilter('4');
+    const byId = nextList();
+    expect(byId.request.params.get('locationId')).toBe('4');
+    byId.flush([]);
+    backend.expectOne(`${API}/playlists`).flush([]);
+    backend.expectOne(`${API}/locations`).flush(LOCATIONS);
+    backend.expectOne(`${API}/groups`).flush(GROUPS);
+
+    page.setLocationFilter('none');
+    const none = nextList();
+    expect(none.request.params.get('noLocation')).toBe('true');
+    expect(none.request.params.has('locationId')).toBe(false);
+    none.flush([]);
+    backend.expectOne(`${API}/playlists`).flush([]);
+    backend.expectOne(`${API}/locations`).flush(LOCATIONS);
+    backend.expectOne(`${API}/groups`).flush(GROUPS);
+  });
+
+  it('filters by group and clears everything with one click', () => {
+    page.setGroupFilter('10');
+    const request = nextList();
+    expect(request.request.params.get('groupId')).toBe('10');
+    request.flush([]);
+    backend.expectOne(`${API}/playlists`).flush([]);
+    backend.expectOne(`${API}/locations`).flush(LOCATIONS);
+    backend.expectOne(`${API}/groups`).flush(GROUPS);
+
+    page.clearFilters();
+    const cleared = nextList();
+    expect(cleared.request.params.keys()).toEqual([]);
+    cleared.flush([device()]);
+    backend.expectOne(`${API}/playlists`).flush([]);
+    backend.expectOne(`${API}/locations`).flush(LOCATIONS);
+    backend.expectOne(`${API}/groups`).flush(GROUPS);
+    expect(page.filtersActive()).toBe(false);
+  });
+
+  /** Digitar não pode disparar uma consulta por letra: espera a pessoa parar de digitar. */
+  it('waits for the user to stop typing before searching', () => {
+    vi.useFakeTimers();
+
+    page.onSearch('r');
+    page.onSearch('re');
+    page.onSearch('rec');
+    backend.expectNone((r) => r.url === `${API}/devices`);
+
+    vi.advanceTimersByTime(300);
+
+    const request = nextList();
+    expect(request.request.params.get('q')).toBe('rec');
+    request.flush([]);
+    backend.expectOne(`${API}/playlists`).flush([]);
+    backend.expectOne(`${API}/locations`).flush(LOCATIONS);
+    backend.expectOne(`${API}/groups`).flush(GROUPS);
+  });
+});
+
+describe('DevicesPage — filters coming from links (dashboard, locations, groups)', () => {
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  it('starts already filtered by the link', () => {
+    const { page, backend } = setup({ local: '4', grupo: '10', situacao: 'offline' });
+
+    page.ngOnInit();
+    backend.expectOne(`${DOWNLOADS}/releases.json`).flush({ releases: [] });
+    const request = backend.expectOne((r) => r.url === `${API}/devices`);
+
+    expect(request.request.params.get('locationId')).toBe('4');
+    expect(request.request.params.get('groupId')).toBe('10');
+    expect(request.request.params.get('connection')).toBe('OFFLINE');
+    request.flush([]);
+    backend.expectOne(`${API}/playlists`).flush([]);
+    backend.expectOne(`${API}/locations`).flush(LOCATIONS);
+    backend.expectOne(`${API}/groups`).flush(GROUPS);
+  });
+
+  it('understands "sem local" and ignores nonsense in the link', () => {
+    const { page, backend } = setup({ local: 'none', grupo: 'abc', situacao: 'quebrada' });
+
+    page.ngOnInit();
+    backend.expectOne(`${DOWNLOADS}/releases.json`).flush({ releases: [] });
+    const request = backend.expectOne((r) => r.url === `${API}/devices`);
+
+    expect(request.request.params.get('noLocation')).toBe('true');
+    expect(request.request.params.has('groupId')).toBe(false);
+    expect(request.request.params.has('connection')).toBe(false);
+    request.flush([]);
+    backend.expectOne(`${API}/playlists`).flush([]);
+    backend.expectOne(`${API}/locations`).flush(LOCATIONS);
+    backend.expectOne(`${API}/groups`).flush(GROUPS);
+  });
+});
+
+describe('DevicesPage — selection and bulk actions', () => {
+  let page: DevicesPage;
+  let backend: HttpTestingController;
+  const tvs = [device({ id: 1 }), device({ id: 2, name: 'TV Vitrine' }), device({ id: 3, name: 'TV Estoque' })];
+
+  beforeEach(() => {
+    ({ page, backend } = setup());
+    start(page, backend, tvs);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    backend.verify();
+  });
+
+  function bulkRequest(): TestRequest {
+    return backend.expectOne(`${API}/devices/bulk`);
+  }
+
+  it('selects and unselects TVs one by one', () => {
+    page.toggle(1);
+    page.toggle(2);
+    expect(page.selectedCount()).toBe(2);
+    expect(page.isSelected(1)).toBe(true);
+
+    page.toggle(1);
+    expect(page.isSelected(1)).toBe(false);
+    expect(page.selectedCount()).toBe(1);
+  });
+
+  it('"select all" marks every TV in the list and a second click clears them', () => {
+    page.toggleAll();
+    expect(page.selectedCount()).toBe(3);
+    expect(page.allSelected()).toBe(true);
+
+    page.toggleAll();
+    expect(page.selectedCount()).toBe(0);
+  });
+
+  it('drops from the selection the TVs that left the list after a refresh', () => {
+    page.toggleAll();
+
+    page.setConnection('OFFLINE');
+    flushRefresh(backend, [tvs[1]]);
+
+    expect([...page.selected()]).toEqual([2]);
+  });
+
+  it('assigns the chosen playlist to the selected TVs and says how many were reached', () => {
+    page.toggle(1);
+    page.toggle(2);
+    const select = { value: '8' };
+
+    page.onBulkPlaylist({ target: select } as unknown as Event);
+
+    const request = bulkRequest();
+    expect(request.request.body).toEqual({ action: 'ASSIGN_PLAYLIST', playlistId: 8, deviceIds: [1, 2] });
+    expect(select.value).toBe(''); // o seletor volta ao título
+    request.flush({ affected: 2 });
+    expect(page.notice.text()).toContain('Playlist aplicada a 2 TV(s)');
+    flushRefresh(backend, tvs);
+  });
+
+  it('removes the playlist from the selected TVs', () => {
+    page.toggle(1);
+
+    page.onBulkPlaylist(selectEvent('none'));
+
+    expect(bulkRequest().request.body).toEqual({ action: 'REMOVE_PLAYLIST', deviceIds: [1] });
+  });
+
+  it('moves the selected TVs to a location or clears it', () => {
+    page.toggle(1);
+    page.onBulkLocation(selectEvent('4'));
+    const move = bulkRequest();
+    expect(move.request.body).toEqual({ action: 'SET_LOCATION', locationId: 4, deviceIds: [1] });
+    move.flush({ affected: 1 });
+    flushRefresh(backend, tvs);
+
+    page.onBulkLocation(selectEvent('none'));
+    expect(bulkRequest().request.body).toEqual({ action: 'CLEAR_LOCATION', deviceIds: [1] });
+  });
+
+  it('adds the selected TVs to a group and takes them out again', () => {
+    page.toggle(2);
+
+    page.onBulkGroup(selectEvent('10'), true);
+    const add = bulkRequest();
+    expect(add.request.body).toEqual({ action: 'ADD_TO_GROUP', groupId: 10, deviceIds: [2] });
+    add.flush({ affected: 1 });
+    flushRefresh(backend, tvs);
+
+    page.onBulkGroup(selectEvent('10'), false);
+    expect(bulkRequest().request.body).toEqual({ action: 'REMOVE_FROM_GROUP', groupId: 10, deviceIds: [2] });
+  });
+
+  it('ignores a chosen "title" option of the selectors', () => {
+    page.toggle(1);
+
+    page.onBulkPlaylist(selectEvent(''));
+    page.onBulkLocation(selectEvent(''));
+    page.onBulkGroup(selectEvent(''), true);
+
+    backend.expectNone(`${API}/devices/bulk`);
+  });
+
+  it('asks for confirmation before disabling and does nothing if the user backs out', () => {
+    page.toggleAll();
+    const confirmation = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    page.bulkSimple('DISABLE');
+
+    expect(confirmation).toHaveBeenCalledWith(expect.stringContaining('3 TV(s)'));
+    backend.expectNone(`${API}/devices/bulk`);
+  });
+
+  it('disables after the user confirms', () => {
+    page.toggleAll();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    page.bulkSimple('DISABLE');
+
+    const request = bulkRequest();
+    expect(request.request.body).toEqual({ action: 'DISABLE', deviceIds: [1, 2, 3] });
+    request.flush({ affected: 2 });
+    expect(page.notice.text()).toContain('2 TV(s) desativada(s)');
+    expect(page.notice.text()).toContain('1 já estavam no estado pedido');
+    flushRefresh(backend, tvs);
+  });
+
+  it('enables and asks for updates without a confirmation window', () => {
+    page.toggle(1);
+    const confirmation = vi.spyOn(window, 'confirm');
+
+    page.bulkSimple('ENABLE');
+    bulkRequest().flush({ affected: 1 });
+    flushRefresh(backend, tvs);
+    page.bulkSimple('CHECK_UPDATE');
+    expect(bulkRequest().request.body).toEqual({ action: 'CHECK_UPDATE', deviceIds: [1] });
+
+    expect(confirmation).not.toHaveBeenCalled();
+  });
+
+  it('explains when the action reached nobody', () => {
+    page.toggle(1);
+
+    page.bulkSimple('ENABLE');
+    bulkRequest().flush({ affected: 0 });
+
+    expect(page.notice.text()).toContain('Nenhuma das TVs selecionadas');
+    flushRefresh(backend, tvs);
+  });
+
+  it('does nothing without a selection', () => {
+    page.bulkSimple('CHECK_UPDATE');
+
+    backend.expectNone(`${API}/devices/bulk`);
+  });
+});
+
+describe('DevicesPage — activating and editing', () => {
+  let page: DevicesPage;
+  let backend: HttpTestingController;
+
+  beforeEach(() => {
+    ({ page, backend } = setup());
+    start(page, backend);
+  });
+
+  afterEach(() => backend.verify());
+
+  function fillActivation(choice: string, newLocation = '') {
+    page.openActivate();
+    page.code.set('K7M2QX');
+    page.name.set('  TV Nova ');
+    page.locationChoice.set(choice);
+    page.newLocation.set(newLocation);
+  }
+
+  it('activates with an existing location chosen from the list (by id) and the chosen groups', () => {
+    fillActivation('4');
+    page.toggleModalGroup(10);
+
+    page.submitModal();
+
+    const request = backend.expectOne(`${API}/devices/activate`);
+    expect(request.request.body).toEqual({ activationCode: 'K7M2QX', name: 'TV Nova', groupIds: [10], locationId: 4 });
+    request.flush(device());
+    flushRefresh(backend);
+    expect(page.modal()).toBeNull();
+  });
+
+  it('activates with a brand new location typed by the user (by name; the server creates it)', () => {
+    fillActivation('new', ' Loja Nova ');
+
+    page.submitModal();
+
+    const request = backend.expectOne(`${API}/devices/activate`);
+    expect(request.request.body).toEqual({ activationCode: 'K7M2QX', name: 'TV Nova', groupIds: [], location: 'Loja Nova' });
+    request.flush(device());
+    flushRefresh(backend);
+  });
+
+  it('activates without a location when none is chosen', () => {
+    fillActivation('');
+
+    page.submitModal();
+
+    const request = backend.expectOne(`${API}/devices/activate`);
+    expect(request.request.body).toEqual({ activationCode: 'K7M2QX', name: 'TV Nova', groupIds: [] });
+    request.flush(device());
+    flushRefresh(backend);
+  });
+
+  it('treats "new location" left blank as no location', () => {
+    fillActivation('new', '   ');
+
+    page.submitModal();
+
+    const request = backend.expectOne(`${API}/devices/activate`);
+    expect(request.request.body).toEqual({ activationCode: 'K7M2QX', name: 'TV Nova', groupIds: [] });
+    request.flush(device());
+    flushRefresh(backend);
+  });
+
+  it('keeps the window open and stops loading when the server refuses', () => {
+    fillActivation('');
+
+    page.submitModal();
+    backend.expectOne(`${API}/devices/activate`).flush({ error: 'Código de ativação inválido ou expirado' }, { status: 404, statusText: 'Not Found' });
+
+    expect(page.busy()).toBe(false);
+    expect(page.modal()).toBe('activate');
+  });
+
+  it('opens the edit window with the current location and groups', () => {
+    page.openEdit(device({ locationId: 4, groupIds: [11] }));
+
+    expect(page.modal()).toBe('edit');
+    expect(page.locationChoice()).toBe('4');
+    expect([...page.modalGroups()]).toEqual([11]);
+  });
+
+  it('saves a changed location by id and the full list of groups', () => {
+    page.openEdit(device({ locationId: 3, groupIds: [10] }));
+    page.locationChoice.set('4');
+    page.toggleModalGroup(10);
+    page.toggleModalGroup(11);
+
+    page.submitModal();
+
+    const request = backend.expectOne(`${API}/devices/1`);
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({ name: 'TV Recepção', groupIds: [11], locationId: 4 });
+    request.flush(device());
+    flushRefresh(backend);
+  });
+
+  /** Ao editar, "sem local" precisa ser dito explicitamente; omitir significaria "não mudar". */
+  it('says "no location" explicitly when editing a TV that should have none', () => {
+    page.openEdit(device({ locationId: 3 }));
+    page.locationChoice.set('');
+
+    page.submitModal();
+
+    const request = backend.expectOne(`${API}/devices/1`);
+    expect(request.request.body).toEqual({ name: 'TV Recepção', groupIds: [], location: '' });
+    request.flush(device());
+    flushRefresh(backend);
   });
 });

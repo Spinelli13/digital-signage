@@ -1,26 +1,40 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { Device } from './models';
+import { Connection, Device } from './models';
 
 export interface DeviceState {
   label: string;
   tone: 'on' | 'off' | 'warn';
 }
 
-export function deviceState(device: Device): DeviceState {
-  switch (device.status) {
-    case 'DISABLED':
-      return { label: 'Desativado', tone: 'off' };
-    case 'PENDING':
-      return { label: 'Aguardando ativação', tone: 'warn' };
-    default:
-      if (device.online) {
-        return { label: 'Online', tone: 'on' };
-      }
-      return device.lastSeenAt
-        ? { label: 'Offline', tone: 'off' }
-        : { label: 'Nunca conectou', tone: 'warn' };
+/** Situação vinda do servidor; se faltar (resposta antiga), deduz do status e do último contato. */
+export function connectionOf(device: Device): Connection {
+  if (device.connection) {
+    return device.connection;
   }
+  if (device.status === 'DISABLED' || device.status === 'PENDING') {
+    return device.status;
+  }
+  if (device.online) {
+    return 'ONLINE';
+  }
+  return device.lastSeenAt ? 'OFFLINE' : 'NEVER';
+}
+
+const STATES: Record<Connection, DeviceState> = {
+  ONLINE: { label: 'Online', tone: 'on' },
+  OFFLINE: { label: 'Offline', tone: 'off' },
+  NEVER: { label: 'Nunca conectou', tone: 'warn' },
+  PENDING: { label: 'Aguardando ativação', tone: 'warn' },
+  DISABLED: { label: 'Desativado', tone: 'off' },
+};
+
+export function stateOfConnection(connection: Connection): DeviceState {
+  return STATES[connection];
+}
+
+export function deviceState(device: Device): DeviceState {
+  return STATES[connectionOf(device)];
 }
 
 /** True quando o dispositivo precisa de atenção do administrador (offline, pendente ou nunca conectado). */

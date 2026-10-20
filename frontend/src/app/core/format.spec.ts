@@ -1,13 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { deviceState, errorMessage, formatBytes, needsAttention, timeAgo } from './format';
+import { connectionOf, deviceState, errorMessage, formatBytes, needsAttention, stateOfConnection, timeAgo } from './format';
 import { Device } from './models';
 
 const device = (overrides: Partial<Device>): Device => ({
   id: 1,
   name: 'TV',
   location: null,
+  locationId: null,
   status: 'ACTIVE',
+  connection: 'NEVER',
+  groupIds: [],
   online: false,
   lastSeenAt: null,
   playerVersion: null,
@@ -20,29 +23,52 @@ const device = (overrides: Partial<Device>): Device => ({
 
 describe('deviceState', () => {
   it('shows online for an active device that is reporting', () => {
-    expect(deviceState(device({ online: true, lastSeenAt: 'x' }))).toEqual({ label: 'Online', tone: 'on' });
+    expect(deviceState(device({ connection: 'ONLINE', online: true, lastSeenAt: 'x' }))).toEqual({ label: 'Online', tone: 'on' });
   });
 
   it('shows offline for an active device that stopped reporting', () => {
-    expect(deviceState(device({ online: false, lastSeenAt: 'x' })).tone).toBe('off');
+    expect(deviceState(device({ connection: 'OFFLINE', lastSeenAt: 'x' })).tone).toBe('off');
   });
 
   it('warns when an active device never connected', () => {
-    expect(deviceState(device({})).label).toBe('Nunca conectou');
+    expect(deviceState(device({ connection: 'NEVER' })).label).toBe('Nunca conectou');
   });
 
   it('shows pending and disabled devices distinctly', () => {
-    expect(deviceState(device({ status: 'PENDING' })).label).toBe('Aguardando ativação');
-    expect(deviceState(device({ status: 'DISABLED' })).label).toBe('Desativado');
+    expect(deviceState(device({ status: 'PENDING', connection: 'PENDING' })).label).toBe('Aguardando ativação');
+    expect(deviceState(device({ status: 'DISABLED', connection: 'DISABLED' })).label).toBe('Desativado');
+  });
+
+  it('has a label for every situation the server can report', () => {
+    for (const connection of ['ONLINE', 'OFFLINE', 'NEVER', 'PENDING', 'DISABLED'] as const) {
+      expect(stateOfConnection(connection).label.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+/** Respostas de um servidor antigo (sem "connection") ainda precisam mostrar o estado certo. */
+describe('connectionOf', () => {
+  const legacy = (overrides: Partial<Device>) => device({ connection: undefined as never, ...overrides });
+
+  it('trusts the server when it reports the connection', () => {
+    expect(connectionOf(device({ connection: 'OFFLINE' }))).toBe('OFFLINE');
+  });
+
+  it('derives the situation from status and last contact when the server does not send it', () => {
+    expect(connectionOf(legacy({ online: true, lastSeenAt: 'x' }))).toBe('ONLINE');
+    expect(connectionOf(legacy({ online: false, lastSeenAt: 'x' }))).toBe('OFFLINE');
+    expect(connectionOf(legacy({}))).toBe('NEVER');
+    expect(connectionOf(legacy({ status: 'PENDING' }))).toBe('PENDING');
+    expect(connectionOf(legacy({ status: 'DISABLED' }))).toBe('DISABLED');
   });
 });
 
 describe('needsAttention', () => {
   it('flags offline and pending devices but not online or deliberately disabled ones', () => {
-    expect(needsAttention(device({ online: true, lastSeenAt: 'x' }))).toBe(false);
-    expect(needsAttention(device({ online: false, lastSeenAt: 'x' }))).toBe(true);
-    expect(needsAttention(device({ status: 'PENDING' }))).toBe(true);
-    expect(needsAttention(device({ status: 'DISABLED' }))).toBe(false);
+    expect(needsAttention(device({ connection: 'ONLINE', online: true, lastSeenAt: 'x' }))).toBe(false);
+    expect(needsAttention(device({ connection: 'OFFLINE', lastSeenAt: 'x' }))).toBe(true);
+    expect(needsAttention(device({ status: 'PENDING', connection: 'PENDING' }))).toBe(true);
+    expect(needsAttention(device({ status: 'DISABLED', connection: 'DISABLED' }))).toBe(false);
   });
 });
 

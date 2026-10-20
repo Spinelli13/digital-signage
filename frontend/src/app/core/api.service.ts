@@ -4,7 +4,24 @@ import { Observable, map } from 'rxjs';
 
 import { ConfigService } from './config.service';
 import { SILENT_ERRORS } from './http-errors';
-import { Device, DeviceUpdateRequest, Media, MediaUrl, Playlist, PlaylistRequest, ReleaseInfo } from './models';
+import { filtersToParams } from './device-filters';
+import {
+  ActivateRequest,
+  BulkRequest,
+  Device,
+  DeviceFilters,
+  DeviceGroup,
+  DeviceGroupRequest,
+  DeviceUpdateRequest,
+  Location,
+  LocationRequest,
+  Media,
+  MediaUrl,
+  Playlist,
+  PlaylistRequest,
+  ReleaseInfo,
+  Summary,
+} from './models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -16,12 +33,58 @@ export class ApiService {
   }
 
   // dispositivos
-  devices(): Observable<Device[]> {
-    return this.http.get<Device[]>(this.url('/devices'));
+  devices(filters: DeviceFilters = {}): Observable<Device[]> {
+    return this.http.get<Device[]>(this.url('/devices'), { params: filtersToParams(filters) });
   }
 
-  activateDevice(body: { activationCode: string; name: string; location: string | null }): Observable<Device> {
+  activateDevice(body: ActivateRequest): Observable<Device> {
     return this.http.post<Device>(this.url('/devices/activate'), body);
+  }
+
+  /** Aplica uma ação a várias TVs de uma vez (marcadas, de um grupo ou de um local). Devolve quantas foram alcançadas. */
+  bulk(body: BulkRequest): Observable<{ affected: number }> {
+    return this.http.post<{ affected: number }>(this.url('/devices/bulk'), body);
+  }
+
+  // locais
+  locations(): Observable<Location[]> {
+    return this.http.get<Location[]>(this.url('/locations'));
+  }
+
+  createLocation(body: LocationRequest): Observable<Location> {
+    return this.http.post<Location>(this.url('/locations'), body);
+  }
+
+  updateLocation(id: number, body: LocationRequest): Observable<Location> {
+    return this.http.put<Location>(this.url(`/locations/${id}`), body);
+  }
+
+  /** Apagar um local não apaga as TVs: elas ficam sem local. */
+  deleteLocation(id: number): Observable<void> {
+    return this.http.delete<void>(this.url(`/locations/${id}`));
+  }
+
+  // grupos
+  groups(): Observable<DeviceGroup[]> {
+    return this.http.get<DeviceGroup[]>(this.url('/groups'));
+  }
+
+  createGroup(body: DeviceGroupRequest): Observable<DeviceGroup> {
+    return this.http.post<DeviceGroup>(this.url('/groups'), body);
+  }
+
+  updateGroup(id: number, body: DeviceGroupRequest): Observable<DeviceGroup> {
+    return this.http.put<DeviceGroup>(this.url(`/groups/${id}`), body);
+  }
+
+  /** Apagar um grupo não apaga as TVs, só o vínculo. */
+  deleteGroup(id: number): Observable<void> {
+    return this.http.delete<void>(this.url(`/groups/${id}`));
+  }
+
+  // resumo do dashboard
+  summary(): Observable<Summary> {
+    return this.http.get<Summary>(this.url('/summary'));
   }
 
   updateDevice(id: number, body: DeviceUpdateRequest): Observable<Device> {

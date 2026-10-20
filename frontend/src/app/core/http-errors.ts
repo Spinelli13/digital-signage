@@ -24,6 +24,16 @@ const ACTIONS: [method: string, path: RegExp, label: string][] = [
   ['PUT', /\/playlists\/\d+$/, 'Salvar playlist'],
   ['DELETE', /\/playlists\/\d+$/, 'Excluir playlist'],
   ['GET', /latest\.json$|releases\.json$/, 'Carregar as versões do aplicativo'],
+  ['POST', /\/devices\/bulk$/, 'Aplicar a ação às TVs'],
+  ['GET', /\/locations$/, 'Carregar os locais'],
+  ['POST', /\/locations$/, 'Criar local'],
+  ['PUT', /\/locations\/\d+$/, 'Salvar local'],
+  ['DELETE', /\/locations\/\d+$/, 'Excluir local'],
+  ['GET', /\/groups$/, 'Carregar os grupos'],
+  ['POST', /\/groups$/, 'Criar grupo'],
+  ['PUT', /\/groups\/\d+(\/devices)?$/, 'Salvar grupo'],
+  ['DELETE', /\/groups\/\d+$/, 'Excluir grupo'],
+  ['GET', /\/summary$/, 'Carregar o resumo'],
 ];
 
 function actionOf(request: HttpRequest<unknown>): string | null {
