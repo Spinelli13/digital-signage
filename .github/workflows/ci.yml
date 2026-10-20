@@ -50,6 +50,6 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-      - uses: android-actions/setup-android@v3
+      # O runner ubuntu já traz o Android SDK com as licenças aceitas.
       - run: chmod +x gradlew
       - run: ./gradlew testDebugUnitTest assembleDebug
