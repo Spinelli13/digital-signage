@@ -157,8 +157,7 @@ class PlayerEngine(
     }
 
     private fun publish(config: PlayerConfig) {
-        mutableState.value =
-            if (config.items.isEmpty()) EngineState.NoContent else EngineState.Playing(config)
+        mutableState.value = if (config.hasContent()) EngineState.Playing(config) else EngineState.NoContent
     }
 
     companion object {

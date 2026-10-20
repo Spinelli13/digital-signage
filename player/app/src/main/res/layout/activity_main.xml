@@ -22,6 +22,13 @@
         app:resize_mode="fit"
         app:shutter_background_color="#000000" />
 
+    <!-- Zonas de um layout (e o WebView da tela cheia). Transparente e sem nada dentro, não aparece. -->
+    <FrameLayout
+        android:id="@+id/zonesRoot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
     <!-- Tarja de erro: aparece por 10 s sobre qualquer coisa que esteja na tela -->
     <TextView
         android:id="@+id/errorBanner"

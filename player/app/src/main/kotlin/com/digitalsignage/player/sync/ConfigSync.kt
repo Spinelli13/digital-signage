@@ -37,14 +37,16 @@ class ConfigSync(
     suspend fun sync(token: String): PlayerConfig {
         val fetched = api.config(token)
 
-        for (item in fetched.config.items) {
-            if (!cache.isCached(item)) {
+        // Todas as zonas (a mesma mídia em duas zonas baixa uma vez só); páginas da web não têm arquivo.
+        val items = fetched.config.allItems()
+        for (item in items) {
+            if (!item.isWeb && !cache.isCached(item)) {
                 downloader.download(token, item.url) { input -> cache.store(item, input) }
             }
         }
 
         store.save(fetched.raw)
-        cache.retainOnly(fetched.config.items)
+        cache.retainOnly(items)
         return fetched.config
     }
 

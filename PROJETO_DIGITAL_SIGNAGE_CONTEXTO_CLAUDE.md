@@ -794,15 +794,17 @@ Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 6).
 
 Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 7).
 
-### Fase 5 — Recursos avançados
+### Fase 5 — Recursos avançados ✅ (concluída em 2026-10-20)
 
 ```text
-Layouts
-Zonas
-QR Code
-Templates
-Conteúdo web
+[x] Layouts (divisão da tela; a TV sem layout continua em tela cheia, como sempre)
+[x] Zonas (retângulos em % da tela, cada uma com a sua playlist; a principal exibe a da TV e das campanhas)
+[x] QR Code (gerado no painel como imagem; o Player não muda para ele)
+[x] Templates (seis modelos de layout prontos)
+[x] Conteúdo web (páginas https exibidas por WebView no Player 0.6)
 ```
+
+Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 8).
 
 ### Fase 6 — SaaS
 

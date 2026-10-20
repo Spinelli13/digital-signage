@@ -7,6 +7,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -88,6 +89,7 @@ class MainActivity : AppCompatActivity() {
             cache,
             findViewById<ImageView>(R.id.imageView),
             findViewById<PlayerView>(R.id.playerView),
+            findViewById<FrameLayout>(R.id.zonesRoot),
             onError = { reporter.report(it) },
         )
 

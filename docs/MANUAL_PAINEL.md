@@ -12,6 +12,7 @@ Como usar o **painel de administração** do Digital Signage no dia a dia: envia
 2. Montar uma **Playlist** com as mídias na ordem e com o tempo que você quiser.
 3. Em **Dispositivos**, escolher qual playlist cada TV exibe. Com várias TVs, organize-as em **Locais** (onde estão) e **Grupos** (conjuntos para agir juntos) e aplique a playlist a todas de uma vez. Para conteúdo que só vale em certas datas, dias ou horários, use **Campanhas**.
 4. Acompanhar: o **Dashboard**, os **Alertas** (o painel avisa quando uma TV some) e os **Relatórios** (disponibilidade, exibições, inventário).
+5. Para telas mais elaboradas, dividir a tela em zonas com **Layouts** e usar **QR Codes** e **páginas da web**.
 
 ---
 
@@ -41,6 +42,7 @@ O **menu à esquerda** leva a cada área:
 | **Pontos & Locais** | Onde estão as TVs (ex.: "Loja Centro"). |
 | **Grupos** | Conjuntos de TVs (ex.: "Recepções") para escolher a playlist e atualizar o aplicativo de todas de uma vez. |
 | **Campanhas** | Uma playlist com **agenda** (datas, dias da semana, horários), **prioridade** e **alvos** (todas as TVs, locais, grupos ou TVs). |
+| **Layouts** | Divide a tela da TV em zonas (conteúdo principal + faixa lateral, rodapé…), cada uma com a sua lista de mídias. Vem com modelos prontos. |
 | **Alertas** | O que precisa de atenção agora (TV sem contato, TV que nunca conectou, erros repetidos) e as configurações para receber os avisos no Slack, Discord e similares. |
 | **Relatórios** | Disponibilidade das TVs, exibições por mídia, inventário e eventos, com download em CSV para o Excel. |
 | **Biblioteca** | Suas imagens e vídeos. |
@@ -63,6 +65,8 @@ O **menu à esquerda** leva a cada área:
 |---|---|---|
 | Imagem | JPG, PNG, WEBP | Proporção **16:9**, de preferência **1920×1080**. Imagens fora dessa proporção aparecem inteiras, com faixas pretas. |
 | Vídeo | MP4 (vídeo H.264) | Até **1080p** e **no máximo 50 MB** por arquivo. Outros formatos (MOV, AVI, MKV, HEVC) podem não tocar. |
+
+Além de arquivos, a Biblioteca também guarda **QR Codes** (botão **▦ QR Code**) e **páginas da web** (botão **🌐 Página web**): veja o capítulo 10.
 
 **Excluir uma mídia:** clique em **Excluir** no cartão da mídia. Se ela estiver em alguma playlist, o painel avisa que não dá para remover; tire-a das playlists primeiro.
 
@@ -339,7 +343,71 @@ Abra **Relatórios**. São quatro, cada um com período (**Hoje**, **7 dias**, *
 
 ---
 
-## 10. Downloads e manuais
+## 10. Layouts, QR Code e páginas da web
+
+Até aqui cada TV mostrava **um conteúdo só, em tela cheia**. Com **layouts** você divide a tela em **zonas**: por exemplo, o conteúdo principal à esquerda e, à direita, uma faixa com avisos, um QR Code ou uma página da web. Cada zona toca a sua própria lista **ao mesmo tempo**.
+
+![TV de teste com o layout "principal + faixa lateral": a promoção na zona principal e o QR Code do cardápio na lateral (captura real do emulador de TV)](manual/img/player-layout.png)
+
+### 10.1 Layouts
+
+Abra **Layouts** no menu. Cada cartão mostra um desenho da divisão da tela, quantas zonas tem e quantas TVs o usam.
+
+![Lista de layouts, com o desenho de cada divisão da tela (captura real)](manual/img/painel-layouts.png)
+
+**Criar um layout**
+
+1. Clique em **+ Novo layout** e escolha um **modelo pronto**: *Tela cheia*, *Principal + faixa lateral*, *Principal + rodapé*, *Principal + lateral + rodapé*, *Duas metades* ou *Quatro quadros*. Dê um nome e clique em **Criar e ajustar**. (Ou **Começar do zero**.)
+
+![Escolha de um modelo de layout (captura real)](manual/img/painel-layout-novo.png)
+
+2. No editor, o desenho no alto mostra a tela. Para cada zona você define o **nome**, a **posição** (X e Y) e o **tamanho** (largura e altura), tudo em **% da tela** a partir do canto superior esquerdo. O desenho se atualiza enquanto você digita, e o painel avisa na hora se alguma zona sai da tela ou se sobrepõe a outra.
+3. Marque qual zona é a **principal**. Ela exibe **a playlist da TV** (e as campanhas, veja abaixo). Nas **outras zonas** escolha uma **playlist fixa** (ou deixe "Sem conteúdo").
+4. **Salvar.** As TVs que usam o layout atualizam sozinhas em até 1 minuto.
+
+![Editor de layout: desenho da tela, posição e tamanho de cada zona, zona principal e playlist das outras (captura real)](manual/img/painel-layout-editor.png)
+
+**Regras do layout:** de 1 a 6 zonas; exatamente uma zona principal; as zonas não podem se sobrepor nem sair da tela; cada uma tem no mínimo 5% de largura e de altura.
+
+**Usar o layout numa TV:** em **Dispositivos**, clique em **Editar** na TV e escolha o **Layout da tela** (ou **Tela cheia** para voltar ao normal). Para várias TVs de uma vez, marque-as e use **Aplicar layout…** na barra azul. A TV mostra uma etiqueta 🧩 com o nome do layout, e o **Histórico** dela registra a mudança.
+
+![Editar a TV: a lista "Layout da tela" (captura real)](manual/img/painel-dispositivo-layout.png)
+
+**Como o layout convive com as campanhas e playlists**
+
+- A **zona principal** exibe a playlist da TV; quando uma **campanha** vale, ela substitui a playlist **só na zona principal**. As outras zonas continuam com a playlist fixa delas.
+- Uma playlist usada numa zona **não pode ser excluída** enquanto o layout a usar (o painel diz qual). E um layout **em uso por TVs** não pode ser excluído: tire as TVs dele antes.
+
+**Dicas para um bom resultado**
+
+- As imagens são exibidas **inteiras** (sem cortar): numa faixa estreita, uma imagem 16:9 fica pequena. Para as faixas, prepare imagens do **formato da zona** (quadradas ou verticais) — e os **QR Codes** já são quadrados.
+- Use **vídeo em uma zona só** (de preferência a principal). Aparelhos baratos nem sempre aguentam dois vídeos ao mesmo tempo, e **só a zona principal toca o som**.
+- Em cada zona as mídias passam em loop, cada uma no seu tempo.
+
+### 10.2 QR Code
+
+Em **Biblioteca**, clique em **▦ QR Code**. Digite o **endereço ou texto** (um cardápio, o Wi‑Fi do local, um WhatsApp…), um **título** e uma **legenda** (opcionais) e escolha as **cores**. A pré-visualização aparece na hora. **Salvar na biblioteca** guarda o QR Code como uma **imagem** comum: coloque-a em qualquer playlist (a de uma zona lateral é uma ótima ideia).
+
+![Criando um QR Code: texto, título, legenda, cores e a pré-visualização (captura real)](manual/img/painel-qr-code.png)
+
+O QR Code sempre fica **escuro sobre fundo claro** (celulares precisam desse contraste). Teste lendo-o com o seu celular antes de publicar. Textos muito longos não cabem num QR Code: prefira um endereço curto.
+
+### 10.3 Página da web
+
+Em **Biblioteca**, clique em **🌐 Página web**. Informe o **endereço** (precisa começar com **https://**), um **nome** e por quantos **segundos** a página fica na tela (de 5 a 3600; o padrão é 30). Ela entra na biblioteca como qualquer mídia e pode ser colocada em qualquer playlist: um painel de vendas, a previsão do tempo, um cardápio online…
+
+![Adicionando uma página da web à biblioteca (captura real)](manual/img/painel-pagina-web.png)
+
+- A **TV precisa de internet** para abrir a página (ela **não fica guardada** na TV como as imagens e vídeos). Se a página não abrir (sem internet, erro do site), a TV **pula** para o próximo item e o erro aparece no **Histórico** da TV.
+- O Player **só abre endereços https** e a página roda **sem interação** (ninguém clica nela). Não use páginas que exigem login digitado na TV.
+- A página é exibida **no tamanho da zona**: sites feitos para celular costumam ficar bem em uma faixa lateral.
+- Os relatórios de **exibições** contam também as páginas.
+
+> **Requisito:** layouts, QR Code e páginas da web exigem o Player **0.6 ou mais novo** nas TVs. Use **Atualizar app** em **Dispositivos**. Um Player mais antigo ignora o layout e mostra a zona principal em tela cheia (e não exibe as páginas da web).
+
+---
+
+## 11. Downloads e manuais
 
 Em **Downloads e manuais** você encontra, sempre atualizados:
 
@@ -351,7 +419,7 @@ Em **Downloads e manuais** você encontra, sempre atualizados:
 
 ---
 
-## 11. Avisos de erro
+## 12. Avisos de erro
 
 Quando algo dá errado, o painel mostra um aviso vermelho no alto da tela, em português, dizendo **o que aconteceu e o que fazer**. O aviso **fica na tela até você clicar em Fechar**.
 
@@ -373,7 +441,7 @@ Todo aviso começa pela **ação** que falhou (por exemplo, "Excluir mídia: …
 
 ---
 
-## 12. Boas práticas
+## 13. Boas práticas
 
 - **Teste com uma TV primeiro**, depois replique para as outras (com grupos, aplicar a mesma playlist a todas é um clique).
 - **Organize desde o começo:** crie os **locais** antes de ativar as TVs e escolha o local na ativação; use **grupos** para o que se repete entre locais (recepções, vitrines…).
@@ -381,16 +449,21 @@ Todo aviso começa pela **ação** que falhou (por exemplo, "Excluir mídia: …
 - Dê **nomes claros** às mídias e playlists (ex.: "Promoção de verão", não "IMG_0231").
 - Nas imagens, **5 a 10 segundos** costumam ser suficientes; textos longos pedem mais tempo.
 - **Campanhas:** defina a **prioridade** com folga (10, 50, 80…) para poder encaixar outras depois, e use o **Simulador** antes de publicar.
+- **QR Code ao lado do conteúdo:** um layout "principal + faixa lateral" com um QR Code (cardápio, promoção, WhatsApp) na lateral transforma a TV em um convite para o celular.
 - **Configure um webhook** (Slack, Discord…) em **Alertas** para saber de uma TV fora do ar sem precisar abrir o painel.
 - **Lembre de publicar:** alterar a playlist não muda a TV até clicar em **Publicar alterações**.
 - Não precisa se preocupar com a internet da TV: ela **guarda tudo** e continua exibindo mesmo se a conexão cair.
 
 ---
 
-## 13. Solução de problemas
+## 14. Solução de problemas
 
 | Problema | O que fazer |
 |---|---|
+| A TV não mostrou o layout novo | Ela precisa do Player **0.6 ou mais novo** (**Atualizar app**) e de até 1 minuto para sincronizar. Confira em **Dispositivos** se a TV mostra a etiqueta 🧩 do layout. |
+| Uma zona do layout ficou em branco | Zona sem playlist fica em branco de propósito (**Sem conteúdo**). Escolha a playlist da zona no editor do layout; a zona **principal** usa a playlist da TV. |
+| A página da web não aparece | A TV precisa de internet e o endereço de **https://**. Veja o **Histórico** da TV: a mensagem diz se a página não abriu ou respondeu erro. A TV pula a página e segue o loop. |
+| Não consigo excluir um layout | Ele está em uso por TVs: troque o layout delas (ou **Tela cheia**) antes. O painel diz quantas TVs usam. |
 | Recebi um alerta **"TV sem contato"** | Veja o **Histórico** da TV: o último evento mostra quando ela parou. Confira energia e Wi‑Fi da TV; quando ela voltar, o alerta se fecha sozinho. |
 | Alerta de **"Erros no Player"** | Abra o **Histórico** da TV e filtre por **Só erros**: a mensagem diz qual mídia falhou. Troque ou reenvie a mídia (vídeo em MP4 H.264, imagem não corrompida). |
 | O relatório de **Exibições** está vazio | As contagens vêm do Player **0.5 ou mais novo**. Use **Atualizar app** nas TVs mais antigas. |

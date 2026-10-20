@@ -207,3 +207,31 @@ Registro de decisões que complementam o [documento de contexto](../PROJETO_DIGI
 
 ### Painel
 - **Alertas** (lista com abertos/resolvidos + limites + webhook com teste), **Relatórios** (4 abas, filtros e CSV baixado com o login do painel), **Histórico** por TV (linha do tempo com filtro de tipo e nível e "carregar mais"), "Na tela: …" em cada TV e o contador de alertas abertos no dashboard.
+
+
+## 2026-10-20 (parte 8) — Fase 5: layouts com zonas, modelos, QR Code e conteúdo web
+
+### Layout = divisão da tela em zonas, cada uma com a sua lista
+- Uma **zona** é um retângulo em **% da tela** (inteiros, 0–100), com nome e, se não for a principal, uma **playlist fixa**. A **zona principal** exibe a playlist da TV — e é só ela que as **campanhas** substituem. Assim a Fase 3 (campanhas) e a Fase 5 não se atropelam: campanha = "o que passa na zona principal"; o resto do layout é permanente.
+- Regras no servidor (`LayoutValidator`, pura e testada): 1 a 6 zonas, **exatamente uma principal**, dentro da tela, mínimo de 5% por lado, **sem sobreposição** (bordas que só se tocam valem), nomes diferentes, principal sem playlist fixa. O painel repete as regras para avisar na hora; o servidor continua sendo quem decide. A regra "uma só principal" **não** é um índice único parcial: o Hibernate insere as zonas novas antes de apagar as antigas ao regravar o layout, e o índice quebraria a edição (achado pelos testes).
+- **Seis modelos prontos** (tela cheia, principal + lateral, principal + rodapé, principal + lateral + rodapé, duas metades, quatro quadros) em código (`LayoutTemplates`): "templates" da fase 5 sem tabela nova; `POST /layouts/from-template` cria o layout e o painel abre o editor para o ajuste fino.
+- `devices.layout_id` com `ON DELETE RESTRICT`: excluir um layout em uso é recusado com mensagem (como playlist em campanha). Sem layout a TV é tela cheia, **exatamente como antes** (nenhuma TV existente muda de comportamento).
+
+### Protocolo: compatível com Players antigos
+- `GET /player/config` ganha `zones[]` (cada uma com `items`); o `items` de cima **continua sendo a zona principal**, então um Player 0.5 ou anterior mostra a principal em tela cheia em vez de quebrar. O heartbeat não muda de formato.
+- **Versão do conteúdo:** o Player compara `playlistId + configVersion` por igualdade. Sem layout é a versão da playlist, como sempre. Com layout o conteúdo depende da playlist principal, do layout e das playlists das outras zonas, então `configVersion` é uma **combinação determinística** (hash de 53 bits, cabe em JavaScript) que muda se qualquer parte mudar. Achado por teste: duas playlists recém-criadas têm a mesma versão (1); sem o id da principal na conta, uma campanha trocando uma pela outra **não** mudaria a versão. O mesmo cálculo (`versionFor`) alimenta o heartbeat, o `GET config` e a lista de TVs, e um teste garante que os três concordam. O painel passou a mostrar "sincronizando…" quando `configVersion ≠ desiredConfigVersion` (antes comparava com `<`, que não serve para um hash).
+- Mudança de layout gera evento `LAYOUT_CHANGED` no histórico da TV (só quando muda de fato).
+
+### Conteúdo web
+- Mídia do tipo `WEB`: guarda só o **endereço** (`media.web_url`; `storage_key` passou a aceitar nulo). Só **https** (o Player de produção não abre http), sem usuário/senha na URL, até 2000 caracteres, de 5 s a 1 h. `GET /media/{id}/file` de uma página responde 400 claro; o `url` do item na configuração é a própria página, que o Player abre direto (sem baixar nem validar checksum).
+- Player: `WebView` (JavaScript e DOM storage ligados — é a página do próprio administrador —, **sem acesso a arquivos do aparelho**, sem zoom, sem foco do controle remoto). A página que não abre em 30 s, ou responde erro, é **pulada** com mensagem que vai para o histórico da TV. Sem internet a TV não exibe páginas (nada é guardado em cache): documentado no manual.
+- **Bug achado no emulador:** com o cache já pronto, as zonas começavam a tocar antes de o layout da tela medir o tamanho delas; uma página aberta num quadro de 1 pixel guardava a escala errada e aparecia ampliada. Agora as zonas só começam **depois de dimensionadas**.
+
+### QR Code: gerado no navegador, sem mudar servidor nem Player
+- O QR Code é uma **imagem comum** (PNG 1080×1080: título, cartão claro com os módulos escuros e legenda) desenhada num canvas no painel (biblioteca `qrcode-generator`, MIT, sem dependências) e enviada como qualquer upload. Motivos: o servidor (Render, imagem enxuta) pode não ter fontes para desenhar texto com Java2D; o Player não precisa conhecer um tipo novo; e a pessoa vê a prévia antes de salvar. Sempre **escuro sobre claro** (contraste exigido pelos leitores) com zona de silêncio de 4 módulos. Verificado: o QR Code **capturado da tela do emulador** foi decodificado por uma biblioteca independente (jsQR) e devolveu exatamente o endereço digitado.
+
+### Player 0.6
+- `ZonePlayer` (a lista de uma zona: imagem, vídeo, página) e `Slideshow` (orquestra as zonas): sem layout (ou com uma zona em tela cheia) usa as views da própria tela, como antes; com layout monta uma área por zona (`ZoneGeometry` converte % em pixels arredondando **cada borda** — zonas vizinhas se encostam sem fresta nem sobreposição em qualquer resolução, testado em 1366×768, 1280×720, 3840×2160…).
+- Só a **zona principal** diz ao servidor "o que está na tela" e toca **áudio**; todas as zonas contam exibições. Cache e sincronização cobrem as mídias de **todas** as zonas (a mesma mídia em duas zonas baixa uma vez) e limpam as que nenhuma zona usa mais. Config sem zonas (servidor antigo) vira uma zona principal em tela cheia.
+- Limite conhecido, documentado: dois **vídeos** ao mesmo tempo dependem do hardware (decodificadores). Recomendação no manual: vídeo numa zona só.
+- Verificado no emulador Android TV 14: principal 70% + lateral 30% (playlist fixa com QR Code e página web), troca de itens por zona, telemetria (mídia na tela, exibições, evento de layout, versão do Player).

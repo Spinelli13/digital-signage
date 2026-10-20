@@ -34,14 +34,18 @@ fun configOf(playlistId: Long?, version: Long, vararg items: ConfigItem) =
     PlayerConfig(deviceId = 1, playlistId = playlistId, configVersion = version, items = items.toList())
 
 /** Serializa como o servidor faria, para exercitar também o parse e a persistência. */
+private fun itemsJson(items: List<ConfigItem>) = items.joinToString(",") {
+    """{"mediaId":${it.mediaId},"name":"${it.name}","type":"${it.type}","url":"${it.url}",""" +
+        """"checksum":${it.checksum?.let { c -> "\"$c\"" } ?: "null"},"fileSize":${it.fileSize},""" +
+        """"position":${it.position},"durationSeconds":${it.durationSeconds}}"""
+}
+
 fun rawJson(config: PlayerConfig): String {
-    val items = config.items.joinToString(",") {
-        """{"mediaId":${it.mediaId},"name":"${it.name}","type":"${it.type}","url":"${it.url}",""" +
-            """"checksum":${it.checksum?.let { c -> "\"$c\"" } ?: "null"},"fileSize":${it.fileSize},""" +
-            """"position":${it.position},"durationSeconds":${it.durationSeconds}}"""
-    }
     val playlist = config.playlistId?.toString() ?: "null"
-    return """{"deviceId":${config.deviceId},"playlistId":$playlist,"configVersion":${config.configVersion},"items":[$items]}"""
+    val zones = if (config.zones.isEmpty()) "" else config.zones.joinToString(",", prefix = ""","zones":[""", postfix = "]") {
+        """{"id":${it.id},"name":"${it.name}","x":${it.x},"y":${it.y},"width":${it.width},"height":${it.height},"main":${it.main},"items":[${itemsJson(it.items)}]}"""
+    }
+    return """{"deviceId":${config.deviceId},"playlistId":$playlist,"configVersion":${config.configVersion},"items":[${itemsJson(config.items)}]$zones}"""
 }
 
 class InMemoryStore(initial: PlayerConfig? = null) : ConfigStore {
