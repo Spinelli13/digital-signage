@@ -65,7 +65,7 @@ public abstract class AbstractApiTest {
 	@BeforeEach
 	void cleanDatabase() {
 		// O administrador (tabela users) é semeado na subida do contexto e precisa sobreviver.
-		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media RESTART IDENTITY CASCADE");
+		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media, locations, device_groups RESTART IDENTITY CASCADE");
 	}
 
 	protected String adminToken() throws Exception {

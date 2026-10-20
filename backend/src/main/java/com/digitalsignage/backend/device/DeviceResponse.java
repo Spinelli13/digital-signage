@@ -1,38 +1,41 @@
 package com.digitalsignage.backend.device;
 
-import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 public record DeviceResponse(
 		Long id,
 		String name,
+		/** Nome do local (vazio se a TV está sem local). Mantido para quem já lia o texto do local. */
 		String location,
+		Long locationId,
 		String status,
+		DeviceConnection connection,
 		boolean online,
 		Instant lastSeenAt,
 		String playerVersion,
 		Long currentPlaylistId,
 		long configVersion,
+		List<Long> groupIds,
 		Instant createdAt,
 		Instant updatedAt) {
 
-	// Provisório até o intervalo real de heartbeat ser definido no passo 15.
-	private static final Duration ONLINE_THRESHOLD = Duration.ofMinutes(2);
-
 	public static DeviceResponse from(Device device) {
-		boolean online = device.getLastSeenAt() != null
-				&& Duration.between(device.getLastSeenAt(), Instant.now()).compareTo(ONLINE_THRESHOLD) <= 0;
+		Instant now = Instant.now();
 
 		return new DeviceResponse(
 				device.getId(),
 				device.getName(),
-				device.getLocation(),
+				device.getLocation() == null ? null : device.getLocation().getName(),
+				device.getLocation() == null ? null : device.getLocation().getId(),
 				device.getStatus(),
-				online,
+				DeviceConnection.of(device, now),
+				DeviceConnection.isRecent(device.getLastSeenAt(), now),
 				device.getLastSeenAt(),
 				device.getPlayerVersion(),
 				device.getCurrentPlaylistId(),
 				device.getConfigVersion(),
+				device.getGroupIds().stream().sorted().toList(),
 				device.getCreatedAt(),
 				device.getUpdatedAt());
 	}

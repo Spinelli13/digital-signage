@@ -1,12 +1,23 @@
 package com.digitalsignage.backend.device;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
+import org.hibernate.annotations.BatchSize;
+
+import com.digitalsignage.backend.location.Location;
+
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -28,7 +39,17 @@ public class Device {
 	@Column(name = "device_token_hash")
 	private String deviceTokenHash;
 
-	private String location;
+	/** Ponto físico onde a TV está (opcional). Apagar o local não apaga a TV: ela fica "sem local". */
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "location_id")
+	private Location location;
+
+	/** Grupos de que a TV faz parte (tabela device_group_members; as chaves estrangeiras garantem a integridade). */
+	@ElementCollection(fetch = FetchType.LAZY)
+	@CollectionTable(name = "device_group_members", joinColumns = @JoinColumn(name = "device_id"))
+	@Column(name = "group_id")
+	@BatchSize(size = 100)
+	private Set<Long> groupIds = new HashSet<>();
 
 	@Column(nullable = false)
 	private String status = DeviceStatus.PENDING.name();
@@ -57,7 +78,7 @@ public class Device {
 	protected Device() {
 	}
 
-	public Device(String name, String location) {
+	public Device(String name, Location location) {
 		this.name = name;
 		this.location = location;
 	}
@@ -71,7 +92,7 @@ public class Device {
 		return device;
 	}
 
-	public void activate(String name, String location) {
+	public void activate(String name, Location location) {
 		this.name = name;
 		this.location = location;
 		this.status = DeviceStatus.ACTIVE.name();
@@ -121,12 +142,16 @@ public class Device {
 		return deviceTokenHash;
 	}
 
-	public String getLocation() {
+	public Location getLocation() {
 		return location;
 	}
 
-	public void setLocation(String location) {
+	public void setLocation(Location location) {
 		this.location = location;
+	}
+
+	public Set<Long> getGroupIds() {
+		return groupIds;
 	}
 
 	public String getStatus() {
