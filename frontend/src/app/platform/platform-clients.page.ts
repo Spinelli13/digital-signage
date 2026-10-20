@@ -250,8 +250,9 @@ export class PlatformClientsPage implements OnInit {
     return TENANT_STATUS_TONES[status];
   }
 
+  /** Limite do plano na tabela: o número, ou "∞" quando não há limite. */
   limit(value: number | null): string {
-    return formatLimit(value);
+    return value === null ? '∞' : formatLimit(value);
   }
 
   async enter(tenant: TenantSummary): Promise<void> {

@@ -1,6 +1,8 @@
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter, map } from 'rxjs';
 
 import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
@@ -62,7 +64,7 @@ import { Notice } from '../core/notice';
     <main>
       @if (auth.isVisiting()) {
         <div class="banner visiting" role="status">
-          Você está atuando no cliente <b>{{ auth.me()?.tenant?.name }}</b>. O que você fizer vale para ele.
+          <span>Você está atuando no cliente <b>{{ auth.me()?.tenant?.name }}</b>. O que você fizer vale para ele.</span>
           <button class="secondary small" (click)="leave()">Voltar ao meu cliente</button>
         </div>
       }
@@ -74,7 +76,7 @@ import { Notice } from '../core/notice';
           <h2>Assinatura {{ subscriptionState() }}</h2>
           <p>O painel deste cliente está bloqueado. As TVs continuam exibindo o conteúdo. Fale com o administrador da sua conta para regularizar.</p>
         </div>
-      } @else {
+      } @else if (showOutlet()) {
         <router-outlet />
       }
     </main>
@@ -182,6 +184,26 @@ export class Shell {
     return me !== null && !me.platformAdmin && (me.tenant.status === 'SUSPENDED' || me.tenant.status === 'CANCELED');
   });
 
+  /** A conta já chegou (ou falhou): só então as páginas abrem, para não pedirem dados que o servidor vai recusar. */
+  readonly ready = signal(false);
+
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter((event) => event instanceof NavigationEnd),
+      map(() => this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  /** Com a assinatura suspensa o administrador só vê "Plano e cobrança" (e os downloads); o resto espera o redirecionamento. */
+  readonly showOutlet = computed(() => {
+    if (!this.ready()) {
+      return false;
+    }
+    const url = this.url();
+    return !this.blocked() || url.startsWith('/plano') || url.startsWith('/downloads');
+  });
+
   /** "suspensa" / "encerrada", para frases sobre a assinatura. */
   readonly subscriptionState = computed(() => (this.auth.me()?.tenant.status === 'CANCELED' ? 'encerrada' : 'suspensa'));
 
@@ -225,7 +247,7 @@ export class Shell {
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.notice.dispose());
-    void this.auth.ensureMe();
+    void this.auth.ensureMe().finally(() => this.ready.set(true));
     // O administrador de um cliente suspenso cai direto em "Plano e cobrança" (o resto do painel responde 402).
     effect(() => {
       if (this.blocked() && this.auth.can('admin') && !this.router.url.startsWith('/plano') && !this.router.url.startsWith('/downloads')) {

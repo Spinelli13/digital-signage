@@ -806,21 +806,23 @@ Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 7).
 
 Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 8).
 
-### Fase 6 — SaaS
+### Fase 6 — SaaS ✅ (concluída em 2026-10-20)
 
 ```text
-Multi-tenant
-Clientes
-Permissões
-Planos
-Cobrança
+[x] Multi-tenant (um banco, `tenant_id` em cada tabela de negócio, isolamento automático com @TenantId do Hibernate)
+[x] Clientes (a operação cadastra, edita, suspende e "entra" no painel do cliente para dar suporte)
+[x] Permissões (Visualizador, Editor, Administrador e Operador da plataforma; equipe gerenciada pelo Administrador)
+[x] Planos (preço e limites de TVs, espaço de mídias e usuários; o servidor recusa o que passa do limite)
+[x] Cobrança (faturas, ciclo automático a cada hora, atraso e suspensão; pagamento registrado à mão — SEM gateway de pagamento nem e-mails)
 ```
+
+Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 9) e no manual do painel (capítulos 11 a 13).
 
 ---
 
 ## 20. O que NÃO fazer agora
 
-Não implementar no MVP:
+Não implementar no MVP (lista original; **atualização:** múltiplas zonas, multi-tenant, cobrança, assinatura e usuários com papéis foram implementados depois, nas fases 5 e 6; o restante segue fora do escopo):
 
 - multi-tenant completo;
 - cobrança;

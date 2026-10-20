@@ -38,6 +38,7 @@ describe('Shell', () => {
     backend.expectOne(`${API}/auth/me`).flush(me);
     fixture.detectChanges();
     await fixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve)); // a conta chegou: a tela abre as páginas no turno seguinte
     fixture.detectChanges();
     return { element: fixture.nativeElement as HTMLElement, component: fixture.componentInstance };
   }
@@ -125,6 +126,21 @@ describe('Shell', () => {
     expect(text).toContain('Plano e cobrança');
     expect(text).not.toContain('Dispositivos');
     expect(element.querySelector('.banner.danger')?.textContent).toContain('suspensa');
+  });
+
+  /** As páginas abrem só depois de a conta chegar; para o cliente suspenso, só "Plano e cobrança" abre (o resto responderia 402). */
+  it('does not open a page the suspended client cannot use (no request, no error)', async () => {
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    const element = await render(meFixture('ADMIN', { tenant: tenantFixture({ status: 'SUSPENDED' }) }));
+
+    expect(element.querySelector('router-outlet')).toBeNull();
+  });
+
+  it('opens the pages as soon as the account has arrived', async () => {
+    const element = await render(meFixture('ADMIN'));
+
+    expect(element.querySelector('router-outlet')).not.toBeNull();
   });
 
   it('tells a non-admin of a suspended client to talk to the account admin', async () => {

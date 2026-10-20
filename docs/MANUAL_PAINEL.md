@@ -13,19 +13,20 @@ Como usar o **painel de administração** do Digital Signage no dia a dia: envia
 3. Em **Dispositivos**, escolher qual playlist cada TV exibe. Com várias TVs, organize-as em **Locais** (onde estão) e **Grupos** (conjuntos para agir juntos) e aplique a playlist a todas de uma vez. Para conteúdo que só vale em certas datas, dias ou horários, use **Campanhas**.
 4. Acompanhar: o **Dashboard**, os **Alertas** (o painel avisa quando uma TV some) e os **Relatórios** (disponibilidade, exibições, inventário).
 5. Para telas mais elaboradas, dividir a tela em zonas com **Layouts** e usar **QR Codes** e **páginas da web**.
+6. Dar acesso à equipe com o **papel** certo para cada pessoa (**Equipe**) e acompanhar o **Plano e cobrança**. Quem opera o serviço para vários clientes usa a área **Plataforma**.
 
 ---
 
 ## 1. Entrar no painel
 
 1. Abra o endereço do painel no navegador.
-2. Digite o **e-mail** e a **senha** de administrador e clique em **Entrar**.
+2. Digite o **seu e-mail** e a **sua senha** e clique em **Entrar**. Cada pessoa tem o próprio acesso (veja o capítulo 11).
 
 ![Tela de entrada do painel (captura real)](manual/img/painel-login.png)
 
 > **Na primeira vez do dia, o painel pode demorar até 1 minuto** para responder. O servidor gratuito "dorme" quando fica sem uso e leva um tempo para acordar. É normal, e **não afeta as TVs**: elas continuam exibindo o que já baixaram.
 
-Para sair, use o botão **Sair** no canto inferior esquerdo.
+Para sair, use o botão **Sair** no canto inferior esquerdo. Logo acima dele, **Minha conta** troca a sua senha.
 
 ---
 
@@ -47,7 +48,12 @@ O **menu à esquerda** leva a cada área:
 | **Relatórios** | Disponibilidade das TVs, exibições por mídia, inventário e eventos, com download em CSV para o Excel. |
 | **Biblioteca** | Suas imagens e vídeos. |
 | **Playlists** | A ordem e o tempo de cada mídia. |
+| **Equipe** | *(Administrador)* As pessoas que acessam o painel e o papel de cada uma. |
+| **Plano e cobrança** | *(Administrador)* O plano, o uso dos limites, as faturas e como pagar. |
 | **Downloads e manuais** | O aplicativo da TV (sempre a versão mais recente) e estes manuais em PDF. |
+| **Plataforma** | *(Operador da plataforma)* Clientes, planos, faturas e configurações do serviço. |
+
+No alto do menu aparece o **cliente** em que você está, o **plano** e a **situação** da assinatura. O painel mostra **só o que o seu papel pode usar** (capítulo 11).
 
 ---
 
@@ -407,7 +413,148 @@ Em **Biblioteca**, clique em **🌐 Página web**. Informe o **endereço** (prec
 
 ---
 
-## 11. Downloads e manuais
+## 11. Equipe e papéis
+
+Cada pessoa entra no painel com o **seu próprio e-mail e senha**, e o **papel** dela decide o que pode fazer. Assim o dono do cliente dá acesso à equipe sem entregar a senha de administrador.
+
+### 11.1 Os papéis
+
+| Papel | O que pode |
+|---|---|
+| **Visualizador** | Só consulta: vê as TVs, a biblioteca, playlists, campanhas, layouts, alertas, relatórios e o histórico. Não altera nada. |
+| **Editor** | Tudo do Visualizador **e** cuida do conteúdo: envia e exclui mídias, monta playlists, campanhas e layouts, e escolhe a **playlist e o layout** de cada TV (também em várias TVs de uma vez). |
+| **Administrador** | Tudo do Editor **e** administra o cliente: ativa, renomeia, move, desativa e exclui TVs, cria locais e grupos, pede atualização do aplicativo, configura os alertas e gerencia a **Equipe** e o **Plano e cobrança**. |
+
+O painel **só mostra os botões que o seu papel pode usar**. Se alguém tentar o que não pode (por exemplo, por um endereço antigo), o servidor recusa e o painel avisa em português.
+
+![Painel de um Editor: não aparecem "Equipe" nem "Plano e cobrança" no menu, nem os botões de adicionar, desativar e excluir TVs (captura real)](manual/img/painel-papel-editor.png)
+
+### 11.2 Gerenciar a equipe (Administrador)
+
+Em **Equipe** estão todas as pessoas do cliente, com o papel e a situação de cada uma. No alto aparece quantos usuários o plano permite (ex.: "2 de 5").
+
+![Tela Equipe: lista de usuários, papéis e a explicação do que cada papel pode (captura real)](manual/img/painel-equipe.png)
+
+- **+ Novo usuário:** informe o nome, o **e-mail** (é o login), o **papel** e uma **senha inicial** (mínimo de 8 caracteres). Combine com a pessoa e peça que a troque em **Minha conta**.
+- **Editar:** muda o nome e o papel, **desativa** o acesso (a pessoa deixa de entrar, mas o cadastro fica) ou define uma nova senha (útil quando alguém esquece a dela). Deixe a senha em branco para mantê-la.
+- **Excluir:** remove a pessoa. O acesso acaba na hora.
+- Você **não pode excluir nem desativar a si mesmo**, e o cliente **sempre mantém pelo menos um administrador ativo** (para tirar o papel do último, promova outra pessoa antes).
+
+![Janela para adicionar um usuário (captura real)](manual/img/painel-equipe-novo.png)
+
+> Se o plano já está com todos os usuários em uso, o painel avisa ("O plano … permite até N usuário(s)"). Desative alguém que não usa mais o painel ou peça um plano maior (capítulo 12).
+
+### 11.3 Minha conta: trocar a própria senha
+
+Em qualquer papel, clique em **Minha conta** (canto inferior esquerdo), digite a **senha atual** e a **nova senha duas vezes** (mínimo de 8 caracteres).
+
+![Janela "Minha conta" com a troca de senha (captura real)](manual/img/painel-minha-conta.png)
+
+---
+
+## 12. Plano e cobrança
+
+Para o **Administrador** do cliente. Mostra o plano contratado, o quanto você já usa dele, as faturas e como pagar.
+
+![Tela Plano e cobrança: plano, uso, faturas, como pagar, planos disponíveis e dados da conta (captura real)](manual/img/painel-plano.png)
+
+### 12.1 Plano e uso
+
+Cada plano tem **limites**: de **TVs** ativadas, de **espaço de mídias** e de **usuários**. As barras mostram o quanto você já usou (verde, laranja a partir de 80% e vermelho quando enche). Um limite "ilimitado" não tem barra para encher.
+
+Quando um limite é atingido, o painel **recusa o que passaria dele**, explicando o motivo e o que fazer:
+
+| Limite | O que acontece ao passar |
+|---|---|
+| **TVs** | Não é possível ativar mais uma TV. Exclua uma que não usa ou peça um plano maior. |
+| **Espaço de mídias** | O envio é recusado. Exclua mídias que não usa mais ou peça um plano maior. |
+| **Usuários** | Não é possível adicionar mais um. Desative alguém ou peça um plano maior. |
+
+O que já existe **nunca é apagado** por causa de um limite: as TVs continuam exibindo normalmente.
+
+### 12.2 Situação da assinatura
+
+| Situação | O que significa |
+|---|---|
+| **Em teste** | Período de teste gratuito (14 dias para clientes novos). O painel avisa nos últimos 7 dias. No fim do teste, a primeira fatura é emitida. |
+| **Em dia** | Tudo pago. |
+| **Em atraso** | Há uma fatura vencida. O painel e as TVs **continuam funcionando** durante a tolerância (7 dias por padrão), com um aviso no alto da tela. |
+| **Suspenso** | Passou a tolerância sem pagamento. O **painel fica bloqueado** (só "Plano e cobrança" abre), mas **as TVs continuam exibindo o que já têm**. |
+| **Encerrado** | A conta foi encerrada pela operação: painel e TVs param. |
+
+Planos **grátis** (preço zero) nunca geram fatura e ficam sempre em dia.
+
+![Cliente com a assinatura suspensa: só "Plano e cobrança" abre, com o motivo e a fatura em aberto (captura real)](manual/img/painel-suspenso.png)
+
+### 12.3 Faturas e como pagar
+
+A lista mostra o número, a descrição, o vencimento, o valor e a situação de cada fatura (**A pagar**, **Vencida**, **Paga** ou **Cancelada**). O quadro **Como pagar** traz as instruções da operação (por exemplo, a chave PIX) e o e-mail de suporte.
+
+1. Pague como indicado em **Como pagar**.
+2. Envie o comprovante à operação, se ela pedir.
+3. A operação **registra o pagamento**: a fatura vira **Paga**, o período é renovado e, se estava em atraso ou suspenso e não há outra fatura vencida, o cliente **volta ao normal** na hora (o painel atualiza sozinho).
+
+> **O pagamento não é automático.** Esta versão não está ligada a um meio de pagamento (cartão, boleto ou PIX automático): a baixa é feita por uma pessoa da operação em **Plataforma → Faturas**.
+
+### 12.4 Trocar de plano e dados da conta
+
+Em **Planos disponíveis** você compara preços e limites. O botão **Pedir este plano** abre um e-mail para a operação, que faz a troca. Em **Dados da conta** você ajusta o nome do cliente, o e-mail de cobrança e o CPF/CNPJ.
+
+---
+
+## 13. Plataforma (para quem opera o serviço)
+
+Esta área aparece **só para o Operador da plataforma**, quem vende e dá suporte ao serviço. Os clientes não a veem.
+
+![Plataforma: visão geral dos clientes, da receita mensal e das faturas em aberto e vencidas (captura real)](manual/img/painel-plataforma.png)
+
+### 13.1 Visão geral
+
+Mostra quantos **clientes** há (por situação), quantas **TVs** estão ativadas, a **receita mensal** dos planos pagos em dia e as **faturas** em aberto e vencidas. O botão **Rodar cobrança agora** executa o ciclo de cobrança na hora: o sistema também o roda sozinho **a cada hora** (emite faturas, marca atrasos e suspende quem passou da tolerância), e rodar de novo no mesmo dia não duplica nada.
+
+### 13.2 Clientes
+
+Cada cliente é uma empresa com os **seus próprios dados**: um cliente nunca vê as TVs, mídias ou usuários de outro.
+
+![Lista de clientes: plano, situação, uso e próximo vencimento (captura real)](manual/img/painel-clientes.png)
+
+- **+ Novo cliente:** informe o nome da empresa, o **plano** e o **primeiro administrador** (nome, e-mail e senha inicial). O cliente começa **em teste**. Envie o endereço do painel e esses dados ao administrador.
+- **Editar:** muda o nome, o plano, a **situação** (por exemplo, reativar à mão ou suspender), o e-mail de cobrança, o CPF/CNPJ e as datas do teste e do período pago.
+- **Nova fatura:** cobrança avulsa (um serviço, uma instalação) com descrição, valor e vencimento. As mensalidades são geradas sozinhas.
+- **Entrar:** abre o painel **como se fosse aquele cliente**, para dar suporte (ver ou ajustar TVs, playlists etc.). Enquanto estiver lá, um aviso azul diz **"Você está atuando no cliente …"** e tudo o que você fizer vale para ele. Clique em **Voltar ao meu cliente** para sair. Isso vale só para a aba do navegador em que você entrou.
+
+![Janela para cadastrar um cliente novo (captura real)](manual/img/painel-cliente-novo.png)
+
+![Operador dentro do painel de um cliente: o aviso azul lembra em qual cliente ele está atuando (captura real)](manual/img/painel-atuando-como.png)
+
+### 13.3 Planos
+
+Define o **preço** e os **limites** (TVs, espaço em MB e usuários) de cada plano. Deixe um limite em branco para "ilimitado". O **código** é um nome curto (ex.: `basico`); **ordem** define a posição na lista; planos **desativados** deixam de ser oferecidos a novos clientes (quem já está neles continua). Não dá para excluir um plano que ainda tem clientes.
+
+![Lista de planos: preço, limites e quantos clientes usam cada um (captura real)](manual/img/painel-planos.png)
+
+### 13.4 Faturas e pagamentos
+
+![Faturas de todos os clientes, com a situação de cada uma (captura real)](manual/img/painel-faturas.png)
+
+- Filtre por **A pagar**, **Pagas**, **Canceladas** ou veja **Todas**.
+- **Registrar pagamento:** quando o dinheiro chegar, escolha a **forma** (PIX, boleto, transferência, cartão, dinheiro ou outra) e, se quiser, uma observação (ex.: "comprovante por e-mail"). A fatura vira **Paga**, o período do cliente é renovado e, se ele estava em atraso ou suspenso sem outra fatura vencida, volta a ficar **em dia**.
+- **Cancelar:** para uma fatura emitida por engano. Uma fatura **paga** não pode ser cancelada.
+
+![Janela para registrar o pagamento de uma fatura (captura real)](manual/img/painel-pagamento.png)
+
+### 13.5 Configurações da plataforma
+
+![Configurações: texto de pagamento, e-mail de suporte e regras da cobrança automática (captura real)](manual/img/painel-plataforma-config.png)
+
+- **Como pagar:** o texto que **todos os clientes** leem em "Plano e cobrança" (chave PIX, dados bancários, para onde enviar o comprovante).
+- **Dias de teste:** duração do teste de um cliente novo (14 por padrão).
+- **Dias de tolerância:** quantos dias após o vencimento o cliente ainda usa o painel antes de ser **suspenso** (7 por padrão).
+- **Antecedência da fatura:** quantos dias antes do fim do período a fatura do mês seguinte é emitida (5 por padrão).
+
+---
+
+## 14. Downloads e manuais
 
 Em **Downloads e manuais** você encontra, sempre atualizados:
 
@@ -419,7 +566,7 @@ Em **Downloads e manuais** você encontra, sempre atualizados:
 
 ---
 
-## 12. Avisos de erro
+## 15. Avisos de erro
 
 Quando algo dá errado, o painel mostra um aviso vermelho no alto da tela, em português, dizendo **o que aconteceu e o que fazer**. O aviso **fica na tela até você clicar em Fechar**.
 
@@ -438,10 +585,13 @@ Todo aviso começa pela **ação** que falhou (por exemplo, "Excluir mídia: …
 | …existe outro registro que depende deste item | Você tentou excluir algo em uso (por exemplo, uma mídia que está numa playlist). | Retire o item de onde ele está sendo usado e tente de novo. |
 | Ativar dispositivo: Código de ativação inválido ou expirado | O código da TV venceu ou foi digitado errado. | Confira o código na TV; se preciso, reinicie o Player para gerar outro. |
 | …o arquivo é grande demais | A mídia passa do limite de tamanho. | Comprima o vídeo (até 50 MB) e envie de novo. |
+| …o plano … permite até N TV(s) / MB de mídias / usuário(s) | O limite do plano foi atingido. | Exclua o que não usa mais ou peça um plano maior (capítulo 12). |
+| …a assinatura de "…" está suspensa | A cobrança está em atraso além da tolerância. | O administrador abre **Plano e cobrança**, paga a fatura e avisa a operação (capítulo 12). |
+| …o papel Editor só pode… / …não tem permissão | O seu papel não permite essa ação. | Peça a um Administrador (capítulo 11). |
 
 ---
 
-## 13. Boas práticas
+## 16. Boas práticas
 
 - **Teste com uma TV primeiro**, depois replique para as outras (com grupos, aplicar a mesma playlist a todas é um clique).
 - **Organize desde o começo:** crie os **locais** antes de ativar as TVs e escolha o local na ativação; use **grupos** para o que se repete entre locais (recepções, vitrines…).
@@ -451,12 +601,14 @@ Todo aviso começa pela **ação** que falhou (por exemplo, "Excluir mídia: …
 - **Campanhas:** defina a **prioridade** com folga (10, 50, 80…) para poder encaixar outras depois, e use o **Simulador** antes de publicar.
 - **QR Code ao lado do conteúdo:** um layout "principal + faixa lateral" com um QR Code (cardápio, promoção, WhatsApp) na lateral transforma a TV em um convite para o celular.
 - **Configure um webhook** (Slack, Discord…) em **Alertas** para saber de uma TV fora do ar sem precisar abrir o painel.
+- **Dê a cada pessoa o menor papel que resolve:** quem só confere o que está no ar é **Visualizador**; quem troca propagandas é **Editor**; reserve **Administrador** para quem cuida das TVs, da equipe e da cobrança. Troque as senhas iniciais em **Minha conta**.
+- **Fique de olho em Plano e cobrança:** o painel avisa no fim do teste e quando há fatura em atraso, antes de qualquer suspensão.
 - **Lembre de publicar:** alterar a playlist não muda a TV até clicar em **Publicar alterações**.
 - Não precisa se preocupar com a internet da TV: ela **guarda tudo** e continua exibindo mesmo se a conexão cair.
 
 ---
 
-## 14. Solução de problemas
+## 17. Solução de problemas
 
 | Problema | O que fazer |
 |---|---|
@@ -464,6 +616,11 @@ Todo aviso começa pela **ação** que falhou (por exemplo, "Excluir mídia: …
 | Uma zona do layout ficou em branco | Zona sem playlist fica em branco de propósito (**Sem conteúdo**). Escolha a playlist da zona no editor do layout; a zona **principal** usa a playlist da TV. |
 | A página da web não aparece | A TV precisa de internet e o endereço de **https://**. Veja o **Histórico** da TV: a mensagem diz se a página não abriu ou respondeu erro. A TV pula a página e segue o loop. |
 | Não consigo excluir um layout | Ele está em uso por TVs: troque o layout delas (ou **Tela cheia**) antes. O painel diz quantas TVs usam. |
+| O menu não mostra **Equipe** ou **Plano e cobrança** | Essas áreas são só do **Administrador**. Peça o papel a quem administra o cliente. |
+| O painel só abre **Plano e cobrança** | A assinatura está **suspensa** (fatura vencida além da tolerância). Pague a fatura (capítulo 12): a operação registra o pagamento e o painel volta ao normal. As TVs continuam exibindo. |
+| Não consigo ativar uma TV, enviar uma mídia ou adicionar um usuário | O **limite do plano** foi atingido (veja o uso em **Plano e cobrança**). Libere espaço ou peça um plano maior. |
+| Esqueci a minha senha | Peça a um **Administrador** do cliente: em **Equipe → Editar** ele define uma nova senha para você. Se foi o administrador que esqueceu, a operação da plataforma redefine. |
+| Paguei e a fatura continua "A pagar" | O pagamento é registrado por uma pessoa da operação (não é automático). Envie o comprovante ao e-mail de suporte indicado em **Como pagar**. |
 | Recebi um alerta **"TV sem contato"** | Veja o **Histórico** da TV: o último evento mostra quando ela parou. Confira energia e Wi‑Fi da TV; quando ela voltar, o alerta se fecha sozinho. |
 | Alerta de **"Erros no Player"** | Abra o **Histórico** da TV e filtre por **Só erros**: a mensagem diz qual mídia falhou. Troque ou reenvie a mídia (vídeo em MP4 H.264, imagem não corrompida). |
 | O relatório de **Exibições** está vazio | As contagens vêm do Player **0.5 ou mais novo**. Use **Atualizar app** nas TVs mais antigas. |
