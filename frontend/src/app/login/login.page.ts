@@ -3,19 +3,15 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../core/auth.service';
-import { errorMessage } from '../core/format';
 
 @Component({
   selector: 'app-login',
   imports: [FormsModule],
   template: `
     <form class="card box" (ngSubmit)="submit()">
+      <img class="logo" src="favicon.svg" alt="Digital Signage" width="56" height="56" />
       <h2>Digital Signage</h2>
       <p class="label">Entre para gerenciar suas telas.</p>
-
-      @if (error()) {
-        <div class="error">{{ error() }}</div>
-      }
 
       <div class="field">
         <label for="email">E-mail</label>
@@ -35,6 +31,7 @@ import { errorMessage } from '../core/format';
     .box { width: 100%; max-width: 380px; padding: 28px; }
     .box button { width: 100%; margin-top: 6px; }
     .label { margin-bottom: 18px; }
+    .logo { display: block; margin-bottom: 14px; border-radius: 13px; }
   `,
 })
 export class LoginPage {
@@ -43,17 +40,15 @@ export class LoginPage {
 
   readonly email = signal('');
   readonly password = signal('');
-  readonly error = signal('');
   readonly busy = signal(false);
 
   async submit(): Promise<void> {
-    this.error.set('');
     this.busy.set(true);
     try {
       await this.auth.login(this.email().trim(), this.password());
       await this.router.navigate(['/dashboard']);
-    } catch (e) {
-      this.error.set(errorMessage(e, 'Não foi possível entrar.'));
+    } catch {
+      // A mensagem (ex.: e-mail ou senha inválidos) é exibida pelo interceptor de erros.
     } finally {
       this.busy.set(false);
     }

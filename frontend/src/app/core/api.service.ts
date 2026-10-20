@@ -1,9 +1,10 @@
-import { HttpClient, HttpEvent } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpEvent } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 import { ConfigService } from './config.service';
-import { Device, DeviceUpdateRequest, Media, MediaUrl, Playlist, PlaylistRequest } from './models';
+import { SILENT_ERRORS } from './http-errors';
+import { Device, DeviceUpdateRequest, Media, MediaUrl, Playlist, PlaylistRequest, ReleaseInfo } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -25,6 +26,11 @@ export class ApiService {
 
   updateDevice(id: number, body: DeviceUpdateRequest): Observable<Device> {
     return this.http.put<Device>(this.url(`/devices/${id}`), body);
+  }
+
+  /** Tira a playlist da TV (ela passa a mostrar "aguardando conteúdo"). A playlist em si não é apagada. */
+  removeDevicePlaylist(id: number): Observable<Device> {
+    return this.http.delete<Device>(this.url(`/devices/${id}/playlist`));
   }
 
   deleteDevice(id: number): Observable<void> {
@@ -49,13 +55,27 @@ export class ApiService {
     return this.http.delete<void>(this.url(`/media/${id}`));
   }
 
-  mediaUrl(id: number): Observable<MediaUrl> {
-    return this.http.get<MediaUrl>(this.url(`/media/${id}/url`));
+  /** Miniaturas pedem em modo silencioso: uma imagem que não carrega não precisa de um aviso na tela. */
+  mediaUrl(id: number, silent = false): Observable<MediaUrl> {
+    return this.http.get<MediaUrl>(this.url(`/media/${id}/url`), { context: new HttpContext().set(SILENT_ERRORS, silent) });
   }
 
   /** Baixa o arquivo pelo backend (necessário quando a mídia fica em disco local e exige o JWT). */
-  mediaBlob(relativeUrl: string): Observable<Blob> {
-    return this.http.get(`${this.config.apiBaseUrl}${relativeUrl}`, { responseType: 'blob' });
+  mediaBlob(relativeUrl: string, silent = false): Observable<Blob> {
+    return this.http.get(`${this.config.apiBaseUrl}${relativeUrl}`, {
+      responseType: 'blob',
+      context: new HttpContext().set(SILENT_ERRORS, silent),
+    });
+  }
+
+  // aplicativo da TV (site de downloads, público)
+  /** Versões publicadas do aplicativo da TV, da mais nova para a mais antiga. */
+  releases(silent = false): Observable<ReleaseInfo[]> {
+    return this.http
+      .get<{ releases: ReleaseInfo[] }>(`${this.config.downloadsUrl}/releases.json`, {
+        context: new HttpContext().set(SILENT_ERRORS, silent),
+      })
+      .pipe(map((body) => body.releases ?? []));
   }
 
   // playlists

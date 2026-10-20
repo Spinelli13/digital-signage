@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { ApiService } from '../core/api.service';
-import { deviceState, errorMessage, needsAttention, timeAgo } from '../core/format';
+import { deviceState, needsAttention, timeAgo } from '../core/format';
 import { Device } from '../core/models';
 
 const REFRESH_MS = 10_000;
@@ -17,10 +17,6 @@ const REFRESH_MS = 10_000;
       <div><h1>Dashboard</h1><p>Visão geral da rede de divulgação.</p></div>
       <a class="primary btn" routerLink="/dispositivos">+ Adicionar dispositivo</a>
     </div>
-
-    @if (error()) {
-      <div class="error">{{ error() }}</div>
-    }
 
     <div class="stats">
       <div class="stat"><div class="label">Dispositivos</div><div class="n">{{ devices().length }}</div></div>
@@ -61,7 +57,6 @@ export class DashboardPage implements OnInit {
   readonly devices = signal<Device[]>([]);
   readonly mediaCount = signal(0);
   readonly playlistCount = signal(0);
-  readonly error = signal('');
 
   readonly online = computed(() => this.devices().filter((d) => d.status === 'ACTIVE' && d.online).length);
   readonly pending = computed(() => this.devices().filter((d) => d.status === 'PENDING').length);
@@ -82,9 +77,9 @@ export class DashboardPage implements OnInit {
         this.devices.set(devices);
         this.mediaCount.set(media.length);
         this.playlistCount.set(playlists.length);
-        this.error.set('');
       },
-      error: (e: unknown) => this.error.set(errorMessage(e)),
+      // O aviso é exibido pelo interceptor de erros; aqui só não deixamos a exceção sem tratamento.
+      error: () => undefined,
     });
   }
 }

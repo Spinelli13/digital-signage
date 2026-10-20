@@ -56,6 +56,17 @@ export interface PlaylistRequest {
   items: { mediaId: number; durationSeconds: number }[];
 }
 
+/** Uma versão do aplicativo da TV, como publicada no site de downloads (releases.json). */
+export interface ReleaseInfo {
+  versionCode: number;
+  versionName: string;
+  apk: string;
+  sha256: string;
+  size: number;
+  notes: string;
+  publishedAt: string;
+}
+
 export interface DeviceUpdateRequest {
   name: string;
   location?: string | null;

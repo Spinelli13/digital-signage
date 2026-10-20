@@ -2,7 +2,8 @@ import { HttpEventType } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 
 import { ApiService } from '../core/api.service';
-import { errorMessage, formatBytes } from '../core/format';
+import { ErrorService } from '../core/error.service';
+import { formatBytes } from '../core/format';
 import { Media } from '../core/models';
 import { MediaThumb } from './media-thumb';
 
@@ -20,9 +21,6 @@ const ACCEPTED = 'image/jpeg,image/png,image/webp,video/mp4';
       </label>
     </div>
 
-    @if (error()) {
-      <div class="error">{{ error() }}</div>
-    }
     @if (uploading()) {
       <div class="card progress">
         Enviando <b>{{ currentFile() }}</b>… {{ progress() }}%
@@ -64,10 +62,10 @@ const ACCEPTED = 'image/jpeg,image/png,image/webp,video/mp4';
 })
 export class MediaPage implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly errors = inject(ErrorService);
 
   readonly accepted = ACCEPTED;
   readonly items = signal<Media[]>([]);
-  readonly error = signal('');
   readonly uploading = signal(false);
   readonly progress = signal(0);
   readonly currentFile = signal('');
@@ -84,8 +82,6 @@ export class MediaPage implements OnInit {
     if (files.length === 0) {
       return;
     }
-
-    this.error.set('');
     this.uploading.set(true);
     for (const file of files) {
       this.currentFile.set(file.name);
@@ -93,8 +89,9 @@ export class MediaPage implements OnInit {
       try {
         const duration = file.type.startsWith('video/') ? await readVideoDuration(file) : null;
         await this.upload(file, duration);
-      } catch (e) {
-        this.error.set(`${file.name}: ${errorMessage(e)}`);
+      } catch {
+        // O motivo já foi mostrado pelo interceptor; aqui dizemos qual arquivo falhou e o que aconteceu com a fila.
+        this.errors.show(`Não foi possível enviar "${file.name}". Os arquivos seguintes da fila não foram enviados.`);
         break;
       }
     }
@@ -109,7 +106,7 @@ export class MediaPage implements OnInit {
     this.api.deleteMedia(media.id).subscribe({
       next: () => this.load(),
       // 409: a mídia ainda está em uma playlist (mensagem vem da API)
-      error: (e: unknown) => this.error.set(errorMessage(e)),
+      error: () => undefined,
     });
   }
 
@@ -132,7 +129,7 @@ export class MediaPage implements OnInit {
   private load(): void {
     this.api.mediaList().subscribe({
       next: (media) => this.items.set(media),
-      error: (e: unknown) => this.error.set(errorMessage(e)),
+      error: () => undefined,
     });
   }
 }

@@ -8,12 +8,13 @@ import { AuthService } from '../core/auth.service';
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
   template: `
     <aside class="side">
-      <div class="brand"><span class="logo">▶</span> Digital Signage</div>
+      <div class="brand"><img class="logo" src="favicon.svg" alt="" width="34" height="34" /> Digital Signage</div>
       <nav>
         <a routerLink="/dashboard" routerLinkActive="active">▦ Dashboard</a>
         <a routerLink="/dispositivos" routerLinkActive="active">📺 Dispositivos</a>
         <a routerLink="/biblioteca" routerLinkActive="active">🖼 Biblioteca</a>
         <a routerLink="/playlists" routerLinkActive="active">☷ Playlists</a>
+        <a routerLink="/downloads" routerLinkActive="active">⬇ Downloads e manuais</a>
       </nav>
       <button class="logout" (click)="logout()">Sair</button>
     </aside>
@@ -23,7 +24,7 @@ import { AuthService } from '../core/auth.service';
     :host { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
     .side { background: var(--sidebar); color: #fff; padding: 22px 14px; display: flex; flex-direction: column; gap: 22px; }
     .brand { font-weight: 700; font-size: 17px; padding: 0 10px; display: flex; align-items: center; gap: 10px; }
-    .logo { background: var(--blue); border-radius: 8px; padding: 4px 8px; font-size: 13px; }
+    .logo { display: block; border-radius: 9px; }
     nav { display: flex; flex-direction: column; gap: 4px; }
     nav a { color: #c9d2e6; padding: 11px 12px; border-radius: 10px; }
     nav a:hover { background: rgba(255, 255, 255, 0.07); }

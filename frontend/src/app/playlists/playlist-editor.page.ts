@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { ApiService } from '../core/api.service';
-import { errorMessage } from '../core/format';
 import { Media, Playlist, PlaylistItem } from '../core/models';
 import { MediaThumb } from '../media/media-thumb';
 import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, totalSeconds } from './playlist-editor';
@@ -25,9 +24,6 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
       </div>
     </div>
 
-    @if (error()) {
-      <div class="error">{{ error() }}</div>
-    }
     @if (notice()) {
       <div class="success">{{ notice() }}</div>
     }
@@ -111,7 +107,6 @@ export class PlaylistEditorPage implements OnInit {
   readonly items = signal<PlaylistItem[]>([]);
   readonly library = signal<Media[]>([]);
   readonly savedName = signal('');
-  readonly error = signal('');
   readonly notice = signal('');
   readonly busy = signal(false);
 
@@ -124,7 +119,7 @@ export class PlaylistEditorPage implements OnInit {
   ngOnInit(): void {
     this.api.mediaList().subscribe({
       next: (media) => this.library.set(media),
-      error: (e: unknown) => this.error.set(errorMessage(e)),
+      error: () => undefined,
     });
 
     const id = this.route.snapshot.paramMap.get('id');
@@ -132,7 +127,7 @@ export class PlaylistEditorPage implements OnInit {
       this.playlistId.set(Number(id));
       this.api.playlist(Number(id)).subscribe({
         next: (playlist) => this.apply(playlist),
-        error: (e: unknown) => this.error.set(errorMessage(e)),
+        error: () => undefined,
       });
     }
   }
@@ -155,7 +150,6 @@ export class PlaylistEditorPage implements OnInit {
 
   save(): void {
     this.busy.set(true);
-    this.error.set('');
     this.notice.set('');
     const body = toRequest(this.name(), this.description(), this.items());
 
@@ -171,10 +165,7 @@ export class PlaylistEditorPage implements OnInit {
           void this.router.navigate(['/playlists', playlist.id], { replaceUrl: true });
         }
       },
-      error: (e: unknown) => {
-        this.busy.set(false);
-        this.error.set(errorMessage(e));
-      },
+      error: () => this.busy.set(false),
     });
   }
 

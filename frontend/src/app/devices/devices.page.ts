@@ -3,8 +3,9 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
 import { ApiService } from '../core/api.service';
-import { deviceState, errorMessage, timeAgo } from '../core/format';
-import { Device, Playlist } from '../core/models';
+import { deviceState, timeAgo } from '../core/format';
+import { Device, Playlist, ReleaseInfo } from '../core/models';
+import { isOutdated } from '../core/versions';
 
 const REFRESH_MS = 10_000;
 
@@ -16,10 +17,6 @@ const REFRESH_MS = 10_000;
       <div><h1>Dispositivos</h1><p>Gerencie todas as telas e Players conectados.</p></div>
       <button class="primary" (click)="openActivate()">+ Adicionar dispositivo</button>
     </div>
-
-    @if (error()) {
-      <div class="error">{{ error() }}</div>
-    }
 
     <div class="card">
       @if (devices().length === 0) {
@@ -38,11 +35,14 @@ const REFRESH_MS = 10_000;
                 <b>{{ device.name }}</b><br /><small>{{ device.location || 'Sem local' }}</small>
               </td>
               <td><span class="dot" [class]="state(device).tone"></span>{{ state(device).label }}</td>
-              <td>{{ ago(device.lastSeenAt) }}<br /><small>{{ device.playerVersion ? 'v' + device.playerVersion : '' }}</small></td>
+              <td>{{ ago(device.lastSeenAt) }}<br /><small>{{ device.playerVersion ? 'v' + device.playerVersion : '' }}</small>
+                @if (outdated(device)) {
+                  <br /><small class="stale" title="Há uma versão mais nova do Player; ele se atualiza sozinho (alguém precisa confirmar na TV).">⬆ desatualizado (última: v{{ latest()?.versionName }})</small>
+                }</td>
               <td>
                 @if (device.status === 'ACTIVE') {
                   <select [ngModel]="device.currentPlaylistId" (ngModelChange)="assignPlaylist(device, $event)">
-                    <option [ngValue]="null" disabled>Escolha uma playlist…</option>
+                    <option [ngValue]="null">Nenhuma playlist</option>
                     @for (playlist of playlists(); track playlist.id) {
                       <option [ngValue]="playlist.id">{{ playlist.name }}</option>
                     }
@@ -93,9 +93,6 @@ const REFRESH_MS = 10_000;
             <input id="location" name="location" placeholder="Ex.: Loja Centro"
               [ngModel]="location()" (ngModelChange)="location.set($event)" />
           </div>
-          @if (modalError()) {
-            <div class="error">{{ modalError() }}</div>
-          }
           <div class="actions">
             <button type="button" class="secondary" (click)="closeModal()">Cancelar</button>
             <button type="submit" class="primary" [disabled]="busy()">
@@ -110,6 +107,7 @@ const REFRESH_MS = 10_000;
     .row-actions { white-space: nowrap; text-align: right; }
     .row-actions button { margin-left: 6px; }
     select { min-width: 170px; }
+    .stale { color: var(--orange); font-weight: 600; }
   `,
 })
 export class DevicesPage implements OnInit {
@@ -118,10 +116,10 @@ export class DevicesPage implements OnInit {
 
   readonly devices = signal<Device[]>([]);
   readonly playlists = signal<Playlist[]>([]);
-  readonly error = signal('');
+  /** Versão mais recente do Player publicada, para destacar TVs desatualizadas. */
+  readonly latest = signal<ReleaseInfo | null>(null);
 
   readonly modal = signal<'activate' | 'edit' | null>(null);
-  readonly modalError = signal('');
   readonly busy = signal(false);
   readonly code = signal('');
   readonly name = signal('');
@@ -131,7 +129,13 @@ export class DevicesPage implements OnInit {
   readonly state = deviceState;
   readonly ago = (iso: string | null) => timeAgo(iso);
 
+  outdated(device: Device): boolean {
+    return isOutdated(device.playerVersion, this.latest()?.versionName);
+  }
+
   ngOnInit(): void {
+    // Em silêncio: sem o site de downloads só deixamos de destacar TVs desatualizadas.
+    this.api.releases(true).subscribe({ next: (list) => this.latest.set(list[0] ?? null), error: () => undefined });
     this.refresh();
     const timer = setInterval(() => this.refresh(), REFRESH_MS);
     this.destroyRef.onDestroy(() => clearInterval(timer));
@@ -145,7 +149,6 @@ export class DevicesPage implements OnInit {
     this.code.set('');
     this.name.set('');
     this.location.set('');
-    this.modalError.set('');
     this.editing = null;
     this.modal.set('activate');
   }
@@ -153,7 +156,6 @@ export class DevicesPage implements OnInit {
   openEdit(device: Device): void {
     this.name.set(device.name);
     this.location.set(device.location ?? '');
-    this.modalError.set('');
     this.editing = device;
     this.modal.set('edit');
   }
@@ -164,7 +166,6 @@ export class DevicesPage implements OnInit {
 
   submitModal(): void {
     this.busy.set(true);
-    this.modalError.set('');
     const location = this.location().trim() || null;
 
     const request =
@@ -178,30 +179,29 @@ export class DevicesPage implements OnInit {
         this.closeModal();
         this.refresh();
       },
-      error: (e: unknown) => {
-        this.busy.set(false);
-        this.modalError.set(errorMessage(e));
-      },
+      // O aviso aparece por cima do formulário (interceptor de erros); o formulário continua aberto.
+      error: () => this.busy.set(false),
     });
   }
 
   assignPlaylist(device: Device, playlistId: number | null): void {
-    if (playlistId === null || playlistId === device.currentPlaylistId) {
+    if (playlistId === device.currentPlaylistId) {
       return;
     }
-    this.api.updateDevice(device.id, { name: device.name, location: device.location, currentPlaylistId: playlistId }).subscribe({
+    const request =
+      playlistId === null
+        ? this.api.removeDevicePlaylist(device.id)
+        : this.api.updateDevice(device.id, { name: device.name, location: device.location, currentPlaylistId: playlistId });
+    request.subscribe({
       next: () => this.refresh(),
-      error: (e: unknown) => {
-        this.error.set(errorMessage(e));
-        this.refresh();
-      },
+      error: () => this.refresh(),
     });
   }
 
   setStatus(device: Device, status: 'active' | 'disabled'): void {
     this.api.updateDevice(device.id, { name: device.name, location: device.location, status }).subscribe({
       next: () => this.refresh(),
-      error: (e: unknown) => this.error.set(errorMessage(e)),
+      error: () => undefined,
     });
   }
 
@@ -211,7 +211,7 @@ export class DevicesPage implements OnInit {
     }
     this.api.deleteDevice(device.id).subscribe({
       next: () => this.refresh(),
-      error: (e: unknown) => this.error.set(errorMessage(e)),
+      error: () => undefined,
     });
   }
 
@@ -220,9 +220,8 @@ export class DevicesPage implements OnInit {
       next: ({ devices, playlists }) => {
         this.devices.set(devices);
         this.playlists.set(playlists);
-        this.error.set('');
       },
-      error: (e: unknown) => this.error.set(errorMessage(e)),
+      error: () => undefined,
     });
   }
 }

@@ -13,6 +13,7 @@ export const routes: Routes = [
       { path: 'dashboard', loadComponent: () => import('./dashboard/dashboard.page').then((m) => m.DashboardPage) },
       { path: 'dispositivos', loadComponent: () => import('./devices/devices.page').then((m) => m.DevicesPage) },
       { path: 'biblioteca', loadComponent: () => import('./media/media.page').then((m) => m.MediaPage) },
+      { path: 'downloads', loadComponent: () => import('./downloads/downloads.page').then((m) => m.DownloadsPage) },
       { path: 'playlists', loadComponent: () => import('./playlists/playlists.page').then((m) => m.PlaylistsPage) },
       {
         path: 'playlists/nova',

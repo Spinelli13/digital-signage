@@ -36,13 +36,13 @@ export class MediaThumb implements OnInit, OnDestroy {
     if (this.type() !== 'IMAGE') {
       return;
     }
-    this.api.mediaUrl(this.mediaId()).subscribe({
+    this.api.mediaUrl(this.mediaId(), true).subscribe({
       next: (target) => {
         if (!target.requiresAuth) {
           this.src.set(target.url);
           return;
         }
-        this.api.mediaBlob(target.url).subscribe({
+        this.api.mediaBlob(target.url, true).subscribe({
           next: (blob) => {
             this.objectUrl = URL.createObjectURL(blob);
             this.src.set(this.objectUrl);

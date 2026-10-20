@@ -2,7 +2,6 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { ApiService } from '../core/api.service';
-import { errorMessage } from '../core/format';
 import { Playlist } from '../core/models';
 import { formatDuration, totalSeconds } from './playlist-editor';
 
@@ -14,10 +13,6 @@ import { formatDuration, totalSeconds } from './playlist-editor';
       <div><h1>Playlists</h1><p>Defina a ordem e a duração dos conteúdos exibidos nas telas.</p></div>
       <a class="primary btn" routerLink="/playlists/nova">+ Nova playlist</a>
     </div>
-
-    @if (error()) {
-      <div class="error">{{ error() }}</div>
-    }
 
     <div class="card">
       @if (items().length === 0) {
@@ -52,7 +47,6 @@ export class PlaylistsPage implements OnInit {
   private readonly api = inject(ApiService);
 
   readonly items = signal<Playlist[]>([]);
-  readonly error = signal('');
 
   ngOnInit(): void {
     this.load();
@@ -68,14 +62,14 @@ export class PlaylistsPage implements OnInit {
     }
     this.api.deletePlaylist(playlist.id).subscribe({
       next: () => this.load(),
-      error: (e: unknown) => this.error.set(errorMessage(e)),
+      error: () => undefined,
     });
   }
 
   private load(): void {
     this.api.playlists().subscribe({
       next: (playlists) => this.items.set(playlists),
-      error: (e: unknown) => this.error.set(errorMessage(e)),
+      error: () => undefined,
     });
   }
 }
