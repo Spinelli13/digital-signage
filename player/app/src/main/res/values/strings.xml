@@ -2,4 +2,24 @@
 <resources>
     <string name="app_name">Digital Signage Player</string>
     <string name="brand_title">DIGITAL SIGNAGE</string>
+
+    <string name="starting_title">Iniciando…</string>
+    <string name="starting_body">Conectando ao servidor.</string>
+
+    <string name="error_title">Sem conexão com o servidor</string>
+    <string name="error_body">Verifique a internet da TV. Vou tentar de novo automaticamente.\nPressione OK no controle para alterar o endereço do servidor.</string>
+
+    <string name="activation_title">Código de ativação</string>
+    <string name="activation_body">No painel, abra Dispositivos → Adicionar dispositivo e digite este código.</string>
+
+    <string name="disabled_title">Dispositivo desativado</string>
+    <string name="disabled_body">Este dispositivo foi desativado no painel.</string>
+
+    <string name="no_content_title">Aguardando conteúdo</string>
+    <string name="no_content_body">Este dispositivo está ativo, mas ainda não tem uma playlist. Escolha uma no painel.</string>
+
+    <string name="server_dialog_title">Endereço do servidor</string>
+    <string name="server_dialog_ok">Salvar</string>
+    <string name="server_dialog_cancel">Cancelar</string>
+    <string name="server_info">Servidor: %1$s · v%2$s</string>
 </resources>

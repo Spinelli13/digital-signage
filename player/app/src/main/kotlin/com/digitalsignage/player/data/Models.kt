@@ -1,0 +1,89 @@
+package com.digitalsignage.player.data
+
+import org.json.JSONObject
+
+data class PlayerStatus(
+    val deviceId: Long,
+    val status: String,
+    val activationCode: String?,
+    val deviceName: String?,
+) {
+    val isActive get() = status == "ACTIVE"
+    val isPending get() = status == "PENDING"
+}
+
+data class ConfigItem(
+    val mediaId: Long,
+    val name: String,
+    val type: String,
+    val url: String,
+    val checksum: String?,
+    val fileSize: Long,
+    val position: Int,
+    val durationSeconds: Int,
+) {
+    val isVideo get() = type == "VIDEO"
+}
+
+data class PlayerConfig(
+    val deviceId: Long,
+    val playlistId: Long?,
+    val configVersion: Long,
+    val items: List<ConfigItem>,
+)
+
+/** O que o servidor quer que o Player exiba agora (resposta do heartbeat). */
+data class Desired(val playlistId: Long?, val configVersion: Long)
+
+/** Config junto com o JSON original, que é o que fica persistido no aparelho. */
+data class FetchedConfig(val config: PlayerConfig, val raw: String)
+
+object Json {
+
+    fun parseStatus(raw: String): PlayerStatus {
+        val json = JSONObject(raw)
+        return PlayerStatus(
+            deviceId = json.optLong("deviceId"),
+            status = json.getString("status"),
+            activationCode = json.optStringOrNull("activationCode"),
+            deviceName = json.optStringOrNull("deviceName"),
+        )
+    }
+
+    fun parseConfig(raw: String): PlayerConfig {
+        val json = JSONObject(raw)
+        val array = json.getJSONArray("items")
+        val items = (0 until array.length()).map { index ->
+            val item = array.getJSONObject(index)
+            ConfigItem(
+                mediaId = item.getLong("mediaId"),
+                name = item.optString("name"),
+                type = item.getString("type"),
+                url = item.getString("url"),
+                checksum = item.optStringOrNull("checksum"),
+                fileSize = item.optLong("fileSize"),
+                position = item.optInt("position"),
+                durationSeconds = item.optInt("durationSeconds", 10),
+            )
+        }
+        return PlayerConfig(
+            deviceId = json.optLong("deviceId"),
+            playlistId = if (json.isNull("playlistId")) null else json.getLong("playlistId"),
+            configVersion = json.optLong("configVersion"),
+            items = items.sortedBy { it.position },
+        )
+    }
+
+    fun parseDesired(raw: String): Desired {
+        val json = JSONObject(raw)
+        return Desired(
+            playlistId = if (json.isNull("playlistId")) null else json.getLong("playlistId"),
+            configVersion = json.optLong("configVersion"),
+        )
+    }
+
+    // JSONObject.optString devolve "null" (texto) para nulo JSON; aqui nulo vira null de verdade.
+    private fun JSONObject.optStringOrNull(key: String): String? =
+        if (isNull(key)) null else getString(key).ifBlank { null }
+
+}

@@ -1,0 +1,233 @@
+package com.digitalsignage.player
+
+import com.digitalsignage.player.cache.MediaCache
+import com.digitalsignage.player.data.Desired
+import com.digitalsignage.player.data.UnauthorizedException
+import com.digitalsignage.player.engine.EngineState
+import com.digitalsignage.player.engine.PlayerEngine
+import com.digitalsignage.player.engine.Timing
+import com.digitalsignage.player.sync.ConfigSync
+import java.io.File
+import java.io.IOException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class PlayerEngineTest {
+
+    @get:Rule
+    val folder = TemporaryFolder()
+
+    private val api = FakePlayerApi()
+    private val downloader = FakeDownloader()
+    private val timing = Timing(activationPollMs = 5_000, heartbeatMs = 30_000, retryMs = 10_000, disabledPollMs = 30_000)
+
+    private val imgA = "imagem-a".toByteArray()
+    private val imgB = "imagem-b".toByteArray()
+
+    private fun build(store: InMemoryStore): Pair<PlayerEngine, MediaCache> {
+        val cache = MediaCache(File(folder.root, "media"))
+        val sync = ConfigSync(api, downloader, cache, store)
+        return PlayerEngine(api, sync, store, token = { "tok" }, playerVersion = "0.2.0", timing = timing) to cache
+    }
+
+    private fun TestScope.startEngine(engine: PlayerEngine) {
+        backgroundScope.launch { engine.run() }
+        runCurrent()
+    }
+
+    @Test
+    fun `shows the activation code and starts playing once the admin activates the device`() = runTest {
+        val a = itemFor(1, imgA)
+        downloader.files[a.url] = imgA
+        var activated = false
+        api.registerResponse = { pending("K7M2QX") }
+        api.statusResponse = { if (activated) active() else pending("K7M2QX") }
+        api.heartbeatResponse = { Desired(5, 1) }
+        api.configResponse = { configOf(5, 1, a) }
+        val store = InMemoryStore()
+        val (engine, _) = build(store)
+
+        startEngine(engine)
+        assertEquals(EngineState.WaitingActivation("K7M2QX"), engine.state.value)
+
+        activated = true
+        advanceTimeBy(5_001)
+        runCurrent()
+
+        val state = engine.state.value
+        assertTrue("esperava Playing, veio $state", state is EngineState.Playing)
+        assertEquals(1L, (state as EngineState.Playing).config.configVersion)
+        assertNotNull(store.load())
+    }
+
+    /** Regressão do requisito "funcionar sem internet / após reiniciar": começa tocando o cache sem rede. */
+    @Test
+    fun `plays the cached playlist immediately and keeps playing while offline`() = runTest {
+        val a = itemFor(1, imgA)
+        val store = InMemoryStore(configOf(5, 1, a))
+        api.registerResponse = { throw IOException("sem internet") }
+        val (engine, _) = build(store)
+
+        startEngine(engine)
+        assertTrue(engine.state.value is EngineState.Playing)
+
+        advanceTimeBy(60_000)
+        runCurrent()
+        assertTrue("continua tocando mesmo com a rede fora", engine.state.value is EngineState.Playing)
+        assertNotNull(store.load())
+    }
+
+    @Test
+    fun `reports a connection error only when there is nothing cached to show`() = runTest {
+        api.registerResponse = { throw IOException("sem internet") }
+        val (engine, _) = build(InMemoryStore())
+
+        startEngine(engine)
+
+        assertEquals(EngineState.ConnectionError, engine.state.value)
+    }
+
+    @Test
+    fun `recovers by itself when the network comes back`() = runTest {
+        val a = itemFor(1, imgA)
+        downloader.files[a.url] = imgA
+        var online = false
+        api.registerResponse = { if (online) active() else throw IOException("offline") }
+        api.heartbeatResponse = { Desired(5, 1) }
+        api.configResponse = { configOf(5, 1, a) }
+        val (engine, _) = build(InMemoryStore())
+
+        startEngine(engine)
+        assertEquals(EngineState.ConnectionError, engine.state.value)
+
+        online = true
+        advanceTimeBy(10_001)
+        runCurrent()
+
+        assertTrue(engine.state.value is EngineState.Playing)
+    }
+
+    /** Regressão: download que falha não derruba a playlist que está no ar; na próxima tentativa conclui. */
+    @Test
+    fun `keeps the old playlist while a new one fails to download, then switches`() = runTest {
+        val a = itemFor(1, imgA)
+        val b = itemFor(2, imgB)
+        downloader.files[a.url] = imgA
+        downloader.files[b.url] = imgB
+        val store = InMemoryStore(configOf(5, 1, a))
+        val cache = MediaCache(File(folder.root, "media"))
+        cache.store(a, imgA.inputStream())
+        api.registerResponse = { active() }
+        api.heartbeatResponse = { Desired(5, 2) }
+        api.configResponse = { configOf(5, 2, a, b) }
+        downloader.failWith = IOException("rede instável")
+        val (engine, _) = build(store)
+
+        startEngine(engine)
+        assertEquals(1L, (engine.state.value as EngineState.Playing).config.configVersion)
+
+        downloader.failWith = null
+        advanceTimeBy(30_001)
+        runCurrent()
+
+        assertEquals(2L, (engine.state.value as EngineState.Playing).config.configVersion)
+        assertEquals(2L, store.load()!!.configVersion)
+    }
+
+    @Test
+    fun `heartbeat reports the version actually synced, not the one the server wants`() = runTest {
+        val a = itemFor(1, imgA)
+        downloader.files[a.url] = imgA
+        api.registerResponse = { active() }
+        api.heartbeatResponse = { Desired(5, 1) }
+        api.configResponse = { configOf(5, 1, a) }
+        val (engine, _) = build(InMemoryStore())
+
+        startEngine(engine)
+        advanceTimeBy(30_001)
+        runCurrent()
+
+        // 1º heartbeat: nada sincronizado ainda (0); depois de baixar, informa a versão 1.
+        assertEquals(listOf(0L, 1L), api.heartbeatsSeenVersions.take(2))
+    }
+
+    /** O administrador excluiu o dispositivo: a TV esquece o conteúdo e volta a pedir ativação. */
+    @Test
+    fun `goes back to activation and wipes content when the server rejects the token`() = runTest {
+        val a = itemFor(1, imgA)
+        val store = InMemoryStore(configOf(5, 1, a))
+        var deleted = false
+        api.registerResponse = { if (deleted) pending("NEW123") else active() }
+        api.heartbeatResponse = { if (deleted) throw UnauthorizedException() else Desired(5, 1) }
+        val (engine, _) = build(store)
+
+        startEngine(engine)
+        assertTrue(engine.state.value is EngineState.Playing)
+
+        deleted = true
+        advanceTimeBy(30_001)
+        runCurrent()
+        advanceTimeBy(3_000)
+        runCurrent()
+
+        assertEquals(EngineState.WaitingActivation("NEW123"), engine.state.value)
+        assertNull("conteúdo antigo não pode continuar disponível", store.load())
+    }
+
+    @Test
+    fun `a disabled device stops playing and drops its content`() = runTest {
+        val a = itemFor(1, imgA)
+        val store = InMemoryStore(configOf(5, 1, a))
+        api.registerResponse = { disabled() }
+        val (engine, _) = build(store)
+
+        startEngine(engine)
+
+        assertEquals(EngineState.Disabled, engine.state.value)
+        assertNull(store.load())
+    }
+
+    @Test
+    fun `an active device with an empty playlist shows the no-content screen`() = runTest {
+        api.registerResponse = { active() }
+        api.heartbeatResponse = { Desired(null, 0) }
+        api.configResponse = { configOf(null, 0) }
+        val (engine, _) = build(InMemoryStore())
+
+        startEngine(engine)
+
+        assertEquals(EngineState.NoContent, engine.state.value)
+    }
+
+    @Test
+    fun `survives an unexpected server answer and tries again`() = runTest {
+        var calls = 0
+        api.registerResponse = {
+            calls++
+            if (calls == 1) throw IllegalStateException("json estranho") else active()
+        }
+        api.heartbeatResponse = { Desired(null, 0) }
+        api.configResponse = { configOf(null, 0) }
+        val (engine, _) = build(InMemoryStore())
+
+        startEngine(engine)
+        advanceTimeBy(10_001)
+        runCurrent()
+
+        assertEquals(2, api.registerCalls)
+        assertEquals(EngineState.NoContent, engine.state.value)
+    }
+
+}

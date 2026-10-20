@@ -1,0 +1,145 @@
+package com.digitalsignage.player.engine
+
+import com.digitalsignage.player.data.PlayerApi
+import com.digitalsignage.player.data.PlayerConfig
+import com.digitalsignage.player.data.PlayerStatus
+import com.digitalsignage.player.data.UnauthorizedException
+import com.digitalsignage.player.sync.ConfigStore
+import com.digitalsignage.player.sync.ConfigSync
+import java.io.IOException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+
+sealed interface EngineState {
+    /** Ainda não sabemos de nada (primeira abertura, sem cache). */
+    data object Starting : EngineState
+
+    /** Sem rede e sem nada em cache para exibir. */
+    data object ConnectionError : EngineState
+
+    /** Mostrar o código na TV para o administrador digitar no painel. */
+    data class WaitingActivation(val code: String) : EngineState
+
+    data object Disabled : EngineState
+
+    /** Ativo, mas a playlist está vazia ou ainda não foi escolhida no painel. */
+    data object NoContent : EngineState
+
+    data class Playing(val config: PlayerConfig) : EngineState
+}
+
+data class Timing(
+    val activationPollMs: Long = 5_000,
+    val heartbeatMs: Long = 30_000,
+    val retryMs: Long = 10_000,
+    val disabledPollMs: Long = 30_000,
+)
+
+/**
+ * Máquina de estados do Player: registro → aguarda ativação → heartbeat + sincronização.
+ * Prioriza continuar exibindo o que já está em cache: falhas de rede nunca derrubam a reprodução.
+ */
+class PlayerEngine(
+    private val api: PlayerApi,
+    private val sync: ConfigSync,
+    private val store: ConfigStore,
+    private val token: () -> String,
+    private val playerVersion: String,
+    private val timing: Timing = Timing(),
+) {
+
+    private val mutableState = MutableStateFlow<EngineState>(EngineState.Starting)
+    val state: StateFlow<EngineState> = mutableState
+
+    suspend fun run() {
+        // Offline-first: após reiniciar a TV, começa a tocar o cache sem esperar a rede.
+        store.load()?.let { publish(it) }
+
+        while (true) {
+            try {
+                session()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnauthorizedException) {
+                // O servidor não conhece mais este token (dispositivo excluído): volta ao registro.
+                sync.reset()
+                mutableState.value = EngineState.Starting
+                delay(UNAUTHORIZED_RETRY_MS)
+            } catch (e: IOException) {
+                if (mutableState.value == EngineState.Starting) mutableState.value = EngineState.ConnectionError
+                delay(timing.retryMs)
+            } catch (e: Exception) {
+                // Resposta inesperada do servidor: não derruba o Player, tenta de novo adiante.
+                delay(timing.retryMs)
+            }
+        }
+    }
+
+    private suspend fun session() {
+        var status: PlayerStatus = api.register(token(), playerVersion)
+
+        while (true) {
+            when {
+                status.isActive -> {
+                    activeSession()
+                    return
+                }
+
+                status.isPending -> {
+                    sync.reset()
+                    mutableState.value = EngineState.WaitingActivation(status.activationCode.orEmpty())
+                    delay(timing.activationPollMs)
+                    status = api.status(token())
+                }
+
+                else -> {
+                    sync.reset()
+                    mutableState.value = EngineState.Disabled
+                    delay(timing.disabledPollMs)
+                    status = api.register(token(), playerVersion)
+                }
+            }
+        }
+    }
+
+    private suspend fun activeSession() = coroutineScope {
+        var syncJob: Job? = null
+
+        while (isActive) {
+            val desired = api.heartbeat(token(), playerVersion, store.load()?.configVersion ?: 0)
+
+            // A sincronização roda à parte para o heartbeat continuar mesmo durante downloads longos.
+            if (syncJob?.isActive != true && sync.needsSync(desired)) {
+                syncJob = launch {
+                    try {
+                        publish(sync.sync(token()))
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: UnauthorizedException) {
+                        throw e
+                    } catch (e: Exception) {
+                        // Download falhou: segue com a playlist anterior e tenta no próximo ciclo.
+                    }
+                }
+            }
+
+            delay(timing.heartbeatMs)
+        }
+    }
+
+    private fun publish(config: PlayerConfig) {
+        mutableState.value =
+            if (config.items.isEmpty()) EngineState.NoContent else EngineState.Playing(config)
+    }
+
+    companion object {
+        private const val UNAUTHORIZED_RETRY_MS = 2_000L
+    }
+
+}

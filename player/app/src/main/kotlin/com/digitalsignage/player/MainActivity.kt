@@ -1,24 +1,195 @@
 package com.digitalsignage.player
 
+import android.content.Intent
 import android.os.Bundle
+import android.text.InputType
+import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.media3.ui.PlayerView
+import com.digitalsignage.player.cache.MediaCache
+import com.digitalsignage.player.data.HttpPlayerApi
+import com.digitalsignage.player.data.Settings
+import com.digitalsignage.player.engine.EngineState
+import com.digitalsignage.player.engine.PlayerEngine
+import com.digitalsignage.player.sync.ConfigSync
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
+/**
+ * Tela única do Player. Toda a lógica (registro, sincronização, cache) vive em [PlayerEngine];
+ * aqui só se desenha o estado e se toca a playlist.
+ */
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var settings: Settings
+    private lateinit var engine: PlayerEngine
+    private lateinit var slideshow: Slideshow
+    private var engineJob: Job? = null
+
+    private lateinit var overlay: View
+    private lateinit var messageTitle: TextView
+    private lateinit var messageBody: TextView
+    private lateinit var code: TextView
+    private lateinit var serverInfo: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContentView(R.layout.activity_main)
         hideSystemUi()
+
+        overlay = findViewById(R.id.overlay)
+        messageTitle = findViewById(R.id.messageTitle)
+        messageBody = findViewById(R.id.messageBody)
+        code = findViewById(R.id.code)
+        serverInfo = findViewById(R.id.serverInfo)
+
+        settings = Settings(this)
+        applyLaunchExtras(intent)
+
+        val cache = MediaCache(java.io.File(filesDir, "media"))
+        val api = HttpPlayerApi(baseUrl = { settings.serverUrl })
+        engine = PlayerEngine(
+            api = api,
+            sync = ConfigSync(api, api, cache, settings),
+            store = settings,
+            token = { settings.deviceToken },
+            playerVersion = BuildConfig.VERSION_NAME,
+        )
+        // O mesmo ConfigSync não é compartilhado com a Activity: o Slideshow só lê o cache.
+        slideshow = Slideshow(
+            lifecycleScope,
+            cache,
+            findViewById<ImageView>(R.id.imageView),
+            findViewById<PlayerView>(R.id.playerView),
+        )
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                engine.state.collect { render(it) }
+            }
+        }
+        startEngine()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (applyLaunchExtras(intent)) startEngine()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        slideshow.stop()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        slideshow.release()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {
-            hideSystemUi()
+        if (hasFocus) hideSystemUi()
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        val select = keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER
+        if (select && overlay.visibility == View.VISIBLE) {
+            showServerDialog()
+            return true
         }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    private fun startEngine() {
+        engineJob?.cancel()
+        engineJob = lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) { engine.run() }
+        }
+    }
+
+    private fun render(state: EngineState) {
+        when (state) {
+            is EngineState.Playing -> {
+                overlay.visibility = View.GONE
+                slideshow.start(state.config)
+            }
+
+            else -> {
+                slideshow.stop()
+                overlay.visibility = View.VISIBLE
+                showMessage(state)
+            }
+        }
+    }
+
+    private fun showMessage(state: EngineState) {
+        val (title, body) = when (state) {
+            EngineState.Starting -> R.string.starting_title to R.string.starting_body
+            EngineState.ConnectionError -> R.string.error_title to R.string.error_body
+            is EngineState.WaitingActivation -> R.string.activation_title to R.string.activation_body
+            EngineState.Disabled -> R.string.disabled_title to R.string.disabled_body
+            EngineState.NoContent -> R.string.no_content_title to R.string.no_content_body
+            is EngineState.Playing -> return
+        }
+        messageTitle.setText(title)
+        messageBody.setText(body)
+
+        if (state is EngineState.WaitingActivation) {
+            code.text = state.code
+            code.visibility = View.VISIBLE
+        } else {
+            code.visibility = View.GONE
+        }
+        serverInfo.text = getString(R.string.server_info, settings.serverUrl, BuildConfig.VERSION_NAME)
+    }
+
+    private fun showServerDialog() {
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_TEXT_VARIATION_URI
+            setText(settings.serverUrl)
+            setSelection(text.length)
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.server_dialog_title)
+            .setView(input)
+            .setPositiveButton(R.string.server_dialog_ok) { _, _ ->
+                val url = input.text.toString().trim()
+                if (url.isNotEmpty()) {
+                    settings.serverUrl = url
+                    startEngine()
+                }
+            }
+            .setNegativeButton(R.string.server_dialog_cancel, null)
+            .show()
+    }
+
+    /**
+     * Permite configurar via adb sem digitar na TV:
+     *   adb shell am start -n com.digitalsignage.player/.MainActivity --es server_url https://meu-servidor
+     *   adb shell am start -n com.digitalsignage.player/.MainActivity --ez reset true
+     */
+    private fun applyLaunchExtras(intent: Intent?): Boolean {
+        var changed = false
+        intent?.getStringExtra("server_url")?.takeIf { it.isNotBlank() }?.let {
+            settings.serverUrl = it
+            changed = true
+        }
+        if (intent?.getBooleanExtra("reset", false) == true) {
+            settings.resetAll()
+            changed = true
+        }
+        return changed
     }
 
     @Suppress("DEPRECATION")
