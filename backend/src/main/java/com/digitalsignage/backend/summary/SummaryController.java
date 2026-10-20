@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.digitalsignage.backend.campaign.CampaignRepository;
+import com.digitalsignage.backend.campaign.CampaignSchedule;
 import com.digitalsignage.backend.device.Device;
 import com.digitalsignage.backend.device.DeviceConnection;
 import com.digitalsignage.backend.device.DeviceRepository;
@@ -32,18 +34,24 @@ public class SummaryController {
 	private final DeviceGroupRepository groupRepository;
 	private final MediaRepository mediaRepository;
 	private final PlaylistRepository playlistRepository;
+	private final CampaignRepository campaignRepository;
+	private final java.time.Clock clock;
 
 	public SummaryController(
 			DeviceRepository deviceRepository,
 			LocationRepository locationRepository,
 			DeviceGroupRepository groupRepository,
 			MediaRepository mediaRepository,
-			PlaylistRepository playlistRepository) {
+			PlaylistRepository playlistRepository,
+			CampaignRepository campaignRepository,
+			java.time.Clock clock) {
 		this.deviceRepository = deviceRepository;
 		this.locationRepository = locationRepository;
 		this.groupRepository = groupRepository;
 		this.mediaRepository = mediaRepository;
 		this.playlistRepository = playlistRepository;
+		this.campaignRepository = campaignRepository;
+		this.clock = clock;
 	}
 
 	@GetMapping
@@ -69,8 +77,17 @@ public class SummaryController {
 				groupRepository.count(),
 				mediaRepository.count(),
 				playlistRepository.count(),
+				campaignCounts(),
 				byLocation(devices, connections),
 				attention(devices, connections));
+	}
+
+	private SummaryResponse.CampaignCounts campaignCounts() {
+		Instant now = clock.instant();
+		long active = campaignRepository.findEnabledWithTargets().stream()
+				.filter(campaign -> CampaignSchedule.isActive(campaign, now))
+				.count();
+		return new SummaryResponse.CampaignCounts(campaignRepository.count(), active);
 	}
 
 	private List<SummaryResponse.LocationSummary> byLocation(List<Device> devices, Map<Long, DeviceConnection> connections) {

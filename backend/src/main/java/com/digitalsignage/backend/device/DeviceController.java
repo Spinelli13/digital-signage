@@ -27,14 +27,17 @@ public class DeviceController {
 	private final DeviceRepository deviceRepository;
 	private final DeviceService deviceService;
 	private final PlayerConfigService playerConfigService;
+	private final DeviceViews views;
 
 	public DeviceController(
 			DeviceRepository deviceRepository,
 			DeviceService deviceService,
-			PlayerConfigService playerConfigService) {
+			PlayerConfigService playerConfigService,
+			DeviceViews views) {
 		this.deviceRepository = deviceRepository;
 		this.deviceService = deviceService;
 		this.playerConfigService = playerConfigService;
+		this.views = views;
 	}
 
 	/**
@@ -68,19 +71,19 @@ public class DeviceController {
 	@ResponseStatus(HttpStatus.CREATED)
 	@Transactional
 	public DeviceResponse create(@Valid @RequestBody DeviceCreateRequest request) {
-		return DeviceResponse.from(deviceService.create(request));
+		return views.of(deviceService.create(request));
 	}
 
 	@GetMapping("/{id}")
 	@Transactional(readOnly = true)
 	public DeviceResponse get(@PathVariable Long id) {
-		return DeviceResponse.from(findOrThrow(id));
+		return views.of(findOrThrow(id));
 	}
 
 	@PutMapping("/{id}")
 	@Transactional
 	public DeviceResponse update(@PathVariable Long id, @Valid @RequestBody DeviceUpdateRequest request) {
-		return DeviceResponse.from(deviceService.update(id, request));
+		return views.of(deviceService.update(id, request));
 	}
 
 	/**
@@ -90,7 +93,7 @@ public class DeviceController {
 	@PostMapping("/activate")
 	@Transactional
 	public DeviceResponse activate(@Valid @RequestBody ActivateDeviceRequest request) {
-		return DeviceResponse.from(deviceService.activate(request));
+		return views.of(deviceService.activate(request));
 	}
 
 	/**
@@ -111,7 +114,7 @@ public class DeviceController {
 	public DeviceResponse removePlaylist(@PathVariable Long id) {
 		Device device = findOrThrow(id);
 		device.setCurrentPlaylistId(null);
-		return DeviceResponse.from(deviceRepository.save(device));
+		return views.of(deviceRepository.save(device));
 	}
 
 	/** Manda a TV verificar agora se há versão nova do Player (ela percebe no próximo heartbeat). */
@@ -120,7 +123,7 @@ public class DeviceController {
 	public DeviceResponse requestUpdateCheck(@PathVariable Long id) {
 		Device device = findOrThrow(id);
 		device.requestUpdateCheck();
-		return DeviceResponse.from(deviceRepository.save(device));
+		return views.of(deviceRepository.save(device));
 	}
 
 	/** O mesmo pedido para todas as TVs ativas. Devolve quantas foram avisadas. */

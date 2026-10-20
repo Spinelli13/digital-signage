@@ -3,6 +3,8 @@ package com.digitalsignage.backend.device;
 import java.time.Instant;
 import java.util.List;
 
+import com.digitalsignage.backend.campaign.CampaignService;
+
 public record DeviceResponse(
 		Long id,
 		String name,
@@ -16,11 +18,16 @@ public record DeviceResponse(
 		String playerVersion,
 		Long currentPlaylistId,
 		long configVersion,
+		/** A playlist que a TV deve exibir AGORA: a de uma campanha ativa ou, sem campanha, a base ({@code currentPlaylistId}). */
+		Long effectivePlaylistId,
+		/** Campanha que está valendo para a TV agora (vazio = exibe a playlist base). */
+		Long campaignId,
+		String campaignName,
 		List<Long> groupIds,
 		Instant createdAt,
 		Instant updatedAt) {
 
-	public static DeviceResponse from(Device device) {
+	public static DeviceResponse from(Device device, CampaignService.Effective effective) {
 		Instant now = Instant.now();
 
 		return new DeviceResponse(
@@ -35,6 +42,9 @@ public record DeviceResponse(
 				device.getPlayerVersion(),
 				device.getCurrentPlaylistId(),
 				device.getConfigVersion(),
+				effective.playlistId(),
+				effective.fromCampaign() ? effective.campaign().getId() : null,
+				effective.fromCampaign() ? effective.campaign().getName() : null,
 				device.getGroupIds().stream().sorted().toList(),
 				device.getCreatedAt(),
 				device.getUpdatedAt());

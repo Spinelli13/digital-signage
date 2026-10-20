@@ -45,7 +45,7 @@ public class Device {
 	private Location location;
 
 	/** Grupos de que a TV faz parte (tabela device_group_members; as chaves estrangeiras garantem a integridade). */
-	@ElementCollection(fetch = FetchType.LAZY)
+	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "device_group_members", joinColumns = @JoinColumn(name = "device_id"))
 	@Column(name = "group_id")
 	@BatchSize(size = 100)

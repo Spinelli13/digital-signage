@@ -10,9 +10,14 @@ public record SummaryResponse(
 		long groups,
 		long media,
 		long playlists,
+		CampaignCounts campaigns,
 		List<LocationSummary> byLocation,
 		/** TVs que pedem atenção: offline, nunca conectadas ou aguardando ativação (as mais urgentes primeiro). */
 		List<AttentionDevice> attention) {
+
+	/** {@code activeNow}: campanhas valendo neste instante (não pausadas, dentro de período, dia e horário). */
+	public record CampaignCounts(long total, long activeNow) {
+	}
 
 	public record DeviceCounts(long total, long online, long offline, long never, long pending, long disabled) {
 	}

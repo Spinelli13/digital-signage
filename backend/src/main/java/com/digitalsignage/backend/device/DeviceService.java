@@ -30,25 +30,26 @@ public class DeviceService {
 	private final LocationRepository locationRepository;
 	private final DeviceGroupRepository groupRepository;
 	private final PlaylistRepository playlistRepository;
+	private final DeviceViews views;
 
 	public DeviceService(
 			DeviceRepository deviceRepository,
 			LocationRepository locationRepository,
 			DeviceGroupRepository groupRepository,
-			PlaylistRepository playlistRepository) {
+			PlaylistRepository playlistRepository,
+			DeviceViews views) {
 		this.deviceRepository = deviceRepository;
 		this.locationRepository = locationRepository;
 		this.groupRepository = groupRepository;
 		this.playlistRepository = playlistRepository;
+		this.views = views;
 	}
 
 	// ---------- consulta ----------
 
 	@Transactional(readOnly = true)
 	public List<DeviceResponse> search(DeviceFilter filter) {
-		return deviceRepository.findAll(specificationFor(filter), Sort.by("id")).stream()
-				.map(DeviceResponse::from)
-				.toList();
+		return views.of(deviceRepository.findAll(specificationFor(filter), Sort.by("id")));
 	}
 
 	private Specification<Device> specificationFor(DeviceFilter filter) {

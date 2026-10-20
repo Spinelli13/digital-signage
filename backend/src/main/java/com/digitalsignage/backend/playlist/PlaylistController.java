@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.digitalsignage.backend.campaign.CampaignRepository;
+import com.digitalsignage.backend.common.ConflictException;
 import com.digitalsignage.backend.media.Media;
 import com.digitalsignage.backend.media.MediaRepository;
 
@@ -29,10 +31,15 @@ public class PlaylistController {
 
 	private final PlaylistRepository playlistRepository;
 	private final MediaRepository mediaRepository;
+	private final CampaignRepository campaignRepository;
 
-	public PlaylistController(PlaylistRepository playlistRepository, MediaRepository mediaRepository) {
+	public PlaylistController(
+			PlaylistRepository playlistRepository,
+			MediaRepository mediaRepository,
+			CampaignRepository campaignRepository) {
 		this.playlistRepository = playlistRepository;
 		this.mediaRepository = mediaRepository;
+		this.campaignRepository = campaignRepository;
 	}
 
 	@GetMapping
@@ -73,7 +80,12 @@ public class PlaylistController {
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable Long id) {
-		playlistRepository.delete(findOrThrow(id));
+		Playlist playlist = findOrThrow(id);
+		campaignRepository.findFirstByPlaylistId(id).ifPresent(campaign -> {
+			throw new ConflictException("A playlist \"" + playlist.getName() + "\" está em uso pela campanha \""
+					+ campaign.getName() + "\". Troque a playlist da campanha ou exclua a campanha antes.");
+		});
+		playlistRepository.delete(playlist);
 	}
 
 	private Playlist findOrThrow(Long id) {

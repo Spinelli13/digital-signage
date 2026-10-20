@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
@@ -35,6 +36,7 @@ import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(TestClockConfig.class)
 public abstract class AbstractApiTest {
 
 	private static final EmbeddedPostgres POSTGRES = startPostgres();
@@ -62,10 +64,15 @@ public abstract class AbstractApiTest {
 	@Autowired
 	protected JdbcTemplate jdbc;
 
+	/** Relógio do servidor, que os testes podem congelar (campanhas dependem da hora). */
+	@Autowired
+	protected MutableClock clock;
+
 	@BeforeEach
 	void cleanDatabase() {
 		// O administrador (tabela users) é semeado na subida do contexto e precisa sobreviver.
-		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media, locations, device_groups RESTART IDENTITY CASCADE");
+		clock.reset();
+		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media, locations, device_groups, campaigns RESTART IDENTITY CASCADE");
 	}
 
 	protected String adminToken() throws Exception {

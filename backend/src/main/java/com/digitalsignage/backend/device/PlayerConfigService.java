@@ -6,6 +6,7 @@ import java.util.NoSuchElementException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.digitalsignage.backend.campaign.CampaignService;
 import com.digitalsignage.backend.playlist.Playlist;
 import com.digitalsignage.backend.playlist.PlaylistRepository;
 
@@ -17,20 +18,23 @@ import com.digitalsignage.backend.playlist.PlaylistRepository;
 public class PlayerConfigService {
 
 	private final PlaylistRepository playlistRepository;
+	private final CampaignService campaignService;
 
-	public PlayerConfigService(PlaylistRepository playlistRepository) {
+	public PlayerConfigService(PlaylistRepository playlistRepository, CampaignService campaignService) {
 		this.playlistRepository = playlistRepository;
+		this.campaignService = campaignService;
 	}
 
 	@Transactional(readOnly = true)
 	public PlayerConfigResponse buildFor(Device device) {
-		if (device.getCurrentPlaylistId() == null) {
+		// O que a TV exibe agora: a playlist de uma campanha ativa que a alcança ou, sem campanha, a playlist base.
+		Long playlistId = campaignService.effectiveFor(device).playlistId();
+		if (playlistId == null) {
 			return new PlayerConfigResponse(device.getId(), null, 0, List.of());
 		}
 
-		Playlist playlist = playlistRepository.findById(device.getCurrentPlaylistId())
-				.orElseThrow(() -> new NoSuchElementException(
-						"Playlist não encontrada: " + device.getCurrentPlaylistId()));
+		Playlist playlist = playlistRepository.findById(playlistId)
+				.orElseThrow(() -> new NoSuchElementException("Playlist não encontrada: " + playlistId));
 
 		List<PlayerConfigMediaItem> items = playlist.getItems().stream()
 				.map(item -> new PlayerConfigMediaItem(
