@@ -1,5 +1,6 @@
 package com.digitalsignage.player.data
 
+import com.digitalsignage.player.telemetry.HeartbeatReport
 import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.TimeUnit
@@ -22,7 +23,12 @@ interface PlayerApi {
     suspend fun register(token: String, playerVersion: String): PlayerStatus
     suspend fun status(token: String): PlayerStatus
     suspend fun config(token: String): FetchedConfig
-    suspend fun heartbeat(token: String, playerVersion: String, syncedConfigVersion: Long): Desired
+    suspend fun heartbeat(
+        token: String,
+        playerVersion: String,
+        syncedConfigVersion: Long,
+        report: HeartbeatReport = HeartbeatReport.EMPTY,
+    ): Desired
 }
 
 interface MediaDownloader {
@@ -48,8 +54,13 @@ class HttpPlayerApi(
         return FetchedConfig(Json.parseConfig(raw), raw)
     }
 
-    override suspend fun heartbeat(token: String, playerVersion: String, syncedConfigVersion: Long): Desired {
-        val body = JSONObject().put("playerVersion", playerVersion).put("configVersion", syncedConfigVersion)
+    override suspend fun heartbeat(
+        token: String,
+        playerVersion: String,
+        syncedConfigVersion: Long,
+        report: HeartbeatReport,
+    ): Desired {
+        val body = Json.heartbeatBody(playerVersion, syncedConfigVersion, report)
         return Json.parseDesired(send(post("/api/v1/player/heartbeat", body, token)))
     }
 

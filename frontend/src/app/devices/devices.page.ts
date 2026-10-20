@@ -248,7 +248,7 @@ type LocationChoice = string;
   `,
   styles: `
     .row-actions { white-space: nowrap; text-align: right; }
-    .row-actions button { margin-left: 6px; }
+    .row-actions button, .row-actions .btn { margin-left: 6px; }
     select { min-width: 170px; }
     .stale { color: var(--orange); font-weight: 600; }
     .campaign { color: var(--blue); font-weight: 600; }

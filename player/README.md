@@ -19,6 +19,7 @@ Pontos de projeto:
 - **Identidade de conteúdo = playlist + versão** (versões podem coincidir entre playlists diferentes).
 - **Token nunca vai para o armazenamento de mídia**: redirecionamentos (URL assinada S3) são seguidos à mão, sem reenviar `X-Device-Token`.
 - Dispositivo excluído/desativado no painel → a TV esquece o conteúdo e volta a pedir ativação (ou mostra "desativado").
+- **Monitoramento (0.5+)**: o heartbeat também leva a mídia que está na tela, as ocorrências (erros/avisos/"Player iniciado") e quantas vezes cada mídia terminou de ser exibida (`telemetry/Telemetry.kt`). Fila em memória, entrega em duas etapas (só sai da fila depois que o servidor confirma) e um relato que o servidor recusa com HTTP 400 é descartado, para nunca travar os heartbeats. Servidores antigos ignoram os campos novos.
 
 ## Stack
 

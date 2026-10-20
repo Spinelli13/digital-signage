@@ -11,6 +11,7 @@ Como usar o **painel de administração** do Digital Signage no dia a dia: envia
 1. Enviar as mídias para a **Biblioteca** (uma vez só).
 2. Montar uma **Playlist** com as mídias na ordem e com o tempo que você quiser.
 3. Em **Dispositivos**, escolher qual playlist cada TV exibe. Com várias TVs, organize-as em **Locais** (onde estão) e **Grupos** (conjuntos para agir juntos) e aplique a playlist a todas de uma vez. Para conteúdo que só vale em certas datas, dias ou horários, use **Campanhas**.
+4. Acompanhar: o **Dashboard**, os **Alertas** (o painel avisa quando uma TV some) e os **Relatórios** (disponibilidade, exibições, inventário).
 
 ---
 
@@ -40,6 +41,8 @@ O **menu à esquerda** leva a cada área:
 | **Pontos & Locais** | Onde estão as TVs (ex.: "Loja Centro"). |
 | **Grupos** | Conjuntos de TVs (ex.: "Recepções") para escolher a playlist e atualizar o aplicativo de todas de uma vez. |
 | **Campanhas** | Uma playlist com **agenda** (datas, dias da semana, horários), **prioridade** e **alvos** (todas as TVs, locais, grupos ou TVs). |
+| **Alertas** | O que precisa de atenção agora (TV sem contato, TV que nunca conectou, erros repetidos) e as configurações para receber os avisos no Slack, Discord e similares. |
+| **Relatórios** | Disponibilidade das TVs, exibições por mídia, inventário e eventos, com download em CSV para o Excel. |
 | **Biblioteca** | Suas imagens e vídeos. |
 | **Playlists** | A ordem e o tempo de cada mídia. |
 | **Downloads e manuais** | O aplicativo da TV (sempre a versão mais recente) e estes manuais em PDF. |
@@ -152,6 +155,7 @@ O painel confirma quantas TVs foram alcançadas. Se uma ação não se aplica a 
 
 | Botão | O que faz |
 |---|---|
+| **Histórico** | Abre a linha do tempo da TV: quando conectou, caiu, mudou de conteúdo, atualizou e o que o Player relatou (veja 9.1). |
 | **Editar** | Muda o nome, o local e os grupos da TV. |
 | **Atualizar app** | Pede que **esta TV** verifique agora se há versão nova do aplicativo (ela percebe em até 30 segundos). |
 | **Atualizar todas as TVs** (no alto da página) | O mesmo pedido para todas as TVs ativas. |
@@ -260,7 +264,82 @@ No fim da página há o **Simulador**: escolha uma TV e um dia/hora (no horário
 
 ---
 
-## 9. Downloads e manuais
+## 9. Monitoramento: alertas, histórico e relatórios
+
+O painel não mostra só a situação de agora: ele **guarda a história de cada TV**, **avisa quando algo dá errado** e gera **relatórios** do que aconteceu. Nada disso exige configurar algo na TV; basta o Player estar na versão **0.5 ou mais nova** para também contar erros, a mídia na tela e as exibições (as TVs com versão mais antiga continuam aparecendo, só sem esses dados — o **Atualizar app** resolve).
+
+### 9.1 Histórico de uma TV
+
+Em **Dispositivos**, clique em **Histórico** na linha da TV. Você vê, do mais recente para o mais antigo, tudo o que aconteceu com ela:
+
+![Histórico de uma TV: ativação, primeiro contato, conteúdo, queda e volta (captura real, TV de teste)](manual/img/painel-historico.png)
+
+| Evento | Quando aparece |
+|---|---|
+| **Ativada** | Você digitou o código da TV no painel. |
+| **Conectou** | Primeiro contato, ou a TV **voltou** depois de ficar sem contato (diz por quanto tempo). |
+| **Sem contato** | A TV parou de falar com o servidor. A hora é a da queda (2 minutos depois do último contato), não a hora em que o painel percebeu. |
+| **Conteúdo** | A TV passou a exibir outra playlist ou campanha (diz qual). |
+| **Desativada / Reativada** | Você pausou ou reativou a TV no painel. Enquanto está desativada, a TV não conta como queda. |
+| **Atualização pedida** / **Player atualizado** | Você pediu a atualização do aplicativo; a TV passou de uma versão para outra. |
+| **Registro do Player** | Algo que a **própria TV** relatou: um erro (mídia que não abre, download que falhou, aplicativo reiniciado depois de uma falha), um aviso ou "Player iniciado". |
+
+Use os filtros de **tipo** e **nível** (só erros, só avisos…) e **Carregar mais** para ir ao passado. A página se atualiza sozinha.
+
+![Histórico de uma TV com vários erros do Player seguidos (exemplo)](manual/img/painel-historico-erros.png)
+
+> Os horários dos registros do Player vêm do **relógio da TV**. Se a TV estiver com a hora muito errada, o painel usa a hora do servidor para não bagunçar a história.
+
+Em **Dispositivos**, a linha da TV também mostra **"▶ Na tela: …"**: a mídia que o Player disse estar exibindo no último contato.
+
+### 9.2 Alertas
+
+Abra **Alertas** no menu. O painel abre um alerta **sozinho** quando:
+
+| Alerta | Quando abre (padrão) |
+|---|---|
+| **TV sem contato** | A TV fica mais de **10 minutos** sem falar com o servidor (você pode mudar, de 2 minutos a 24 horas). |
+| **TV nunca conectou** | Uma TV foi ativada, mas não fez o primeiro contato em **24 horas**. |
+| **Erros no Player** | A TV relata **5 erros** em 10 minutos. |
+
+O alerta **fecha sozinho** quando o problema acaba (a TV volta, faz o primeiro contato ou para de dar erro) e some da lista de abertos; desmarque **Só os abertos** para ver também os resolvidos. Se a TV cair de novo, abre-se um alerta novo. TVs **desativadas** não geram alerta. O número de alertas abertos aparece no **Dashboard**.
+
+![Lista de alertas (um aberto por erros, um resolvido) e as configurações (captura real, TVs de teste)](manual/img/painel-alertas.png)
+
+Em **Quando avisar** você muda os três limites acima e por quanto tempo o painel **guarda o histórico** (padrão 90 dias; o que passa disso é apagado sozinho). **Ver histórico** leva direto à linha do tempo da TV.
+
+#### Receber os alertas no Slack, Discord, Teams…
+
+Em **Aviso externo (webhook)** cole o endereço de um *webhook de entrada* do seu aplicativo de mensagens (no Slack: *Apps → Incoming Webhooks*; no Discord: *Editar canal → Integrações → Webhooks*). Cada alerta vira uma mensagem por lá, e (se você deixar marcado) também o aviso de que foi **resolvido**. Clique em **Enviar teste** para conferir que chega.
+
+- Só são aceitos endereços **https://** públicos. Por segurança o servidor **não** envia para endereços internos (como `localhost` ou `192.168…`).
+- O endereço completo é um **segredo** (quem o tem consegue postar no seu canal): depois de salvo o painel mostra só o servidor e o final dele e **nunca** o exibe de volta. Para trocar, cole um novo; para parar de avisar, **Remover webhook**.
+- Se o webhook estiver fora do ar, o painel tenta de novo a cada minuto e **desiste depois de 1 hora** (o alerta continua na lista).
+
+### 9.3 Relatórios
+
+Abra **Relatórios**. São quatro, cada um com período (**Hoje**, **7 dias**, **30 dias** ou datas à escolha, no fuso de Brasília) e **⬇ Baixar CSV**, que gera uma planilha com os mesmos filtros que estão na tela (abre direto no Excel em português):
+
+- **Disponibilidade:** por TV e da frota inteira, quanto do tempo observado ela ficou online, quanto offline e quantas quedas teve. Dá para filtrar por local e grupo. A TV só é medida **a partir do primeiro contato** (uma TV nova não nasce com 0%) e o tempo em que esteve **desativada não conta**. Uma TV sem nenhum dado no período aparece como "sem dados", não como 0%.
+
+![Relatório de disponibilidade por TV (captura real, TVs de teste)](manual/img/painel-relatorio-disponibilidade.png)
+
+- **Exibições:** quantas vezes cada **mídia** foi exibida até o fim e por quanto tempo, agrupado por mídia, por TV ou por dia. Uma exibição só conta quando a mídia **termina**; vem das TVs com Player 0.5 ou mais novo.
+
+![Relatório de exibições por mídia (captura real, TVs de teste)](manual/img/painel-relatorio-exibicoes.png)
+
+- **Inventário:** uma foto de agora de todas as TVs: local, grupos, situação, versão do Player, playlist exibida (e a campanha, se houver) e a mídia na tela. Bom para conferir a frota ou entregar a um cliente.
+
+![Inventário das TVs: local, situação, versão do Player e o que cada uma exibe (captura real, TVs de teste)](manual/img/painel-relatorio-inventario.png)
+- **Eventos:** o histórico de todas as TVs juntas, filtrável por TV, tipo e nível. Na tela aparecem os 500 mais recentes; o CSV traz até 20.000.
+
+![Relatório de eventos de todas as TVs (captura real, TVs de teste)](manual/img/painel-relatorio-eventos.png)
+
+> **Cuidado ao abrir o CSV:** textos que começam com `=`, `+`, `-` ou `@` ganham um apóstrofo no começo (`'=…`) de propósito, para o Excel não executá-los como fórmula.
+
+---
+
+## 10. Downloads e manuais
 
 Em **Downloads e manuais** você encontra, sempre atualizados:
 
@@ -272,7 +351,7 @@ Em **Downloads e manuais** você encontra, sempre atualizados:
 
 ---
 
-## 10. Avisos de erro
+## 11. Avisos de erro
 
 Quando algo dá errado, o painel mostra um aviso vermelho no alto da tela, em português, dizendo **o que aconteceu e o que fazer**. O aviso **fica na tela até você clicar em Fechar**.
 
@@ -294,7 +373,7 @@ Todo aviso começa pela **ação** que falhou (por exemplo, "Excluir mídia: …
 
 ---
 
-## 11. Boas práticas
+## 12. Boas práticas
 
 - **Teste com uma TV primeiro**, depois replique para as outras (com grupos, aplicar a mesma playlist a todas é um clique).
 - **Organize desde o começo:** crie os **locais** antes de ativar as TVs e escolha o local na ativação; use **grupos** para o que se repete entre locais (recepções, vitrines…).
@@ -302,15 +381,19 @@ Todo aviso começa pela **ação** que falhou (por exemplo, "Excluir mídia: …
 - Dê **nomes claros** às mídias e playlists (ex.: "Promoção de verão", não "IMG_0231").
 - Nas imagens, **5 a 10 segundos** costumam ser suficientes; textos longos pedem mais tempo.
 - **Campanhas:** defina a **prioridade** com folga (10, 50, 80…) para poder encaixar outras depois, e use o **Simulador** antes de publicar.
+- **Configure um webhook** (Slack, Discord…) em **Alertas** para saber de uma TV fora do ar sem precisar abrir o painel.
 - **Lembre de publicar:** alterar a playlist não muda a TV até clicar em **Publicar alterações**.
 - Não precisa se preocupar com a internet da TV: ela **guarda tudo** e continua exibindo mesmo se a conexão cair.
 
 ---
 
-## 12. Solução de problemas
+## 13. Solução de problemas
 
 | Problema | O que fazer |
 |---|---|
+| Recebi um alerta **"TV sem contato"** | Veja o **Histórico** da TV: o último evento mostra quando ela parou. Confira energia e Wi‑Fi da TV; quando ela voltar, o alerta se fecha sozinho. |
+| Alerta de **"Erros no Player"** | Abra o **Histórico** da TV e filtre por **Só erros**: a mensagem diz qual mídia falhou. Troque ou reenvie a mídia (vídeo em MP4 H.264, imagem não corrompida). |
+| O relatório de **Exibições** está vazio | As contagens vêm do Player **0.5 ou mais novo**. Use **Atualizar app** nas TVs mais antigas. |
 | A TV aparece **Offline** mas está exibindo | Normal por até ~2 minutos depois de uma queda de internet. Se persistir, verifique o Wi‑Fi da TV. |
 | A TV mostra **"Aguardando conteúdo"** | Ela está ativa, mas sem playlist. Escolha uma playlist para ela em **Dispositivos**. |
 | Mudei a playlist e a TV não mudou | Confirme que clicou em **Publicar alterações** e aguarde até 1 minuto. |

@@ -3,6 +3,7 @@ package com.digitalsignage.player
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.SystemClock
 import android.view.View
 import android.widget.ImageView
 import androidx.lifecycle.LifecycleCoroutineScope
@@ -15,6 +16,7 @@ import com.digitalsignage.player.cache.MediaCache
 import com.digitalsignage.player.data.ConfigItem
 import com.digitalsignage.player.data.PlayerConfig
 import com.digitalsignage.player.errors.ErrorMessages
+import com.digitalsignage.player.telemetry.Telemetry
 import java.io.File
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +37,8 @@ class Slideshow(
     private val playerView: PlayerView,
     /** Avisa o usuário (por 10 s na tela) quando uma mídia não pode ser exibida. */
     private val onError: (String) -> Unit = {},
+    /** Conta ao servidor o que está na tela e quantas vezes cada mídia foi exibida. */
+    private val telemetry: Telemetry = Telemetry.shared,
 ) {
 
     private var job: Job? = null
@@ -54,6 +58,7 @@ class Slideshow(
         job = null
         player?.stop()
         shownImage = null
+        telemetry.mediaShown(null)
         imageView.visibility = View.INVISIBLE
         playerView.visibility = View.INVISIBLE
     }
@@ -113,8 +118,12 @@ class Slideshow(
         player?.stop()
         playerView.visibility = View.INVISIBLE
         imageView.visibility = View.VISIBLE
+        telemetry.mediaShown(item.mediaId)
 
-        delay(item.durationSeconds.coerceAtLeast(1) * 1000L)
+        val seconds = item.durationSeconds.coerceAtLeast(1)
+        delay(seconds * 1000L)
+        // Só conta a exibição que foi até o fim (parar no meio cancela a corrotina antes desta linha).
+        telemetry.played(item.mediaId, seconds.toLong())
         return true
     }
 
@@ -127,6 +136,13 @@ class Slideshow(
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_ENDED) done.complete(true)
+            }
+
+            override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
+                // Vídeo único em repetição nunca "termina": cada volta ao início é uma exibição completa.
+                if (loop && reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
+                    telemetry.played(item.mediaId, oldPosition.positionMs / 1000)
+                }
             }
 
             override fun onPlayerError(error: PlaybackException) {
@@ -145,17 +161,20 @@ class Slideshow(
             shownImage = null
             imageView.visibility = View.INVISIBLE
             playerView.visibility = View.VISIBLE
+            telemetry.mediaShown(item.mediaId)
+            val startedAt = SystemClock.elapsedRealtime()
 
             // Um vídeo único repete sozinho (REPEAT_MODE_ONE) e só termina por erro ou cancelamento.
             val timeoutMs = (item.durationSeconds.coerceAtLeast(1) + VIDEO_GRACE_SECONDS) * 1000L
             return if (loop) {
                 done.await()
             } else {
-                withTimeoutOrNull(timeoutMs) { done.await() }
-                    ?: run {
-                        lastFailure = "o vídeo não terminou no tempo esperado"
-                        false
-                    }
+                val finished = withTimeoutOrNull(timeoutMs) { done.await() }
+                if (finished == null) lastFailure = "o vídeo não terminou no tempo esperado"
+                if (finished == true) {
+                    telemetry.played(item.mediaId, (SystemClock.elapsedRealtime() - startedAt) / 1000)
+                }
+                finished == true
             }
         } finally {
             exo.removeListener(listener)

@@ -681,14 +681,14 @@ class MonitoringTest extends AbstractApiTest {
 	@Test
 	void settingsAreValidated() throws Exception {
 		for (String body : new String[] {
-				"{\"offlineAfterMinutes\": 0}", "{\"offlineAfterMinutes\": 5000}", "{\"neverConnectedAfterHours\": 0}",
+				"{\"offlineAfterMinutes\": 0}", "{\"offlineAfterMinutes\": 1}", "{\"offlineAfterMinutes\": 5000}", "{\"neverConnectedAfterHours\": 0}",
 				"{\"errorBurstCount\": 0}", "{\"errorBurstCount\": 101}", "{\"eventsRetentionDays\": 3}", "{\"webhookUrl\": \"ftp://x/y\"}" }) {
 			mvc.perform(asAdmin(put("/api/v1/alerts/settings").contentType(MediaType.APPLICATION_JSON).content(body)))
 					.andExpect(status().isBadRequest());
 		}
 		mvc.perform(asAdmin(put("/api/v1/alerts/settings").contentType(MediaType.APPLICATION_JSON)
 				.content("{\"offlineAfterMinutes\": 5000}")))
-				.andExpect(jsonPath("$.error").value("O tempo sem contato para alertar precisa estar entre 1 e 1440"));
+				.andExpect(jsonPath("$.error").value("O tempo sem contato para alertar precisa estar entre 2 e 1440"));
 	}
 
 	@Test

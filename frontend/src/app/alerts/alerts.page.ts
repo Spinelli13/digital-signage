@@ -77,7 +77,7 @@ const REFRESH_MS = 15_000;
       <div class="fields">
         <div class="field">
           <label for="offline">TV sem contato há mais de (minutos)</label>
-          <input id="offline" type="number" min="1" max="1440" [ngModel]="offlineAfterMinutes()" (ngModelChange)="offlineAfterMinutes.set($event)" />
+          <input id="offline" type="number" min="2" max="1440" [ngModel]="offlineAfterMinutes()" (ngModelChange)="offlineAfterMinutes.set($event)" />
         </div>
         <div class="field">
           <label for="never">TV ativada que nunca se conectou, após (horas)</label>
@@ -131,7 +131,8 @@ const REFRESH_MS = 15_000;
     tr.resolved td { color: var(--muted); }
     .row-actions { text-align: right; white-space: nowrap; }
     .settings { margin-top: 18px; }
-    .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 18px; }
+    /* rótulos de uma e de duas linhas: os campos alinham pela base, não pelo topo */
+    .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 18px; align-items: end; }
     .sub { margin-top: 18px; }
   `,
 })

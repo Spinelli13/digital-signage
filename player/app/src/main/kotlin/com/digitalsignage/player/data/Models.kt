@@ -1,5 +1,11 @@
 package com.digitalsignage.player.data
 
+import com.digitalsignage.player.telemetry.HeartbeatReport
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+import org.json.JSONArray
 import org.json.JSONObject
 
 data class PlayerStatus(
@@ -77,6 +83,39 @@ object Json {
             items = items.sortedBy { it.position },
         )
     }
+
+    /**
+     * Corpo do heartbeat. Os campos de monitoramento só entram quando há o que dizer: um servidor mais antigo
+     * ignora o que não conhece, e o heartbeat de uma TV sem novidades continua do tamanho de sempre.
+     */
+    fun heartbeatBody(playerVersion: String, syncedConfigVersion: Long, report: HeartbeatReport): JSONObject {
+        val body = JSONObject().put("playerVersion", playerVersion).put("configVersion", syncedConfigVersion)
+        report.currentMediaId?.let { body.put("currentMediaId", it) }
+        if (report.events.isNotEmpty()) {
+            val events = JSONArray()
+            for (event in report.events) {
+                events.put(
+                    JSONObject()
+                        .put("level", event.level.name)
+                        .put("message", event.message)
+                        .put("at", isoUtc(event.atMillis)),
+                )
+            }
+            body.put("events", events)
+        }
+        if (report.plays.isNotEmpty()) {
+            val plays = JSONArray()
+            for (play in report.plays) {
+                plays.put(JSONObject().put("mediaId", play.mediaId).put("count", play.count).put("seconds", play.seconds))
+            }
+            body.put("plays", plays)
+        }
+        return body
+    }
+
+    /** 2026-11-05T12:00:00Z. SimpleDateFormat porque java.time só existe a partir do Android 8 e o Player vai até o 5. */
+    fun isoUtc(millis: Long): String =
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }.format(Date(millis))
 
     fun parseDesired(raw: String): Desired {
         val json = JSONObject(raw)

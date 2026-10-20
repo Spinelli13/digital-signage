@@ -172,3 +172,38 @@ Registro de decisões que complementam o [documento de contexto](../PROJETO_DIGI
 
 ### Painel
 - Página **Campanhas** (lista com situação — ativa agora, aguardando horário, agendada, encerrada, pausada —, editor com dias/horário/fuso/alvos e **simulador**), rótulo "Agora: campanha X" em cada TV e o contador no dashboard. Validação no formulário (mensagens em português) e de novo no servidor.
+
+
+## 2026-10-20 (parte 7) — Fase 4: monitoramento (histórico, logs, relatórios e alertas)
+
+### Decisão central: o servidor conta a história; o Player só relata o que só ele sabe
+- Tudo que o **servidor** percebe sozinho vira evento: ativação, TV que volta a se conectar, TV que **parou de falar**, desativar/reativar, troca de playlist/campanha, versão nova do Player, pedido de atualização. O Player só relata o que o servidor não tem como saber: **erros e avisos** (mídia que não abre, download que falha, reinício após falha), a **mídia que está na tela** e **quantas vezes cada mídia foi exibida**. Isso vai **dentro do heartbeat que já existia** (campos novos, todos opcionais): nenhuma rota nova no Player e Players antigos (0.4.x) continuam funcionando, só sem esses dados.
+- **Queda detectada pelo servidor, não pelo Player** (uma TV sem energia/internet não consegue avisar): a cada minuto o servidor percebe quem passou de 2 min sem falar e grava `OFFLINE` **datado em último contato + 2 min** (e não "quando percebi"). Se o servidor ainda não tinha percebido quando a TV volta (ex.: o próprio servidor estava parado), o heartbeat grava a queda de forma retroativa, para a linha do tempo ficar completa. Cada TV guarda o último estado gravado (`recorded_connection`) para nunca repetir evento.
+- **Desativada não conta como queda**: o tempo desativada não entra na disponibilidade (nem como online, nem como offline) e fecha os alertas abertos.
+
+### Modelo (V5)
+- `device_events` (história), `alerts` (índice único parcial: **no máximo um alerta aberto por TV e tipo**), `monitoring_settings` (linha única, com `CHECK` nos limites) e `media_plays` (exibições por TV, mídia e **dia no fuso do relatório**, acumuladas com `ON CONFLICT DO UPDATE`). Apagar a TV apaga a história dela (cascata); apagar uma mídia não derruba o heartbeat que a cita (a contagem dessa mídia é descartada).
+- Guarda do histórico configurável (padrão 90 dias, 7–730) e limpeza de hora em hora; alertas resolvidos saem junto.
+
+### Alertas
+- Três tipos: **TV sem contato** (padrão: 10 min), **TV ativada que nunca se conectou** (24 h) e **erros repetidos no Player** (5 erros em 10 min). Abre quando a condição vale, **fecha sozinho** quando deixa de valer; uma nova queda abre um alerta novo. Os limites são configuráveis no painel.
+- **Webhook** (Slack/Discord/Teams/Zapier): `POST` com `text` (Slack) e `content` (Discord) iguais, mais `event` e os dados do alerta. Regras de segurança:
+  - **só `https://`** e **nunca endereços internos** (localhost, 10.x, 192.168.x, 172.16–31.x, 169.254.x/metadados de nuvem, 100.64.x, IPv6 local): o servidor não pode ser usado para varrer a rede interna (SSRF); a regra vale também para o nome do host (resolvido) e **não segue redirecionamentos** (o nome é resolvido ao salvar e de novo ao enviar; um DNS malicioso que trocasse a resposta entre os dois momentos não é coberto, risco aceito porque só o administrador configura o endereço);
+  - o endereço é um segredo (a URL do Slack dá acesso a postar): **nunca volta do servidor** — o painel recebe só o host e os 4 últimos caracteres;
+  - falha de entrega é repetida a cada minuto e **abandonada depois de 1 h** (um webhook quebrado não acumula tentativas para sempre); botão "Enviar teste" no painel.
+  - Em testes o servidor aceita `http` local (`app.monitoring.allow-insecure-webhooks`); em produção a opção não existe.
+
+### Relatórios (todos com CSV)
+- **Disponibilidade** (online ÷ observado por TV e da frota, quedas), **exibições** (por mídia, TV ou dia), **inventário** das TVs e **eventos**. Datas no fuso do relatório (America/Sao_Paulo), `to` inclusivo, período máximo de 366 dias.
+- Disponibilidade só conta o tempo **observado** (a partir do primeiro evento da TV): uma TV nova não nasce com 0% por "não ter existido antes", e a TV sem nenhum dado mostra "sem dados", nunca "0%".
+- CSV pensado para o Excel brasileiro: BOM UTF-8, separador `;`, vírgula decimal (fixa em pt-BR, não depende da configuração do servidor), e **proteção contra injeção de fórmula** (célula que começa com `=`, `+`, `-`, `@` ganha um apóstrofo; as mensagens dos erros vêm da TV e não são confiáveis).
+
+### Player 0.5
+- Fila de ocorrências em memória (`Telemetry`): mesma mensagem não se repete em 5 min (internet fora gera erro a cada tentativa), máximo de 100 pendentes (as mais antigas saem) e **entrega em duas etapas** (copia → servidor confirma → só então tira da fila; o que chegou no meio do caminho fica). Todo erro mostrado na tela (`ErrorReporter`) também vai para o histórico da TV.
+- **Bug evitado por projeto:** o servidor recusa o heartbeat inteiro (HTTP 400) se o relato passar dos limites. Sem cuidado, um relato recusado seria reenviado para sempre e a TV pareceria offline. O Player trunca mensagens em 500 caracteres, respeita 30 ocorrências/100 mídias por heartbeat e **descarta o relato que o servidor recusar**.
+- Exibição só é contada quando a mídia **termina** (parar no meio não conta); vídeo único em repetição conta cada volta. As contagens ficam na memória: se a TV reiniciar entre dois contatos, perde-se no máximo ~30 s de contagem.
+- Verificado no emulador Android TV 14 contra o backend novo: ocorrências, mídia na tela e exibições chegaram; uma queda de 3 min virou `OFFLINE` + `ONLINE ("voltou depois de 3 min sem contato")` e o erro registrado durante a queda foi entregue depois.
+- Os horários dos eventos do Player vêm do **relógio da TV**; o servidor os troca pelo horário dele quando passam de 5 min no futuro ou de 7 dias no passado (TV com relógio errado não bagunça o histórico). Não há correção fina de pequenos desvios (anotado como evolução possível).
+
+### Painel
+- **Alertas** (lista com abertos/resolvidos + limites + webhook com teste), **Relatórios** (4 abas, filtros e CSV baixado com o login do painel), **Histórico** por TV (linha do tempo com filtro de tipo e nível e "carregar mais"), "Na tela: …" em cada TV e o contador de alertas abertos no dashboard.

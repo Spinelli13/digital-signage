@@ -40,6 +40,21 @@ class ErrorsTest {
         job.cancel()
     }
 
+    @Test
+    fun `hands every accepted message to the sink but not the suppressed repeats`() {
+        var now = 0L
+        val reporter = ErrorReporter(clock = { now }, dedupeMs = 60_000)
+        val recorded = mutableListOf<String>()
+        reporter.sink = { recorded += it }
+
+        reporter.report("Sem conexão")
+        now += 1_000
+        reporter.report("Sem conexão")
+        reporter.report("Outro erro")
+
+        assertEquals(listOf("Sem conexão", "Outro erro"), recorded)
+    }
+
     /** Regressão de usabilidade: com a internet fora o Player tenta a cada poucos segundos; a tarja não pode ficar fixa. */
     @Test
     fun `suppresses the same message while it is still recent`() {

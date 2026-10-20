@@ -1,5 +1,6 @@
 package com.digitalsignage.player.engine
 
+import com.digitalsignage.player.data.ApiException
 import com.digitalsignage.player.data.PlayerApi
 import com.digitalsignage.player.errors.ErrorMessages
 import com.digitalsignage.player.data.PlayerConfig
@@ -7,6 +8,7 @@ import com.digitalsignage.player.data.PlayerStatus
 import com.digitalsignage.player.data.UnauthorizedException
 import com.digitalsignage.player.sync.ConfigStore
 import com.digitalsignage.player.sync.ConfigSync
+import com.digitalsignage.player.telemetry.Telemetry
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -57,6 +59,8 @@ class PlayerEngine(
     private val onError: (String) -> Unit = {},
     /** Chamado a cada heartbeat que traz um pedido de verificação de atualização (valor do pedido). */
     private val onUpdateCheckRequested: (Long) -> Unit = {},
+    /** O que o Player conta ao servidor a cada heartbeat (ocorrências, mídia na tela, exibições). */
+    private val telemetry: Telemetry = Telemetry.shared,
 ) {
 
     private val mutableState = MutableStateFlow<EngineState>(EngineState.Starting)
@@ -120,7 +124,16 @@ class PlayerEngine(
         var syncJob: Job? = null
 
         while (isActive) {
-            val desired = api.heartbeat(token(), playerVersion, store.load()?.configVersion ?: 0)
+            val report = telemetry.snapshot()
+            val desired = try {
+                api.heartbeat(token(), playerVersion, store.load()?.configVersion ?: 0, report)
+            } catch (e: ApiException) {
+                // HTTP 400: o servidor recusou este relato. Sem descartá-lo, o mesmo relato seria reenviado para
+                // sempre e nenhum heartbeat mais passaria (a TV pareceria offline). Outros erros mantêm o relato.
+                if (e.code == 400 && !report.isEmpty) telemetry.acknowledge(report)
+                throw e
+            }
+            telemetry.acknowledge(report)
             if (desired.updateCheckToken > 0) onUpdateCheckRequested(desired.updateCheckToken)
 
             // A sincronização roda à parte para o heartbeat continuar mesmo durante downloads longos.

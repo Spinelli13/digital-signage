@@ -1,12 +1,16 @@
 package com.digitalsignage.player
 
 import com.digitalsignage.player.cache.MediaCache
+import com.digitalsignage.player.data.ApiException
 import com.digitalsignage.player.data.Desired
 import com.digitalsignage.player.data.UnauthorizedException
 import com.digitalsignage.player.engine.EngineState
 import com.digitalsignage.player.engine.PlayerEngine
 import com.digitalsignage.player.engine.Timing
 import com.digitalsignage.player.sync.ConfigSync
+import com.digitalsignage.player.telemetry.Level
+import com.digitalsignage.player.telemetry.PlayCount
+import com.digitalsignage.player.telemetry.Telemetry
 import java.io.File
 import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,6 +38,7 @@ class PlayerEngineTest {
     private val api = FakePlayerApi()
     private val reported = mutableListOf<String>()
     private val downloader = FakeDownloader()
+    private val telemetry = Telemetry()
     private val timing = Timing(activationPollMs = 5_000, heartbeatMs = 30_000, retryMs = 10_000, disabledPollMs = 30_000)
 
     private val imgA = "imagem-a".toByteArray()
@@ -42,7 +47,7 @@ class PlayerEngineTest {
     private fun build(store: InMemoryStore): Pair<PlayerEngine, MediaCache> {
         val cache = MediaCache(File(folder.root, "media"))
         val sync = ConfigSync(api, downloader, cache, store)
-        return PlayerEngine(api, sync, store, token = { "tok" }, playerVersion = "0.2.0", timing = timing, onError = { reported += it }) to cache
+        return PlayerEngine(api, sync, store, token = { "tok" }, playerVersion = "0.2.0", timing = timing, onError = { reported += it }, telemetry = telemetry) to cache
     }
 
     private fun TestScope.startEngine(engine: PlayerEngine) {
@@ -208,6 +213,87 @@ class PlayerEngineTest {
 
         // 1º heartbeat: nada sincronizado ainda (0); depois de baixar, informa a versão 1.
         assertEquals(listOf(0L, 1L), api.heartbeatsSeenVersions.take(2))
+    }
+
+    // ---------- relato de monitoramento no heartbeat ----------
+
+    @Test
+    fun `the heartbeat carries what the Player recorded and the server confirmation clears it`() = runTest {
+        api.registerResponse = { active() }
+        api.heartbeatResponse = { Desired(null, 0) }
+        telemetry.event(Level.ERROR, "Falha ao baixar a mídia")
+        telemetry.mediaShown(7)
+        telemetry.played(7, 10)
+        val (engine, _) = build(InMemoryStore())
+
+        startEngine(engine)
+        advanceTimeBy(30_001)
+        runCurrent()
+
+        val first = api.reportsSeen[0]
+        assertEquals(listOf("Falha ao baixar a mídia"), first.events.map { it.message })
+        assertEquals(7L, first.currentMediaId)
+        assertEquals(listOf(PlayCount(7, 1, 10)), first.plays)
+        // o segundo heartbeat não repete o que o servidor já recebeu, mas continua dizendo o que está na tela
+        val second = api.reportsSeen[1]
+        assertTrue(second.events.isEmpty())
+        assertTrue(second.plays.isEmpty())
+        assertEquals(7L, second.currentMediaId)
+    }
+
+    @Test
+    fun `a heartbeat that fails keeps the report for the next attempt`() = runTest {
+        api.registerResponse = { active() }
+        var failing = true
+        api.heartbeatResponse = { if (failing) throw IOException("sem internet") else Desired(null, 0) }
+        telemetry.event(Level.ERROR, "erro guardado")
+        telemetry.played(3, 8)
+        val (engine, _) = build(InMemoryStore())
+
+        startEngine(engine)
+        assertEquals(1, api.reportsSeen.size)
+        assertEquals(1, telemetry.pendingEvents())
+
+        failing = false
+        advanceTimeBy(60_000)
+        runCurrent()
+
+        val delivered = api.reportsSeen[1] // a primeira tentativa depois da falha
+        assertEquals(listOf("erro guardado"), delivered.events.map { it.message })
+        assertEquals(listOf(PlayCount(3, 1, 8)), delivered.plays)
+        assertEquals(0, telemetry.pendingEvents())
+    }
+
+    /** Sem isso um relato recusado (HTTP 400) seria reenviado para sempre e a TV pareceria offline. */
+    @Test
+    fun `a report the server refuses with 400 is dropped so heartbeats keep flowing`() = runTest {
+        api.registerResponse = { active() }
+        var calls = 0
+        api.heartbeatResponse = { if (calls++ == 0) throw ApiException(400, "relato inválido") else Desired(null, 0) }
+        telemetry.event(Level.ERROR, "relato que o servidor não aceita")
+        val (engine, _) = build(InMemoryStore())
+
+        startEngine(engine)
+        advanceTimeBy(60_000)
+        runCurrent()
+
+        assertTrue(api.reportsSeen.size >= 2)
+        assertTrue("o relato recusado não pode voltar", api.reportsSeen.drop(1).all { it.events.isEmpty() })
+    }
+
+    @Test
+    fun `other server errors keep the report`() = runTest {
+        api.registerResponse = { active() }
+        var calls = 0
+        api.heartbeatResponse = { if (calls++ == 0) throw ApiException(503, "indisponível") else Desired(null, 0) }
+        telemetry.event(Level.ERROR, "ainda pendente")
+        val (engine, _) = build(InMemoryStore())
+
+        startEngine(engine)
+        advanceTimeBy(60_000)
+        runCurrent()
+
+        assertEquals(listOf("ainda pendente"), api.reportsSeen[1].events.map { it.message })
     }
 
     /** O administrador excluiu o dispositivo: a TV esquece o conteúdo e volta a pedir ativação. */

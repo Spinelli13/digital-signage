@@ -783,14 +783,16 @@ Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 5).
 
 Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 6).
 
-### Fase 4 — Monitoramento
+### Fase 4 — Monitoramento ✅ (concluída em 2026-10-20)
 
 ```text
-Histórico
-Logs
-Relatórios
-Alertas
+[x] Histórico (linha do tempo de cada TV: ativação, conexão, queda, conteúdo, versão; o servidor registra sozinho)
+[x] Logs (erros e avisos relatados pelo Player 0.5 dentro do heartbeat, com fila e entrega em duas etapas)
+[x] Relatórios (disponibilidade, exibições por mídia/TV/dia, inventário e eventos; CSV para o Excel)
+[x] Alertas (TV sem contato, nunca conectou, erros repetidos; webhook https com proteção contra SSRF)
 ```
+
+Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 7).
 
 ### Fase 5 — Recursos avançados
 

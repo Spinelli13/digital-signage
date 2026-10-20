@@ -3,6 +3,10 @@ package com.digitalsignage.player
 import com.digitalsignage.player.data.ApiException
 import com.digitalsignage.player.data.HttpPlayerApi
 import com.digitalsignage.player.data.UnauthorizedException
+import com.digitalsignage.player.telemetry.HeartbeatReport
+import com.digitalsignage.player.telemetry.Level
+import com.digitalsignage.player.telemetry.PlayCount
+import com.digitalsignage.player.telemetry.ReportedEvent
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -56,6 +60,23 @@ class HttpPlayerApiTest {
         val request = server.takeRequest()
         assertEquals("meu-token", request.getHeader("X-Device-Token"))
         assertTrue(request.body.readUtf8().contains("\"configVersion\":1"))
+    }
+
+    @Test
+    fun `the heartbeat sends the report so the server can build the history`() = runBlocking {
+        server.enqueue(MockResponse().setBody("""{"playlistId":2,"configVersion":3,"serverTime":"x"}"""))
+        val report = HeartbeatReport(
+            currentMediaId = 9,
+            events = listOf(ReportedEvent(1, Level.WARN, "Disco quase cheio", 0)),
+            plays = listOf(PlayCount(9, 2, 20)),
+        )
+
+        api.heartbeat("meu-token", "0.5.0", 3, report)
+
+        val body = server.takeRequest().body.readUtf8()
+        assertTrue(body, body.contains("\"currentMediaId\":9"))
+        assertTrue(body, body.contains("\"message\":\"Disco quase cheio\""))
+        assertTrue(body, body.contains("\"mediaId\":9"))
     }
 
     @Test

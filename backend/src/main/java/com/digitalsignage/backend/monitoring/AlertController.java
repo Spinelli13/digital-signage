@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.digitalsignage.backend.device.Device;
+import com.digitalsignage.backend.device.DeviceConnection;
 import com.digitalsignage.backend.device.DeviceRepository;
 
 /** Alertas abertos/resolvidos e as configurações de monitoramento (limites e webhook). */
@@ -113,7 +114,8 @@ public class AlertController {
 	public SettingsResponse update(@RequestBody SettingsRequest request) {
 		MonitoringSettings settings = monitoring.settings();
 		if (request.offlineAfterMinutes() != null) {
-			settings.setOfflineAfterMinutes(inRange(request.offlineAfterMinutes(), 1, 1440, "O tempo sem contato para alertar"));
+			// no mínimo 2 min: é a janela em que o servidor ainda considera a TV online (menos que isso alertaria antes de a TV constar como offline)
+				settings.setOfflineAfterMinutes(inRange(request.offlineAfterMinutes(), (int) DeviceConnection.ONLINE_WINDOW.toMinutes(), 1440, "O tempo sem contato para alertar"));
 		}
 		if (request.neverConnectedAfterHours() != null) {
 			settings.setNeverConnectedAfterHours(inRange(request.neverConnectedAfterHours(), 1, 720, "O prazo para uma TV ativada se conectar"));

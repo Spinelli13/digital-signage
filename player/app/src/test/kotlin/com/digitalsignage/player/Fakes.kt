@@ -9,6 +9,7 @@ import com.digitalsignage.player.data.PlayerApi
 import com.digitalsignage.player.data.PlayerConfig
 import com.digitalsignage.player.data.PlayerStatus
 import com.digitalsignage.player.sync.ConfigStore
+import com.digitalsignage.player.telemetry.HeartbeatReport
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -76,6 +77,9 @@ class FakePlayerApi : PlayerApi {
     var configResponse: () -> PlayerConfig = { throw IOException("offline") }
 
     val heartbeatsSeenVersions = mutableListOf<Long>()
+
+    /** O relato que cada heartbeat levou (mesmo os que o "servidor" recusou). */
+    val reportsSeen = mutableListOf<HeartbeatReport>()
     var registerCalls = 0
 
     override suspend fun register(token: String, playerVersion: String): PlayerStatus {
@@ -85,8 +89,9 @@ class FakePlayerApi : PlayerApi {
 
     override suspend fun status(token: String): PlayerStatus = statusResponse()
 
-    override suspend fun heartbeat(token: String, playerVersion: String, syncedConfigVersion: Long): Desired {
+    override suspend fun heartbeat(token: String, playerVersion: String, syncedConfigVersion: Long, report: HeartbeatReport): Desired {
         heartbeatsSeenVersions += syncedConfigVersion
+        reportsSeen += report
         return heartbeatResponse()
     }
 

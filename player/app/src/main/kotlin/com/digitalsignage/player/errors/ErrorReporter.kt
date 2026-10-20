@@ -21,6 +21,10 @@ class ErrorReporter(
 
     private val lastShown = HashMap<String, Long>()
 
+    /** Chamado com cada mensagem aceita (não repetida): o Player a registra também para o servidor. */
+    @Volatile
+    var sink: ((String) -> Unit)? = null
+
     /** Devolve true se a mensagem foi aceita para exibição, false se foi suprimida por repetição recente. */
     @Synchronized
     fun report(message: String, repeatAfterMs: Long = dedupeMs): Boolean {
@@ -29,6 +33,7 @@ class ErrorReporter(
         if (last != null && now - last < repeatAfterMs) return false
         lastShown[message] = now
         flow.tryEmit(message)
+        sink?.invoke(message)
         return true
     }
 

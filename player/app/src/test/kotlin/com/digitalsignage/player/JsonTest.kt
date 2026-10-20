@@ -1,6 +1,10 @@
 package com.digitalsignage.player
 
 import com.digitalsignage.player.data.Json
+import com.digitalsignage.player.telemetry.HeartbeatReport
+import com.digitalsignage.player.telemetry.Level
+import com.digitalsignage.player.telemetry.PlayCount
+import com.digitalsignage.player.telemetry.ReportedEvent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -63,6 +67,47 @@ class JsonTest {
 
         val none = Json.parseDesired("""{"playlistId":null,"configVersion":0,"serverTime":"x"}""")
         assertNull(none.playlistId)
+    }
+
+    @Test
+    fun `an uneventful heartbeat body is exactly what older servers expect`() {
+        val body = Json.heartbeatBody("0.5.1", 12, HeartbeatReport.EMPTY)
+
+        assertEquals(setOf("playerVersion", "configVersion"), body.keys().asSequence().toSet())
+        assertEquals("0.5.1", body.getString("playerVersion"))
+        assertEquals(12L, body.getLong("configVersion"))
+    }
+
+    @Test
+    fun `the heartbeat body carries the media on screen, the events with UTC times and the plays`() {
+        val report = HeartbeatReport(
+            currentMediaId = 7,
+            events = listOf(ReportedEvent(1, Level.ERROR, "Falha ao baixar a mídia", 1_793_880_000_000L)),
+            plays = listOf(PlayCount(7, 3, 30)),
+        )
+
+        val body = Json.heartbeatBody("0.5.1", 12, report)
+
+        assertEquals(7L, body.getLong("currentMediaId"))
+        val event = body.getJSONArray("events").getJSONObject(0)
+        assertEquals("ERROR", event.getString("level"))
+        assertEquals("Falha ao baixar a mídia", event.getString("message"))
+        assertEquals("2026-11-05T12:00:00Z", event.getString("at"))
+        val play = body.getJSONArray("plays").getJSONObject(0)
+        assertEquals(7L, play.getLong("mediaId"))
+        assertEquals(3, play.getInt("count"))
+        assertEquals(30L, play.getLong("seconds"))
+    }
+
+    @Test
+    fun `formats instants as UTC regardless of the device time zone`() {
+        val previous = java.util.TimeZone.getDefault()
+        try {
+            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("America/Sao_Paulo"))
+            assertEquals("1970-01-01T00:00:00Z", Json.isoUtc(0))
+        } finally {
+            java.util.TimeZone.setDefault(previous)
+        }
     }
 
     @Test
