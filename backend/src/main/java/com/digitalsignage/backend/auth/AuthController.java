@@ -8,6 +8,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,6 +21,7 @@ import com.digitalsignage.backend.user.User;
 import com.digitalsignage.backend.user.UserRepository;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 
 @RestController
 public class AuthController {
@@ -32,6 +34,9 @@ public class AuthController {
 			String role,
 			boolean platformAdmin,
 			TenantSummary tenant) {
+	}
+
+	public record PasswordChange(@NotBlank String currentPassword, @NotBlank String newPassword) {
 	}
 
 	private final UserRepository userRepository;
@@ -64,6 +69,22 @@ public class AuthController {
 		}
 
 		return ResponseEntity.ok(new LoginResponse(jwtService.generateToken(user.getEmail())));
+	}
+
+	/** Cada pessoa troca a própria senha (precisa da atual, para que um computador esquecido logado não a troque por ela). */
+	@PutMapping("/api/v1/auth/password")
+	@org.springframework.transaction.annotation.Transactional
+	public ResponseEntity<Void> changePassword(@AuthenticationPrincipal PanelUser current, @Valid @RequestBody PasswordChange request) {
+		User user = userRepository.findById(current.id()).orElseThrow(() -> new NoSuchElementException("Usuário não encontrado"));
+		if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+			throw new IllegalArgumentException("A senha atual não confere");
+		}
+		if (request.newPassword().length() < com.digitalsignage.backend.user.UserController.MIN_PASSWORD) {
+			throw new IllegalArgumentException("A senha nova precisa ter pelo menos " + com.digitalsignage.backend.user.UserController.MIN_PASSWORD + " caracteres");
+		}
+		user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+		userRepository.save(user);
+		return ResponseEntity.noContent().build();
 	}
 
 	@GetMapping("/api/v1/auth/me")

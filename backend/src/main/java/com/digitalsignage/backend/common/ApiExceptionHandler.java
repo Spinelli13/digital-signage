@@ -34,6 +34,12 @@ public class ApiExceptionHandler {
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
 	}
 
+	/** O papel do usuário não permite a operação. */
+	@ExceptionHandler(ForbiddenException.class)
+	public ResponseEntity<Map<String, String>> handleForbidden(ForbiddenException ex) {
+		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
+	}
+
 	/** O plano do cliente não permite (limite de TVs, de espaço ou de usuários). */
 	@ExceptionHandler(com.digitalsignage.backend.tenant.PlanLimitException.class)
 	public ResponseEntity<Map<String, String>> handlePlanLimit(com.digitalsignage.backend.tenant.PlanLimitException ex) {

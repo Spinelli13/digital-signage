@@ -65,12 +65,18 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.GET, "/api/v1/media/*/file").hasAnyRole("VIEWER", "DEVICE")
 						// Operação da plataforma (clientes, planos, faturas).
 						.requestMatchers("/api/v1/platform/**").hasRole("PLATFORM_ADMIN")
-						// Quem sou eu: qualquer usuário do painel.
-						.requestMatchers("/api/v1/auth/me").hasRole("VIEWER")
+						// Quem sou eu e trocar a própria senha: qualquer usuário do painel.
+						.requestMatchers("/api/v1/auth/**").hasRole("VIEWER")
 						// Equipe e cobrança: só quem administra o cliente (nem para consultar).
 						.requestMatchers("/api/v1/users/**", "/api/v1/billing/**").hasRole("ADMIN")
-						// Consultar: qualquer papel. Gravar: o ADMIN (as exceções do EDITOR vêm na próxima regra).
+						// Consultar: qualquer papel.
 						.requestMatchers(HttpMethod.GET, "/api/v1/**").hasRole("VIEWER")
+						// Gravar conteúdo (mídias, playlists, campanhas, layouts) e escolher o que cada TV exibe: o EDITOR.
+						.requestMatchers("/api/v1/media/**", "/api/v1/playlists/**", "/api/v1/campaigns/**", "/api/v1/layouts/**").hasRole("EDITOR")
+						.requestMatchers(HttpMethod.PUT, "/api/v1/devices/*").hasRole("EDITOR")
+						.requestMatchers(HttpMethod.DELETE, "/api/v1/devices/*/playlist", "/api/v1/devices/*/layout").hasRole("EDITOR")
+						.requestMatchers(HttpMethod.POST, "/api/v1/devices/bulk").hasRole("EDITOR")
+						// O resto (ativar, excluir e agrupar TVs, locais, grupos, alertas, equipe, cobrança): o ADMIN.
 						.anyRequest().hasRole("ADMIN"))
 				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 				.addFilterBefore(deviceAuthFilter, UsernamePasswordAuthenticationFilter.class);

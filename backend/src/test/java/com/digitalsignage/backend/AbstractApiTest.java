@@ -57,6 +57,8 @@ public abstract class AbstractApiTest {
 		registry.add("app.storage.local-path", STORAGE_DIR::toString);
 		// Os testes chamam a avaliação do monitoramento na hora que querem (relógio controlado); sem o ciclo automático.
 		registry.add("app.monitoring.enabled", () -> "false");
+		// A cobrança também: os testes rodam o ciclo na hora que querem, com o relógio controlado.
+		registry.add("app.billing.enabled", () -> "false");
 		// ...e o webhook de teste é um servidor local (em produção só https e só endereços públicos).
 		registry.add("app.monitoring.allow-insecure-webhooks", () -> "true");
 	}
@@ -84,6 +86,8 @@ public abstract class AbstractApiTest {
 		jdbc.update("UPDATE monitoring_settings SET offline_after_minutes = 10, never_connected_after_hours = 24, error_burst_count = 5, webhook_url = NULL, notify_on_resolve = TRUE, events_retention_days = 90");
 		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media, locations, device_groups, campaigns, device_events, alerts, media_plays, layouts RESTART IDENTITY CASCADE");
 		// Clientes, usuários e planos criados pelos testes (o cliente 1 = reserva e o 2 = original, com o administrador, ficam).
+		jdbc.update("DELETE FROM invoices");
+		jdbc.update("UPDATE platform_settings SET company_name = 'Digital Signage', payment_instructions = 'Pague por PIX ou boleto e envie o comprovante para o suporte.', support_email = NULL, trial_days = 14, grace_days = 7, invoice_lead_days = 5");
 		jdbc.update("DELETE FROM monitoring_settings WHERE tenant_id > 2");
 		jdbc.update("DELETE FROM users WHERE tenant_id > 2");
 		jdbc.update("DELETE FROM tenants WHERE id > 2");
@@ -109,6 +113,32 @@ public abstract class AbstractApiTest {
 				.andExpect(status().isOk())
 				.andReturn().getResponse().getContentAsString();
 		return json.readTree(body).get("token").asText();
+	}
+
+	@Autowired
+	protected org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+	/** Cria um cliente direto no banco (a operação da plataforma tem a própria API, testada à parte). */
+	protected long createTenantRow(String name, String planCode, String status) {
+		return jdbc.queryForObject(
+				"INSERT INTO tenants (name, slug, plan_id, status) VALUES (?, ?, (SELECT id FROM plans WHERE code = ?), ?) RETURNING id",
+				Long.class, name, name.toLowerCase().replace(' ', '-') + "-" + java.util.UUID.randomUUID().toString().substring(0, 6), planCode, status);
+	}
+
+	protected void createUserRow(long tenantId, String email, String role, String password) {
+		jdbc.update("INSERT INTO users (name, email, password_hash, tenant_id, role, active) VALUES (?, ?, ?, ?, ?, true)",
+				email, email, passwordEncoder.encode(password), tenantId, role);
+	}
+
+	protected String loginAs(String email, String password) throws Exception {
+		String body = mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+				.content(json.writeValueAsString(Map.of("email", email, "password", password))))
+				.andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+		return json.readTree(body).get("token").asText();
+	}
+
+	protected MockHttpServletRequestBuilder withToken(String token, MockHttpServletRequestBuilder request) {
+		return request.header("Authorization", "Bearer " + token);
 	}
 
 	protected MockHttpServletRequestBuilder asAdmin(MockHttpServletRequestBuilder request) throws Exception {

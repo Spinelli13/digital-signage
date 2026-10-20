@@ -14,14 +14,17 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.digitalsignage.backend.common.ForbiddenException;
 import com.digitalsignage.backend.group.DeviceGroupRepository;
 import com.digitalsignage.backend.layout.LayoutRepository;
 import com.digitalsignage.backend.location.Location;
 import com.digitalsignage.backend.location.LocationRepository;
 import com.digitalsignage.backend.monitoring.MonitoringService;
 import com.digitalsignage.backend.playlist.PlaylistRepository;
+import com.digitalsignage.backend.security.CurrentUser;
 import com.digitalsignage.backend.tenant.PlanLimits;
 import com.digitalsignage.backend.tenant.TenantContext;
+import com.digitalsignage.backend.user.Role;
 
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -138,6 +141,7 @@ public class DeviceService {
 	@Transactional
 	public Device update(Long id, DeviceUpdateRequest request) {
 		Device device = find(id);
+		requireContentOnlyForEditors(device, request);
 		String oldStatus = device.getStatus();
 		device.setName(request.name());
 
@@ -245,10 +249,31 @@ public class DeviceService {
 				.orElseThrow(() -> new NoSuchElementException("Dispositivo não encontrado: " + id));
 	}
 
+	/**
+	 * O Editor cuida do conteúdo: escolhe a playlist e o layout de cada TV, mas não renomeia, não muda de local ou
+	 * grupo e não ativa/desativa. Isso é do Administrador do cliente.
+	 */
+	private void requireContentOnlyForEditors(Device current, DeviceUpdateRequest request) {
+		if (CurrentUser.isAtLeast(Role.ADMIN)) {
+			return;
+		}
+		boolean touchesMore = !request.name().equals(current.getName()) || request.location() != null || request.locationId() != null
+				|| request.status() != null || request.groupIds() != null;
+		if (touchesMore) {
+			throw new ForbiddenException("O papel Editor só pode escolher a playlist e o layout das TVs. Nome, local, grupos e situação são do Administrador.");
+		}
+	}
+
+	private static final java.util.Set<BulkAction> EDITOR_BULK = java.util.Set.of(
+			BulkAction.ASSIGN_PLAYLIST, BulkAction.REMOVE_PLAYLIST, BulkAction.ASSIGN_LAYOUT, BulkAction.REMOVE_LAYOUT);
+
 	// ---------- ações em massa ----------
 
 	@Transactional
 	public BulkResult bulk(BulkDeviceRequest request) {
+		if (!CurrentUser.isAtLeast(Role.ADMIN) && !EDITOR_BULK.contains(request.action())) {
+			throw new ForbiddenException("O papel Editor só pode aplicar playlist e layout a várias TVs. As outras ações são do Administrador.");
+		}
 		List<Device> targets = resolveTargets(request);
 		List<Device> changed = new ArrayList<>();
 
