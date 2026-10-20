@@ -3,8 +3,10 @@ import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@a
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 
+import { AuthService } from '../core/auth.service';
 import { ConfigService } from '../core/config.service';
 import { Device, DeviceGroup, Layout, Location, Playlist, ReleaseInfo } from '../core/models';
+import { meFixture } from '../testing/fixtures';
 import { DevicesPage } from './devices.page';
 
 const API = 'http://api.test/api/v1';
@@ -617,6 +619,27 @@ describe('DevicesPage — activating and editing', () => {
     expect(request.request.body).toEqual({ name: 'TV Recepção', groupIds: [], location: '' });
     request.flush(device());
     flushRefresh(backend);
+  });
+});
+
+describe('DevicesPage — editing as an Editor', () => {
+  /** O Editor só escolhe o layout: nome, local e grupos seriam recusados (403), então nem são enviados. */
+  it('sends only the name and the layout', () => {
+    const { page, backend } = setup();
+    TestBed.inject(AuthService).me.set(meFixture('EDITOR'));
+    page.ngOnInit();
+    backend.expectOne(`${DOWNLOADS}/releases.json`).flush({ releases: [release('0.3.0')] });
+    flushRefresh(backend, [device({ locationId: 3, groupIds: [10] })], [layout(20, 'Lateral')]);
+
+    page.openEdit(device({ locationId: 3, groupIds: [10] }));
+    page.layoutChoice.set('20');
+    page.submitModal();
+
+    const request = backend.expectOne(`${API}/devices/1`);
+    expect(request.request.body).toEqual({ name: 'TV Recepção', layoutId: 20 });
+    request.flush(device());
+    flushRefresh(backend);
+    backend.verify();
   });
 });
 

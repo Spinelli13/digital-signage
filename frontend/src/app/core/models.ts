@@ -446,3 +446,178 @@ export interface WebContentRequest {
   url: string;
   durationSeconds: number;
 }
+
+// ---------- clientes, equipe, planos e cobrança (fase 6) ----------
+
+export type Role = 'VIEWER' | 'EDITOR' | 'ADMIN' | 'PLATFORM_ADMIN';
+export type TenantStatus = 'SYSTEM' | 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'SUSPENDED' | 'CANCELED';
+
+/** Limite nulo = sem limite. */
+export interface PlanInfo {
+  id: number;
+  code: string;
+  name: string;
+  priceCents: number;
+  currency: string;
+  maxDevices: number | null;
+  maxStorageMb: number | null;
+  maxUsers: number | null;
+}
+
+/** O que o cliente está usando do plano (TVs ativadas, espaço das mídias em bytes, usuários ativos). */
+export interface Usage {
+  devices: number;
+  storageBytes: number;
+  users: number;
+}
+
+export interface TenantSummary {
+  id: number;
+  name: string;
+  slug: string;
+  status: TenantStatus;
+  plan: PlanInfo;
+  usage: Usage;
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  billingEmail: string | null;
+}
+
+/** Quem está logado e em que cliente está atuando. */
+export interface Me {
+  id: number;
+  name: string;
+  email: string;
+  role: Role;
+  platformAdmin: boolean;
+  tenant: TenantSummary;
+}
+
+export interface TeamMember {
+  id: number;
+  name: string;
+  email: string;
+  role: Role;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface TeamMemberRequest {
+  name: string;
+  email: string;
+  password: string;
+  role: Role;
+}
+
+/** Campos ausentes não mudam. */
+export interface TeamMemberUpdate {
+  name?: string;
+  role?: Role;
+  active?: boolean;
+  password?: string;
+}
+
+export type InvoiceStatus = 'OPEN' | 'PAID' | 'VOID';
+
+export interface Invoice {
+  id: number;
+  tenantId: number;
+  tenantName: string | null;
+  number: string;
+  description: string;
+  periodStart: string | null;
+  periodEnd: string | null;
+  amountCents: number;
+  currency: string;
+  status: InvoiceStatus;
+  dueDate: string;
+  /** Aberta e já vencida. */
+  overdue: boolean;
+  paidAt: string | null;
+  paymentMethod: string | null;
+  paymentNote: string | null;
+  createdAt: string;
+}
+
+export interface PlanOption {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+  priceCents: number;
+  currency: string;
+  maxDevices: number | null;
+  maxStorageMb: number | null;
+  maxUsers: number | null;
+}
+
+/** "Plano e cobrança" do cliente. */
+export interface BillingInfo {
+  tenant: TenantSummary;
+  document: string | null;
+  invoices: Invoice[];
+  companyName: string;
+  paymentInstructions: string | null;
+  supportEmail: string | null;
+  plans: PlanOption[];
+}
+
+export interface PlatformPlan extends PlanOption {
+  active: boolean;
+  sortOrder: number;
+  tenantCount: number;
+}
+
+export interface PlatformPlanRequest {
+  code: string;
+  name: string;
+  description: string | null;
+  priceCents: number;
+  maxDevices: number | null;
+  maxStorageMb: number | null;
+  maxUsers: number | null;
+  active: boolean;
+  sortOrder: number;
+}
+
+export interface PlatformTenantRequest {
+  name: string;
+  planId: number;
+  adminName: string;
+  adminEmail: string;
+  adminPassword: string;
+  billingEmail: string | null;
+  document: string | null;
+}
+
+/** Campos ausentes não mudam. */
+export interface PlatformTenantUpdate {
+  name?: string;
+  planId?: number;
+  status?: TenantStatus;
+  billingEmail?: string;
+  document?: string;
+  notes?: string;
+  trialEndsAt?: string;
+  currentPeriodEnd?: string;
+}
+
+export interface PlatformSettings {
+  companyName: string;
+  paymentInstructions: string | null;
+  supportEmail: string | null;
+  trialDays: number;
+  graceDays: number;
+  invoiceLeadDays: number;
+}
+
+export interface PlatformOverview {
+  tenants: number;
+  tenantsByStatus: Partial<Record<TenantStatus, number>>;
+  devices: number;
+  monthlyRecurringCents: number;
+  openInvoices: number;
+  openInvoicesCents: number;
+  overdueInvoices: number;
+  overdueInvoicesCents: number;
+}

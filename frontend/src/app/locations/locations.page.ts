@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { ApiService } from '../core/api.service';
+import { AuthService } from '../core/auth.service';
 import { Location } from '../core/models';
 import { Notice } from '../core/notice';
 
@@ -15,7 +16,9 @@ import { Notice } from '../core/notice';
         <h1>Pontos &amp; Locais</h1>
         <p>Onde estão as suas TVs. Cada TV pertence a um local; use os locais para filtrar e agir em várias TVs de uma vez.</p>
       </div>
-      <button class="primary" (click)="openNew()">+ Novo local</button>
+      @if (auth.can('admin')) {
+        <button class="primary" (click)="openNew()">+ Novo local</button>
+      }
     </div>
 
     @if (notice.text(); as text) {
@@ -57,8 +60,10 @@ import { Notice } from '../core/notice';
                 }
               </td>
               <td class="row-actions">
-                <button class="secondary small" (click)="openEdit(location)">Editar</button>
-                <button class="danger small" (click)="remove(location)">Excluir</button>
+                @if (auth.can('admin')) {
+                  <button class="secondary small" (click)="openEdit(location)">Editar</button>
+                  <button class="danger small" (click)="remove(location)">Excluir</button>
+                }
               </td>
             </tr>
           }
@@ -93,6 +98,7 @@ import { Notice } from '../core/notice';
 })
 export class LocationsPage implements OnInit {
   private readonly api = inject(ApiService);
+  protected readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly items = signal<Location[]>([]);

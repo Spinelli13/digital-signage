@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
 import { ApiService } from '../core/api.service';
+import { AuthService } from '../core/auth.service';
 import { Campaign, CampaignPreview, Device, DeviceGroup, Location, Playlist } from '../core/models';
 import { Notice } from '../core/notice';
 import {
@@ -32,7 +33,9 @@ type IdSet = 'locationIds' | 'groupIds' | 'deviceIds';
         <h1>Campanhas</h1>
         <p>Uma playlist que só vale em certas datas, dias e horários, para as TVs que você escolher.</p>
       </div>
-      <button class="primary" (click)="openNew()">+ Nova campanha</button>
+      @if (auth.can('content')) {
+        <button class="primary" (click)="openNew()">+ Nova campanha</button>
+      }
     </div>
 
     @if (notice.text(); as text) {
@@ -65,9 +68,11 @@ type IdSet = 'locationIds' | 'groupIds' | 'deviceIds';
                 <span class="dot" [class]="badge(campaign).tone"></span><span [title]="badge(campaign).hint">{{ badge(campaign).label }}</span>
               </td>
               <td class="row-actions">
-                <button class="secondary small" (click)="openEdit(campaign)">Editar</button>
-                <button class="secondary small" (click)="togglePause(campaign)">{{ campaign.enabled ? 'Pausar' : 'Reativar' }}</button>
-                <button class="danger small" (click)="remove(campaign)">Excluir</button>
+                @if (auth.can('content')) {
+                  <button class="secondary small" (click)="openEdit(campaign)">Editar</button>
+                  <button class="secondary small" (click)="togglePause(campaign)">{{ campaign.enabled ? 'Pausar' : 'Reativar' }}</button>
+                  <button class="danger small" (click)="remove(campaign)">Excluir</button>
+                }
               </td>
             </tr>
           }
@@ -254,6 +259,7 @@ type IdSet = 'locationIds' | 'groupIds' | 'deviceIds';
 })
 export class CampaignsPage implements OnInit {
   private readonly api = inject(ApiService);
+  protected readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly campaigns = signal<Campaign[]>([]);

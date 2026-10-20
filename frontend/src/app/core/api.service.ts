@@ -23,15 +23,24 @@ import {
   EventRow,
   EventType,
   InventoryRow,
+  BillingInfo,
+  Invoice,
   Layout,
   LayoutRequest,
   LayoutTemplate,
   Location,
   LocationRequest,
+  Me,
   Media,
   MediaUrl,
   MonitoringSettings,
   MonitoringSettingsRequest,
+  PlatformOverview,
+  PlatformPlan,
+  PlatformPlanRequest,
+  PlatformSettings,
+  PlatformTenantRequest,
+  PlatformTenantUpdate,
   Playlist,
   PlaylistRequest,
   PlaysGroupBy,
@@ -39,6 +48,10 @@ import {
   ReleaseInfo,
   ReportRange,
   Summary,
+  TeamMember,
+  TeamMemberRequest,
+  TeamMemberUpdate,
+  TenantSummary,
   UptimeReport,
   WebContentRequest,
   WebhookTestResult,
@@ -135,6 +148,102 @@ export class ApiService {
   previewCampaigns(deviceId: number, at?: string): Observable<CampaignPreview> {
     const query = at ? `?deviceId=${deviceId}&at=${encodeURIComponent(at)}` : `?deviceId=${deviceId}`;
     return this.http.get<CampaignPreview>(this.url(`/campaigns/preview${query}`));
+  }
+
+  // ---------- equipe, conta e cobrança (fase 6) ----------
+  me(): Observable<Me> {
+    return this.http.get<Me>(this.url('/auth/me'));
+  }
+
+  /** Cada pessoa troca a própria senha (precisa da atual). */
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    return this.http.put<void>(this.url('/auth/password'), { currentPassword, newPassword });
+  }
+
+  team(): Observable<TeamMember[]> {
+    return this.http.get<TeamMember[]>(this.url('/users'));
+  }
+
+  createTeamMember(body: TeamMemberRequest): Observable<TeamMember> {
+    return this.http.post<TeamMember>(this.url('/users'), body);
+  }
+
+  updateTeamMember(id: number, body: TeamMemberUpdate): Observable<TeamMember> {
+    return this.http.put<TeamMember>(this.url(`/users/${id}`), body);
+  }
+
+  deleteTeamMember(id: number): Observable<void> {
+    return this.http.delete<void>(this.url(`/users/${id}`));
+  }
+
+  billing(): Observable<BillingInfo> {
+    return this.http.get<BillingInfo>(this.url('/billing'));
+  }
+
+  updateBillingProfile(body: { name?: string; billingEmail?: string; document?: string }): Observable<TenantSummary> {
+    return this.http.put<TenantSummary>(this.url('/billing/profile'), body);
+  }
+
+  // ---------- operação da plataforma ----------
+  platformOverview(): Observable<PlatformOverview> {
+    return this.http.get<PlatformOverview>(this.url('/platform/overview'));
+  }
+
+  platformTenants(): Observable<TenantSummary[]> {
+    return this.http.get<TenantSummary[]>(this.url('/platform/tenants'));
+  }
+
+  createPlatformTenant(body: PlatformTenantRequest): Observable<TenantSummary> {
+    return this.http.post<TenantSummary>(this.url('/platform/tenants'), body);
+  }
+
+  updatePlatformTenant(id: number, body: PlatformTenantUpdate): Observable<TenantSummary> {
+    return this.http.put<TenantSummary>(this.url(`/platform/tenants/${id}`), body);
+  }
+
+  platformPlans(): Observable<PlatformPlan[]> {
+    return this.http.get<PlatformPlan[]>(this.url('/platform/plans'));
+  }
+
+  createPlatformPlan(body: PlatformPlanRequest): Observable<PlatformPlan> {
+    return this.http.post<PlatformPlan>(this.url('/platform/plans'), body);
+  }
+
+  updatePlatformPlan(id: number, body: PlatformPlanRequest): Observable<PlatformPlan> {
+    return this.http.put<PlatformPlan>(this.url(`/platform/plans/${id}`), body);
+  }
+
+  deletePlatformPlan(id: number): Observable<void> {
+    return this.http.delete<void>(this.url(`/platform/plans/${id}`));
+  }
+
+  platformInvoices(status?: string, tenantId?: number | null): Observable<Invoice[]> {
+    return this.http.get<Invoice[]>(this.url('/platform/invoices'), { params: queryParams({ status, tenantId }) });
+  }
+
+  createPlatformInvoice(tenantId: number, body: { description: string; amountCents: number; dueDate: string }): Observable<Invoice> {
+    return this.http.post<Invoice>(this.url(`/platform/tenants/${tenantId}/invoices`), body);
+  }
+
+  payInvoice(id: number, method: string, note: string): Observable<Invoice> {
+    return this.http.post<Invoice>(this.url(`/platform/invoices/${id}/pay`), { method, note });
+  }
+
+  voidInvoice(id: number): Observable<Invoice> {
+    return this.http.post<Invoice>(this.url(`/platform/invoices/${id}/void`), {});
+  }
+
+  /** Roda o ciclo de cobrança agora (o sistema também roda sozinho a cada hora). */
+  runBilling(): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(this.url('/platform/billing/run'), {});
+  }
+
+  platformSettings(): Observable<PlatformSettings> {
+    return this.http.get<PlatformSettings>(this.url('/platform/settings'));
+  }
+
+  updatePlatformSettings(body: Partial<PlatformSettings>): Observable<PlatformSettings> {
+    return this.http.put<PlatformSettings>(this.url('/platform/settings'), body);
   }
 
   // layouts (fase 5)

@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { ApiService } from '../core/api.service';
+import { AuthService } from '../core/auth.service';
 import { Layout, LayoutTemplate, Playlist } from '../core/models';
 import { Notice } from '../core/notice';
 import {
@@ -29,7 +30,9 @@ import {
         <h1>Layouts</h1>
         <p>Divida a tela da TV em zonas: o conteúdo principal e, por exemplo, uma faixa lateral com avisos ou um QR Code. Sem layout, a TV exibe um conteúdo só, em tela cheia.</p>
       </div>
-      <button class="primary" (click)="openNew()">+ Novo layout</button>
+      @if (auth.can('content')) {
+        <button class="primary" (click)="openNew()">+ Novo layout</button>
+      }
     </div>
 
     @if (notice.text(); as text) {
@@ -70,8 +73,10 @@ import {
               </small>
             </div>
             <div class="buttons">
-              <button class="secondary small" (click)="openEdit(layout)">Editar</button>
-              <button class="danger small" (click)="remove(layout)">Excluir</button>
+              @if (auth.can('content')) {
+                <button class="secondary small" (click)="openEdit(layout)">Editar</button>
+                <button class="danger small" (click)="remove(layout)">Excluir</button>
+              }
             </div>
           </div>
         }
@@ -201,6 +206,7 @@ import {
 })
 export class LayoutsPage implements OnInit {
   private readonly api = inject(ApiService);
+  protected readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly layouts = signal<Layout[]>([]);

@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { ApiService } from '../core/api.service';
+import { AuthService } from '../core/auth.service';
 import { Device, DeviceGroup, Playlist } from '../core/models';
 import { Notice } from '../core/notice';
 
@@ -16,7 +17,9 @@ import { Notice } from '../core/notice';
         <h1>Grupos</h1>
         <p>Conjuntos de TVs para agir em várias de uma vez: escolher a playlist, atualizar o aplicativo ou filtrar.</p>
       </div>
-      <button class="primary" (click)="openNew()">+ Novo grupo</button>
+      @if (auth.can('admin')) {
+        <button class="primary" (click)="openNew()">+ Novo grupo</button>
+      }
     </div>
 
     @if (notice.text(); as text) {
@@ -65,9 +68,11 @@ import { Notice } from '../core/notice';
                 </select>
               </td>
               <td class="row-actions">
-                <button class="secondary small" (click)="openEdit(group)">Editar</button>
-                <button class="secondary small" [disabled]="group.deviceCount === 0" (click)="checkUpdate(group)">Atualizar app</button>
-                <button class="danger small" (click)="remove(group)">Excluir</button>
+                @if (auth.can('admin')) {
+                  <button class="secondary small" (click)="openEdit(group)">Editar</button>
+                  <button class="secondary small" [disabled]="group.deviceCount === 0" (click)="checkUpdate(group)">Atualizar app</button>
+                  <button class="danger small" (click)="remove(group)">Excluir</button>
+                }
               </td>
             </tr>
           }
@@ -119,6 +124,7 @@ import { Notice } from '../core/notice';
 })
 export class GroupsPage implements OnInit {
   private readonly api = inject(ApiService);
+  protected readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly groups = signal<DeviceGroup[]>([]);

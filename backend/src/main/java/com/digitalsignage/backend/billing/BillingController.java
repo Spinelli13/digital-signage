@@ -43,6 +43,8 @@ public class BillingController {
 
 	public record BillingResponse(
 			TenantSummary tenant,
+			/** CPF/CNPJ cadastrado (o resumo do cliente não o traz). */
+			String document,
 			List<InvoiceResponse> invoices,
 			/** Como pagar (texto da operação) e como falar com ela. */
 			String companyName,
@@ -89,6 +91,7 @@ public class BillingController {
 		PlatformSettings platform = settings.findById(PlatformSettings.ID).orElseThrow();
 		return new BillingResponse(
 				summaries.of(tenant),
+				tenant.getDocument(),
 				// só as faturas DESTE cliente (a consulta recebe o cliente: as faturas não passam pelo isolamento automático)
 				invoices.findByTenantIdOrderByCreatedAtDescIdDesc(tenant.getId()).stream().map(invoice -> InvoiceResponse.of(invoice, tenant.getName(), today)).toList(),
 				platform.getCompanyName(), platform.getPaymentInstructions(), platform.getSupportEmail(),

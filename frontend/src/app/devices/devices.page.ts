@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { ApiService } from '../core/api.service';
+import { AuthService } from '../core/auth.service';
 import { hasFilters } from '../core/device-filters';
 import { deviceState, timeAgo } from '../core/format';
 import {
@@ -33,10 +34,12 @@ type LocationChoice = string;
   template: `
     <div class="head">
       <div><h1>Dispositivos</h1><p>Gerencie todas as telas e Players conectados.</p></div>
-      <div class="head-actions">
-        <button class="secondary" (click)="updateAll()" title="Pede a todas as TVs que verifiquem agora se há versão nova do Player">⬆ Atualizar todas as TVs</button>
-        <button class="primary" (click)="openActivate()">+ Adicionar dispositivo</button>
-      </div>
+      @if (auth.can('admin')) {
+        <div class="head-actions">
+          <button class="secondary" (click)="updateAll()" title="Pede a todas as TVs que verifiquem agora se há versão nova do Player">⬆ Atualizar todas as TVs</button>
+          <button class="primary" (click)="openActivate()">+ Adicionar dispositivo</button>
+        </div>
+      }
     </div>
 
     @if (notice.text(); as text) {
@@ -79,7 +82,7 @@ type LocationChoice = string;
       <span class="count">{{ devices().length }} TV(s)</span>
     </div>
 
-    @if (selectedCount() > 0) {
+    @if (selectedCount() > 0 && auth.can('content')) {
       <div class="bulk" role="region" aria-label="Ações nas TVs selecionadas">
         <b>{{ selectedCount() }} selecionada(s)</b>
         <select aria-label="Playlist das selecionadas" (change)="onBulkPlaylist($event)">
@@ -98,29 +101,31 @@ type LocationChoice = string;
             }
           </select>
         }
-        <button class="secondary small" (click)="bulkSimple('DISABLE')">Desativar</button>
-        <button class="secondary small" (click)="bulkSimple('ENABLE')">Reativar</button>
-        <button class="secondary small" (click)="bulkSimple('CHECK_UPDATE')">Atualizar app</button>
-        <select aria-label="Mover as selecionadas para um local" (change)="onBulkLocation($event)">
-          <option value="">Mover para local…</option>
-          <option value="none">Sem local</option>
-          @for (location of locations(); track location.id) {
-            <option [value]="location.id">{{ location.name }}</option>
+        @if (auth.can('admin')) {
+          <button class="secondary small" (click)="bulkSimple('DISABLE')">Desativar</button>
+          <button class="secondary small" (click)="bulkSimple('ENABLE')">Reativar</button>
+          <button class="secondary small" (click)="bulkSimple('CHECK_UPDATE')">Atualizar app</button>
+          <select aria-label="Mover as selecionadas para um local" (change)="onBulkLocation($event)">
+            <option value="">Mover para local…</option>
+            <option value="none">Sem local</option>
+            @for (location of locations(); track location.id) {
+              <option [value]="location.id">{{ location.name }}</option>
+            }
+          </select>
+          @if (groups().length > 0) {
+            <select aria-label="Adicionar as selecionadas a um grupo" (change)="onBulkGroup($event, true)">
+              <option value="">Adicionar ao grupo…</option>
+              @for (group of groups(); track group.id) {
+                <option [value]="group.id">{{ group.name }}</option>
+              }
+            </select>
+            <select aria-label="Tirar as selecionadas de um grupo" (change)="onBulkGroup($event, false)">
+              <option value="">Tirar do grupo…</option>
+              @for (group of groups(); track group.id) {
+                <option [value]="group.id">{{ group.name }}</option>
+              }
+            </select>
           }
-        </select>
-        @if (groups().length > 0) {
-          <select aria-label="Adicionar as selecionadas a um grupo" (change)="onBulkGroup($event, true)">
-            <option value="">Adicionar ao grupo…</option>
-            @for (group of groups(); track group.id) {
-              <option [value]="group.id">{{ group.name }}</option>
-            }
-          </select>
-          <select aria-label="Tirar as selecionadas de um grupo" (change)="onBulkGroup($event, false)">
-            <option value="">Tirar do grupo…</option>
-            @for (group of groups(); track group.id) {
-              <option [value]="group.id">{{ group.name }}</option>
-            }
-          </select>
         }
         <button class="secondary small" (click)="clearSelection()">Limpar seleção</button>
       </div>
@@ -167,7 +172,7 @@ type LocationChoice = string;
                 }</td>
               <td>
                 @if (device.status === 'ACTIVE') {
-                  <select [ngModel]="device.currentPlaylistId" (ngModelChange)="assignPlaylist(device, $event)">
+                  <select [ngModel]="device.currentPlaylistId" [disabled]="!auth.can('content')" (ngModelChange)="assignPlaylist(device, $event)">
                     <option [ngValue]="null">Nenhuma playlist</option>
                     @for (playlist of playlists(); track playlist.id) {
                       <option [ngValue]="playlist.id">{{ playlist.name }}</option>
@@ -188,14 +193,18 @@ type LocationChoice = string;
               </td>
               <td class="row-actions">
                 <a class="secondary small btn" [routerLink]="['/dispositivos', device.id, 'historico']" title="Quando conectou, caiu, mudou de conteúdo e o que o Player relatou">Histórico</a>
-                <button class="secondary small" (click)="openEdit(device)">Editar</button>
-                @if (device.status === 'ACTIVE') {
-                  <button class="secondary small" (click)="checkUpdate(device)" title="Pede que esta TV verifique agora se há versão nova do Player">Atualizar app</button>
-                  <button class="secondary small" (click)="setStatus(device, 'disabled')">Desativar</button>
-                } @else if (device.status === 'DISABLED') {
-                  <button class="secondary small" (click)="setStatus(device, 'active')">Reativar</button>
+                @if (auth.can('content')) {
+                  <button class="secondary small" (click)="openEdit(device)">Editar</button>
                 }
-                <button class="danger small" (click)="remove(device)">Excluir</button>
+                @if (auth.can('admin')) {
+                  @if (device.status === 'ACTIVE') {
+                    <button class="secondary small" (click)="checkUpdate(device)" title="Pede que esta TV verifique agora se há versão nova do Player">Atualizar app</button>
+                    <button class="secondary small" (click)="setStatus(device, 'disabled')">Desativar</button>
+                  } @else if (device.status === 'DISABLED') {
+                    <button class="secondary small" (click)="setStatus(device, 'active')">Reativar</button>
+                  }
+                  <button class="danger small" (click)="remove(device)">Excluir</button>
+                }
               </td>
             </tr>
           }
@@ -217,6 +226,7 @@ type LocationChoice = string;
           } @else {
             <h2>Editar dispositivo</h2>
           }
+          @if (auth.can('admin')) {
           <div class="field">
             <label for="name">Nome do dispositivo</label>
             <input id="name" name="name" placeholder="Ex.: TV Recepção" required
@@ -236,6 +246,9 @@ type LocationChoice = string;
                 [ngModel]="newLocation()" (ngModelChange)="newLocation.set($event)" />
             }
           </div>
+          } @else {
+            <p class="label">{{ name() }} — como Editor, você escolhe o layout da tela. Nome, local e grupos são do Administrador.</p>
+          }
           @if (modal() === 'edit' && layouts().length > 0) {
             <div class="field">
               <label for="layout">Layout da tela</label>
@@ -247,7 +260,7 @@ type LocationChoice = string;
               </select>
             </div>
           }
-          @if (groups().length > 0) {
+          @if (groups().length > 0 && auth.can('admin')) {
             <div class="field">
               <label>Grupos</label>
               <div class="chips">
@@ -296,6 +309,7 @@ type LocationChoice = string;
 })
 export class DevicesPage implements OnInit {
   private readonly api = inject(ApiService);
+  protected readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
 
@@ -602,8 +616,8 @@ export class DevicesPage implements OnInit {
           })
         : this.api.updateDevice(this.editing!.id, {
             name: this.name().trim(),
-            groupIds,
-            ...locationFields,
+            // O Editor só escolhe o layout: nome, local e grupos seriam recusados pelo servidor (403).
+            ...(this.auth.can('admin') ? { groupIds, ...locationFields } : {}),
             ...(this.layoutChoice() === '' ? {} : { layoutId: Number(this.layoutChoice()) }),
           });
 

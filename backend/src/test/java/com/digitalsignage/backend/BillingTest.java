@@ -262,6 +262,8 @@ class BillingTest extends AbstractApiTest {
 		mvc.perform(withToken(a.token(), put("/api/v1/billing/profile").contentType(MediaType.APPLICATION_JSON)
 				.content("{\"name\":\"Cliente A Ltda\",\"billingEmail\":\"financeiro@a.com\",\"document\":\"12.345.678/0001-90\"}")))
 				.andExpect(status().isOk()).andExpect(jsonPath("$.name").value("Cliente A Ltda")).andExpect(jsonPath("$.billingEmail").value("financeiro@a.com"));
+		// o painel mostra o CPF/CNPJ cadastrado (o resumo do cliente não o traz)
+		mvc.perform(withToken(a.token(), get("/api/v1/billing"))).andExpect(status().isOk()).andExpect(jsonPath("$.document").value("12.345.678/0001-90"));
 		mvc.perform(withToken(a.token(), put("/api/v1/billing/profile").contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"cliente b\"}"))).andExpect(status().isConflict());
 		mvc.perform(withToken(a.token(), put("/api/v1/billing/profile").contentType(MediaType.APPLICATION_JSON).content("{\"billingEmail\":\"nao-e-email\"}"))).andExpect(status().isBadRequest());
 	}

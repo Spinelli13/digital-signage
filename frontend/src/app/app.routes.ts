@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { authGuard } from './core/auth.guard';
+import { capabilityGuard } from './core/role.guard';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./login/login.page').then((m) => m.LoginPage) },
@@ -23,6 +24,43 @@ export const routes: Routes = [
       { path: 'locais', loadComponent: () => import('./locations/locations.page').then((m) => m.LocationsPage) },
       { path: 'grupos', loadComponent: () => import('./groups/groups.page').then((m) => m.GroupsPage) },
       { path: 'biblioteca', loadComponent: () => import('./media/media.page').then((m) => m.MediaPage) },
+      {
+        path: 'equipe',
+        canActivate: [capabilityGuard('admin')],
+        loadComponent: () => import('./team/team.page').then((m) => m.TeamPage),
+      },
+      {
+        path: 'plano',
+        canActivate: [capabilityGuard('admin')],
+        loadComponent: () => import('./billing/billing.page').then((m) => m.BillingPage),
+      },
+      {
+        path: 'plataforma',
+        canActivate: [capabilityGuard('platform')],
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            loadComponent: () => import('./platform/platform-overview.page').then((m) => m.PlatformOverviewPage),
+          },
+          {
+            path: 'clientes',
+            loadComponent: () => import('./platform/platform-clients.page').then((m) => m.PlatformClientsPage),
+          },
+          {
+            path: 'planos',
+            loadComponent: () => import('./platform/platform-plans.page').then((m) => m.PlatformPlansPage),
+          },
+          {
+            path: 'faturas',
+            loadComponent: () => import('./platform/platform-invoices.page').then((m) => m.PlatformInvoicesPage),
+          },
+          {
+            path: 'configuracoes',
+            loadComponent: () => import('./platform/platform-settings.page').then((m) => m.PlatformSettingsPage),
+          },
+        ],
+      },
       { path: 'downloads', loadComponent: () => import('./downloads/downloads.page').then((m) => m.DownloadsPage) },
       { path: 'playlists', loadComponent: () => import('./playlists/playlists.page').then((m) => m.PlaylistsPage) },
       {

@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { ApiService } from '../core/api.service';
+import { AuthService } from '../core/auth.service';
 import { formatDateTime, timeAgo } from '../core/format';
 import { ALERT_LABELS } from '../core/monitoring-labels';
 import { Alert, MonitoringSettings, MonitoringSettingsRequest, WebhookTestResult } from '../core/models';
@@ -72,6 +73,7 @@ const REFRESH_MS = 15_000;
       }
     </div>
 
+    @if (auth.can('admin')) {
     <div class="card settings">
       <h3>Quando avisar</h3>
       <div class="fields">
@@ -122,6 +124,7 @@ const REFRESH_MS = 15_000;
         <button class="primary" (click)="save()" [disabled]="saving()">{{ saving() ? 'Salvando…' : 'Salvar configurações' }}</button>
       </div>
     </div>
+    }
   `,
   styles: `
     .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
@@ -138,6 +141,7 @@ const REFRESH_MS = 15_000;
 })
 export class AlertsPage implements OnInit {
   private readonly api = inject(ApiService);
+  protected readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly alerts = signal<Alert[]>([]);

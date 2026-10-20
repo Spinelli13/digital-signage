@@ -3,6 +3,7 @@ import { Component, ElementRef, OnInit, effect, inject, signal, viewChild } from
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '../core/api.service';
+import { AuthService } from '../core/auth.service';
 import { ErrorService } from '../core/error.service';
 import { formatBytes, mediaTypeLabel } from '../core/format';
 import { Media } from '../core/models';
@@ -20,14 +21,16 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
   template: `
     <div class="head">
       <div><h1>Biblioteca de Mídia</h1><p>Imagens (JPG, PNG, WEBP), vídeos (MP4), páginas da web e QR Codes disponíveis para as playlists.</p></div>
-      <div class="head-actions">
-        <button class="secondary" (click)="openWeb()">🌐 Página web</button>
-        <button class="secondary" (click)="openQr()">▦ QR Code</button>
-        <label class="primary upload">
-          + Enviar mídia
-          <input type="file" multiple [accept]="accepted" (change)="onFiles($event)" [disabled]="uploading()" hidden />
-        </label>
-      </div>
+      @if (auth.can('content')) {
+        <div class="head-actions">
+          <button class="secondary" (click)="openWeb()">🌐 Página web</button>
+          <button class="secondary" (click)="openQr()">▦ QR Code</button>
+          <label class="primary upload">
+            + Enviar mídia
+            <input type="file" multiple [accept]="accepted" (change)="onFiles($event)" [disabled]="uploading()" hidden />
+          </label>
+        </div>
+      }
     </div>
 
     @if (notice.text(); as text) {
@@ -59,7 +62,9 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
                 <small class="url" [title]="media.url">{{ media.url }}</small>
               }
             </div>
-            <button class="danger small" (click)="remove(media)">Excluir</button>
+            @if (auth.can('content')) {
+              <button class="danger small" (click)="remove(media)">Excluir</button>
+            }
           </div>
         }
       </div>
@@ -153,6 +158,7 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
 })
 export class MediaPage implements OnInit {
   private readonly api = inject(ApiService);
+  protected readonly auth = inject(AuthService);
   private readonly errors = inject(ErrorService);
 
   readonly accepted = ACCEPTED;

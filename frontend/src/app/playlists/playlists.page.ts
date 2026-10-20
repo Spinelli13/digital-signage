@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { ApiService } from '../core/api.service';
+import { AuthService } from '../core/auth.service';
 import { Playlist } from '../core/models';
 import { formatDuration, totalSeconds } from './playlist-editor';
 
@@ -11,7 +12,9 @@ import { formatDuration, totalSeconds } from './playlist-editor';
   template: `
     <div class="head">
       <div><h1>Playlists</h1><p>Defina a ordem e a duração dos conteúdos exibidos nas telas.</p></div>
-      <a class="primary btn" routerLink="/playlists/nova">+ Nova playlist</a>
+      @if (auth.can('content')) {
+        <a class="primary btn" routerLink="/playlists/nova">+ Nova playlist</a>
+      }
     </div>
 
     <div class="card">
@@ -27,8 +30,10 @@ import { formatDuration, totalSeconds } from './playlist-editor';
               <td>{{ duration(playlist) }}</td>
               <td>v{{ playlist.configVersion }}</td>
               <td class="row-actions">
-                <a class="secondary small btn" [routerLink]="['/playlists', playlist.id]">Editar</a>
-                <button class="danger small" (click)="remove(playlist)">Excluir</button>
+                <a class="secondary small btn" [routerLink]="['/playlists', playlist.id]">{{ auth.can('content') ? 'Editar' : 'Ver' }}</a>
+                @if (auth.can('content')) {
+                  <button class="danger small" (click)="remove(playlist)">Excluir</button>
+                }
               </td>
             </tr>
           }
@@ -45,6 +50,7 @@ import { formatDuration, totalSeconds } from './playlist-editor';
 })
 export class PlaylistsPage implements OnInit {
   private readonly api = inject(ApiService);
+  protected readonly auth = inject(AuthService);
 
   readonly items = signal<Playlist[]>([]);
 

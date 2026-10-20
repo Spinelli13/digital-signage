@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { ApiService } from '../core/api.service';
+import { AuthService } from '../core/auth.service';
 import { mediaTypeLabel } from '../core/format';
 import { Media, Playlist, PlaylistItem } from '../core/models';
 import { MediaThumb } from '../media/media-thumb';
@@ -19,9 +20,11 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
       </div>
       <div class="top-actions">
         <a class="secondary btn" routerLink="/playlists">Voltar</a>
-        <button class="primary" (click)="save()" [disabled]="busy() || !canSave()">
-          {{ busy() ? 'Publicando…' : 'Publicar alterações' }}
-        </button>
+        @if (auth.can('content')) {
+          <button class="primary" (click)="save()" [disabled]="busy() || !canSave()">
+            {{ busy() ? 'Publicando…' : 'Publicar alterações' }}
+          </button>
+        }
       </div>
     </div>
 
@@ -101,6 +104,7 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
 export class PlaylistEditorPage implements OnInit {
   readonly typeLabel = mediaTypeLabel;
   private readonly api = inject(ApiService);
+  protected readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
