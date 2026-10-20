@@ -125,7 +125,7 @@ class HttpPlayerApi(
         private const val MAX_REDIRECTS = 5
         private val JSON = "application/json; charset=utf-8".toMediaType()
 
-        fun defaultClient(): OkHttpClient = OkHttpClient.Builder()
+        fun defaultClient(): OkHttpClient = TlsTrust.apply(OkHttpClient.Builder())
             // Redirecionamentos são tratados à mão (ver download) para não vazar o token.
             .followRedirects(false)
             .followSslRedirects(false)

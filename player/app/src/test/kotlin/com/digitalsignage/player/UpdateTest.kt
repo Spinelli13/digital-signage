@@ -6,10 +6,17 @@ import com.digitalsignage.player.update.ReleaseJson
 import com.digitalsignage.player.update.UpdateCheck
 import com.digitalsignage.player.update.UpdateChecker
 import com.digitalsignage.player.update.UpdateIntegrityException
+import com.digitalsignage.player.update.UpdateRequestTrigger
+import com.digitalsignage.player.update.waitForNextCheck
 import com.digitalsignage.player.update.UpdateWindow
 import java.io.File
 import java.io.IOException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -203,6 +210,84 @@ class UpdateTest {
         }
 
         assertFalse(File(target.path + ".part").exists())
+    }
+
+    // --- pedido de verificação vindo do painel ---
+
+    @Test
+    fun `the first heartbeat with a request triggers one check, the following ones do not`() {
+        var handled = 0L
+        var requests = 0
+        val trigger = UpdateRequestTrigger(lastHandled = { handled }, remember = { handled = it }, request = { requests++ })
+
+        trigger.onHeartbeat(100)
+        trigger.onHeartbeat(100)
+        trigger.onHeartbeat(100)
+
+        assertEquals(1, requests)
+        assertEquals(100L, handled)
+    }
+
+    @Test
+    fun `a newer request triggers another check and zero never does`() {
+        var handled = 0L
+        var requests = 0
+        val trigger = UpdateRequestTrigger(lastHandled = { handled }, remember = { handled = it }, request = { requests++ })
+
+        trigger.onHeartbeat(0)
+        trigger.onHeartbeat(100)
+        trigger.onHeartbeat(250)
+
+        assertEquals(2, requests)
+        assertEquals(250L, handled)
+    }
+
+    /** Reiniciar a TV não pode repetir um pedido que já foi tratado (o valor fica guardado no aparelho). */
+    @Test
+    fun `an already handled request is not repeated after the player restarts`() {
+        var requests = 0
+        val trigger = UpdateRequestTrigger(lastHandled = { 100L }, remember = { }, request = { requests++ })
+
+        trigger.onHeartbeat(100)
+
+        assertEquals(0, requests)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `waiting for the next check wakes up immediately when the panel asks`() = runTest {
+        val requests = Channel<Unit>(Channel.CONFLATED)
+        var requested: Boolean? = null
+        val job = launch { requested = waitForNextCheck(requests, 30 * 60_000L) }
+
+        advanceTimeBy(1_000)
+        assertNull("ainda esperando o intervalo", requested)
+
+        requests.trySend(Unit)
+        advanceTimeBy(1)
+        job.join()
+
+        assertEquals(true, requested)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `waiting for the next check ends by itself after the interval`() = runTest {
+        val requests = Channel<Unit>(Channel.CONFLATED)
+
+        assertFalse(waitForNextCheck(requests, 30 * 60_000L))
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `several requests while busy count as a single check`() = runTest {
+        val requests = Channel<Unit>(Channel.CONFLATED)
+        requests.trySend(Unit)
+        requests.trySend(Unit)
+        requests.trySend(Unit)
+
+        assertTrue(waitForNextCheck(requests, 1_000))
+        assertFalse(waitForNextCheck(requests, 1_000))
     }
 
     // --- janela de horário ---

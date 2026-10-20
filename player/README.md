@@ -41,7 +41,7 @@ cd player
 
 ## Atualização automática (sem Google Play)
 
-O Player consulta `https://signage-downloads.pages.dev/latest.json` a cada 6 horas. Havendo versão mais nova, baixa o APK, confere o SHA‑256 e a versão e o entrega ao instalador do Android; depois da atualização o app reabre sozinho. Detalhes e **limitações medidas** (o Android pede confirmação na TV) em [docs/INSTALACAO_TV.md](../docs/INSTALACAO_TV.md#6-atualizacao-automatica).
+O Player consulta `https://signage-downloads.pages.dev/latest.json` a cada 30 minutos (e na hora, quando o painel pede em **Dispositivos → Atualizar app**). Havendo versão mais nova, baixa o APK, confere o SHA‑256 e a versão e o entrega ao instalador do Android; depois da atualização o app reabre sozinho. Detalhes e **limitações medidas** (o Android pede confirmação na TV) em [docs/INSTALACAO_TV.md](../docs/INSTALACAO_TV.md#6-atualizacao-automatica).
 
 - Libere uma vez "instalar apps desconhecidos" para o Player: `adb shell appops set com.digitalsignage.player REQUEST_INSTALL_PACKAGES allow`.
 - Se ninguém confirmar em 10 minutos, o Player cancela a instalação e volta a exibir.
@@ -51,7 +51,7 @@ O Player consulta `https://signage-downloads.pages.dev/latest.json` a cada 6 hor
 
 ```bash
 node scripts/create-release-key.mjs        # uma única vez: cria a chave em ~/.signage (FAÇA BACKUP)
-node scripts/release-player.mjs --notes "O que mudou"   # compila, assina e publica o APK na lista de downloads
+node scripts/release-player.mjs --notes "O que mudou"   # compila, assina e publica o APK + manuais (versão automática; o CI faz o mesmo a cada push em player/**)
 ```
 
 Antes, aumente `versionCode`/`versionName` em `app/build.gradle.kts`. A chave **nunca** vai para o git (`player/keystore.properties` está ignorado).

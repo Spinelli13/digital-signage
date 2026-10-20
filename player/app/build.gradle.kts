@@ -41,8 +41,10 @@ android {
         applicationId = "com.digitalsignage.player"
         minSdk = 21
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.3.0"
+        // O script/CI de release passa -PversionCode/-PversionName (ver scripts/release-player.mjs). Em desenvolvimento
+        // fica 1 / 0.0.0-dev (e a atualização automática vem desligada nas builds debug, ver Settings).
+        versionCode = (project.findProperty("versionCode") as String?)?.toInt() ?: 1
+        versionName = (project.findProperty("versionName") as String?) ?: "0.0.0-dev"
 
         buildConfigField("String", "DEFAULT_SERVER_URL", "\"$serverUrl\"")
         buildConfigField("String", "DEFAULT_UPDATE_URL", "\"$updateUrl\"")
@@ -104,6 +106,7 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    testImplementation("com.squareup.okhttp3:okhttp-tls:4.12.0")
     // No android.jar as classes org.json são stubs; nos testes JVM precisamos da implementação real.
     testImplementation("org.json:json:20240303")
 }

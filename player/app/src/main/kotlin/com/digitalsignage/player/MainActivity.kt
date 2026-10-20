@@ -24,6 +24,7 @@ import com.digitalsignage.player.errors.ErrorReporter
 import com.digitalsignage.player.engine.PlayerEngine
 import com.digitalsignage.player.sync.ConfigSync
 import com.digitalsignage.player.update.UpdateManager
+import com.digitalsignage.player.update.UpdateRequestTrigger
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -66,6 +67,12 @@ class MainActivity : AppCompatActivity() {
 
         val cache = MediaCache(java.io.File(filesDir, "media"))
         val api = HttpPlayerApi(baseUrl = { settings.serverUrl })
+        val updates = UpdateManager(applicationContext, settings)
+        val updateTrigger = UpdateRequestTrigger(
+            lastHandled = { settings.lastUpdateToken },
+            remember = { settings.lastUpdateToken = it },
+            request = { updates.requestCheck() },
+        )
         engine = PlayerEngine(
             api = api,
             sync = ConfigSync(api, api, cache, settings),
@@ -73,6 +80,7 @@ class MainActivity : AppCompatActivity() {
             token = { settings.deviceToken },
             playerVersion = BuildConfig.VERSION_NAME,
             onError = { reporter.report(it) },
+            onUpdateCheckRequested = updateTrigger::onHeartbeat,
         )
         // O mesmo ConfigSync não é compartilhado com a Activity: o Slideshow só lê o cache.
         slideshow = Slideshow(
@@ -109,7 +117,6 @@ class MainActivity : AppCompatActivity() {
         startEngine()
 
         // Atualização automática do próprio app pelo site de downloads (sem Google Play).
-        val updates = UpdateManager(applicationContext, settings)
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) { updates.run() }
         }

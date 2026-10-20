@@ -6,6 +6,7 @@ import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.digitalsignage.player.data.TlsTrust
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
@@ -16,7 +17,7 @@ class UpdateIntegrityException(message: String) : IOException(message)
  * Um APK corrompido ou adulterado nunca chega ao instalador.
  */
 class ApkDownloader(
-    private val http: OkHttpClient = OkHttpClient.Builder()
+    private val http: OkHttpClient = TlsTrust.apply(OkHttpClient.Builder())
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
         .build(),

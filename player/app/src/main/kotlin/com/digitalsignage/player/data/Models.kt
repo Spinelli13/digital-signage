@@ -33,7 +33,11 @@ data class PlayerConfig(
 )
 
 /** O que o servidor quer que o Player exiba agora (resposta do heartbeat). */
-data class Desired(val playlistId: Long?, val configVersion: Long)
+/**
+ * [updateCheckToken] muda quando o administrador pede, no painel, que a TV verifique atualização do Player
+ * (0 = nunca pediu). A TV só reage a valores que ainda não tratou.
+ */
+data class Desired(val playlistId: Long?, val configVersion: Long, val updateCheckToken: Long = 0)
 
 /** Config junto com o JSON original, que é o que fica persistido no aparelho. */
 data class FetchedConfig(val config: PlayerConfig, val raw: String)
@@ -79,6 +83,7 @@ object Json {
         return Desired(
             playlistId = if (json.isNull("playlistId")) null else json.getLong("playlistId"),
             configVersion = json.optLong("configVersion"),
+            updateCheckToken = json.optLong("updateCheckToken", 0),
         )
     }
 

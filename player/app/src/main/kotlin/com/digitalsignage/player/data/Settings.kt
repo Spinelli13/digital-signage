@@ -36,8 +36,9 @@ class Settings(context: Context) : ConfigStore {
             prefs.edit().putString(KEY_UPDATE_URL, value.trim()).commit()
         }
 
+    /** Ligada por padrão no APK de release; nas builds de desenvolvimento (debug) começa desligada. */
     var autoUpdate: Boolean
-        get() = prefs.getBoolean(KEY_AUTO_UPDATE, true)
+        get() = prefs.getBoolean(KEY_AUTO_UPDATE, !BuildConfig.DEBUG)
         set(value) {
             prefs.edit().putBoolean(KEY_AUTO_UPDATE, value).commit()
         }
@@ -54,6 +55,13 @@ class Settings(context: Context) : ConfigStore {
         get() = prefs.getString(KEY_LAST_CRASH, null)
         set(value) {
             prefs.edit().putString(KEY_LAST_CRASH, value).commit()
+        }
+
+    /** Último pedido de verificação de atualização (vindo do painel) que este aparelho já tratou. */
+    var lastUpdateToken: Long
+        get() = prefs.getLong(KEY_UPDATE_TOKEN, 0)
+        set(value) {
+            prefs.edit().putLong(KEY_UPDATE_TOKEN, value).commit()
         }
 
     /** Último resultado da verificação/instalação de atualização (para diagnóstico). */
@@ -94,6 +102,7 @@ class Settings(context: Context) : ConfigStore {
         const val KEY_AUTO_UPDATE = "auto_update"
         const val KEY_UPDATE_WINDOW = "update_window"
         const val KEY_UPDATE_STATUS = "update_status"
+        const val KEY_UPDATE_TOKEN = "update_token"
         const val KEY_LAST_CRASH = "last_crash"
     }
 

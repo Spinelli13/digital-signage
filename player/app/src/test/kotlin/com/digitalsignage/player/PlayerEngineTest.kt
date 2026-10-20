@@ -150,6 +150,50 @@ class PlayerEngineTest {
     }
 
     @Test
+    fun `passes a panel request for an update check to the app on every heartbeat that carries it`() = runTest {
+        val a = itemFor(1, imgA)
+        downloader.files[a.url] = imgA
+        val tokens = mutableListOf<Long>()
+        api.registerResponse = { active() }
+        api.heartbeatResponse = { Desired(5, 1, updateCheckToken = 777) }
+        api.configResponse = { configOf(5, 1, a) }
+        val cache = MediaCache(File(folder.root, "media"))
+        val store = InMemoryStore()
+        val engine = PlayerEngine(
+            api, ConfigSync(api, downloader, cache, store), store, token = { "tok" }, playerVersion = "0.2.0",
+            timing = timing, onUpdateCheckRequested = { tokens += it },
+        )
+
+        startEngine(engine)
+        advanceTimeBy(30_001)
+        runCurrent()
+
+        assertEquals(listOf(777L, 777L), tokens.take(2))
+    }
+
+    @Test
+    fun `does not call the update callback when no check was requested`() = runTest {
+        val a = itemFor(1, imgA)
+        downloader.files[a.url] = imgA
+        var calls = 0
+        api.registerResponse = { active() }
+        api.heartbeatResponse = { Desired(5, 1) }
+        api.configResponse = { configOf(5, 1, a) }
+        val cache = MediaCache(File(folder.root, "media"))
+        val store = InMemoryStore()
+        val engine = PlayerEngine(
+            api, ConfigSync(api, downloader, cache, store), store, token = { "tok" }, playerVersion = "0.2.0",
+            timing = timing, onUpdateCheckRequested = { calls++ },
+        )
+
+        startEngine(engine)
+        advanceTimeBy(30_001)
+        runCurrent()
+
+        assertEquals(0, calls)
+    }
+
+    @Test
     fun `heartbeat reports the version actually synced, not the one the server wants`() = runTest {
         val a = itemFor(1, imgA)
         downloader.files[a.url] = imgA

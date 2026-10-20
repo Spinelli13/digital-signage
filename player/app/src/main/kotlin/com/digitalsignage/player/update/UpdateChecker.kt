@@ -4,6 +4,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.digitalsignage.player.data.TlsTrust
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
@@ -17,7 +18,7 @@ sealed interface UpdateCheck {
 }
 
 class UpdateChecker(
-    private val http: OkHttpClient = OkHttpClient.Builder()
+    private val http: OkHttpClient = TlsTrust.apply(OkHttpClient.Builder())
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .build(),

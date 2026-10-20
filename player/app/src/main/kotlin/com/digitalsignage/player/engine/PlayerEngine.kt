@@ -55,6 +55,8 @@ class PlayerEngine(
     private val timing: Timing = Timing(),
     /** Recebe a mensagem de cada falha para o usuário ver (ver ErrorReporter). Nunca interrompe a reprodução. */
     private val onError: (String) -> Unit = {},
+    /** Chamado a cada heartbeat que traz um pedido de verificação de atualização (valor do pedido). */
+    private val onUpdateCheckRequested: (Long) -> Unit = {},
 ) {
 
     private val mutableState = MutableStateFlow<EngineState>(EngineState.Starting)
@@ -119,6 +121,7 @@ class PlayerEngine(
 
         while (isActive) {
             val desired = api.heartbeat(token(), playerVersion, store.load()?.configVersion ?: 0)
+            if (desired.updateCheckToken > 0) onUpdateCheckRequested(desired.updateCheckToken)
 
             // A sincronização roda à parte para o heartbeat continuar mesmo durante downloads longos.
             if (syncJob?.isActive != true && sync.needsSync(desired)) {

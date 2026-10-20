@@ -65,4 +65,14 @@ class JsonTest {
         assertNull(none.playlistId)
     }
 
+    @Test
+    fun `reads the update check token and treats its absence as none`() {
+        val asked = Json.parseDesired("""{"playlistId":4,"configVersion":9,"serverTime":"x","updateCheckToken":1789000000123}""")
+        assertEquals(1_789_000_000_123L, asked.updateCheckToken)
+
+        // Servidor antigo (sem o campo): o Player continua funcionando.
+        val old = Json.parseDesired("""{"playlistId":4,"configVersion":9,"serverTime":"x"}""")
+        assertEquals(0L, old.updateCheckToken)
+    }
+
 }

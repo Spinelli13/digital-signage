@@ -11,10 +11,36 @@ import java.io.File
 import java.util.Calendar
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 enum class UpdateOutcome { DISABLED, WAITING_FOR_WINDOW, NOT_ALLOWED, UP_TO_DATE, INCOMPATIBLE, INSTALLING, FAILED }
+
+/** Espera [waitMs] pelo próximo ciclo, mas acorda na hora se chegar um pedido. Devolve true se foi um pedido. */
+internal suspend fun waitForNextCheck(requests: ReceiveChannel<Unit>, waitMs: Long): Boolean =
+    withTimeoutOrNull(waitMs) {
+        requests.receive()
+        true
+    } ?: false
+
+/**
+ * Transforma o valor que vem no heartbeat em, no máximo, um pedido por pedido do painel: guarda o último tratado
+ * para um reinício do Player (ou os heartbeats seguintes, de 30 em 30 s) não repetir a verificação.
+ */
+class UpdateRequestTrigger(
+    private val lastHandled: () -> Long,
+    private val remember: (Long) -> Unit,
+    private val request: () -> Unit,
+) {
+    fun onHeartbeat(token: Long) {
+        if (token <= 0 || token == lastHandled()) return
+        remember(token)
+        request()
+    }
+}
 
 /**
  * Verifica periodicamente o latest.json do site de downloads e, havendo versão nova, baixa, confere o
@@ -30,12 +56,20 @@ class UpdateManager(
 ) {
 
     private val updatesDir get() = File(context.cacheDir, "updates")
+    private val requests = Channel<Unit>(Channel.CONFLATED)
+
+    /** O administrador pediu, no painel, que esta TV verifique atualização agora (ignora a janela de horário). */
+    fun requestCheck() {
+        requests.trySend(Unit)
+    }
 
     suspend fun run() {
         delay(START_DELAY_MS) // deixa a TV começar a exibir antes de usar a rede para isso
+        var requested = false
         while (true) {
-            val outcome = checkOnce()
-            delay(
+            val outcome = checkOnce(ignoreWindow = requested)
+            requested = waitForNextCheck(
+                requests,
                 when (outcome) {
                     UpdateOutcome.WAITING_FOR_WINDOW -> WINDOW_RETRY_MS
                     // Sem permissão também tenta de novo logo: o usuário pode liberar a qualquer momento.
@@ -46,13 +80,16 @@ class UpdateManager(
         }
     }
 
-    suspend fun checkOnce(): UpdateOutcome {
+    suspend fun checkOnce(ignoreWindow: Boolean = false): UpdateOutcome {
         if (!settings.autoUpdate) return UpdateOutcome.DISABLED
-        if (!UpdateWindow.isOpen(settings.updateWindow, minuteOfDay())) return UpdateOutcome.WAITING_FOR_WINDOW
+        if (!ignoreWindow && !UpdateWindow.isOpen(settings.updateWindow, minuteOfDay())) return UpdateOutcome.WAITING_FOR_WINDOW
 
         return try {
             when (val result = checker.check(settings.updateUrl, BuildConfig.VERSION_CODE.toLong())) {
-                UpdateCheck.UpToDate -> UpdateOutcome.UP_TO_DATE
+                UpdateCheck.UpToDate -> {
+                    settings.lastUpdateStatus = null // some o aviso de falha anterior, se houver
+                    UpdateOutcome.UP_TO_DATE
+                }
 
                 is UpdateCheck.Incompatible -> {
                     settings.lastUpdateStatus = "Versão ${result.release.versionName} exige Android mais novo"
@@ -126,7 +163,7 @@ class UpdateManager(
 
     private companion object {
         const val START_DELAY_MS = 90_000L
-        const val CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000L
+        const val CHECK_INTERVAL_MS = 30 * 60 * 1000L
         const val WINDOW_RETRY_MS = 15 * 60 * 1000L
         const val FAILURE_RETRY_MS = 30 * 60 * 1000L
         const val SIX_HOURS_MS = 6 * 60 * 60 * 1000L
