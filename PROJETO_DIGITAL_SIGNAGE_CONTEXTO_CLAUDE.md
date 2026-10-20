@@ -905,7 +905,7 @@ A IA deve seguir aproximadamente esta ordem:
 19. [~] Deploy inicial (guia completo em [docs/DEPLOY.md](./docs/DEPLOY.md): rede local → túnel → nuvem gratuita; **nada foi publicado ainda**).
 20. [ ] Só depois iniciar expansão.
 
-Transversal: testes de regressão automatizados (backend 77, painel 27, Player 56) rodando no GitHub Actions a cada push. APK publicado numa lista de downloads com atualização automática pelo site (sem Google Play); manual de instalação em docs/INSTALACAO_TV.md.
+Transversal: testes de regressão automatizados (backend 81, painel 58, Player 86) rodando no GitHub Actions a cada push. APK publicado numa lista de downloads com atualização automática pelo site (sem Google Play), pedido de atualização pelo painel e um único APK para Android 5.0+; manuais em PDF ilustrados (docs/INSTALACAO_TV.md e docs/MANUAL_PAINEL.md) publicados junto com cada versão; erros tratados e exibidos nos dois clientes (painel: até fechar; TV: 10 s).
 
 Detalhes de cada etapa concluída (decisões tomadas, bugs encontrados e corrigidos) ficam em [docs/DECISIONS.md](./docs/DECISIONS.md).
 

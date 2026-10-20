@@ -26,7 +26,8 @@ jobs:
     steps:
       - name: Sem segredo configurado
         if: env.HAS_TOKEN != 'true'
-        run: echo "::notice::CLOUDFLARE_API_TOKEN não configurado: deploy automático pulado. Veja docs/DEPLOY.md."
+        run: |
+          echo "::notice::CLOUDFLARE_API_TOKEN não configurado: deploy automático pulado. Veja docs/DEPLOY.md."
 
       - uses: actions/checkout@v4
         if: env.HAS_TOKEN == 'true'

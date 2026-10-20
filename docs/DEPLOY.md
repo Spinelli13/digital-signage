@@ -342,22 +342,40 @@ gh secret set CLOUDFLARE_API_TOKEN
 
 Enquanto o segredo não existir, o job termina como "pulado" (aviso, não erro). Para testar depois: *Actions → Deploy do painel → Run workflow*.
 
-### Publicar uma nova versão do Player
+### Publicar o Player (APK, lista de downloads e manuais)
 
-O site de downloads (`https://signage-downloads.pages.dev`) é um projeto separado do painel, de propósito: um deploy do painel nunca apaga os APKs. Para publicar:
+O site de downloads (`https://signage-downloads.pages.dev`) é um projeto separado do painel, de propósito: um deploy do painel nunca apaga os APKs. Ele guarda o **APK mais recente** (e as 4 versões anteriores), o `latest.json` que as TVs consultam, o atalho curto `/d` e os **manuais em PDF** (instalação na TV e uso do painel). O painel mostra tudo isso na página **Downloads e manuais**.
 
-1. Aumente `versionCode` e `versionName` em `player/app/build.gradle.kts`.
-2. Rode, na raiz do projeto:
+**Versão automática.** O `versionCode` é o número de commits do repositório (sempre cresce) e o `versionName` é `player/VERSION` + esse número (ex.: `0.4.71`). Não há mais nada para editar à mão; para uma mudança "grande", suba o `player/VERSION` (ex.: de `0.4` para `0.5`).
+
+**Pelo seu computador:**
 
 ```bash
-node scripts/release-player.mjs --notes "O que mudou nesta versão"
+node scripts/release-player.mjs --notes "O que mudou nesta versão"   # APK novo + site + manuais
+node scripts/release-player.mjs --site-only                          # só site e manuais (sem versão nova)
+node scripts/release-player.mjs --dry-run                            # monta release-site/ sem publicar
 ```
 
-O script compila o APK de release, assina, **confere que a chave é a mesma das versões já publicadas** (se não for, recusa: as TVs rejeitariam a atualização), baixa as versões anteriores do próprio site, monta a lista (últimas 5), publica e confere o que ficou no ar (baixa o APK e compara o SHA-256). As TVs com o Player instalado passam a enxergar a versão nova em até 6 horas.
+O script compila o APK de release, assina, **confere que a chave é a mesma das versões já publicadas** (se não for, recusa: as TVs rejeitariam a atualização), baixa as versões anteriores do próprio site, gera os manuais em PDF/HTML, publica e **confere o que ficou no ar** (baixa o APK e compara o SHA-256, confere os PDFs e o CORS do `releases.json`).
+
+**Automático (GitHub Actions):** o fluxo [`publicar-player.yml`](../.github/workflows/publicar-player.yml) faz o mesmo a cada push na `master` que mude `player/**` (APK novo) ou os manuais (só site). Antes de publicar ele roda os testes do Player: se algum falhar, nada é publicado. Ele só funciona depois de você criar os segredos **uma vez** (até lá termina como "pulado", sem erro):
+
+1. Crie o token da Cloudflare (o mesmo da seção anterior) e deixe-o numa variável do seu terminal **apenas durante o comando** (PowerShell: `$env:CLOUDFLARE_API_TOKEN = "..."`).
+2. Com o `gh auth login` feito, rode na raiz do projeto:
+
+```bash
+node scripts/configurar-ci.mjs
+```
+
+Ele grava como segredos do repositório a chave de assinatura (`SIGNAGE_KEYSTORE_BASE64`, `SIGNAGE_KEYSTORE_PASSWORD`, `SIGNAGE_KEY_ALIAS`, `SIGNAGE_KEY_PASSWORD`) e o `CLOUDFLARE_API_TOKEN`, **sem imprimir nenhum valor**. Atenção: isso entrega a chave de assinatura ao GitHub Actions (só os fluxos do repositório a leem). Se não quiser, não rode e publique pelo seu computador.
+
+**Como as TVs ficam em dia.** Cada TV consulta o `latest.json` a cada 30 minutos; você pode adiantar no painel (**Dispositivos → Atualizar app** ou **Atualizar todas as TVs**: o backend marca o pedido e a TV percebe no próximo heartbeat, em até 30 s). O Android **sempre pede confirmação na TV** antes de instalar (não há atualização silenciosa sem MDM/root); sem confirmação em 10 minutos a TV cancela e volta a exibir. As TVs desatualizadas aparecem marcadas no painel.
 
 **Chave de assinatura:** criada uma única vez com `node scripts/create-release-key.mjs` e guardada em `~/.signage` (a senha fica ao lado, nunca no repositório). **Faça backup dessa pasta.** Sem a mesma chave não há atualização por cima das TVs já instaladas (só desinstalando e reinstalando cada uma).
 
-O manual de instalação para o dia a dia está em [INSTALACAO_TV.md](./INSTALACAO_TV.md) e é publicado como página (`/manual.html`) no mesmo site.
+**Compatibilidade:** um único APK (Android 5.0 ou mais novo, qualquer processador) serve a todos os aparelhos; a tabela está no anexo do [INSTALACAO_TV.md](./INSTALACAO_TV.md).
+
+**Manuais:** [INSTALACAO_TV.md](./INSTALACAO_TV.md) e [MANUAL_PAINEL.md](./MANUAL_PAINEL.md) viram PDF ilustrado (`scripts/build-manuals.mjs`, usa o Edge ou o Chrome do computador/runner). As capturas de tela ficam em `docs/manual/img/` (reais, do painel e do emulador de Android TV) e os esquemas são gerados por `scripts/manual-illustrations.mjs`. Para atualizar uma captura, rode o painel/emulador, tire a imagem nova e substitua o arquivo.
 
 ---
 

@@ -44,7 +44,7 @@ Cada bug corrigido no projeto tem um teste de regressão; a lista está em [docs
 
 ## Baixar o Player e instalar na TV
 
-Lista de versões do APK e manual de instalação (TCL Android TV e Fire TV Stick): **https://signage-downloads.pages.dev** — atalho curto para o app Downloader: `signage-downloads.pages.dev/d`. O Player se atualiza sozinho a partir daí. Manual em [docs/INSTALACAO_TV.md](./docs/INSTALACAO_TV.md).
+Último APK, lista de versões e **manuais em PDF ilustrados** (instalação na TV TCL/Fire TV Stick e uso do painel): **https://signage-downloads.pages.dev** (também no menu **Downloads e manuais** do painel) — atalho curto para o app Downloader: `signage-downloads.pages.dev/d`. O Player se atualiza sozinho a partir daí (a TV precisa de um OK do Android) e o painel pode pedir a atualização na hora. Um único APK (Android 5.0+) atende todos os aparelhos. Fontes dos manuais: [docs/INSTALACAO_TV.md](./docs/INSTALACAO_TV.md) e [docs/MANUAL_PAINEL.md](./docs/MANUAL_PAINEL.md).
 
 ## Colocando no ar / testando na TV
 

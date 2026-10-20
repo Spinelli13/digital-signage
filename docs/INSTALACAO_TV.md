@@ -12,6 +12,8 @@ Como instalar o aplicativo **Digital Signage Player** em uma **TV TCL com Androi
 | Download do Player (lista de versões) | `https://signage-downloads.pages.dev` |
 | Atalho curto para baixar a versão mais recente | `signage-downloads.pages.dev/d` |
 
+![Quem conversa com quem: o painel configura o servidor, as TVs consultam o servidor e o site de downloads](manual/img/arquitetura.svg)
+
 ---
 
 ## 1. Antes de começar
@@ -31,6 +33,8 @@ Como instalar o aplicativo **Digital Signage Player** em uma **TV TCL com Androi
 3. No painel: **Dispositivos → Adicionar dispositivo** e digitar o código.
 4. No painel: enviar as mídias, montar uma **playlist** e escolhê-la para a TV.
 
+![Os 4 passos: instalar, ver o código na TV, ativar no painel e enviar a playlist](manual/img/fluxo-geral.svg)
+
 **Dois caminhos para instalar:**
 
 | | Método A — Downloader | Método B — ADB (com PC) |
@@ -42,6 +46,8 @@ Como instalar o aplicativo **Digital Signage Player** em uma **TV TCL com Androi
 
 > Os nomes dos menus mudam conforme o modelo e a versão do Android/Fire OS. Os caminhos abaixo são os **típicos**; se o seu for um pouco diferente, procure pelo nome da opção (por exemplo, "Fontes desconhecidas" ou "Instalar apps desconhecidos").
 
+![Teclas do controle remoto citadas neste manual (Android TV e Fire TV)](manual/img/controles-remotos.svg)
+
 ---
 
 ## 2. TV TCL com Android TV
@@ -52,6 +58,8 @@ Como instalar o aplicativo **Digital Signage Player** em uma **TV TCL com Androi
 2. Vá em **Preferências do dispositivo → Sobre**.
 3. Role até **Compilação** (às vezes "Build" ou "Versão do SO") e aperte **OK 7 vezes seguidas**. Aparece "Agora você é um desenvolvedor".
 4. Volte um nível. Surgiu **Opções do desenvolvedor**. Entre e ligue **Depuração USB**. Se existir **Depuração de rede** (ou "ADB por rede"), ligue também.
+
+![Caminho dos menus na TCL para ligar as opções de desenvolvedor](manual/img/tcl-modo-desenvolvedor.svg)
 
 ### 2.2 Método A — instalar com o app Downloader (sem computador)
 
@@ -66,6 +74,8 @@ Como instalar o aplicativo **Digital Signage Player** em uma **TV TCL com Androi
 1. **Configurações → Preferências do dispositivo → Segurança e restrições → Fontes desconhecidas** (em algumas TVs: **Configurações → Apps → Acesso especial → Instalar apps desconhecidos**).
 2. Ligue a chave do **Downloader**.
 
+![Caminho dos menus na TCL para liberar o Downloader a instalar apps de fora da loja](manual/img/tcl-fontes-downloader.svg)
+
 > Se você pular este passo, a TV avisa na hora da instalação e oferece um atalho para essa tela.
 
 **Passo 3 — Baixe o Player.**
@@ -75,6 +85,8 @@ Como instalar o aplicativo **Digital Signage Player** em uma **TV TCL com Androi
 3. O arquivo `player-….apk` é baixado (cerca de 6 MB).
 4. Quando terminar, clique em **Instalar**.
 5. Ao final, escolha **Concluído** (não precisa abrir ainda) e, se o Downloader perguntar se quer apagar o arquivo, escolha **Excluir** para liberar espaço.
+
+![Esquema do app Downloader com o endereço do Player digitado](manual/img/downloader.svg)
 
 > **Digitar com o controle é lento.** Dica: o app **Google Home** no celular, ou o controle remoto virtual do Android TV, permite digitar com o teclado do celular.
 
@@ -93,6 +105,12 @@ Depois de instalado, o Player precisa de **duas permissões** que o Android não
 2. Entre em **Instalar apps desconhecidos**, escolha **Digital Signage Player** e ligue.
 3. Volte e entre em **Exibir sobre outros apps**, escolha **Digital Signage Player** e ligue.
 
+![Caminho dos menus na TCL para liberar a instalação de apps pelo Player](manual/img/tcl-fontes-desconhecidas.svg)
+
+![Tela real "Instalar apps desconhecidos" do Android TV, com o Digital Signage Player permitido](manual/img/tv-instalar-apps-desconhecidos.png)
+
+![Caminho dos menus na TCL para liberar "Exibir sobre outros apps"](manual/img/tcl-sobre-outros-apps.svg)
+
 **Se a sua TV não tiver esses menus** (acontece em algumas TCL), use o **método B** abaixo: dois comandos resolvem.
 
 <a id="24-metodo-b-instalar-com-o-computador-adb"></a>
@@ -100,6 +118,8 @@ Depois de instalado, o Player precisa de **duas permissões** que o Android não
 ### 2.4 Método B — instalar com o computador (ADB)
 
 Este método funciona em **qualquer** TV Android e libera todas as permissões.
+
+![Computador e TV na mesma rede: o adb conecta e instala o Player](manual/img/adb-conexao.svg)
 
 **Passo 1 — Prepare o computador (uma vez só).**
 
@@ -139,13 +159,25 @@ Se aparecer `Success`, está instalado.
 ### 2.5 Ativar a TV e exibir as propagandas
 
 1. A TV mostra **"Código de ativação"** com 6 caracteres grandes. Anote.
+
+![Tela da TV com o código de ativação (captura real)](manual/img/player-codigo.png)
+
 2. No celular ou computador, abra `https://signage-painel.pages.dev` e entre.
 3. Vá em **Dispositivos → Adicionar dispositivo**.
 4. Digite o **código**, dê um **nome** (ex.: "TV Recepção"), informe o **local** e clique em **Ativar dispositivo**.
+
+![Painel: janela "Adicionar dispositivo" com o código digitado (captura real)](manual/img/painel-adicionar-dispositivo.png)
+
 5. Em **Biblioteca**, envie imagens (JPG, PNG, WEBP) e vídeos (MP4).
 6. Em **Playlists → Nova playlist**, adicione as mídias, ajuste a duração de cada imagem e clique em **Publicar alterações**.
 7. Em **Dispositivos**, na linha da TV, escolha a playlist na coluna **Playlist**.
 8. Em até uns **30 a 60 segundos** a TV baixa o conteúdo e começa a exibir.
+
+![Painel: lista de dispositivos com a playlist de cada TV (captura real)](manual/img/painel-dispositivos.png)
+
+![A TV exibindo a playlist em tela cheia (captura real da TV)](manual/img/player-tocando.png)
+
+O passo a passo de mídias e playlists, com mais detalhes, está no **Manual do painel**.
 
 > **Na primeira vez do dia, o painel pode demorar até 1 minuto** para responder (o servidor "acorda"). É normal no plano gratuito. **Isso nunca interrompe a TV:** ela continua exibindo o que já baixou.
 
@@ -183,6 +215,8 @@ Faça nesta ordem e marque:
 3. Ligue **Depuração ADB** (necessária só para o método B).
 4. Ligue **Instalar apps desconhecidos** (em versões antigas chama-se **Apps de fontes desconhecidas**). Nas versões novas, a chave é **por aplicativo** e você a liga no passo 3.2.
 
+![Caminho dos menus no Fire TV Stick para ligar as opções de desenvolvedor](manual/img/firetv-modo-desenvolvedor.svg)
+
 ### 3.2 Método A — instalar com o app Downloader (sem computador)
 
 **Passo 1 — Instale o Downloader.**
@@ -194,6 +228,8 @@ Faça nesta ordem e marque:
 **Passo 2 — Deixe o Downloader instalar apps.**
 
 *Configurações → Meu Fire TV → Opções do desenvolvedor → Instalar apps desconhecidos* → ligue **Downloader**.
+
+![Caminho dos menus no Fire TV Stick para liberar o Downloader](manual/img/firetv-fontes-desconhecidas.svg)
 
 **Passo 3 — Baixe o Player.**
 
@@ -207,6 +243,8 @@ Faça nesta ordem e marque:
 O Fire TV **não coloca** apps de fora da loja na tela inicial. Para abrir:
 
 *Configurações → Aplicativos → Gerenciar aplicativos instalados → Digital Signage Player → Iniciar aplicativo.*
+
+![Caminho dos menus no Fire TV Stick para abrir o Player depois de instalar](manual/img/firetv-abrir-app.svg)
 
 Dica: nessa mesma tela, depois de abrir o app uma vez, ele passa a aparecer no final da lista **Seus aplicativos**. Para movê-lo para o começo, selecione o ícone, aperte o botão **menu (≡)** do controle e escolha **Mover**.
 
@@ -283,29 +321,43 @@ Todos começam com `.\adb` (troque `IP_DA_TV` pelo endereço da sua TV e rode `.
 
 ## 6. Atualização automática
 
-**Como funciona:** a cada 6 horas (e ~1,5 minuto depois de abrir), o Player consulta `signage-downloads.pages.dev/latest.json`. Se houver uma versão mais nova, ele baixa, **confere o SHA‑256** e entrega ao instalador do Android. Ele nunca instala um arquivo que não bata com o SHA‑256 publicado, nem uma versão igual ou mais antiga.
+**O Player se atualiza sozinho, sem Google Play.** Sempre que uma versão nova é publicada, ela aparece no site de downloads e no painel (menu **Downloads e manuais**); as TVs descobrem e se atualizam.
 
-**O que você vai ver na TV:** quando a nova versão estiver pronta, o Android abre uma janela sobre a propaganda:
+![Como a TV se atualiza: nova versão publicada, TV descobre, baixa e confere, Android pergunta, OK e volta sozinha](manual/img/atualizacao-fluxo.svg)
 
-> **Digital Signage Player — Do you want to update this app?** &nbsp; [ Update ] [ Cancel ]
+**Como a TV descobre a versão nova**
 
-- O botão selecionado costuma ser o **Cancelar** (Cancel).
-- Com o controle, aperte **← (esquerda)** para ir em **Atualizar** (Update) e depois **OK**.
+- Sozinha, **a cada 30 minutos** (e cerca de 1 minuto e meio depois de abrir o Player).
+- **Na hora**, quando você pede pelo painel: em **Dispositivos**, clique em **Atualizar app** na linha de uma TV, ou em **Atualizar todas as TVs** no alto da página. A TV recebe o pedido em até 30 segundos.
+
+![Painel: aviso depois de pedir a atualização de todas as TVs (captura real)](manual/img/painel-atualizar-tvs.png)
+
+Ela baixa o arquivo, **confere o SHA‑256** e entrega ao instalador do Android. O Player nunca instala um arquivo que não bata com o SHA‑256 publicado, nem uma versão igual ou mais antiga.
+
+**O que você vai ver na TV:** quando a nova versão está pronta, o Android abre uma janela de confirmação sobre a propaganda (em inglês ou português, conforme o idioma da TV): **"Do you want to update this app?"** (*Deseja atualizar este app?*), com os botões **Install/Update** e **Cancel**.
+
+![Janela do Android pedindo para confirmar a atualização do Player (captura real, Android TV 14)](manual/img/player-atualizar.png)
+
+- Aperte **OK** no botão **Instalar/Atualizar**. Se o foco estiver em **Cancelar**, aperte **←** (esquerda) e depois **OK**.
 - Em alguns segundos o Player é reinstalado e **volta sozinho para a tela** (precisa da permissão "Exibir sobre outros apps").
 
-**Limitação importante, medida na prática:** no Android 14 (testado em um emulador de Android TV) o sistema **sempre pede essa confirmação**, mesmo quando o Player já é o instalador do app e mesmo com ele em segundo plano. **Ou seja, alguém precisa apertar OK na TV.** Para evitar propagandas cobertas por tempo indeterminado:
+**Limitação do Android (medida na prática):** no Android 14 (testado em um emulador de Android TV) o sistema **sempre pede essa confirmação**, mesmo quando o Player já é o instalador do app e mesmo com ele em segundo plano. **Ou seja, alguém precisa apertar OK na TV.** Para evitar propagandas cobertas por tempo indeterminado:
 
-- Se **ninguém confirmar em 10 minutos**, o Player **cancela** a instalação e volta sozinho a exibir. Ele tenta de novo mais tarde.
+- Se **ninguém confirmar em 10 minutos**, o Player **cancela** a instalação, mostra um aviso por 10 segundos e volta sozinho a exibir. Ele tenta de novo mais tarde.
 - Você pode escolher o **horário** das atualizações (`update_window`, seção 5) para que ocorram com alguém presente, ou desligá‑las (`auto_update false`) e atualizar quando quiser, com o método B.
 - Atualizações **realmente silenciosas** só existem em aparelhos gerenciados por MDM/"proprietário do dispositivo" ou com acesso root, o que está fora do escopo deste manual.
 
-**Como saber a versão de cada TV:** no painel, em *Dispositivos*, abaixo do "Último contato" aparece a versão (por exemplo `v0.3.0`).
+**Como saber a versão de cada TV:** no painel, em *Dispositivos*, abaixo do "Último contato" aparece a versão (por exemplo `v0.4.7`). TVs com versão anterior à mais recente aparecem marcadas como **⬆ desatualizado**.
 
 **Se a TV não atualiza:** a mensagem de diagnóstico aparece no rodapé da tela de aviso do Player (por exemplo: "falta liberar instalar apps desconhecidos"). Veja também a tabela abaixo.
 
 ---
 
 ## 7. Solução de problemas
+
+**Avisos de erro.** Quando algo dá errado, o Player mostra uma faixa vermelha no alto da tela com a explicação em português, por **10 segundos**, sem interromper as propagandas. No painel, o aviso fica na tela **até você clicar em Fechar**.
+
+![Faixa de erro do Player sobre a propaganda em exibição (captura real)](manual/img/player-erro.png)
 
 | Problema | O que fazer |
 |---|---|
@@ -333,12 +385,35 @@ Todos começam com `.\adb` (troque `IP_DA_TV` pelo endereço da sua TV e rode `.
 
 ---
 
+<a id="anexo-compatibilidade"></a>
+
+## Anexo — Compatibilidade: qual versão do aplicativo para qual TV?
+
+**Existe um único arquivo APK e ele serve para todos os aparelhos listados abaixo.** Não há versão "para TCL" e versão "para Fire TV": o mesmo APK roda em qualquer Android TV, Google TV, Fire TV e TV box com Android **5.0 ou mais novo**, em processadores ARM (32 ou 64 bits) ou x86 (o aplicativo não usa código nativo). A instalação e a atualização automática escolhem sempre a versão mais recente.
+
+| Sistema do aparelho | Versão do Android | Compatível? | Observações |
+|---|---|---|---|
+| Android TV / Google TV (TCL, Sony, Philips, Xiaomi, TV boxes) | 5.0 a 14 | **Sim** | Testado em emulador com Android **5.1** e **14**. Em TVs reais, veja a nota abaixo. |
+| Fire TV Stick / Fire TV (Fire OS 5) | 5.1 | **Sim** | Equivale ao Android 5.1 testado em emulador. |
+| Fire TV Stick / Fire TV Cube (Fire OS 6, 7 e 8) | 7.1, 9 e 11 | **Sim** | O início automático ao ligar pode exigir "Exibir sobre outros apps" (seção 3.5). |
+| Qualquer aparelho com Android anterior ao 5.0 (inclusive Fire OS muito antigo) | 4.x ou menor | **Não** | O Android é antigo demais para o aplicativo. |
+| Samsung (Tizen), LG (webOS), Roku e Apple TV | — | **Não** | Não são Android. Para esses seria preciso outro aplicativo. |
+
+**O que foi realmente testado:** o aplicativo foi executado de ponta a ponta (ativação, exibição, atualização) em **emuladores** de Android TV com Android **5.1** e **14**. **Ainda não foi medido em uma TCL ou em um Fire TV Stick reais.** Se algo se comportar diferente no seu aparelho, anote o **modelo** e a **versão do sistema** (em *Sobre*) e avise a equipe.
+
+**Android 5.0 a 7.0 e certificados:** esses sistemas não conhecem a autoridade de certificados usada pelo site de downloads. O Player já inclui essa autoridade por conta própria, então a atualização automática funciona. Já o app **Downloader** usa as regras do próprio aparelho: se ele mostrar um erro de certificado ao abrir o endereço de download, baixe o APK no computador e instale pelo **método B (ADB)**.
+
+**Vídeos:** use MP4 com vídeo H.264 (até 1080p). É o formato que todos os aparelhos acima reproduzem. Veja também os cuidados da seção 3.8 para o Fire TV Stick.
+
+<!-- fim-do-manual -->
+
 ## 9. Para quem publica novas versões
 
-Quem mantém o projeto publica uma versão nova com um único comando, no computador de desenvolvimento (a chave de assinatura fica em `C:\Users\<usuário>\.signage`; **guarde um backup dela**: sem a mesma chave, as TVs não aceitam atualização):
+**Automático:** todo push na `master` que altere `player/**` (ou os manuais) dispara o fluxo `.github/workflows/publicar-player.yml`, que compila e assina o APK, publica no site de downloads (`latest.json`, lista de versões, manuais em PDF) e, com isso, as TVs se atualizam. O número da versão vem da contagem de commits (`versionCode`) e do arquivo `player/VERSION`. Veja `docs/DEPLOY.md`, seção "Publicar o Player".
+
+**Manual** (no seu computador): a chave de assinatura fica em `C:\Users\<usuário>\.signage` (**guarde um backup dela**: sem a mesma chave, as TVs não aceitam atualização).
 
 ```powershell
-node scripts/release-player.mjs --notes "O que mudou nesta versão"
+node scripts/release-player.mjs --notes "O que mudou nesta versão"   # compila, assina e publica
+node scripts/release-player.mjs --site-only                          # só republica manuais/site, sem nova versão
 ```
-
-Isso compila, assina, publica na lista de downloads e atualiza o `latest.json` que as TVs consultam. Antes, aumente o `versionCode` e o `versionName` em `player/app/build.gradle.kts`.
