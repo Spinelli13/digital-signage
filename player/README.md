@@ -67,4 +67,5 @@ Passo a passo completo (TCL, Fire Stick, nuvem): [docs/DEPLOY.md](../docs/DEPLOY
 - [x] Reprodução de imagens (decodificação reduzida p/ pouca RAM) e vídeos MP4 (ExoPlayer), loop, item corrompido é pulado.
 - [x] Funciona offline e retoma sozinho quando a rede volta.
 - [x] 39 testes JVM (cliente HTTP com MockWebServer, cache, sincronização, máquina de estados).
-- [ ] **Validado em hardware real** — nada disso foi rodado numa TV ainda (a máquina de desenvolvimento não tem emulador Android). Reprodução na tela, tela cheia e início automático só se confirmam na TCL/Fire Stick.
+- [x] Verificado no **emulador de Android TV 14** (ativação, imagens, vídeo, loop, troca de playlist, offline + app reaberto, início automático após reboot).
+- [ ] **Validado em TV física** (TCL / Fire Stick): ainda não. O emulador não reproduz firmware/decodificadores de cada fabricante.

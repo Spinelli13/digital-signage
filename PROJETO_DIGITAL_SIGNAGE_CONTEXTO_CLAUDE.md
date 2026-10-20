@@ -895,11 +895,11 @@ A IA deve seguir aproximadamente esta ordem:
 11. [x] Player mínimo (compilado e validado — instalação em hardware real ainda pendente).
 12. [x] Ativação (código na TV + token do aparelho; validado no software, falta na TV física).
 13. [x] Download/cache (checksum SHA-256, troca atômica; validado em testes JVM, falta na TV física).
-14. [x] Reprodução (imagens + vídeo MP4; **só compila e passa nos testes — nunca rodou numa TV**).
+14. [x] Reprodução (imagens + vídeo MP4; **verificada no emulador de Android TV 14**; falta confirmar na TCL/Fire Stick reais).
 15. [x] Heartbeat.
 16. [x] Integração painel ↔ Player (painel Angular + API; fluxo conferido no navegador contra o backend real).
-17. [~] Teste sem internet (comportamento coberto por testes automatizados; falta confirmar na TV).
-18. [~] Teste após reinicialização (receiver de boot existe; depende da versão do Android — falta confirmar na TV).
+17. [x] Teste sem internet (backend parado + app reaberto → toca o cache; verificado no emulador; falta confirmar na TV real).
+18. [x] Teste após reinicialização (verificado no emulador com a permissão "exibir sobre outros apps" + overlay invisível; ver docs/DEPLOY.md; falta confirmar na TV real).
 19. [~] Deploy inicial (guia completo em [docs/DEPLOY.md](./docs/DEPLOY.md): rede local → túnel → nuvem gratuita; **nada foi publicado ainda**).
 20. [ ] Só depois iniciar expansão.
 

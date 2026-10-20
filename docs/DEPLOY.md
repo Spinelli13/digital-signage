@@ -33,6 +33,38 @@ Validado automaticamente (rodou, passou):
 
 ---
 
+## Fase A0 — Emulador de Android TV no próprio PC
+
+Já está instalado nesta máquina: AVD `signage_tv` (Android 14 TV, x86, aceleração WHPX; imagem em `Sdk\system-images\android-34\android-tv\x86`, ~8 GB em disco). É o jeito mais rápido de iterar: o emulador enxerga o seu PC em **`10.0.2.2`**.
+
+```bash
+# 1) ligar o emulador (abre uma janela; ~40 s até estar pronto)
+"$LOCALAPPDATA/Android/Sdk/emulator/emulator.exe" -avd signage_tv -no-snapshot-save
+
+# 2) compilar o Player apontando para o backend do PC e instalar
+cd player
+./gradlew assembleDebug -PserverUrl=http://10.0.2.2:8080
+adb -s emulator-5554 install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s emulator-5554 shell am start -n com.digitalsignage.player/.MainActivity
+
+# 3) ver a tela da TV como imagem (útil para conferir sem olhar a janela)
+adb -s emulator-5554 exec-out screencap -p > tv.png
+```
+
+O backend pode ser o do Docker (`docker compose up -d`, Postgres 16 real) ou o `DevApplication`. Depois é o mesmo fluxo do passo 7 da Fase A: a TV mostra o código, você ativa no painel (`http://localhost:4200`), envia mídias e atribui uma playlist.
+
+Para testar o início automático no emulador (o reboot não persiste a permissão sozinho, então force a gravação):
+
+```bash
+adb -s emulator-5554 shell appops set com.digitalsignage.player SYSTEM_ALERT_WINDOW allow
+adb -s emulator-5554 shell cmd appops write-settings   # só necessário no emulador
+adb -s emulator-5554 reboot
+```
+
+Dica: `screenrecord` só grava quando a tela muda — para gerar um MP4 de teste com movimento, navegue num menu enquanto grava.
+
+---
+
 ## Fase A — TV TCL na sua rede local
 
 ### 1. Subir o backend no PC
@@ -128,13 +160,21 @@ Se o `adb connect` não funcionar, instale pelo pendrive/app "Send Files to TV",
 
 #### Reinício (início automático)
 
-O Player tenta abrir sozinho ao ligar a TV. No Android 10 ou mais novo o sistema pode bloquear isso, a menos que o app tenha a permissão "exibir sobre outros apps". Conceda uma vez:
+O Player abre sozinho ao ligar a TV, mas **no Android 10 ou mais novo isso exige uma permissão** ("exibir sobre outros apps"). Conceda uma vez, com a TV já com o app aberto pelo menos uma vez:
 
 ```bash
 adb shell appops set com.digitalsignage.player SYSTEM_ALERT_WINDOW allow
 ```
 
-Se mesmo assim não abrir, **me diga o modelo e a versão do Android da TV** — dá para tratar de outras formas (serviço em primeiro plano, configuração de launcher).
+O que foi verificado no emulador de Android TV 14 (Fase A0), lendo o log do sistema:
+
+| Situação | Resultado |
+|---|---|
+| Sem a permissão | `BAL_BLOCK`: o receiver roda, mas o Android bloqueia abrir a tela — o app **não** abre |
+| Com a permissão, abrindo a tela direto | `BAL_BLOCK` do mesmo jeito: a permissão sozinha **não basta** |
+| Com a permissão + overlay invisível de 1 px (o que o `BootReceiver` faz) | `BAL_ALLOW_VISIBLE_WINDOW`: o Player abre e volta a tocar |
+
+Se na sua TCL o app continuar sem abrir, **me diga o modelo e a versão do Android da TV**. A alternativa mais robusta é registrar o Player como tela inicial (launcher) da TV, que o sistema abre sempre no boot — troca o comportamento do botão Home, por isso só faço se for preciso. No Fire Stick (Fire OS baseado em Android 9/11, conforme o modelo) o início automático é medido à parte.
 
 ---
 
@@ -196,11 +236,14 @@ Render e Cloudflare Pages implantam a partir do GitHub. O repositório já exist
 
 ### C.3 Render — backend
 
-1. Em render.com: **New → Web Service** → conecte o repositório.
-2. Configure:
-   - **Language:** Docker · **Root Directory:** `backend` · **Dockerfile Path:** `./Dockerfile`
-   - **Instance type:** Free · **Health Check Path:** `/api/v1/health`
-3. Variáveis de ambiente:
+**Caminho rápido (recomendado):** em render.com, **New → Blueprint** → escolha o repositório. O arquivo [`render.yaml`](../render.yaml) já define o serviço (Docker, plano Free, health check, `JWT_SECRET` gerado automaticamente) e a tela pede só os valores secretos da tabela abaixo.
+
+**Caminho manual:** **New → Web Service** → conecte o repositório e configure:
+
+- **Language:** Docker · **Dockerfile Path:** `./backend/Dockerfile` · **Docker Build Context Directory:** `./backend`
+- **Instance type:** Free · **Health Check Path:** `/api/v1/health`
+
+Variáveis de ambiente (no Blueprint, só as que não têm valor fixo no arquivo são pedidas):
 
 | Variável | Valor |
 |---|---|
@@ -232,12 +275,7 @@ Observações:
    - **Root directory:** `frontend`
    - **Build command:** `npm ci && npm run build`
    - **Build output directory:** `dist/painel/browser`
-3. Depois do primeiro deploy, edite `frontend/public/config.json` com a URL do Render e faça push:
-
-```json
-{ "apiBaseUrl": "https://<servico>.onrender.com" }
-```
-
+3. Em **Settings → Variables and secrets** (ou na criação do projeto), defina `API_BASE_URL` = `https://<servico>.onrender.com`. O build grava essa URL em `config.json` sozinho (`frontend/scripts/write-config.mjs`); não precisa de commit. Depois de definir a variável, faça um novo deploy.
 4. Volte ao Render e ajuste `CORS_ALLOWED_ORIGINS` para `https://<seu-projeto>.pages.dev` (sem barra no final).
 
 Abra o painel, entre, e envie uma imagem para conferir se o upload para o Supabase funciona (se falhar aqui, veja "Problemas comuns").
