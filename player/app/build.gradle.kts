@@ -15,6 +15,24 @@ val serverUrl: String = (project.findProperty("serverUrl") as String?)
     ?: localProperties.getProperty("signage.serverUrl")
     ?: "http://localhost:8080"
 
+// Onde o Player procura versões novas de si mesmo (latest.json do site de downloads).
+val updateUrl: String = (project.findProperty("updateUrl") as String?)
+    ?: localProperties.getProperty("signage.updateUrl")
+    ?: "https://signage-downloads.pages.dev/latest.json"
+
+// Assinatura de release. A chave NUNCA vai para o repositório: fica em player/keystore.properties (ignorado
+// pelo git) ou nas variáveis SIGNAGE_KEYSTORE_*. Todas as versões precisam ser assinadas com a MESMA chave,
+// senão o Android recusa a atualização por cima de uma versão já instalada.
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+fun signingValue(property: String, env: String): String? =
+    keystoreProperties.getProperty(property) ?: System.getenv(env)
+
+val releaseStoreFile = signingValue("storeFile", "SIGNAGE_KEYSTORE_FILE")
+val hasReleaseKey = releaseStoreFile != null && file(releaseStoreFile).exists()
+
 android {
     namespace = "com.digitalsignage.player"
     compileSdk = 36
@@ -23,10 +41,22 @@ android {
         applicationId = "com.digitalsignage.player"
         minSdk = 21
         targetSdk = 36
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.3.0"
 
         buildConfigField("String", "DEFAULT_SERVER_URL", "\"$serverUrl\"")
+        buildConfigField("String", "DEFAULT_UPDATE_URL", "\"$updateUrl\"")
+    }
+
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = file(releaseStoreFile!!)
+                storePassword = signingValue("storePassword", "SIGNAGE_KEYSTORE_PASSWORD")
+                keyAlias = signingValue("keyAlias", "SIGNAGE_KEY_ALIAS")
+                keyPassword = signingValue("keyPassword", "SIGNAGE_KEY_PASSWORD")
+            }
+        }
     }
 
     buildFeatures {
@@ -42,6 +72,7 @@ android {
             isMinifyEnabled = false
             // Produção exige https://.
             manifestPlaceholders["usesCleartext"] = "false"
+            if (hasReleaseKey) signingConfig = signingConfigs.getByName("release")
         }
     }
 

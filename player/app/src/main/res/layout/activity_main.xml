@@ -22,6 +22,22 @@
         app:resize_mode="fit"
         app:shutter_background_color="#000000" />
 
+    <!-- Tarja de erro: aparece por 10 s sobre qualquer coisa que esteja na tela -->
+    <TextView
+        android:id="@+id/errorBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="#CC8C1D2C"
+        android:elevation="8dp"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="40dp"
+        android:paddingVertical="22dp"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
     <LinearLayout
         android:id="@+id/overlay"
         android:layout_width="match_parent"

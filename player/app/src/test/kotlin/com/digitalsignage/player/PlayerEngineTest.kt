@@ -16,6 +16,8 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -30,6 +32,7 @@ class PlayerEngineTest {
     val folder = TemporaryFolder()
 
     private val api = FakePlayerApi()
+    private val reported = mutableListOf<String>()
     private val downloader = FakeDownloader()
     private val timing = Timing(activationPollMs = 5_000, heartbeatMs = 30_000, retryMs = 10_000, disabledPollMs = 30_000)
 
@@ -39,7 +42,7 @@ class PlayerEngineTest {
     private fun build(store: InMemoryStore): Pair<PlayerEngine, MediaCache> {
         val cache = MediaCache(File(folder.root, "media"))
         val sync = ConfigSync(api, downloader, cache, store)
-        return PlayerEngine(api, sync, store, token = { "tok" }, playerVersion = "0.2.0", timing = timing) to cache
+        return PlayerEngine(api, sync, store, token = { "tok" }, playerVersion = "0.2.0", timing = timing, onError = { reported += it }) to cache
     }
 
     private fun TestScope.startEngine(engine: PlayerEngine) {
@@ -197,6 +200,83 @@ class PlayerEngineTest {
 
         assertEquals(EngineState.Disabled, engine.state.value)
         assertNull(store.load())
+    }
+
+    // --- avisos de erro para o usuário ---
+
+    @Test
+    fun `tells the user when the server cannot be reached, without stopping the cached playlist`() = runTest {
+        val a = itemFor(1, imgA)
+        val store = InMemoryStore(configOf(5, 1, a))
+        api.registerResponse = { throw java.net.UnknownHostException("sem internet") }
+        val (engine, _) = build(store)
+
+        startEngine(engine)
+
+        assertTrue(reported.single().startsWith("Servidor: "))
+        assertTrue(reported.single().contains("internet"))
+        assertTrue("segue tocando o cache", engine.state.value is EngineState.Playing)
+    }
+
+    @Test
+    fun `tells the user when this device was removed from the panel`() = runTest {
+        val store = InMemoryStore(configOf(5, 1, itemFor(1, imgA)))
+        api.registerResponse = { throw UnauthorizedException() }
+        val (engine, _) = build(store)
+
+        startEngine(engine)
+
+        assertTrue(reported.single().contains("painel"))
+    }
+
+    @Test
+    fun `explains a failed content update and says the previous playlist keeps playing`() = runTest {
+        val a = itemFor(1, imgA)
+        val b = itemFor(2, imgB)
+        downloader.files[b.url] = imgB
+        val store = InMemoryStore(configOf(5, 1, a))
+        MediaCache(File(folder.root, "media")).store(a, imgA.inputStream())
+        api.registerResponse = { active() }
+        api.heartbeatResponse = { Desired(5, 2) }
+        api.configResponse = { configOf(5, 2, a, b) }
+        downloader.failWith = java.net.SocketTimeoutException("lento")
+        val (engine, _) = build(store)
+
+        startEngine(engine)
+
+        assertTrue(reported.single().contains("continuo exibindo o anterior"))
+        assertTrue(engine.state.value is EngineState.Playing)
+    }
+
+    @Test
+    fun `stays quiet when everything works`() = runTest {
+        api.registerResponse = { active() }
+        api.heartbeatResponse = { Desired(null, 0) }
+        api.configResponse = { configOf(null, 0) }
+        val (engine, _) = build(InMemoryStore())
+
+        startEngine(engine)
+
+        assertTrue(reported.isEmpty())
+    }
+
+    /** O administrador tirou a playlist da TV: ela para de exibir o conteúdo antigo e libera o cache. */
+    @Test
+    fun `goes to the no-content screen and frees the cache when the playlist is removed from the device`() = runTest {
+        val a = itemFor(1, imgA)
+        val store = InMemoryStore(configOf(5, 1, a))
+        val cache = MediaCache(File(folder.root, "media"))
+        cache.store(a, imgA.inputStream())
+        api.registerResponse = { active() }
+        api.heartbeatResponse = { Desired(null, 0) }
+        api.configResponse = { configOf(null, 0) }
+        val (engine, _) = build(store)
+
+        startEngine(engine)
+
+        assertEquals(EngineState.NoContent, engine.state.value)
+        assertFalse("a mídia da playlist removida não deve ficar no cache", cache.isCached(a))
+        assertNull(store.load()?.playlistId)
     }
 
     @Test

@@ -29,6 +29,40 @@ class Settings(context: Context) : ConfigStore {
             return token
         }
 
+    /** Endereço do latest.json do site de downloads, de onde o Player busca versões novas dele mesmo. */
+    var updateUrl: String
+        get() = prefs.getString(KEY_UPDATE_URL, null) ?: BuildConfig.DEFAULT_UPDATE_URL
+        set(value) {
+            prefs.edit().putString(KEY_UPDATE_URL, value.trim()).commit()
+        }
+
+    var autoUpdate: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_UPDATE, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_AUTO_UPDATE, value).commit()
+        }
+
+    /** "HH:mm-HH:mm"; vazio = a qualquer hora. Ver UpdateWindow. */
+    var updateWindow: String
+        get() = prefs.getString(KEY_UPDATE_WINDOW, "") ?: ""
+        set(value) {
+            prefs.edit().putString(KEY_UPDATE_WINDOW, value.trim()).commit()
+        }
+
+    /** Última queda inesperada do app (gravada antes de o processo morrer; exibida na próxima abertura). */
+    var lastCrash: String?
+        get() = prefs.getString(KEY_LAST_CRASH, null)
+        set(value) {
+            prefs.edit().putString(KEY_LAST_CRASH, value).commit()
+        }
+
+    /** Último resultado da verificação/instalação de atualização (para diagnóstico). */
+    var lastUpdateStatus: String?
+        get() = prefs.getString(KEY_UPDATE_STATUS, null)
+        set(value) {
+            prefs.edit().putString(KEY_UPDATE_STATUS, value).apply()
+        }
+
     override fun load(): PlayerConfig? =
         prefs.getString(KEY_CONFIG, null)?.let { raw ->
             try {
@@ -56,6 +90,11 @@ class Settings(context: Context) : ConfigStore {
         const val KEY_SERVER = "server_url"
         const val KEY_TOKEN = "device_token"
         const val KEY_CONFIG = "config_json"
+        const val KEY_UPDATE_URL = "update_url"
+        const val KEY_AUTO_UPDATE = "auto_update"
+        const val KEY_UPDATE_WINDOW = "update_window"
+        const val KEY_UPDATE_STATUS = "update_status"
+        const val KEY_LAST_CRASH = "last_crash"
     }
 
 }

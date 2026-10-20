@@ -1,6 +1,7 @@
 package com.digitalsignage.player.engine
 
 import com.digitalsignage.player.data.PlayerApi
+import com.digitalsignage.player.errors.ErrorMessages
 import com.digitalsignage.player.data.PlayerConfig
 import com.digitalsignage.player.data.PlayerStatus
 import com.digitalsignage.player.data.UnauthorizedException
@@ -52,6 +53,8 @@ class PlayerEngine(
     private val token: () -> String,
     private val playerVersion: String,
     private val timing: Timing = Timing(),
+    /** Recebe a mensagem de cada falha para o usuário ver (ver ErrorReporter). Nunca interrompe a reprodução. */
+    private val onError: (String) -> Unit = {},
 ) {
 
     private val mutableState = MutableStateFlow<EngineState>(EngineState.Starting)
@@ -68,14 +71,17 @@ class PlayerEngine(
                 throw e
             } catch (e: UnauthorizedException) {
                 // O servidor não conhece mais este token (dispositivo excluído): volta ao registro.
+                onError(ErrorMessages.describe(e))
                 sync.reset()
                 mutableState.value = EngineState.Starting
                 delay(UNAUTHORIZED_RETRY_MS)
             } catch (e: IOException) {
+                onError(ErrorMessages.describe("Servidor", e))
                 if (mutableState.value == EngineState.Starting) mutableState.value = EngineState.ConnectionError
                 delay(timing.retryMs)
             } catch (e: Exception) {
                 // Resposta inesperada do servidor: não derruba o Player, tenta de novo adiante.
+                onError(ErrorMessages.describe("Servidor", e))
                 delay(timing.retryMs)
             }
         }
@@ -125,6 +131,7 @@ class PlayerEngine(
                         throw e
                     } catch (e: Exception) {
                         // Download falhou: segue com a playlist anterior e tenta no próximo ciclo.
+                        onError(ErrorMessages.describe("Falha ao atualizar o conteúdo (continuo exibindo o anterior)", e))
                     }
                 }
             }

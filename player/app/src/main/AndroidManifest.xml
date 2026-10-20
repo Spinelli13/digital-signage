@@ -6,6 +6,8 @@
     <!-- Android 10+ só deixa o app abrir sozinho após o boot se tiver "exibir sobre outros apps".
          O usuário concede uma vez (ver player/README.md). -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Atualização automática pelo site de downloads, sem Google Play (o usuário libera uma vez). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <uses-feature
         android:name="android.software.leanback"
@@ -15,6 +17,7 @@
         android:required="false" />
 
     <application
+        android:name=".PlayerApp"
         android:allowBackup="false"
         android:banner="@drawable/banner"
         android:icon="@drawable/ic_launcher"
@@ -41,8 +44,14 @@
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+        <!-- Resultado da instalação de uma atualização (só o instalador do sistema chama). -->
+        <receiver
+            android:name=".update.InstallResultReceiver"
+            android:exported="false" />
 
     </application>
 

@@ -19,9 +19,14 @@ import com.digitalsignage.player.cache.MediaCache
 import com.digitalsignage.player.data.HttpPlayerApi
 import com.digitalsignage.player.data.Settings
 import com.digitalsignage.player.engine.EngineState
+import com.digitalsignage.player.errors.ErrorMessages
+import com.digitalsignage.player.errors.ErrorReporter
 import com.digitalsignage.player.engine.PlayerEngine
 import com.digitalsignage.player.sync.ConfigSync
+import com.digitalsignage.player.update.UpdateManager
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -40,6 +45,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var messageBody: TextView
     private lateinit var code: TextView
     private lateinit var serverInfo: TextView
+    private lateinit var errorBanner: TextView
+    private val reporter = ErrorReporter.shared
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +59,7 @@ class MainActivity : AppCompatActivity() {
         messageBody = findViewById(R.id.messageBody)
         code = findViewById(R.id.code)
         serverInfo = findViewById(R.id.serverInfo)
+        errorBanner = findViewById(R.id.errorBanner)
 
         settings = Settings(this)
         applyLaunchExtras(intent)
@@ -64,6 +72,7 @@ class MainActivity : AppCompatActivity() {
             store = settings,
             token = { settings.deviceToken },
             playerVersion = BuildConfig.VERSION_NAME,
+            onError = { reporter.report(it) },
         )
         // O mesmo ConfigSync não é compartilhado com a Activity: o Slideshow só lê o cache.
         slideshow = Slideshow(
@@ -71,7 +80,26 @@ class MainActivity : AppCompatActivity() {
             cache,
             findViewById<ImageView>(R.id.imageView),
             findViewById<PlayerView>(R.id.playerView),
+            onError = { reporter.report(it) },
         )
+
+        // Toda mensagem de erro aparece por 10 segundos; mensagens em fila aparecem uma depois da outra.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                reporter.messages.collect { message ->
+                    errorBanner.text = "⚠  $message"
+                    errorBanner.visibility = View.VISIBLE
+                    delay(ErrorReporter.DISPLAY_MS)
+                    errorBanner.visibility = View.GONE
+                }
+            }
+        }
+
+        // Se o app caiu por um erro inesperado, conta o motivo agora que ele voltou.
+        settings.lastCrash?.let {
+            reporter.report("O Player foi reiniciado após um erro inesperado ($it).", 0)
+            settings.lastCrash = null
+        }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -79,6 +107,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
         startEngine()
+
+        // Atualização automática do próprio app pelo site de downloads (sem Google Play).
+        val updates = UpdateManager(applicationContext, settings)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) { updates.run() }
+        }
+        // O status da atualização muda depois de a tela ser desenhada: mantém o texto da tela de aviso em dia.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (true) {
+                    delay(5_000)
+                    if (overlay.visibility == View.VISIBLE) serverInfo.text = serverInfoText()
+                }
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -113,7 +156,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startEngine() {
         engineJob?.cancel()
-        engineJob = lifecycleScope.launch {
+        engineJob = lifecycleScope.launch(CoroutineExceptionHandler { _, e -> reporter.report(ErrorMessages.describe(e)) }) {
             repeatOnLifecycle(Lifecycle.State.STARTED) { engine.run() }
         }
     }
@@ -151,8 +194,13 @@ class MainActivity : AppCompatActivity() {
         } else {
             code.visibility = View.GONE
         }
-        serverInfo.text = getString(R.string.server_info, settings.serverUrl, BuildConfig.VERSION_NAME)
+        serverInfo.text = serverInfoText()
     }
+
+    /** Endereço do servidor, versão e (para diagnóstico na TV) o último resultado da atualização automática. */
+    private fun serverInfoText(): String =
+        getString(R.string.server_info, settings.serverUrl, BuildConfig.VERSION_NAME) +
+            (settings.lastUpdateStatus?.let { "\nAtualização: $it" } ?: "")
 
     private fun showServerDialog() {
         val input = EditText(this).apply {
@@ -178,6 +226,8 @@ class MainActivity : AppCompatActivity() {
      * Permite configurar via adb sem digitar na TV:
      *   adb shell am start -n com.digitalsignage.player/.MainActivity --es server_url https://meu-servidor
      *   adb shell am start -n com.digitalsignage.player/.MainActivity --ez reset true
+     *   adb shell am start -n com.digitalsignage.player/.MainActivity --ez auto_update false
+     *   adb shell am start -n com.digitalsignage.player/.MainActivity --es update_window "02:00-05:00"
      */
     private fun applyLaunchExtras(intent: Intent?): Boolean {
         var changed = false
@@ -185,6 +235,10 @@ class MainActivity : AppCompatActivity() {
             settings.serverUrl = it
             changed = true
         }
+        // Configuração da atualização automática (não exige reiniciar o motor).
+        intent?.getStringExtra("update_url")?.takeIf { it.isNotBlank() }?.let { settings.updateUrl = it }
+        if (intent?.hasExtra("auto_update") == true) settings.autoUpdate = intent.getBooleanExtra("auto_update", true)
+        if (intent?.hasExtra("update_window") == true) settings.updateWindow = intent.getStringExtra("update_window").orEmpty()
         if (intent?.getBooleanExtra("reset", false) == true) {
             settings.resetAll()
             changed = true

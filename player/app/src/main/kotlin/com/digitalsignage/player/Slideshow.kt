@@ -14,6 +14,7 @@ import androidx.media3.ui.PlayerView
 import com.digitalsignage.player.cache.MediaCache
 import com.digitalsignage.player.data.ConfigItem
 import com.digitalsignage.player.data.PlayerConfig
+import com.digitalsignage.player.errors.ErrorMessages
 import java.io.File
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -32,15 +33,20 @@ class Slideshow(
     private val cache: MediaCache,
     private val imageView: ImageView,
     private val playerView: PlayerView,
+    /** Avisa o usuário (por 10 s na tela) quando uma mídia não pode ser exibida. */
+    private val onError: (String) -> Unit = {},
 ) {
 
     private var job: Job? = null
     private var player: ExoPlayer? = null
     private var shownImage: File? = null
+    private var lastFailure: String? = null
 
     fun start(config: PlayerConfig) {
         stop()
-        job = scope.launch { loop(config.items) }
+        // Exceção inesperada na reprodução: avisa na tela em vez de matar o app.
+        val handler = kotlinx.coroutines.CoroutineExceptionHandler { _, e -> onError(ErrorMessages.describe(e)) }
+        job = scope.launch(handler) { loop(config.items) }
     }
 
     fun stop() {
@@ -66,11 +72,13 @@ class Slideshow(
         var consecutiveFailures = 0
         while (true) {
             val item = playable[index % playable.size]
+            lastFailure = null
             val shown = try {
                 if (item.isVideo) playVideo(item, loop = playable.size == 1) else showImage(item)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
+                lastFailure = ErrorMessages.describe(e)
                 false
             }
 
@@ -78,6 +86,7 @@ class Slideshow(
                 consecutiveFailures = 0
             } else {
                 consecutiveFailures++
+                onError("Não foi possível exibir \"${item.name}\"${lastFailure?.let { " ($it)" } ?: ""}. Passando para o próximo item.")
                 delay(FAILURE_PAUSE_MS)
                 // Todos os itens falharam seguidos: evita um laço apertado, espera um pouco mais.
                 if (consecutiveFailures >= playable.size) delay(ALL_FAILED_PAUSE_MS)
@@ -92,7 +101,11 @@ class Slideshow(
             val metrics = imageView.resources.displayMetrics
             val bitmap = withContext(Dispatchers.IO) {
                 decodeScaled(file, metrics.widthPixels, metrics.heightPixels)
-            } ?: return false
+            }
+            if (bitmap == null) {
+                lastFailure = "imagem inválida, corrompida ou grande demais"
+                return false
+            }
 
             imageView.setImageBitmap(bitmap)
             shownImage = file
@@ -117,6 +130,7 @@ class Slideshow(
             }
 
             override fun onPlayerError(error: PlaybackException) {
+                lastFailure = "falha ao reproduzir o vídeo: ${error.errorCodeName}"
                 done.complete(false)
             }
         }
@@ -134,7 +148,15 @@ class Slideshow(
 
             // Um vídeo único repete sozinho (REPEAT_MODE_ONE) e só termina por erro ou cancelamento.
             val timeoutMs = (item.durationSeconds.coerceAtLeast(1) + VIDEO_GRACE_SECONDS) * 1000L
-            return if (loop) done.await() else withTimeoutOrNull(timeoutMs) { done.await() } ?: false
+            return if (loop) {
+                done.await()
+            } else {
+                withTimeoutOrNull(timeoutMs) { done.await() }
+                    ?: run {
+                        lastFailure = "o vídeo não terminou no tempo esperado"
+                        false
+                    }
+            }
         } finally {
             exo.removeListener(listener)
         }
