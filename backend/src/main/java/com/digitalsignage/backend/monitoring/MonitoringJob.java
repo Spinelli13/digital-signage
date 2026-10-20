@@ -4,6 +4,10 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
+import com.digitalsignage.backend.tenant.Tenant;
+import com.digitalsignage.backend.tenant.TenantContext;
+import com.digitalsignage.backend.tenant.TenantRepository;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -25,31 +29,47 @@ public class MonitoringJob {
 
 	private final MonitoringService monitoring;
 	private final AlertNotifier notifier;
+	private final TenantRepository tenants;
 	private final Clock clock;
 	private volatile Instant lastPurge = Instant.EPOCH;
 
-	public MonitoringJob(MonitoringService monitoring, AlertNotifier notifier, Clock clock) {
+	public MonitoringJob(MonitoringService monitoring, AlertNotifier notifier, TenantRepository tenants, Clock clock) {
 		this.monitoring = monitoring;
 		this.notifier = notifier;
+		this.tenants = tenants;
 		this.clock = clock;
 	}
 
 	@Scheduled(fixedDelayString = "${app.monitoring.interval-ms:60000}", initialDelayString = "${app.monitoring.initial-delay-ms:60000}")
 	public void tick() {
 		Instant now = clock.instant();
+		boolean purge = Duration.between(lastPurge, now).compareTo(PURGE_EVERY) >= 0;
 		try {
-			monitoring.evaluate(now);
-			notifier.notifyPending(now);
-			if (Duration.between(lastPurge, now).compareTo(PURGE_EVERY) >= 0) {
-				int removed = monitoring.purge(now);
-				lastPurge = now;
-				if (removed > 0) {
-					log.info("Histórico antigo apagado: {} evento(s)", removed);
+			// Cada cliente é atendido por vez, "como" ele: o monitoramento de um nunca enxerga os dados de outro.
+			for (Tenant tenant : tenants.findAllCustomers()) {
+				try {
+					TenantContext.runAs(tenant.getId(), () -> runFor(now, purge));
+				} catch (RuntimeException e) {
+					// a falha de um cliente nunca impede o ciclo dos outros nem derruba o servidor
+					log.error("Falha no ciclo de monitoramento do cliente {}", tenant.getSlug(), e);
 				}
 			}
+			if (purge) {
+				lastPurge = now;
+			}
 		} catch (RuntimeException e) {
-			// uma falha aqui nunca pode derrubar o servidor nem impedir o próximo ciclo
 			log.error("Falha no ciclo de monitoramento", e);
+		}
+	}
+
+	private void runFor(Instant now, boolean purge) {
+		monitoring.evaluate(now);
+		notifier.notifyPending(now);
+		if (purge) {
+			int removed = monitoring.purge(now);
+			if (removed > 0) {
+				log.info("Histórico antigo apagado: {} evento(s)", removed);
+			}
 		}
 	}
 

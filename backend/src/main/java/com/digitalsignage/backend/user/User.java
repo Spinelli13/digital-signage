@@ -11,6 +11,10 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
+/**
+ * Usuário do painel. Os usuários não são isolados por cliente no Hibernate (o login procura pelo e-mail, que é único
+ * em toda a plataforma); quem decide o que cada um enxerga é o {@code tenantId} dele.
+ */
 @Entity
 @Table(name = "users")
 public class User {
@@ -28,6 +32,16 @@ public class User {
 	@Column(name = "password_hash", nullable = false)
 	private String passwordHash;
 
+	/** O cliente a que o usuário pertence (o do operador da plataforma é o cliente onde ele "mora"). */
+	@Column(name = "tenant_id")
+	private Long tenantId;
+
+	@Column(nullable = false)
+	private String role = Role.ADMIN.name();
+
+	@Column(nullable = false)
+	private boolean active = true;
+
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
 
@@ -37,10 +51,12 @@ public class User {
 	protected User() {
 	}
 
-	public User(String name, String email, String passwordHash) {
+	public User(String name, String email, String passwordHash, Long tenantId, Role role) {
 		this.name = name;
 		this.email = email;
 		this.passwordHash = passwordHash;
+		this.tenantId = tenantId;
+		this.role = role.name();
 	}
 
 	@PrePersist
@@ -63,12 +79,40 @@ public class User {
 		return name;
 	}
 
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	public String getEmail() {
 		return email;
 	}
 
 	public String getPasswordHash() {
 		return passwordHash;
+	}
+
+	public void setPasswordHash(String passwordHash) {
+		this.passwordHash = passwordHash;
+	}
+
+	public Long getTenantId() {
+		return tenantId;
+	}
+
+	public Role getRole() {
+		return Role.valueOf(role);
+	}
+
+	public void setRole(Role role) {
+		this.role = role.name();
+	}
+
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
 	}
 
 	public Instant getCreatedAt() {

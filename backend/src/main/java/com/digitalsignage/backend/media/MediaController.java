@@ -30,10 +30,12 @@ public class MediaController {
 
 	private final MediaRepository mediaRepository;
 	private final MediaStorage storageService;
+	private final com.digitalsignage.backend.tenant.PlanLimits planLimits;
 
-	public MediaController(MediaRepository mediaRepository, MediaStorage storageService) {
+	public MediaController(MediaRepository mediaRepository, MediaStorage storageService, com.digitalsignage.backend.tenant.PlanLimits planLimits) {
 		this.mediaRepository = mediaRepository;
 		this.storageService = storageService;
+		this.planLimits = planLimits;
 	}
 
 	@GetMapping
@@ -53,6 +55,7 @@ public class MediaController {
 		}
 
 		MediaKind kind = MediaKind.fromMimeType(file.getContentType());
+		planLimits.requireRoomForUpload(com.digitalsignage.backend.tenant.TenantContext.current(), file.getSize());
 		StoredFile stored = storageService.store(file);
 
 		String mediaName = (name == null || name.isBlank()) ? file.getOriginalFilename() : name;

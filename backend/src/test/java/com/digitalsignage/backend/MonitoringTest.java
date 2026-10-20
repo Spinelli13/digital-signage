@@ -118,7 +118,7 @@ class MonitoringTest extends AbstractApiTest {
 
 	private void evaluateAt(String iso) {
 		clock.freeze(iso);
-		monitoring.evaluate(clock.instant());
+		inTenant(DEFAULT_TENANT, () -> monitoring.evaluate(clock.instant()));
 	}
 
 	private int openAlerts(long deviceId, String type) {
@@ -737,7 +737,7 @@ class MonitoringTest extends AbstractApiTest {
 		heartbeat(token);
 		evaluateAt("2026-11-05T12:30:00Z");
 
-		int sent = notifier.notifyPending(clock.instant());
+		int sent = inTenant(DEFAULT_TENANT, () -> notifier.notifyPending(clock.instant()));
 
 		assertEquals(1, sent);
 		JsonNode payload = json.readTree(received.get(0));
@@ -757,8 +757,8 @@ class MonitoringTest extends AbstractApiTest {
 		heartbeat(token);
 		evaluateAt("2026-11-05T12:30:00Z");
 
-		notifier.notifyPending(clock.instant());
-		notifier.notifyPending(clock.instant());
+		inTenant(DEFAULT_TENANT, () -> notifier.notifyPending(clock.instant()));
+		inTenant(DEFAULT_TENANT, () -> notifier.notifyPending(clock.instant()));
 
 		assertEquals(1, received.size());
 	}
@@ -771,12 +771,12 @@ class MonitoringTest extends AbstractApiTest {
 		String token = activeTv("TV", null);
 		heartbeat(token);
 		evaluateAt("2026-11-05T12:30:00Z");
-		notifier.notifyPending(clock.instant());
+		inTenant(DEFAULT_TENANT, () -> notifier.notifyPending(clock.instant()));
 
 		clock.freeze("2026-11-05T12:31:00Z");
 		heartbeat(token);
 		evaluateAt("2026-11-05T12:31:30Z");
-		notifier.notifyPending(clock.instant());
+		inTenant(DEFAULT_TENANT, () -> notifier.notifyPending(clock.instant()));
 
 		assertEquals(2, received.size());
 		assertEquals("alert.resolved", json.readTree(received.get(1)).get("event").asText());
@@ -786,11 +786,11 @@ class MonitoringTest extends AbstractApiTest {
 		received.clear();
 		mvc.perform(asAdmin(put("/api/v1/alerts/settings").contentType(MediaType.APPLICATION_JSON).content("{\"notifyOnResolve\": false}")));
 		evaluateAt("2026-11-05T14:00:00Z"); // nova queda -> novo alerta
-		notifier.notifyPending(clock.instant());
+		inTenant(DEFAULT_TENANT, () -> notifier.notifyPending(clock.instant()));
 		clock.freeze("2026-11-05T14:05:00Z");
 		heartbeat(token);
 		evaluateAt("2026-11-05T14:05:30Z");
-		notifier.notifyPending(clock.instant());
+		inTenant(DEFAULT_TENANT, () -> notifier.notifyPending(clock.instant()));
 		assertEquals(1, received.size());
 		assertEquals("alert.opened", json.readTree(received.get(0)).get("event").asText());
 	}
@@ -802,7 +802,7 @@ class MonitoringTest extends AbstractApiTest {
 		heartbeat(token);
 		evaluateAt("2026-11-05T12:30:00Z");
 
-		assertEquals(0, notifier.notifyPending(clock.instant()));
+		assertEquals(0, inTenant(DEFAULT_TENANT, () -> notifier.notifyPending(clock.instant())));
 
 		assertNull(jdbc.queryForObject("SELECT notified_at FROM alerts", java.sql.Timestamp.class));
 	}
@@ -817,11 +817,11 @@ class MonitoringTest extends AbstractApiTest {
 		heartbeat(token);
 		evaluateAt("2026-11-05T12:30:00Z");
 
-		assertEquals(0, notifier.notifyPending(at("2026-11-05T12:31:00Z")));
+		assertEquals(0, inTenant(DEFAULT_TENANT, () -> notifier.notifyPending(at("2026-11-05T12:31:00Z"))));
 		assertNull(jdbc.queryForObject("SELECT notified_at FROM alerts", java.sql.Timestamp.class)); // tentará de novo
 
 		status.set(200);
-		assertEquals(1, notifier.notifyPending(at("2026-11-05T12:32:00Z"))); // o webhook voltou
+		assertEquals(1, inTenant(DEFAULT_TENANT, () -> notifier.notifyPending(at("2026-11-05T12:32:00Z")))); // o webhook voltou
 		assertNotNull(jdbc.queryForObject("SELECT notified_at FROM alerts", java.sql.Timestamp.class));
 	}
 
@@ -834,7 +834,7 @@ class MonitoringTest extends AbstractApiTest {
 		heartbeat(token);
 		evaluateAt("2026-11-05T12:30:00Z"); // alerta aberto às 12:30
 
-		notifier.notifyPending(at("2026-11-05T13:31:00Z")); // mais de 1 h depois
+		inTenant(DEFAULT_TENANT, () -> notifier.notifyPending(at("2026-11-05T13:31:00Z"))); // mais de 1 h depois
 
 		assertNotNull(jdbc.queryForObject("SELECT notified_at FROM alerts", java.sql.Timestamp.class));
 	}
@@ -869,9 +869,9 @@ class MonitoringTest extends AbstractApiTest {
 		String token = activeTv("TV", null);
 		long id = deviceId("TV");
 		heartbeat(token);
-		monitoring.record(id, com.digitalsignage.backend.monitoring.EventType.PLAYER_LOG, com.digitalsignage.backend.monitoring.EventLevel.INFO, "antigo", at("2026-06-01T00:00:00Z"));
+		inTenant(DEFAULT_TENANT, () -> monitoring.record(id, com.digitalsignage.backend.monitoring.EventType.PLAYER_LOG, com.digitalsignage.backend.monitoring.EventLevel.INFO, "antigo", at("2026-06-01T00:00:00Z")));
 
-		int removed = monitoring.purge(at(T0));
+		int removed = inTenant(DEFAULT_TENANT, () -> monitoring.purge(at(T0)));
 
 		assertEquals(1, removed);
 		assertEquals(0, events(id, "PLAYER_LOG").size());

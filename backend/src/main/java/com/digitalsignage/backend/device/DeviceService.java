@@ -20,6 +20,8 @@ import com.digitalsignage.backend.location.Location;
 import com.digitalsignage.backend.location.LocationRepository;
 import com.digitalsignage.backend.monitoring.MonitoringService;
 import com.digitalsignage.backend.playlist.PlaylistRepository;
+import com.digitalsignage.backend.tenant.PlanLimits;
+import com.digitalsignage.backend.tenant.TenantContext;
 
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -36,6 +38,8 @@ public class DeviceService {
 	private final LayoutRepository layoutRepository;
 	private final DeviceViews views;
 	private final MonitoringService monitoring;
+	private final PlanLimits planLimits;
+	private final org.springframework.jdbc.core.JdbcTemplate jdbc;
 	private final Clock clock;
 
 	public DeviceService(
@@ -46,6 +50,8 @@ public class DeviceService {
 			LayoutRepository layoutRepository,
 			DeviceViews views,
 			MonitoringService monitoring,
+			PlanLimits planLimits,
+			org.springframework.jdbc.core.JdbcTemplate jdbc,
 			Clock clock) {
 		this.deviceRepository = deviceRepository;
 		this.locationRepository = locationRepository;
@@ -54,6 +60,8 @@ public class DeviceService {
 		this.layoutRepository = layoutRepository;
 		this.views = views;
 		this.monitoring = monitoring;
+		this.planLimits = planLimits;
+		this.jdbc = jdbc;
 		this.clock = clock;
 	}
 
@@ -167,7 +175,15 @@ public class DeviceService {
 	@Transactional
 	public Device activate(ActivateDeviceRequest request) {
 		String code = request.activationCode().trim().toUpperCase();
-		Device device = deviceRepository.findByActivationCodeAndStatus(code, DeviceStatus.PENDING.name())
+		// A TV que mostra o código ainda não é de nenhum cliente (está na reserva): quem digita o código a recebe.
+		Long pendingId = jdbc.query(
+				"SELECT id FROM devices WHERE activation_code = ? AND status = 'PENDING' AND tenant_id = ?",
+				(rs, i) -> rs.getLong("id"), code, TenantContext.POOL_ID).stream().findFirst()
+				.orElseThrow(() -> new NoSuchElementException("Código de ativação inválido ou expirado"));
+		long tenantId = TenantContext.current();
+		planLimits.requireRoomForDevice(tenantId);
+		jdbc.update("UPDATE devices SET tenant_id = ? WHERE id = ?", tenantId, pendingId);
+		Device device = deviceRepository.findById(pendingId)
 				.orElseThrow(() -> new NoSuchElementException("Código de ativação inválido ou expirado"));
 
 		device.activate(request.name(), resolveLocation(request.locationId(), request.location()));

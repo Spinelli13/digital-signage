@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import org.hibernate.annotations.TenantId;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,6 +25,11 @@ public class Playlist {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+
+	/** O cliente dono da linha: o Hibernate preenche ao gravar e filtra em toda consulta (ver TenantContext). */
+	@TenantId
+	@Column(name = "tenant_id", nullable = false, updatable = false)
+	private Long tenantId;
 
 	@Column(nullable = false)
 	private String name;
@@ -69,6 +76,10 @@ public class Playlist {
 			items.add(item);
 		}
 		configVersion++;
+	}
+
+	public Long getTenantId() {
+		return tenantId;
 	}
 
 	public Long getId() {

@@ -24,7 +24,9 @@ import com.digitalsignage.backend.device.DeviceStatus;
 import com.digitalsignage.backend.device.PlayerConfigResponse;
 import com.digitalsignage.backend.device.PlayerConfigService;
 import com.digitalsignage.backend.monitoring.MonitoringService;
+import com.digitalsignage.backend.security.DeviceLookup;
 import com.digitalsignage.backend.security.TokenHasher;
+import com.digitalsignage.backend.tenant.TenantContext;
 
 import jakarta.validation.Valid;
 
@@ -43,6 +45,7 @@ public class PlayerController {
 	private final PlayerConfigService playerConfigService;
 	private final CampaignService campaignService;
 	private final MonitoringService monitoringService;
+	private final DeviceLookup deviceLookup;
 	private final Clock clock;
 	private final SecureRandom random = new SecureRandom();
 
@@ -51,11 +54,13 @@ public class PlayerController {
 			PlayerConfigService playerConfigService,
 			CampaignService campaignService,
 			MonitoringService monitoringService,
+			DeviceLookup deviceLookup,
 			Clock clock) {
 		this.deviceRepository = deviceRepository;
 		this.playerConfigService = playerConfigService;
 		this.campaignService = campaignService;
 		this.monitoringService = monitoringService;
+		this.deviceLookup = deviceLookup;
 		this.clock = clock;
 	}
 
@@ -64,9 +69,15 @@ public class PlayerController {
 	public PlayerStatusResponse register(@Valid @RequestBody PlayerRegisterRequest request) {
 		String tokenHash = TokenHasher.sha256Hex(request.deviceToken());
 
-		return deviceRepository.findByDeviceTokenHash(tokenHash)
-				.map(PlayerStatusResponse::from)
-				.orElseGet(() -> registerNew(tokenHash, request.playerVersion()));
+		// Uma TV já conhecida é de algum cliente; uma TV nova ainda não é de ninguém e fica na reserva até um cliente
+		// digitar o código dela. Em cada caso a consulta roda "como" o dono (o registro é anônimo, sem filtro de login).
+		var known = deviceLookup.byTokenHash(tokenHash);
+		if (known.isPresent()) {
+			return TenantContext.callAs(known.get().tenantId(), () -> deviceRepository.findById(known.get().id())
+					.map(PlayerStatusResponse::from)
+					.orElseThrow(() -> new NoSuchElementException("Dispositivo não encontrado: " + known.get().id())));
+		}
+		return TenantContext.callAs(TenantContext.POOL_ID, () -> registerNew(tokenHash, request.playerVersion()));
 	}
 
 	@GetMapping("/status")

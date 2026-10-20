@@ -27,8 +27,8 @@ class S3StorageTest extends AbstractApiTest {
 
 	private long insertMediaRow(String storageKey) {
 		return jdbc.queryForObject(
-				"INSERT INTO media (name, type, mime_type, storage_key, file_size, checksum) "
-						+ "VALUES ('foto', 'IMAGE', 'image/png', ?, 10, 'abc') RETURNING id",
+				"INSERT INTO media (name, type, mime_type, storage_key, file_size, checksum, tenant_id) "
+						+ "VALUES ('foto', 'IMAGE', 'image/png', ?, 10, 'abc', 2) RETURNING id",
 				Long.class, storageKey);
 	}
 

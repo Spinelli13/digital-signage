@@ -67,7 +67,7 @@ class RealServerTest {
 
 	private String activeDeviceToken() {
 		String token = "a".repeat(64);
-		jdbc.update("INSERT INTO devices (name, status, device_token_hash) VALUES ('TV', 'ACTIVE', ?)",
+		jdbc.update("INSERT INTO devices (name, status, device_token_hash, tenant_id) VALUES ('TV', 'ACTIVE', ?, 2)",
 				TokenHasher.sha256Hex(token));
 		return token;
 	}
@@ -116,7 +116,7 @@ class RealServerTest {
 	@Test
 	void disabledDeviceGets401SoThePlayerKnowsToStop() throws Exception {
 		String token = "c".repeat(64);
-		jdbc.update("INSERT INTO devices (name, status, device_token_hash) VALUES ('TV', 'DISABLED', ?)",
+		jdbc.update("INSERT INTO devices (name, status, device_token_hash, tenant_id) VALUES ('TV', 'DISABLED', ?, 2)",
 				TokenHasher.sha256Hex(token));
 
 		assertEquals(401, send("GET", "/api/v1/player/config", null, "X-Device-Token", token).statusCode());

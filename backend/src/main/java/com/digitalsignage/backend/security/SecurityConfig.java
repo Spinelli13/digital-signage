@@ -61,8 +61,16 @@ public class SecurityConfig {
 						// Player ainda não ativado só pode consultar o próprio estado (para exibir o código).
 						.requestMatchers("/api/v1/player/status").hasAnyRole("DEVICE", "DEVICE_PENDING")
 						.requestMatchers("/api/v1/player/**").hasRole("DEVICE")
-						// Player ativado baixa a mídia; o painel (admin) também precisa para pré-visualizar.
-						.requestMatchers(HttpMethod.GET, "/api/v1/media/*/file").hasAnyRole("ADMIN", "DEVICE")
+						// Player ativado baixa a mídia; o painel também precisa para pré-visualizar.
+						.requestMatchers(HttpMethod.GET, "/api/v1/media/*/file").hasAnyRole("VIEWER", "DEVICE")
+						// Operação da plataforma (clientes, planos, faturas).
+						.requestMatchers("/api/v1/platform/**").hasRole("PLATFORM_ADMIN")
+						// Quem sou eu: qualquer usuário do painel.
+						.requestMatchers("/api/v1/auth/me").hasRole("VIEWER")
+						// Equipe e cobrança: só quem administra o cliente (nem para consultar).
+						.requestMatchers("/api/v1/users/**", "/api/v1/billing/**").hasRole("ADMIN")
+						// Consultar: qualquer papel. Gravar: o ADMIN (as exceções do EDITOR vêm na próxima regra).
+						.requestMatchers(HttpMethod.GET, "/api/v1/**").hasRole("VIEWER")
 						.anyRequest().hasRole("ADMIN"))
 				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 				.addFilterBefore(deviceAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -75,7 +83,7 @@ public class SecurityConfig {
 		CorsConfiguration configuration = new CorsConfiguration();
 		configuration.setAllowedOrigins(allowedOrigins);
 		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-		configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Device-Token"));
+		configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Device-Token", "X-Tenant-Id"));
 		configuration.setMaxAge(3600L);
 
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

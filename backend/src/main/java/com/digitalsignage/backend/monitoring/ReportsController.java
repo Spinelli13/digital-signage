@@ -267,8 +267,9 @@ public class ReportsController {
 			default -> throw new IllegalArgumentException("Agrupamento inválido: " + groupBy + " (use media, device ou day)");
 		}
 		StringBuilder sql = new StringBuilder("SELECT " + select + ", SUM(p.plays) AS plays, SUM(p.seconds) AS seconds, COUNT(DISTINCT p.device_id) AS devices "
-				+ "FROM media_plays p JOIN media m ON m.id = p.media_id JOIN devices d ON d.id = p.device_id WHERE p.day BETWEEN ? AND ?");
-		List<Object> args = new ArrayList<>(List.of(Date.valueOf(firstDay), Date.valueOf(lastDay)));
+				+ "FROM media_plays p JOIN media m ON m.id = p.media_id JOIN devices d ON d.id = p.device_id WHERE p.day BETWEEN ? AND ? AND d.tenant_id = ?");
+		// SQL direto não passa pelo isolamento do Hibernate: o cliente entra na consulta à mão
+		List<Object> args = new ArrayList<>(List.of(Date.valueOf(firstDay), Date.valueOf(lastDay), com.digitalsignage.backend.tenant.TenantContext.current()));
 		if (deviceId != null) {
 			sql.append(" AND p.device_id = ?");
 			args.add(deviceId);

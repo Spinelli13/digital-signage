@@ -112,7 +112,7 @@ class PlayerFlowTest extends AbstractApiTest {
 	@Test
 	void registerRefusesWhenTooManyDevicesAreWaiting() throws Exception {
 		for (int i = 0; i < 100; i++) {
-			jdbc.update("INSERT INTO devices (name, status, device_token_hash, activation_code) VALUES (?, 'PENDING', ?, ?)",
+			jdbc.update("INSERT INTO devices (name, status, device_token_hash, activation_code, tenant_id) VALUES (?, 'PENDING', ?, ?, 1)",
 					"p" + i, "hash" + i, String.format("CODE%02d", i));
 		}
 

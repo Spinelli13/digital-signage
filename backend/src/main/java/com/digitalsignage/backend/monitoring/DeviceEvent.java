@@ -2,6 +2,8 @@ package com.digitalsignage.backend.monitoring;
 
 import java.time.Instant;
 
+import org.hibernate.annotations.TenantId;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -18,6 +20,11 @@ public class DeviceEvent {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+
+	/** O cliente dono da linha: o Hibernate preenche ao gravar e filtra em toda consulta (ver TenantContext). */
+	@TenantId
+	@Column(name = "tenant_id", nullable = false, updatable = false)
+	private Long tenantId;
 
 	@Column(name = "device_id", nullable = false)
 	private Long deviceId;
@@ -51,6 +58,10 @@ public class DeviceEvent {
 	@PrePersist
 	void onCreate() {
 		createdAt = Instant.now();
+	}
+
+	public Long getTenantId() {
+		return tenantId;
 	}
 
 	public Long getId() {

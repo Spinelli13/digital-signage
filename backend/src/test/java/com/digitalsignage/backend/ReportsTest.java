@@ -94,7 +94,7 @@ class ReportsTest extends AbstractApiTest {
 
 	private void evaluateAt(String iso) {
 		clock.freeze(iso);
-		monitoring.evaluate(clock.instant());
+		inTenant(DEFAULT_TENANT, () -> monitoring.evaluate(clock.instant()));
 	}
 
 	private String csv(ResultActions result) throws Exception {

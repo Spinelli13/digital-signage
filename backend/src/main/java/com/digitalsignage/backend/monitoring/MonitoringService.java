@@ -70,9 +70,9 @@ public class MonitoringService {
 		return reportZone;
 	}
 
+	/** As configurações do cliente atual; sem linha gravada ainda, os padrões (o primeiro "salvar" grava). */
 	public MonitoringSettings settings() {
-		return settingsRepository.findById(MonitoringSettings.ID)
-				.orElseThrow(() -> new IllegalStateException("Configurações de monitoramento ausentes"));
+		return settingsRepository.findAll().stream().findFirst().orElseGet(MonitoringSettings::new);
 	}
 
 	// ---------- eventos disparados por ações do painel ----------
@@ -224,7 +224,10 @@ public class MonitoringService {
 		}
 		// só mídias que ainda existem (uma mídia apagada no meio do caminho não pode derrubar o heartbeat)
 		String placeholders = mediaIds.stream().map(id -> "?").collect(Collectors.joining(","));
-		Set<Long> existing = Set.copyOf(jdbc.queryForList("SELECT id FROM media WHERE id IN (" + placeholders + ")", Long.class, mediaIds.toArray()));
+		// só mídias do próprio cliente (uma TV não pode contar exibição de mídia de outro cliente)
+		java.util.List<Object> args = new java.util.ArrayList<>(mediaIds);
+		args.add(com.digitalsignage.backend.tenant.TenantContext.current());
+		Set<Long> existing = Set.copyOf(jdbc.queryForList("SELECT id FROM media WHERE id IN (" + placeholders + ") AND tenant_id = ?", Long.class, args.toArray()));
 		LocalDate day = now.atZone(reportZone).toLocalDate();
 
 		Map<Long, long[]> totals = new HashMap<>();
@@ -306,8 +309,10 @@ public class MonitoringService {
 		int retentionDays = settings().getEventsRetentionDays();
 		Instant before = now.minus(Duration.ofDays(retentionDays));
 		int removed = events.deleteOlderThan(before);
-		jdbc.update("DELETE FROM alerts WHERE resolved_at IS NOT NULL AND resolved_at < ?", java.sql.Timestamp.from(before));
-		jdbc.update("DELETE FROM media_plays WHERE day < ?", Date.valueOf(before.atZone(reportZone).toLocalDate()));
+		long tenantId = com.digitalsignage.backend.tenant.TenantContext.current();
+		jdbc.update("DELETE FROM alerts WHERE resolved_at IS NOT NULL AND resolved_at < ? AND tenant_id = ?", java.sql.Timestamp.from(before), tenantId);
+		jdbc.update("DELETE FROM media_plays WHERE day < ? AND device_id IN (SELECT id FROM devices WHERE tenant_id = ?)",
+				Date.valueOf(before.atZone(reportZone).toLocalDate()), tenantId);
 		return removed;
 	}
 

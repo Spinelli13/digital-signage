@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
+import java.util.function.Supplier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -24,6 +25,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import com.digitalsignage.backend.tenant.TenantContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -59,6 +61,9 @@ public abstract class AbstractApiTest {
 		registry.add("app.monitoring.allow-insecure-webhooks", () -> "true");
 	}
 
+	/** O cliente original da instalação (migration V7): onde o administrador dos testes atua. */
+	protected static final long DEFAULT_TENANT = 2L;
+
 	@Autowired
 	protected MockMvc mvc;
 
@@ -78,6 +83,21 @@ public abstract class AbstractApiTest {
 		clock.reset();
 		jdbc.update("UPDATE monitoring_settings SET offline_after_minutes = 10, never_connected_after_hours = 24, error_burst_count = 5, webhook_url = NULL, notify_on_resolve = TRUE, events_retention_days = 90");
 		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media, locations, device_groups, campaigns, device_events, alerts, media_plays, layouts RESTART IDENTITY CASCADE");
+		// Clientes, usuários e planos criados pelos testes (o cliente 1 = reserva e o 2 = original, com o administrador, ficam).
+		jdbc.update("DELETE FROM monitoring_settings WHERE tenant_id > 2");
+		jdbc.update("DELETE FROM users WHERE tenant_id > 2");
+		jdbc.update("DELETE FROM tenants WHERE id > 2");
+		jdbc.update("UPDATE tenants SET plan_id = (SELECT id FROM plans WHERE code = 'interno'), status = 'ACTIVE', current_period_end = NULL, trial_ends_at = NULL WHERE id = 2");
+		jdbc.update("DELETE FROM plans WHERE code NOT IN ('interno', 'gratis', 'basico', 'profissional')");
+	}
+
+	/** Chama um serviço direto (sem passar pelo filtro de login) "como" o cliente indicado. */
+	protected <T> T inTenant(long tenantId, Supplier<T> action) {
+		return TenantContext.callAs(tenantId, action);
+	}
+
+	protected void inTenant(long tenantId, Runnable action) {
+		TenantContext.runAs(tenantId, action);
 	}
 
 	protected String adminToken() throws Exception {

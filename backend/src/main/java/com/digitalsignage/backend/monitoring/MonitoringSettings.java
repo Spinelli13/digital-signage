@@ -3,21 +3,29 @@ package com.digitalsignage.backend.monitoring;
 import java.time.Instant;
 
 import jakarta.persistence.Column;
+import org.hibernate.annotations.TenantId;
+
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
-/** Configurações de monitoramento e alertas (uma única linha, id = 1). */
+/** Configurações de monitoramento e alertas (uma linha por cliente). */
 @Entity
 @Table(name = "monitoring_settings")
 public class MonitoringSettings {
 
-	public static final short ID = 1;
-
 	@Id
-	private Short id = ID;
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+
+	/** O cliente dono da linha: o Hibernate preenche ao gravar e filtra em toda consulta (ver TenantContext). */
+	@TenantId
+	@Column(name = "tenant_id", nullable = false, updatable = false)
+	private Long tenantId;
 
 	@Column(name = "offline_after_minutes", nullable = false)
 	private int offlineAfterMinutes = 10;
@@ -40,7 +48,8 @@ public class MonitoringSettings {
 	@Column(name = "updated_at", nullable = false)
 	private Instant updatedAt;
 
-	protected MonitoringSettings() {
+	/** Os padrões (um cliente novo ainda não tem linha gravada: ela nasce no primeiro "salvar"). */
+	public MonitoringSettings() {
 	}
 
 	@PrePersist

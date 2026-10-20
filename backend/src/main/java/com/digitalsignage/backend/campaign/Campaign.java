@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.CascadeType;
+import org.hibernate.annotations.TenantId;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -36,6 +38,11 @@ public class Campaign {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+
+	/** O cliente dono da linha: o Hibernate preenche ao gravar e filtra em toda consulta (ver TenantContext). */
+	@TenantId
+	@Column(name = "tenant_id", nullable = false, updatable = false)
+	private Long tenantId;
 
 	@Column(nullable = false)
 	private String name;
@@ -130,6 +137,10 @@ public class Campaign {
 	}
 
 	// ---- acesso ----
+
+	public Long getTenantId() {
+		return tenantId;
+	}
 
 	public Long getId() {
 		return id;

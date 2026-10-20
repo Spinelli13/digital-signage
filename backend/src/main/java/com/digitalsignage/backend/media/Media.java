@@ -2,6 +2,8 @@ package com.digitalsignage.backend.media;
 
 import java.time.Instant;
 
+import org.hibernate.annotations.TenantId;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -18,6 +20,11 @@ public class Media {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+
+	/** O cliente dono da linha: o Hibernate preenche ao gravar e filtra em toda consulta (ver TenantContext). */
+	@TenantId
+	@Column(name = "tenant_id", nullable = false, updatable = false)
+	private Long tenantId;
 
 	@Column(nullable = false)
 	private String name;
@@ -85,6 +92,10 @@ public class Media {
 	@PreUpdate
 	void onUpdate() {
 		updatedAt = Instant.now();
+	}
+
+	public Long getTenantId() {
+		return tenantId;
 	}
 
 	public Long getId() {
