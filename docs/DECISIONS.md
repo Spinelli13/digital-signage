@@ -79,3 +79,31 @@ Registro de decisões que complementam o [documento de contexto](../PROJETO_DIGI
 - **Bug real achado pelo emulador — início automático**: o `BootReceiver` era acionado, mas o Android 14 bloqueava abrir a Activity (`BAL_BLOCK`), **mesmo com `SYSTEM_ALERT_WINDOW` concedida**. A permissão só vale se o app tiver uma janela de overlay *visível*; o receiver agora cria um overlay invisível de 1 px, abre a Activity e remove o overlay (`BAL_ALLOW_VISIBLE_WINDOW` no log). Não há teste automatizado possível (depende do sistema); o procedimento de verificação está em docs/DEPLOY.md (Fase A0).
 - Pegadinha do emulador: o `appops` não é persistido num `adb reboot` sem `cmd appops write-settings`. Em TV real isso não deve ser necessário.
 - Deploy: `render.yaml` (Blueprint) e `API_BASE_URL` lida no build do painel (`frontend/scripts/write-config.mjs`), para a URL do backend não precisar de commit.
+
+## 2026-10-20 (parte 3) — Nuvem no ar, endurecimento, logo, distribuição do APK e atualização automática
+
+### Nuvem
+- Backend no Render (Docker, plano gratuito, Oregon), banco e mídias no Supabase (projeto numa organização própria, plano Free), painel no Cloudflare Pages — tudo conectado e verificado de ponta a ponta com o emulador.
+- **Região do Render (Oregon) não muda**: mudar exige recriar o serviço (URL nova, segredos de novo). Custo da distância ≈ 70 ms por consulta ao banco; irrelevante para uma TV que faz um heartbeat a cada 30 s. Decidido **não** recriar.
+- Três falhas reais do primeiro deploy (todas na tabela "Problemas comuns" do DEPLOY.md): `DB_URL` não chegou (valores `sync: false` do Blueprint ficam em branco se não preenchidos → o app cai no padrão `localhost:5432`), senha do banco ausente (usa o padrão `changeme`), e o Flyway recusando um schema `public` não vazio (a opção "RLS automático" do Supabase cria uma função ali) — resolvido com `SPRING_FLYWAY_BASELINE_ON_MIGRATE=true` + `BASELINE_VERSION=0`, reproduzido e validado em Postgres 16 real antes de aplicar.
+- Pegadinha da `wrangler` nova (4.151): ao falhar, ela **altera arquivos do projeto onde roda** (`package.json`, `package-lock.json`, `.gitignore`, cria `wrangler.jsonc`) e reconstrói a pasta de saída sem as variáveis, o que publicou um painel apontando para `localhost`. Passou-se a rodá-la de uma pasta fora do repositório e a conferir o `config.json` de `dist` antes de cada publicação. Projetos do Pages precisam de `--force` na criação (a CLI tenta delegar ao Workers).
+
+### Endurecimento do backend
+- **`REQUIRE_STRONG_SECRETS=true`**: o backend recusa subir se `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` ou `POSTGRES_PASSWORD` estiverem nos padrões de desenvolvimento (só os *nomes* aparecem na mensagem). Testado sem Spring completo (`ApplicationContextRunner`). Desligado por padrão para não atrapalhar o desenvolvimento local.
+- **`DELETE /devices/{id}/playlist`**: tirar a playlist de uma TV (o `PUT` com `currentPlaylistId` ausente significa "não mudar"). O Player vai para "Aguardando conteúdo" e libera o cache (teste de regressão no motor).
+
+### Identidade visual
+- Logo único (TV com "play"), usado como favicon, na barra lateral e no login do painel, como ícone do app e como banner da tela inicial do Android TV (verificado no launcher do emulador).
+
+### Distribuição e atualização do APK (sem Google Play)
+- **Site de downloads separado do painel** (`signage-downloads`): um deploy do painel nunca apaga os APKs. Contém a lista de versões, `latest.json` (o que o Player consulta), atalho curto `/d` e os manuais em HTML. `scripts/release-player.mjs` compila, assina, **recusa publicar se a chave de assinatura mudou**, reconstrói o site a partir do próprio site (confere o SHA‑256 das versões antigas) e confere o que ficou no ar.
+- **Chave de assinatura** em `~/.signage` (senha ao lado, nunca no git). Perdê-la impede atualizar por cima das TVs já instaladas.
+- **Atualização automática verificada no emulador (Android 14)**: o Player consulta `latest.json`, baixa, confere SHA‑256 e versionCode, instala pelo PackageInstaller e **volta sozinho** (receiver de `MY_PACKAGE_REPLACED`). Medido:
+  - **O Android sempre pede confirmação** ("Deseja atualizar este app?", foco inicial em *Cancelar*), mesmo depois de o Player virar o instalador do app. Testei a hipótese de que ficar em segundo plano dispensaria o OK: **falso** (o modo foi implementado, medido e removido).
+  - Para a TV nunca ficar presa na janela do instalador: sem confirmação em 10 min o Player **cancela a instalação e volta a exibir** (verificado no emulador). Janela de horário opcional (`update_window`).
+  - Atualização **realmente silenciosa** só com aparelho gerenciado (proprietário do dispositivo/MDM) ou root.
+- Sem a permissão "instalar apps desconhecidos" o Player não baixa nada e registra o motivo (aparece na tela de aviso).
+- O Player lê o `latest.json` sem enviar nenhuma credencial do aparelho.
+
+### Descoberta no emulador
+- `MY_PACKAGE_REPLACED` reabre o Player depois da atualização; o truque do overlay de 1 px (já usado no boot) foi extraído para `LaunchHelper` e reaproveitado.

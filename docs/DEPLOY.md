@@ -322,7 +322,48 @@ Eu consigo preparar o `docker-compose` com Caddy se você preferir esse caminho.
 
 ---
 
+## Depois de no ar: manutenção
+
+### Segredos obrigatórios na nuvem
+
+Com `REQUIRE_STRONG_SECRETS=true` (já no `render.yaml`) o backend **recusa subir** se `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` ou `POSTGRES_PASSWORD` ainda estiverem nos valores padrão de desenvolvimento, e o log do Render diz exatamente quais variáveis corrigir (sem mostrar os valores). Em um serviço que já existe, adicione essa variável em *Environment*.
+
+### Deploy automático do painel (GitHub Actions)
+
+O workflow [`deploy-painel.yml`](../.github/workflows/deploy-painel.yml) publica o painel no Cloudflare Pages a cada push na `master` que mude `frontend/`: roda os testes, compila com a URL do backend e confere que o `config.json` aponta para o lugar certo antes de publicar. As variáveis não secretas (`API_BASE_URL`, `CLOUDFLARE_ACCOUNT_ID`) já estão no repositório. **Falta só um segredo**, que você cria uma vez:
+
+1. No Cloudflare: **My Profile → API Tokens → Create Token → Create Custom Token**.
+2. Permissão: **Account → Cloudflare Pages → Edit**. Recursos da conta: a conta do projeto. Crie e copie o token (aparece uma vez).
+3. No terminal, dentro da pasta do projeto (o valor é digitado no prompt e **não passa por mais ninguém**):
+
+```bash
+gh secret set CLOUDFLARE_API_TOKEN
+```
+
+Enquanto o segredo não existir, o job termina como "pulado" (aviso, não erro). Para testar depois: *Actions → Deploy do painel → Run workflow*.
+
+### Publicar uma nova versão do Player
+
+O site de downloads (`https://signage-downloads.pages.dev`) é um projeto separado do painel, de propósito: um deploy do painel nunca apaga os APKs. Para publicar:
+
+1. Aumente `versionCode` e `versionName` em `player/app/build.gradle.kts`.
+2. Rode, na raiz do projeto:
+
+```bash
+node scripts/release-player.mjs --notes "O que mudou nesta versão"
+```
+
+O script compila o APK de release, assina, **confere que a chave é a mesma das versões já publicadas** (se não for, recusa: as TVs rejeitariam a atualização), baixa as versões anteriores do próprio site, monta a lista (últimas 5), publica e confere o que ficou no ar (baixa o APK e compara o SHA-256). As TVs com o Player instalado passam a enxergar a versão nova em até 6 horas.
+
+**Chave de assinatura:** criada uma única vez com `node scripts/create-release-key.mjs` e guardada em `~/.signage` (a senha fica ao lado, nunca no repositório). **Faça backup dessa pasta.** Sem a mesma chave não há atualização por cima das TVs já instaladas (só desinstalando e reinstalando cada uma).
+
+O manual de instalação para o dia a dia está em [INSTALACAO_TV.md](./INSTALACAO_TV.md) e é publicado como página (`/manual.html`) no mesmo site.
+
+---
+
 ## Instalando no Fire Stick (depois da TCL)
+
+> O passo a passo completo e detalhado (TCL e Fire TV Stick, com o app Downloader ou ADB) está em [INSTALACAO_TV.md](./INSTALACAO_TV.md). O resumo abaixo é só uma referência rápida.
 
 O mesmo APK serve — o Fire OS é baseado em Android.
 

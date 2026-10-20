@@ -1,0 +1,295 @@
+#!/usr/bin/env node
+// Compila o APK de release do Player, assina e publica no site de downloads (Cloudflare Pages).
+//
+//   node scripts/release-player.mjs --notes "O que mudou nesta versão"
+//   node scripts/release-player.mjs --skip-build --dry-run     # só monta o site em release-site/, sem publicar
+//
+// Antes: ter rodado scripts/create-release-key.mjs e estar logado na wrangler (npx wrangler login).
+//
+// O site é reconstruído a cada publicação: o script baixa as versões anteriores do próprio site (confere o
+// SHA-256 de cada uma), acrescenta a nova e republica tudo. Mantém as 5 últimas. Resultado:
+//   /                 lista de versões para baixar
+//   /latest.json      o que o Player consulta para se atualizar sozinho
+//   /d                atalho curto que baixa a versão mais recente (fácil de digitar no app Downloader)
+//   /manual.html      manual de instalação (gerado de docs/INSTALACAO_TV.md, se existir)
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const playerDir = join(root, 'player');
+const stagingDir = join(root, 'release-site');
+const isWin = process.platform === 'win32';
+const KEEP_VERSIONS = 5;
+
+// ---------- argumentos ----------
+const args = process.argv.slice(2);
+const flag = (name) => args.includes(`--${name}`);
+const option = (name, fallback) => {
+  const i = args.indexOf(`--${name}`);
+  return i >= 0 && args[i + 1] ? args[i + 1] : fallback;
+};
+const site = option('site', 'https://signage-downloads.pages.dev').replace(/\/+$/, '');
+const projectName = option('project', 'signage-downloads');
+const serverUrl = option('server-url', 'https://signage-backend-1l0l.onrender.com');
+const notes = option('notes', '');
+
+const log = (message) => console.log(`\n▶ ${message}`);
+const fail = (message) => {
+  console.error(`\n✖ ${message}`);
+  process.exit(1);
+};
+const sha256 = (file) => createHash('sha256').update(readFileSync(file)).digest('hex');
+
+function run(command, commandArgs, options = {}) {
+  const result = spawnSync(command, commandArgs, { encoding: 'utf8', shell: isWin, ...options });
+  if (result.status !== 0 && !options.allowFailure) {
+    fail(`Falhou: ${command} ${commandArgs.join(' ')}\n${result.stdout ?? ''}${result.stderr ?? ''}`);
+  }
+  return result;
+}
+
+function sdkDir() {
+  const props = join(playerDir, 'local.properties');
+  if (!existsSync(props)) return process.env.ANDROID_HOME;
+  const line = readFileSync(props, 'utf8').split(/\r?\n/).find((l) => l.startsWith('sdk.dir='));
+  return line?.slice('sdk.dir='.length).replace(/\\:/g, ':').replace(/\\\\/g, '\\');
+}
+
+function apksigner() {
+  const sdk = sdkDir();
+  const buildTools = sdk && join(sdk, 'build-tools');
+  if (!buildTools || !existsSync(buildTools)) fail('Android SDK não encontrado (defina sdk.dir em player/local.properties).');
+  const newest = readdirSync(buildTools).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).pop();
+  return join(buildTools, newest, isWin ? 'apksigner.bat' : 'apksigner');
+}
+
+// ---------- 1. build ----------
+if (!existsSync(join(playerDir, 'keystore.properties'))) {
+  fail('Falta player/keystore.properties. Rode primeiro: node scripts/create-release-key.mjs');
+}
+if (!flag('skip-build')) {
+  log('Compilando o APK de release');
+  run(isWin ? `"${join(playerDir, 'gradlew.bat')}"` : join(playerDir, 'gradlew'), ['assembleRelease', `-PserverUrl=${serverUrl}`, '--console=plain'], {
+    cwd: playerDir,
+    stdio: 'inherit',
+  });
+}
+
+const apkDir = join(playerDir, 'app', 'build', 'outputs', 'apk', 'release');
+const builtApk = join(apkDir, 'app-release.apk');
+if (!existsSync(builtApk)) fail(`APK não encontrado: ${builtApk}`);
+const meta = JSON.parse(readFileSync(join(apkDir, 'output-metadata.json'), 'utf8')).elements[0];
+const { versionCode, versionName } = meta;
+
+// ---------- 2. assinatura ----------
+log(`Verificando a assinatura (versão ${versionName}, código ${versionCode})`);
+const verify = run(apksigner(), ['verify', '--print-certs', builtApk]);
+const certSha256 = /certificate SHA-256 digest: ([0-9a-f]{64})/i.exec(verify.stdout)?.[1]?.toLowerCase();
+if (!certSha256) fail('Não foi possível ler o certificado do APK (ele está assinado?).');
+console.log(`  certificado SHA-256: ${certSha256}`);
+
+// ---------- 3. histórico publicado ----------
+log(`Lendo as versões já publicadas em ${site}`);
+rmSync(stagingDir, { recursive: true, force: true });
+mkdirSync(stagingDir, { recursive: true });
+
+let previous = [];
+try {
+  const response = await fetch(`${site}/releases.json`, { headers: { 'Cache-Control': 'no-cache' } });
+  if (response.ok) previous = (await response.json()).releases ?? [];
+} catch {
+  // primeira publicação: o site ainda não existe
+}
+
+for (const release of previous) {
+  if (release.certSha256 && release.certSha256 !== certSha256 && !flag('allow-new-key')) {
+    fail(
+      `A chave de assinatura mudou!\n  publicada: ${release.certSha256}\n  agora:     ${certSha256}\n` +
+        'As TVs já instaladas RECUSARIAM esta atualização. Use a chave original (~/.signage) ou, se a troca for ' +
+        'intencional, rode com --allow-new-key (e reinstale cada TV à mão).',
+    );
+  }
+}
+
+const releases = [];
+for (const release of previous.filter((r) => r.versionCode !== versionCode).slice(0, KEEP_VERSIONS - 1)) {
+  try {
+    const response = await fetch(`${site}/${release.apk}`);
+    const data = Buffer.from(await response.arrayBuffer());
+    if (!response.ok || createHash('sha256').update(data).digest('hex') !== release.sha256) throw new Error('inválido');
+    writeFileSync(join(stagingDir, release.apk), data);
+    releases.push(release);
+    console.log(`  mantida: ${release.apk}`);
+  } catch {
+    console.warn(`  ! ${release.apk} não pôde ser recuperada e saiu da lista`);
+  }
+}
+
+// ---------- 4. nova versão ----------
+const apkName = `player-${versionName}.apk`;
+copyFileSync(builtApk, join(stagingDir, apkName));
+const entry = {
+  versionCode,
+  versionName,
+  apk: apkName,
+  sha256: sha256(builtApk),
+  size: statSync(builtApk).size,
+  minSdk: 21,
+  notes,
+  publishedAt: new Date().toISOString(),
+  certSha256,
+};
+releases.unshift(entry);
+releases.sort((a, b) => b.versionCode - a.versionCode);
+
+const latest = releases[0];
+writeFileSync(join(stagingDir, 'releases.json'), JSON.stringify({ releases }, null, 2) + '\n');
+writeFileSync(
+  join(stagingDir, 'latest.json'),
+  JSON.stringify(
+    {
+      versionCode: latest.versionCode,
+      versionName: latest.versionName,
+      apkUrl: latest.apk,
+      sha256: latest.sha256,
+      size: latest.size,
+      minSdk: latest.minSdk,
+      notes: latest.notes,
+      publishedAt: latest.publishedAt,
+    },
+    null,
+    2,
+  ) + '\n',
+);
+// ícones do site (mesmo logo do painel)
+for (const icon of ['favicon.svg', 'favicon.ico']) copyFileSync(join(root, 'frontend', 'public', icon), join(stagingDir, icon));
+writeFileSync(join(stagingDir, '_redirects'), `/d /${latest.apk} 302\n`);
+writeFileSync(
+  join(stagingDir, '_headers'),
+  [
+    '/*.apk', '  Content-Type: application/vnd.android.package-archive', '  Content-Disposition: attachment', '',
+    '/latest.json', '  Cache-Control: no-cache', '',
+    '/releases.json', '  Cache-Control: no-cache', '',
+  ].join('\n'),
+);
+
+// manual (opcional)
+const manualSource = join(root, 'docs', 'INSTALACAO_TV.md');
+let hasManual = false;
+if (existsSync(manualSource)) {
+  log('Gerando o manual de instalação em HTML');
+  const bodyFile = join(tmpdir(), 'signage-manual-body.html');
+  run('npx', ['--yes', 'marked@14', '--gfm', '-i', manualSource, '-o', bodyFile], { cwd: tmpdir() });
+  writeFileSync(join(stagingDir, 'manual.html'), page('Manual de instalação', readFileSync(bodyFile, 'utf8'), true));
+  hasManual = true;
+}
+writeFileSync(join(stagingDir, 'index.html'), indexPage(releases, hasManual));
+
+console.log(`\nSite montado em ${stagingDir}: ${releases.length} versão(ões), a mais recente é a ${latest.versionName}.`);
+if (flag('dry-run')) {
+  console.log('--dry-run: nada foi publicado.');
+  process.exit(0);
+}
+
+// ---------- 5. publicação ----------
+log(`Publicando em ${site}`);
+const wrangler = (wranglerArgs) =>
+  // Rodado fora do repositório: a wrangler nova altera package.json/.gitignore do projeto onde roda.
+  run('npx', ['--yes', 'wrangler@4', ...wranglerArgs], { cwd: tmpdir(), allowFailure: true });
+let deploy = wrangler(['pages', 'deploy', stagingDir, '--project-name', projectName, '--branch', 'master', '--commit-message', `Player-${versionName}`]);
+if (deploy.status !== 0 && /does not exist|not found/i.test(deploy.stdout + deploy.stderr)) {
+  console.log('  projeto ainda não existe: criando');
+  run('npx', ['--yes', 'wrangler@4', 'pages', 'project', 'create', projectName, '--production-branch', 'master', '--force'], { cwd: tmpdir() });
+  deploy = wrangler(['pages', 'deploy', stagingDir, '--project-name', projectName, '--branch', 'master', '--commit-message', `Player-${versionName}`]);
+}
+if (deploy.status !== 0) fail(`Publicação falhou:\n${deploy.stdout}${deploy.stderr}`);
+
+// ---------- 6. conferência no ar ----------
+log('Conferindo o que ficou no ar');
+await new Promise((r) => setTimeout(r, 5000));
+const live = await (await fetch(`${site}/latest.json`, { headers: { 'Cache-Control': 'no-cache' } })).json();
+const liveApk = Buffer.from(await (await fetch(new URL(live.apkUrl, `${site}/`))).arrayBuffer());
+const ok = live.versionCode === versionCode && createHash('sha256').update(liveApk).digest('hex') === live.sha256;
+if (!ok) fail('O que está no ar não confere com o que foi publicado (versão ou SHA-256).');
+console.log(`  latest.json -> versão ${live.versionName}; APK baixado e conferido (SHA-256 ok)`);
+console.log(`\n✔ Publicado: ${site}\n  Download direto: ${site}/d`);
+
+// ---------- páginas ----------
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+}
+
+function megabytes(bytes) {
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function dateBr(iso) {
+  return new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+}
+
+function page(title, body, wide = false) {
+  return `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(title)} — Digital Signage</title>
+<meta name="theme-color" content="#3563e9">
+<style>
+  :root { --blue:#3563e9; --text:#172033; --muted:#6d7788; --line:#e6eaf1; --bg:#f5f7fb; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; }
+  main { max-width:${wide ? '860px' : '760px'}; margin:0 auto; padding:28px 16px 60px; }
+  h1,h2,h3 { line-height:1.25; } h2 { margin-top:2em; border-bottom:1px solid var(--line); padding-bottom:.3em; }
+  a { color:var(--blue); }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:22px; margin:18px 0; }
+  .btn { display:inline-block; background:var(--blue); color:#fff; text-decoration:none; font-weight:600; padding:13px 22px; border-radius:11px; }
+  .muted { color:var(--muted); font-size:14px; } code { background:#eef1f7; padding:1px 6px; border-radius:6px; font-size:.92em; }
+  pre { background:#111a2c; color:#e8eefc; padding:14px 16px; border-radius:10px; overflow:auto; } pre code { background:none; padding:0; color:inherit; }
+  table { width:100%; border-collapse:collapse; background:#fff; } th,td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; font-size:15px; }
+  th { color:var(--muted); font-size:13px; } blockquote { margin:1em 0; padding:.2em 1em; border-left:4px solid var(--blue); background:#eef3ff; border-radius:0 8px 8px 0; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:700; margin-bottom:6px; } .brand img { width:34px; height:34px; border-radius:9px; }
+  .sha { font-family:ui-monospace,Consolas,monospace; font-size:12px; word-break:break-all; color:var(--muted); }
+  @media (max-width:600px) { th:nth-child(4), td:nth-child(4) { display:none; } }
+</style>
+</head>
+<body><main>
+<div class="brand"><img src="favicon.svg" alt=""> Digital Signage</div>
+${body}
+</main></body></html>
+`;
+}
+
+function indexPage(list, withManual) {
+  const top = list[0];
+  const rows = list
+    .map(
+      (r) => `<tr><td><b>${escapeHtml(r.versionName)}</b></td><td>${dateBr(r.publishedAt)}</td><td>${megabytes(r.size)}</td>
+<td>${escapeHtml(r.notes || '—')}</td><td><a href="${escapeHtml(r.apk)}" download>Baixar</a></td></tr>
+<tr><td colspan="5" class="sha">SHA-256: ${r.sha256}</td></tr>`,
+    )
+    .join('\n');
+  return page(
+    'Downloads do Player',
+    `<h1>Player para TV</h1>
+<p class="muted">Aplicativo para Android TV e Fire TV Stick. Instalação direta pelo arquivo APK, sem Google Play. Depois de instalado, ele se atualiza sozinho a partir desta página.</p>
+<div class="card">
+  <div class="muted">Versão mais recente</div>
+  <h2 style="margin:.1em 0 .4em;border:0">${escapeHtml(top.versionName)} <span class="muted" style="font-weight:400">· ${dateBr(top.publishedAt)} · ${megabytes(top.size)}</span></h2>
+  ${top.notes ? `<p>${escapeHtml(top.notes)}</p>` : ''}
+  <p><a class="btn" href="${escapeHtml(top.apk)}" download>Baixar APK ${escapeHtml(top.versionName)}</a></p>
+  <p class="muted">Na TV, com o app <b>Downloader</b>, digite o endereço curto: <code>${new URL(site).host}/d</code></p>
+  <p class="sha">SHA-256: ${top.sha256}</p>
+</div>
+${withManual ? '<p>📖 <a href="manual.html"><b>Manual de instalação</b></a> (TCL Android TV e Fire TV Stick, passo a passo)</p>' : ''}
+<h2>Todas as versões</h2>
+<table><tr><th>Versão</th><th>Data</th><th>Tamanho</th><th>Novidades</th><th></th></tr>
+${rows}
+</table>
+<p class="muted">Confira o SHA-256 se quiser garantir que o arquivo não foi alterado. O Android também recusa qualquer atualização que não venha assinada com a mesma chave das versões anteriores.</p>`,
+  );
+}

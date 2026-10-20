@@ -844,37 +844,39 @@ Não implementar no MVP:
 - [x] migrations funcionam.
 - [x] login funciona.
 - [x] dispositivo pode ser criado.
-- [ ] ativação por código funciona.
+- [x] ativação por código funciona.
 - [x] mídia pode ser cadastrada.
 - [x] playlist pode ser criada.
 - [x] playlist pode ser associada.
 - [x] Player consegue buscar configuração.
-- [ ] heartbeat funciona.
+- [x] heartbeat funciona.
 
 ### Frontend
 
-- [ ] Login.
-- [ ] Dashboard.
-- [ ] Dispositivos.
-- [ ] Biblioteca.
-- [ ] Playlist.
-- [ ] Associação playlist/dispositivo.
-- [ ] Status online/offline.
+- [x] Login.
+- [x] Dashboard.
+- [x] Dispositivos.
+- [x] Biblioteca.
+- [x] Playlist.
+- [x] Associação playlist/dispositivo.
+- [x] Status online/offline.
 
 ### Player
 
-- [ ] inicia.
-- [ ] exibe código.
-- [ ] ativa.
-- [ ] autentica.
-- [ ] baixa mídia.
-- [ ] mantém cache.
-- [ ] reproduz imagem.
-- [ ] reproduz vídeo.
-- [ ] executa playlist.
-- [ ] envia heartbeat.
-- [ ] funciona sem internet.
-- [ ] sincroniza após retorno.
+- [x] inicia.
+- [x] exibe código.
+- [x] ativa.
+- [x] autentica.
+- [x] baixa mídia.
+- [x] mantém cache.
+- [x] reproduz imagem.
+- [x] reproduz vídeo.
+- [x] executa playlist.
+- [x] envia heartbeat.
+- [x] funciona sem internet.
+- [x] sincroniza após retorno.
+
+> Verificado no painel publicado (Cloudflare Pages) + backend (Render) + banco (Supabase) e no **emulador de Android TV 14**. Ainda **não** verificado em TV física (TCL, Fire Stick) nem o upload de vídeos grandes (>50 MB: limite do plano gratuito do Supabase). Itens do painel que o escopo cita e ainda faltam: "atividades recentes" no dashboard e "visualizar detalhes" do dispositivo.
 
 ---
 
@@ -903,7 +905,7 @@ A IA deve seguir aproximadamente esta ordem:
 19. [~] Deploy inicial (guia completo em [docs/DEPLOY.md](./docs/DEPLOY.md): rede local → túnel → nuvem gratuita; **nada foi publicado ainda**).
 20. [ ] Só depois iniciar expansão.
 
-Transversal: testes de regressão automatizados (backend 66, painel 23, Player 39) rodando no GitHub Actions a cada push.
+Transversal: testes de regressão automatizados (backend 77, painel 27, Player 56) rodando no GitHub Actions a cada push. APK publicado numa lista de downloads com atualização automática pelo site (sem Google Play); manual de instalação em docs/INSTALACAO_TV.md.
 
 Detalhes de cada etapa concluída (decisões tomadas, bugs encontrados e corrigidos) ficam em [docs/DECISIONS.md](./docs/DECISIONS.md).
 

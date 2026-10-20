@@ -15,6 +15,11 @@ player/build/
 player/app/build/
 player/*.iml
 player/.cxx/
+# Chave de assinatura do APK: NUNCA versionar (perdê-la impede atualizar as TVs já instaladas)
+player/keystore.properties
+*.jks
+*.keystore
+release-site/
 
 # Env
 .env

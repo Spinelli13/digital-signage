@@ -42,6 +42,10 @@ cd player   && ./gradlew testDebugUnitTest    # Player (JVM)
 
 Cada bug corrigido no projeto tem um teste de regressão; a lista está em [docs/DECISIONS.md](./docs/DECISIONS.md).
 
+## Baixar o Player e instalar na TV
+
+Lista de versões do APK e manual de instalação (TCL Android TV e Fire TV Stick): **https://signage-downloads.pages.dev** — atalho curto para o app Downloader: `signage-downloads.pages.dev/d`. O Player se atualiza sozinho a partir daí. Manual em [docs/INSTALACAO_TV.md](./docs/INSTALACAO_TV.md).
+
 ## Colocando no ar / testando na TV
 
 Passo a passo (rede local com a TCL → túnel → nuvem gratuita → Fire Stick): **[docs/DEPLOY.md](./docs/DEPLOY.md)**.
