@@ -6,6 +6,8 @@ services:
     name: signage-backend
     runtime: docker
     plan: free
+    # Mesma região do projeto Supabase (us-east-1 = Virgínia): cada consulta ao banco fica rápida.
+    region: virginia
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     healthCheckPath: /api/v1/health
