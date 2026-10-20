@@ -1,0 +1,76 @@
+import { HttpErrorResponse } from '@angular/common/http';
+
+import { Device } from './models';
+
+export interface DeviceState {
+  label: string;
+  tone: 'on' | 'off' | 'warn';
+}
+
+export function deviceState(device: Device): DeviceState {
+  switch (device.status) {
+    case 'DISABLED':
+      return { label: 'Desativado', tone: 'off' };
+    case 'PENDING':
+      return { label: 'Aguardando ativação', tone: 'warn' };
+    default:
+      if (device.online) {
+        return { label: 'Online', tone: 'on' };
+      }
+      return device.lastSeenAt
+        ? { label: 'Offline', tone: 'off' }
+        : { label: 'Nunca conectou', tone: 'warn' };
+  }
+}
+
+/** True quando o dispositivo precisa de atenção do administrador (offline, pendente ou nunca conectado). */
+export function needsAttention(device: Device): boolean {
+  const state = deviceState(device);
+  return state.tone !== 'on' && device.status !== 'DISABLED';
+}
+
+export function timeAgo(iso: string | null, now: number = Date.now()): string {
+  if (!iso) {
+    return '—';
+  }
+  const seconds = Math.max(0, Math.round((now - new Date(iso).getTime()) / 1000));
+  if (seconds < 60) {
+    return 'agora';
+  }
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    return `${minutes} min atrás`;
+  }
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return `${hours} h atrás`;
+  }
+  return `${Math.floor(hours / 24)} d atrás`;
+}
+
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+  if (bytes < 1024 * 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+/** Extrai a mensagem {"error": "..."} devolvida pela API, com fallback legível. */
+export function errorMessage(error: unknown, fallback = 'Algo deu errado. Tente novamente.'): string {
+  if (error instanceof HttpErrorResponse) {
+    if (error.status === 0) {
+      return 'Não foi possível conectar ao servidor.';
+    }
+    const body = error.error as { error?: string } | null;
+    if (body && typeof body.error === 'string') {
+      return body.error;
+    }
+  }
+  return fallback;
+}
