@@ -300,6 +300,9 @@ Depois repita o **passo 7 e o roteiro da Fase A**.
 | Painel: "Não foi possível conectar ao servidor" | Backend dormindo (aguarde ~1 min) ou `apiBaseUrl` errado em `config.json` |
 | Painel carrega mas chamadas falham no console (CORS) | `CORS_ALLOWED_ORIGINS` diferente da URL real do painel (precisa ser idêntica, sem `/` final) |
 | Backend não sobe, erro de conexão com `[...]` (IPv6) | Está usando a conexão direta do Supabase; use o Session pooler |
+| Backend cai com `Found non-empty schema(s) "public" but no schema history table` | O `public` do Supabase já tem objetos (função do RLS automático). Defina `SPRING_FLYWAY_BASELINE_ON_MIGRATE=true` e `SPRING_FLYWAY_BASELINE_VERSION=0` (já estão no `render.yaml`) |
+| Backend cai com `password authentication failed` | `POSTGRES_PASSWORD` ausente ou errada (ausente = usa a senha padrão de desenvolvimento). Resete a senha no Supabase e cole no Render |
+| Backend tenta `localhost:5432` | `DB_URL` não chegou ao serviço: variáveis marcadas `sync: false` no Blueprint ficam em branco se não forem preenchidas |
 | Upload retorna 500 | Credenciais/endpoint/região S3 errados; arquivo acima de 50 MB (limite do plano gratuito do Supabase) |
 | TV mostra "Sem conexão" | URL do servidor errada ou backend dormindo; aperte OK no controle para corrigir |
 | TV baixa mas não toca vídeo | Formato não suportado — use MP4 H.264 |
