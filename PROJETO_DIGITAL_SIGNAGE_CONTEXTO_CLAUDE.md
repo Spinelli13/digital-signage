@@ -893,15 +893,17 @@ A IA deve seguir aproximadamente esta ordem:
 9. [x] Playlists.
 10. [x] Endpoint de configuração do Player.
 11. [x] Player mínimo (compilado e validado — instalação em hardware real ainda pendente).
-12. [ ] Ativação.
-13. [ ] Download/cache.
-14. [ ] Reprodução.
-15. [ ] Heartbeat.
-16. [ ] Integração painel ↔ Player.
-17. [ ] Teste sem internet.
-18. [ ] Teste após reinicialização.
-19. [ ] Deploy inicial.
+12. [x] Ativação (código na TV + token do aparelho; validado no software, falta na TV física).
+13. [x] Download/cache (checksum SHA-256, troca atômica; validado em testes JVM, falta na TV física).
+14. [x] Reprodução (imagens + vídeo MP4; **só compila e passa nos testes — nunca rodou numa TV**).
+15. [x] Heartbeat.
+16. [x] Integração painel ↔ Player (painel Angular + API; fluxo conferido no navegador contra o backend real).
+17. [~] Teste sem internet (comportamento coberto por testes automatizados; falta confirmar na TV).
+18. [~] Teste após reinicialização (receiver de boot existe; depende da versão do Android — falta confirmar na TV).
+19. [~] Deploy inicial (guia completo em [docs/DEPLOY.md](./docs/DEPLOY.md): rede local → túnel → nuvem gratuita; **nada foi publicado ainda**).
 20. [ ] Só depois iniciar expansão.
+
+Transversal: testes de regressão automatizados (backend 66, painel 23, Player 39) rodando no GitHub Actions a cada push.
 
 Detalhes de cada etapa concluída (decisões tomadas, bugs encontrados e corrigidos) ficam em [docs/DECISIONS.md](./docs/DECISIONS.md).
 
