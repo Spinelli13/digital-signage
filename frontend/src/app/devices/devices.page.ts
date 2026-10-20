@@ -160,8 +160,11 @@ type LocationChoice = string;
                       <option [ngValue]="playlist.id">{{ playlist.name }}</option>
                     }
                   </select>
-                  @if (device.currentPlaylistId !== null && device.configVersion < versionOf(device.currentPlaylistId)) {
-                    <small>sincronizando…</small>
+                  @if (device.campaignName) {
+                    <br /><small class="campaign" title="Uma campanha vale agora para esta TV e tem prioridade sobre a playlist dela.">📣 Agora: campanha {{ device.campaignName }}</small>
+                  }
+                  @if (device.currentPlaylistId !== null && device.configVersion < versionOf(device.effectivePlaylistId ?? device.currentPlaylistId)) {
+                    <br /><small>sincronizando…</small>
                   }
                 } @else {
                   <span class="muted">—</span>
@@ -244,6 +247,7 @@ type LocationChoice = string;
     .row-actions button { margin-left: 6px; }
     select { min-width: 170px; }
     .stale { color: var(--orange); font-weight: 600; }
+    .campaign { color: var(--blue); font-weight: 600; }
     .head-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; padding: 14px; }
     .filters .search { flex: 1 1 220px; min-width: 180px; width: auto; }

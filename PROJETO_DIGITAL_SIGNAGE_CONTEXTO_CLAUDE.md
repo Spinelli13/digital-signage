@@ -771,15 +771,17 @@ Sincronização
 
 Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 5).
 
-### Fase 3 — Campanhas
+### Fase 3 — Campanhas ✅ (concluída em 2026-10-20)
 
 ```text
-Agendamento
-Data início/fim
-Horários
-Prioridade
-Segmentação
+[x] Agendamento (resolvido no servidor a cada heartbeat; o Player não muda)
+[x] Data início/fim (inclusivas)
+[x] Horários (dias da semana, janela diária, fuso por campanha, atravessa a meia-noite)
+[x] Prioridade (e desempate por alvo mais específico, depois a mais nova)
+[x] Segmentação (todas as TVs, TV, local ou grupo; simulador no painel)
 ```
+
+Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 6).
 
 ### Fase 4 — Monitoramento
 
@@ -907,7 +909,7 @@ A IA deve seguir aproximadamente esta ordem:
 19. [~] Deploy inicial (guia completo em [docs/DEPLOY.md](./docs/DEPLOY.md): rede local → túnel → nuvem gratuita; **nada foi publicado ainda**).
 20. [ ] Só depois iniciar expansão.
 
-Transversal: testes de regressão automatizados (backend 127, painel 115, Player 86) rodando no GitHub Actions a cada push. APK publicado numa lista de downloads com atualização automática pelo site (sem Google Play), pedido de atualização pelo painel e um único APK para Android 5.0+; manuais em PDF ilustrados (docs/INSTALACAO_TV.md e docs/MANUAL_PAINEL.md) publicados junto com cada versão; erros tratados e exibidos nos dois clientes (painel: até fechar; TV: 10 s).
+Transversal: testes de regressão automatizados (backend 177, painel 145, Player 86) rodando no GitHub Actions a cada push. APK publicado numa lista de downloads com atualização automática pelo site (sem Google Play), pedido de atualização pelo painel e um único APK para Android 5.0+; manuais em PDF ilustrados (docs/INSTALACAO_TV.md e docs/MANUAL_PAINEL.md) publicados junto com cada versão; erros tratados e exibidos nos dois clientes (painel: até fechar; TV: 10 s).
 
 Detalhes de cada etapa concluída (decisões tomadas, bugs encontrados e corrigidos) ficam em [docs/DECISIONS.md](./docs/DECISIONS.md).
 

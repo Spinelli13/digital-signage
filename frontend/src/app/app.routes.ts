@@ -12,6 +12,7 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', loadComponent: () => import('./dashboard/dashboard.page').then((m) => m.DashboardPage) },
       { path: 'dispositivos', loadComponent: () => import('./devices/devices.page').then((m) => m.DevicesPage) },
+      { path: 'campanhas', loadComponent: () => import('./campaigns/campaigns.page').then((m) => m.CampaignsPage) },
       { path: 'locais', loadComponent: () => import('./locations/locations.page').then((m) => m.LocationsPage) },
       { path: 'grupos', loadComponent: () => import('./groups/groups.page').then((m) => m.GroupsPage) },
       { path: 'biblioteca', loadComponent: () => import('./media/media.page').then((m) => m.MediaPage) },

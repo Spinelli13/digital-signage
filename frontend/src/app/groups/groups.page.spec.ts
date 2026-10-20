@@ -33,6 +33,9 @@ const device = (id: number, name: string): Device => ({
   playerVersion: null,
   currentPlaylistId: null,
   configVersion: 0,
+  effectivePlaylistId: null,
+  campaignId: null,
+  campaignName: null,
   createdAt: '',
   updatedAt: '',
 });

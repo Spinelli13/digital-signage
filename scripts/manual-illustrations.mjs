@@ -351,3 +351,64 @@ menuPath('firetv-abrir-app.svg', 'Fire TV Stick · Abrir o Player depois de inst
   writeFileSync(join(outDir, 'estados-tv.svg'), svg(w, h, body));
   console.log('ok estados-tv.svg');
 }
+
+// =====================================================================================================
+// 10. Campanhas: como a TV decide o que exibir
+// =====================================================================================================
+{
+  const w = 1040, h = 330;
+  let body = text(40, 44, 'Como a TV decide o que exibir', { size: 24, weight: 700 });
+  const steps = [
+    ['1', 'Quais campanhas valem agora?', ['Só as não pausadas, dentro do', 'período, do dia da semana', 'e do horário (fuso da campanha)']],
+    ['2', 'Quais alcançam esta TV?', ['Todas as TVs, esta TV,', 'o local dela ou', 'um grupo de que ela faz parte']],
+    ['3', 'Quem vence?', ['A de maior prioridade.', 'Empate: alvo mais específico', '(TV, grupo, local, todas); depois a mais nova']],
+  ];
+  steps.forEach(([n, title, lines], i) => {
+    const x = 40 + i * 330;
+    body += `<rect x="${x}" y="84" width="300" height="150" rx="14" fill="${C.white}" stroke="${C.blue}" stroke-width="3"/>`;
+    body += badge(x + 24, 84, n) + text(x + 150, 124, title, { size: 16, weight: 700, anchor: 'middle' });
+    body += lines.map((l, k) => text(x + 150, 156 + k * 22, l, { size: 13, fill: C.muted, anchor: 'middle' })).join('');
+    if (i < 2) body += arrow(x + 304, 160, x + 326, 160);
+  });
+  body += `<rect x="40" y="258" width="960" height="52" rx="12" fill="#eaf8f2" stroke="${C.green}" stroke-width="2"/>`;
+  body += text(520, 280, 'Sem nenhuma campanha valendo, a TV exibe a PLAYLIST DELA (a que você escolheu em Dispositivos).', { size: 15, weight: 700, anchor: 'middle' });
+  body += text(520, 299, 'A decisão é refeita a cada contato da TV com o servidor (30 s): a troca acontece sozinha, no horário certo.', { size: 13, fill: C.muted, anchor: 'middle' });
+  writeFileSync(join(outDir, 'campanha-decisao.svg'), svg(w, h, body));
+  console.log('ok campanha-decisao.svg');
+}
+
+// =====================================================================================================
+// 11. Campanhas: exemplo de um dia (linha do tempo)
+// =====================================================================================================
+{
+  const w = 1040, h = 360;
+  const x0 = 250, x1 = 1000, hour = (x1 - x0) / 24;
+  const at = (hh) => x0 + hh * hour;
+  let body = text(40, 44, 'Exemplo: uma sexta-feira numa TV da Loja Shopping', { size: 22, weight: 700 }) + text(40, 66, 'Entre parênteses, a prioridade de cada campanha.', { size: 13, fill: C.muted });
+  const lanes = [
+    ['Promoção de verão (50)', 0, 24, C.orange],
+    ['Cardápio do almoço (70)', 11, 14, C.green],
+    ['Happy hour (80)', 18, 23, C.blue],
+  ];
+  lanes.forEach(([label, from, to, color], i) => {
+    const y = 86 + i * 52;
+    body += text(40, y + 22, label, { size: 14 });
+    body += `<rect x="${x0}" y="${y}" width="${x1 - x0}" height="30" rx="6" fill="#e9edf5"/>`;
+    body += `<rect x="${at(from)}" y="${y}" width="${at(to) - at(from)}" height="30" rx="6" fill="${color}" opacity=".85"/>`;
+  });
+  // resultado
+  const y = 86 + 3 * 52 + 14;
+  body += text(40, y + 22, 'O que a TV exibe', { size: 15, weight: 700 });
+  const result = [[0, 11, 'Promoção', C.orange], [11, 14, 'Almoço', C.green], [14, 18, 'Promoção', C.orange], [18, 23, 'Happy hour', C.blue], [23, 24, 'Promoção', C.orange]];
+  result.forEach(([from, to, label, color]) => {
+    body += `<rect x="${at(from) + 1}" y="${y}" width="${at(to) - at(from) - 2}" height="34" rx="6" fill="${color}"/>`;
+    if (to - from >= 3) body += text((at(from) + at(to)) / 2, y + 22, label, { size: 13, weight: 700, fill: C.white, anchor: 'middle' });
+  });
+  // eixo
+  for (let hh = 0; hh <= 24; hh += 3) {
+    body += `<line x1="${at(hh)}" y1="${y + 40}" x2="${at(hh)}" y2="${y + 48}" stroke="${C.muted}"/>` + text(at(hh), y + 64, `${String(hh).padStart(2, '0')}h`, { size: 12, fill: C.muted, anchor: 'middle' });
+  }
+  body += text(40, h - 14, 'Das 11h às 14h o almoço (prioridade 70) vence a promoção (50); das 18h às 23h o happy hour (80) vence tudo; no resto do dia vale a promoção.', { size: 12, fill: C.muted });
+  writeFileSync(join(outDir, 'campanha-linha-do-tempo.svg'), svg(w, h, body));
+  console.log('ok campanha-linha-do-tempo.svg');
+}

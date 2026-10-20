@@ -17,6 +17,10 @@ export interface Device {
   playerVersion: string | null;
   currentPlaylistId: number | null;
   configVersion: number;
+  /** O que a TV exibe AGORA: a playlist de uma campanha ativa ou, sem campanha, a base (currentPlaylistId). */
+  effectivePlaylistId: number | null;
+  campaignId: number | null;
+  campaignName: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -164,7 +168,70 @@ export interface Summary {
   groups: number;
   media: number;
   playlists: number;
+  campaigns: { total: number; activeNow: number };
   /** id nulo = TVs sem local. */
   byLocation: { id: number | null; name: string; total: number; online: number }[];
   attention: { id: number; name: string; location: string | null; connection: Connection; lastSeenAt: string | null }[];
+}
+
+// ---------- campanhas (fase 3) ----------
+
+export type CampaignState = 'ACTIVE' | 'WAITING' | 'SCHEDULED' | 'ENDED' | 'PAUSED';
+export type TargetType = 'ALL' | 'LOCATION' | 'GROUP' | 'DEVICE';
+
+export interface CampaignTargetInfo {
+  type: TargetType;
+  /** Id da TV, do local ou do grupo; nulo em "todas as TVs". */
+  id: number | null;
+  name: string | null;
+}
+
+export interface Campaign {
+  id: number;
+  name: string;
+  description: string | null;
+  playlistId: number;
+  playlistName: string | null;
+  /** Maior número vence quando duas campanhas alcançam a mesma TV ao mesmo tempo. */
+  priority: number;
+  enabled: boolean;
+  startDate: string | null;
+  endDate: string | null;
+  /** "HH:mm:ss" (ou nulo = o dia todo). */
+  startTime: string | null;
+  endTime: string | null;
+  /** 1 = segunda ... 7 = domingo. */
+  daysOfWeek: number[];
+  timezone: string;
+  targets: CampaignTargetInfo[];
+  state: CampaignState;
+  deviceCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CampaignRequest {
+  name: string;
+  description: string | null;
+  playlistId: number;
+  priority: number;
+  enabled: boolean;
+  startDate: string | null;
+  endDate: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  daysOfWeek: number[];
+  timezone: string;
+  targets: { type: TargetType; id: number | null }[];
+}
+
+/** O que uma TV exibiria num momento (simulação da agenda). */
+export interface CampaignPreview {
+  deviceId: number;
+  at: string;
+  playlistId: number | null;
+  playlistName: string | null;
+  source: 'CAMPAIGN' | 'BASE' | 'NONE';
+  campaignId: number | null;
+  campaignName: string | null;
 }

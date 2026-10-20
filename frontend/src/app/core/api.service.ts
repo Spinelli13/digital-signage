@@ -8,6 +8,9 @@ import { filtersToParams } from './device-filters';
 import {
   ActivateRequest,
   BulkRequest,
+  Campaign,
+  CampaignPreview,
+  CampaignRequest,
   Device,
   DeviceFilters,
   DeviceGroup,
@@ -80,6 +83,29 @@ export class ApiService {
   /** Apagar um grupo não apaga as TVs, só o vínculo. */
   deleteGroup(id: number): Observable<void> {
     return this.http.delete<void>(this.url(`/groups/${id}`));
+  }
+
+  // campanhas
+  campaigns(): Observable<Campaign[]> {
+    return this.http.get<Campaign[]>(this.url('/campaigns'));
+  }
+
+  createCampaign(body: CampaignRequest): Observable<Campaign> {
+    return this.http.post<Campaign>(this.url('/campaigns'), body);
+  }
+
+  updateCampaign(id: number, body: CampaignRequest): Observable<Campaign> {
+    return this.http.put<Campaign>(this.url(`/campaigns/${id}`), body);
+  }
+
+  deleteCampaign(id: number): Observable<void> {
+    return this.http.delete<void>(this.url(`/campaigns/${id}`));
+  }
+
+  /** "O que esta TV exibiria neste momento?" (instante ISO; vazio = agora). */
+  previewCampaigns(deviceId: number, at?: string): Observable<CampaignPreview> {
+    const query = at ? `?deviceId=${deviceId}&at=${encodeURIComponent(at)}` : `?deviceId=${deviceId}`;
+    return this.http.get<CampaignPreview>(this.url(`/campaigns/preview${query}`));
   }
 
   // resumo do dashboard

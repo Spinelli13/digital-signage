@@ -13,6 +13,7 @@ const EMPTY: Summary = {
   groups: 0,
   media: 0,
   playlists: 0,
+  campaigns: { total: 0, activeNow: 0 },
   byLocation: [],
   attention: [],
 };
@@ -37,6 +38,7 @@ const EMPTY: Summary = {
       <a class="stat" routerLink="/grupos"><div class="label">Grupos</div><div class="n">{{ summary().groups }}</div></a>
       <a class="stat" routerLink="/biblioteca"><div class="label">Mídias</div><div class="n">{{ summary().media }}</div></a>
       <a class="stat" routerLink="/playlists"><div class="label">Playlists</div><div class="n">{{ summary().playlists }}</div></a>
+      <a class="stat" routerLink="/campanhas"><div class="label">Campanhas ativas agora</div><div class="n" [class.ok]="summary().campaigns.activeNow > 0">{{ summary().campaigns.activeNow }}<small> de {{ summary().campaigns.total }}</small></div></a>
     </div>
 
     <div class="two">

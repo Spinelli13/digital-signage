@@ -152,3 +152,23 @@ Registro de decisões que complementam o [documento de contexto](../PROJETO_DIGI
 ### Painel
 - Novas páginas **Pontos & Locais** e **Grupos**; **Dispositivos** ganhou busca, filtros (também por link vindo do Dashboard/Locais/Grupos), seleção e barra de ações em massa; o **Dashboard** passou a ser alimentado por `/summary`.
 - Achado pelas capturas de tela reais (não pelos testes): o CSS global fazia todo `input`/`select` ocupar a linha inteira, o que empilhou os filtros e jogou as caixas de marcar acima do texto; corrigido (caixas de marcar com largura automática, rótulo ao lado).
+
+## 2026-10-20 (parte 6) — Fase 3: campanhas (agendamento, período, horários, prioridade, segmentação)
+
+### Decisão central: a agenda é resolvida **no servidor**, a cada heartbeat
+- Uma campanha é uma playlist + agenda + prioridade + alvos. Cada TV continua tendo a sua playlist base; **uma campanha ativa agora e que alcança a TV substitui a base**, e sem campanha a TV exibe a base. `PlayerConfigService` passa a devolver a playlist efetiva, e o heartbeat (que já devolvia `playlistId` + `configVersion`) faz o Player trocar sozinho. **O Player não muda** (nenhuma versão nova do APK e nenhum risco para TVs já instaladas).
+- Custo assumido e documentado: a troca depende de a TV estar online no horário (ela descobre em até 30 s e baixa a playlist); sem internet, continua exibindo o que tem e troca ao reconectar. A alternativa (o Player receber a agenda inteira, pré-baixar as mídias e trocar pelo relógio do aparelho) é mais robusta offline, mas exige mudança grande no Player, no cache e no protocolo, e só se justifica quando houver TVs reais com internet instável; fica anotada como evolução possível, não como pendência.
+
+### Regras de agenda (`CampaignSchedule`, puras e testadas com horas fixas)
+- Período com as duas datas **inclusivas**; dias da semana ISO (1 = segunda); janela diária com início inclusivo e fim **exclusivo**; fuso **por campanha** (padrão America/Sao_Paulo), nunca UTC (teste de regressão de fuso).
+- **Janela que atravessa a meia-noite** (fim < início) conta pelo dia em que **começa**: sexta 22:00–06:00 vale de sexta 22:00 a sábado 06:00; uma campanha cujo último dia é sexta ainda termina a janela de sexta no sábado de madrugada, e a janela de sábado não começa. Início = fim é recusado (ambíguo); para o dia todo, deixam-se os dois vazios.
+- **Desempate** (nunca ambíguo): maior prioridade; depois alvo mais específico (TV > grupo > local > todas); depois a campanha mais nova. A prioridade vence a especificidade de propósito (o administrador decide).
+- O relógio é um bean (`Clock`) para os testes congelarem o tempo.
+
+### Modelo e integridade
+- `campaigns` + `campaign_targets` (V4). Alvos em colunas separadas com chave estrangeira própria (todas / TV / local / grupo, `CHECK` de exatamente um por linha): apagar a TV, o local ou o grupo remove o alvo sozinho e a campanha continua existindo (alcançando menos TVs). `playlist_id` é `RESTRICT`: apagar uma playlist usada por campanha é recusado com mensagem que diz qual campanha a usa.
+- API: CRUD, `GET /campaigns/preview?deviceId=&at=` (o que a TV exibiria num momento: CAMPAIGN/BASE/NONE), e as respostas de TV trazem `effectivePlaylistId` e a campanha vencedora. O resumo do dashboard conta campanhas ativas agora.
+- **Bug achado pelo teste de integração do heartbeat:** com `open-in-view` desligado, ler os grupos da TV fora de transação falhava (`LazyInitializationException`); os grupos passaram a ser carregados junto com a TV.
+
+### Painel
+- Página **Campanhas** (lista com situação — ativa agora, aguardando horário, agendada, encerrada, pausada —, editor com dias/horário/fuso/alvos e **simulador**), rótulo "Agora: campanha X" em cada TV e o contador no dashboard. Validação no formulário (mensagens em português) e de novo no servidor.

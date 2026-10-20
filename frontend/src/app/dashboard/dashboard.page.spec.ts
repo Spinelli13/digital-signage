@@ -15,6 +15,7 @@ const SUMMARY: Summary = {
   groups: 1,
   media: 4,
   playlists: 2,
+  campaigns: { total: 3, activeNow: 1 },
   byLocation: [
     { id: 1, name: 'Centro', total: 3, online: 2 },
     { id: null, name: 'Sem local', total: 3, online: 0 },

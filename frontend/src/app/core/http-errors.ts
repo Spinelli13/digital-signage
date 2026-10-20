@@ -34,6 +34,11 @@ const ACTIONS: [method: string, path: RegExp, label: string][] = [
   ['PUT', /\/groups\/\d+(\/devices)?$/, 'Salvar grupo'],
   ['DELETE', /\/groups\/\d+$/, 'Excluir grupo'],
   ['GET', /\/summary$/, 'Carregar o resumo'],
+  ['GET', /\/campaigns$/, 'Carregar as campanhas'],
+  ['POST', /\/campaigns$/, 'Criar campanha'],
+  ['PUT', /\/campaigns\/\d+$/, 'Salvar campanha'],
+  ['DELETE', /\/campaigns\/\d+$/, 'Excluir campanha'],
+  ['GET', /\/campaigns\/preview$/, 'Simular a agenda'],
 ];
 
 function actionOf(request: HttpRequest<unknown>): string | null {

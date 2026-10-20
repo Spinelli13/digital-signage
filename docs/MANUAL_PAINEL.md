@@ -10,7 +10,7 @@ Como usar o **painel de administração** do Digital Signage no dia a dia: envia
 
 1. Enviar as mídias para a **Biblioteca** (uma vez só).
 2. Montar uma **Playlist** com as mídias na ordem e com o tempo que você quiser.
-3. Em **Dispositivos**, escolher qual playlist cada TV exibe. Com várias TVs, organize-as em **Locais** (onde estão) e **Grupos** (conjuntos para agir juntos) e aplique a playlist a todas de uma vez.
+3. Em **Dispositivos**, escolher qual playlist cada TV exibe. Com várias TVs, organize-as em **Locais** (onde estão) e **Grupos** (conjuntos para agir juntos) e aplique a playlist a todas de uma vez. Para conteúdo que só vale em certas datas, dias ou horários, use **Campanhas**.
 
 ---
 
@@ -35,10 +35,11 @@ O **menu à esquerda** leva a cada área:
 
 | Menu | Para que serve |
 |---|---|
-| **Dashboard** | Visão geral: quantas TVs estão online, offline, nunca conectaram ou aguardam ativação; quantas há em cada local; e quais precisam de atenção. Clique em qualquer número para ver essas TVs. |
+| **Dashboard** | Visão geral: quantas TVs estão online, offline, nunca conectaram ou aguardam ativação; quantas há em cada local; e quais precisam de atenção. Mostra também quantas campanhas valem agora. Clique em qualquer número para ver essas TVs. |
 | **Dispositivos** | As TVs: ativar, dar nome, local e grupos, escolher a playlist, filtrar, agir em várias de uma vez, desativar, excluir e pedir atualização do aplicativo. |
 | **Pontos & Locais** | Onde estão as TVs (ex.: "Loja Centro"). |
 | **Grupos** | Conjuntos de TVs (ex.: "Recepções") para escolher a playlist e atualizar o aplicativo de todas de uma vez. |
+| **Campanhas** | Uma playlist com **agenda** (datas, dias da semana, horários), **prioridade** e **alvos** (todas as TVs, locais, grupos ou TVs). |
 | **Biblioteca** | Suas imagens e vídeos. |
 | **Playlists** | A ordem e o tempo de cada mídia. |
 | **Downloads e manuais** | O aplicativo da TV (sempre a versão mais recente) e estes manuais em PDF. |
@@ -109,6 +110,8 @@ Na linha da TV, use a lista da coluna **Playlist**:
 
 - escolha uma playlist para a TV começar a exibi-la (em até 1 minuto);
 - escolha **Nenhuma playlist** para tirar o conteúdo: a TV passa a mostrar "Aguardando conteúdo". A playlist em si **não** é apagada.
+
+A playlist escolhida aqui é a **playlist da TV**: o que ela exibe quando nenhuma campanha vale. Quando uma campanha está valendo, aparece abaixo da lista o aviso **"Agora: campanha …"** (a campanha tem prioridade sobre a playlist da TV).
 
 ![Lista de dispositivos: situação, último contato, versão do aplicativo, playlist, local e grupos de cada TV (captura real)](manual/img/painel-dispositivos.png)
 
@@ -205,7 +208,59 @@ Um **grupo** é um conjunto livre de TVs (ex.: "Recepções", "Vitrines", "Refei
 
 ---
 
-## 8. Downloads e manuais
+## 8. Campanhas
+
+Uma **campanha** é uma playlist com agenda: ela só vale em certas **datas**, **dias da semana** e **horários**, para as TVs que você escolher, e tem uma **prioridade**. Exemplos: o cardápio do almoço das 11h às 14h nos refeitórios; uma promoção de 1 a 30 de novembro em todas as lojas; um aviso só no fim de semana.
+
+Sem campanhas, cada TV exibe a playlist dela, como sempre. Quando uma campanha vale, ela **substitui** a playlist da TV enquanto durar, e a TV volta sozinha ao conteúdo normal depois.
+
+![Como a TV decide o que exibir: campanhas que valem agora, que alcançam a TV, maior prioridade; sem campanha, a playlist da TV](manual/img/campanha-decisao.svg)
+
+### 8.1 Criar uma campanha
+
+1. Abra **Campanhas** e clique em **+ Nova campanha**.
+2. Dê um **nome**, escolha a **playlist** que será exibida e a **prioridade** (veja 8.3).
+3. Em **Quando**, defina:
+   - **De / Até (data):** o período (as duas datas valem). Deixe vazio para não limitar.
+   - **Dias da semana:** marque os dias em que vale.
+   - **O dia todo** ou um **horário** (das … às …). Se o fim for antes do início (por exemplo, das 22:00 às 06:00), a campanha atravessa a meia-noite e conta pelo dia em que **começa**: "sexta das 22h às 6h" vale de sexta 22h até sábado 6h.
+   - **Fuso horário:** as datas e horas valem neste fuso (o padrão é o de Brasília).
+4. Em **Para quem**, marque **Todas as TVs** ou escolha **locais**, **grupos** e **TVs** (pode misturar: a campanha vale para a soma deles).
+5. Salve. As TVs alcançadas passam a seguir a campanha **sozinhas, no horário dela**: não é preciso fazer mais nada.
+
+![Janela de edição de campanha: playlist, prioridade, período, dias, horário, fuso e alvos (captura real)](manual/img/painel-campanha-editar.png)
+
+### 8.2 A lista de campanhas
+
+![Lista de campanhas com a agenda, os alvos, a prioridade e a situação de cada uma (captura real)](manual/img/painel-campanhas.png)
+
+| Situação | O que significa |
+|---|---|
+| **Ativa agora** | Está valendo neste momento nas TVs que ela alcança. |
+| **Aguardando horário** | Está no período, mas hoje ainda não é o dia ou a hora dela. |
+| **Agendada** | O período ainda não começou. |
+| **Encerrada** | O período já terminou. |
+| **Pausada** | Você a pausou; não é exibida até **Reativar**. |
+
+Use **Pausar/Reativar** para desligar uma campanha sem apagá-la, **Editar** para mudar qualquer coisa e **Excluir** para remover (as TVs voltam à playlist delas ou a outra campanha que valha). Uma **playlist em uso por uma campanha** não pode ser excluída: o painel diz qual campanha a usa.
+
+### 8.3 Prioridade: quando duas campanhas valem ao mesmo tempo
+
+Se mais de uma campanha vale agora para a mesma TV, vence a de **maior prioridade** (0 a 1000; o padrão é 50). Em caso de empate, vence a que mira **mais de perto** (TV, depois grupo, depois local, depois "todas as TVs") e, se ainda empatar, a mais nova.
+
+![Exemplo de um dia: a promoção vale o dia todo, o almoço vence das 11h às 14h e o happy hour das 18h às 23h](manual/img/campanha-linha-do-tempo.svg)
+
+### 8.4 Simular antes de publicar
+
+No fim da página há o **Simulador**: escolha uma TV e um dia/hora (no horário do seu computador) e clique em **Simular**. O painel diz qual playlist a TV exibiria e de qual campanha, ou se vale a playlist da própria TV. Ótimo para conferir uma agenda nova.
+
+![Simulador: o que a TV exibiria agora (captura real)](manual/img/painel-campanha-simulacao.png)
+
+> **A TV precisa estar online para trocar.** Ela descobre a mudança no contato com o servidor (a cada 30 segundos) e baixa a playlist da campanha. Se a TV estiver sem internet na hora da troca, continua exibindo o que já tinha e troca quando a conexão voltar. Para campanhas importantes, **deixe a TV online um pouco antes** do horário, para ela já ter baixado o conteúdo.
+
+---
+
+## 9. Downloads e manuais
 
 Em **Downloads e manuais** você encontra, sempre atualizados:
 
@@ -217,7 +272,7 @@ Em **Downloads e manuais** você encontra, sempre atualizados:
 
 ---
 
-## 9. Avisos de erro
+## 10. Avisos de erro
 
 Quando algo dá errado, o painel mostra um aviso vermelho no alto da tela, em português, dizendo **o que aconteceu e o que fazer**. O aviso **fica na tela até você clicar em Fechar**.
 
@@ -239,25 +294,29 @@ Todo aviso começa pela **ação** que falhou (por exemplo, "Excluir mídia: …
 
 ---
 
-## 10. Boas práticas
+## 11. Boas práticas
 
 - **Teste com uma TV primeiro**, depois replique para as outras (com grupos, aplicar a mesma playlist a todas é um clique).
 - **Organize desde o começo:** crie os **locais** antes de ativar as TVs e escolha o local na ativação; use **grupos** para o que se repete entre locais (recepções, vitrines…).
 - Prefira imagens **16:9 (1920×1080)** e vídeos **MP4 H.264 até 1080p**, de no máximo 50 MB.
 - Dê **nomes claros** às mídias e playlists (ex.: "Promoção de verão", não "IMG_0231").
 - Nas imagens, **5 a 10 segundos** costumam ser suficientes; textos longos pedem mais tempo.
+- **Campanhas:** defina a **prioridade** com folga (10, 50, 80…) para poder encaixar outras depois, e use o **Simulador** antes de publicar.
 - **Lembre de publicar:** alterar a playlist não muda a TV até clicar em **Publicar alterações**.
 - Não precisa se preocupar com a internet da TV: ela **guarda tudo** e continua exibindo mesmo se a conexão cair.
 
 ---
 
-## 11. Solução de problemas
+## 12. Solução de problemas
 
 | Problema | O que fazer |
 |---|---|
 | A TV aparece **Offline** mas está exibindo | Normal por até ~2 minutos depois de uma queda de internet. Se persistir, verifique o Wi‑Fi da TV. |
 | A TV mostra **"Aguardando conteúdo"** | Ela está ativa, mas sem playlist. Escolha uma playlist para ela em **Dispositivos**. |
 | Mudei a playlist e a TV não mudou | Confirme que clicou em **Publicar alterações** e aguarde até 1 minuto. |
+| A campanha não apareceu na TV | Veja em **Campanhas** se ela está **Ativa agora** (dia, horário e fuso certos) e se a TV está entre os **alvos** (use o Simulador). A TV precisa estar online: ela troca em até ~1 minuto depois do horário. |
+| Duas campanhas, a TV mostra a "errada" | Vence a de **maior prioridade**; em empate, a de alvo mais específico, depois a mais nova. Confira com o Simulador. |
+| Não consigo excluir uma playlist | Ela está em uso por uma campanha (o aviso diz qual). Troque a playlist da campanha ou exclua a campanha. |
 | Não acho uma TV na lista | Veja se há **filtros ativos** (aparece "Limpar filtros") ou texto na busca. |
 | Apaguei um local e as TVs sumiram | Elas não somem: ficam **"Sem local"**. Escolha **Sem local** no filtro de Local, ou use o Dashboard. |
 | Uma ação em massa disse "N já estavam no estado pedido" | Normal: a ação só alcança as TVs a que se aplica (por exemplo, "Reativar" só alcança as desativadas). |
