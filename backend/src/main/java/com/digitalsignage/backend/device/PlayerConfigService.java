@@ -27,8 +27,13 @@ public class PlayerConfigService {
 
 	@Transactional(readOnly = true)
 	public PlayerConfigResponse buildFor(Device device) {
-		// O que a TV exibe agora: a playlist de uma campanha ativa que a alcança ou, sem campanha, a playlist base.
-		Long playlistId = campaignService.effectiveFor(device).playlistId();
+		return buildFor(device, campaignService.effectiveFor(device));
+	}
+
+	/** Com o que a TV exibe agora já decidido (campanha ativa que a alcança ou, sem campanha, a playlist base). */
+	@Transactional(readOnly = true)
+	public PlayerConfigResponse buildFor(Device device, CampaignService.Effective effective) {
+		Long playlistId = effective.playlistId();
 		if (playlistId == null) {
 			return new PlayerConfigResponse(device.getId(), null, 0, List.of());
 		}

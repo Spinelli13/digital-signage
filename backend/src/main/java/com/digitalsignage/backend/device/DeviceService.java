@@ -1,5 +1,6 @@
 package com.digitalsignage.backend.device;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.digitalsignage.backend.group.DeviceGroupRepository;
 import com.digitalsignage.backend.location.Location;
 import com.digitalsignage.backend.location.LocationRepository;
+import com.digitalsignage.backend.monitoring.MonitoringService;
 import com.digitalsignage.backend.playlist.PlaylistRepository;
 
 import jakarta.persistence.criteria.Join;
@@ -31,18 +33,24 @@ public class DeviceService {
 	private final DeviceGroupRepository groupRepository;
 	private final PlaylistRepository playlistRepository;
 	private final DeviceViews views;
+	private final MonitoringService monitoring;
+	private final Clock clock;
 
 	public DeviceService(
 			DeviceRepository deviceRepository,
 			LocationRepository locationRepository,
 			DeviceGroupRepository groupRepository,
 			PlaylistRepository playlistRepository,
-			DeviceViews views) {
+			DeviceViews views,
+			MonitoringService monitoring,
+			Clock clock) {
 		this.deviceRepository = deviceRepository;
 		this.locationRepository = locationRepository;
 		this.groupRepository = groupRepository;
 		this.playlistRepository = playlistRepository;
 		this.views = views;
+		this.monitoring = monitoring;
+		this.clock = clock;
 	}
 
 	// ---------- consulta ----------
@@ -118,6 +126,7 @@ public class DeviceService {
 	@Transactional
 	public Device update(Long id, DeviceUpdateRequest request) {
 		Device device = find(id);
+		String oldStatus = device.getStatus();
 		device.setName(request.name());
 
 		if (request.locationId() != null) {
@@ -128,6 +137,7 @@ public class DeviceService {
 
 		if (request.status() != null) {
 			device.setStatus(DeviceStatus.valueOf(request.status().toUpperCase()).name());
+			monitoring.recordStatusChange(device, oldStatus, clock.instant());
 		}
 
 		if (request.currentPlaylistId() != null) {
@@ -155,7 +165,9 @@ public class DeviceService {
 		if (request.groupIds() != null) {
 			replaceGroups(device, request.groupIds());
 		}
-		return deviceRepository.save(device);
+		Device saved = deviceRepository.save(device);
+		monitoring.recordActivated(saved, clock.instant());
+		return saved;
 	}
 
 	/** Por id (precisa existir) ou por nome (acha o local de mesmo nome ou cria). Vazio = sem local. */
@@ -221,19 +233,24 @@ public class DeviceService {
 			case ENABLE -> targets.stream()
 					.filter(device -> DeviceStatus.DISABLED.name().equals(device.getStatus()))
 					.forEach(device -> {
+						String oldStatus = device.getStatus();
 						device.setStatus(DeviceStatus.ACTIVE.name());
+						monitoring.recordStatusChange(device, oldStatus, clock.instant());
 						changed.add(device);
 					});
 			case DISABLE -> targets.stream()
 					.filter(device -> DeviceStatus.ACTIVE.name().equals(device.getStatus()))
 					.forEach(device -> {
+						String oldStatus = device.getStatus();
 						device.setStatus(DeviceStatus.DISABLED.name());
+						monitoring.recordStatusChange(device, oldStatus, clock.instant());
 						changed.add(device);
 					});
 			case CHECK_UPDATE -> targets.stream()
 					.filter(device -> DeviceStatus.ACTIVE.name().equals(device.getStatus()))
 					.forEach(device -> {
 						device.requestUpdateCheck();
+						monitoring.recordUpdateRequested(device, clock.instant());
 						changed.add(device);
 					});
 			case SET_LOCATION -> {

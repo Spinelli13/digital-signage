@@ -53,6 +53,10 @@ public abstract class AbstractApiTest {
 		registry.add("spring.datasource.username", () -> "postgres");
 		registry.add("spring.datasource.password", () -> "postgres");
 		registry.add("app.storage.local-path", STORAGE_DIR::toString);
+		// Os testes chamam a avaliação do monitoramento na hora que querem (relógio controlado); sem o ciclo automático.
+		registry.add("app.monitoring.enabled", () -> "false");
+		// ...e o webhook de teste é um servidor local (em produção só https e só endereços públicos).
+		registry.add("app.monitoring.allow-insecure-webhooks", () -> "true");
 	}
 
 	@Autowired
@@ -72,7 +76,8 @@ public abstract class AbstractApiTest {
 	void cleanDatabase() {
 		// O administrador (tabela users) é semeado na subida do contexto e precisa sobreviver.
 		clock.reset();
-		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media, locations, device_groups, campaigns RESTART IDENTITY CASCADE");
+		jdbc.update("UPDATE monitoring_settings SET offline_after_minutes = 10, never_connected_after_hours = 24, error_burst_count = 5, webhook_url = NULL, notify_on_resolve = TRUE, events_retention_days = 90");
+		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media, locations, device_groups, campaigns, device_events, alerts, media_plays RESTART IDENTITY CASCADE");
 	}
 
 	protected String adminToken() throws Exception {

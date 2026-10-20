@@ -11,6 +11,8 @@ public record SummaryResponse(
 		long media,
 		long playlists,
 		CampaignCounts campaigns,
+		/** Alertas abertos agora (TV offline, nunca conectou, erros repetidos). */
+		long openAlerts,
 		List<LocationSummary> byLocation,
 		/** TVs que pedem atenção: offline, nunca conectadas ou aguardando ativação (as mais urgentes primeiro). */
 		List<AttentionDevice> attention) {

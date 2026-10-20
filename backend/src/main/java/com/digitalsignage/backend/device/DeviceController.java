@@ -1,5 +1,6 @@
 package com.digitalsignage.backend.device;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.digitalsignage.backend.monitoring.MonitoringService;
+
 import jakarta.validation.Valid;
 
 @RestController
@@ -28,16 +31,22 @@ public class DeviceController {
 	private final DeviceService deviceService;
 	private final PlayerConfigService playerConfigService;
 	private final DeviceViews views;
+	private final MonitoringService monitoring;
+	private final Clock clock;
 
 	public DeviceController(
 			DeviceRepository deviceRepository,
 			DeviceService deviceService,
 			PlayerConfigService playerConfigService,
-			DeviceViews views) {
+			DeviceViews views,
+			MonitoringService monitoring,
+			Clock clock) {
 		this.deviceRepository = deviceRepository;
 		this.deviceService = deviceService;
 		this.playerConfigService = playerConfigService;
 		this.views = views;
+		this.monitoring = monitoring;
+		this.clock = clock;
 	}
 
 	/**
@@ -123,6 +132,7 @@ public class DeviceController {
 	public DeviceResponse requestUpdateCheck(@PathVariable Long id) {
 		Device device = findOrThrow(id);
 		device.requestUpdateCheck();
+		monitoring.recordUpdateRequested(device, clock.instant());
 		return views.of(deviceRepository.save(device));
 	}
 
@@ -133,7 +143,10 @@ public class DeviceController {
 		List<Device> active = deviceRepository.findAll().stream()
 				.filter(device -> DeviceStatus.ACTIVE.name().equals(device.getStatus()))
 				.toList();
-		active.forEach(Device::requestUpdateCheck);
+		active.forEach(device -> {
+			device.requestUpdateCheck();
+			monitoring.recordUpdateRequested(device, clock.instant());
+		});
 		deviceRepository.saveAll(active);
 		return Map.of("requested", active.size());
 	}

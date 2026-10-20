@@ -2,11 +2,13 @@ package com.digitalsignage.backend.player;
 
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.NoSuchElementException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,11 +16,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.digitalsignage.backend.campaign.CampaignService;
 import com.digitalsignage.backend.device.Device;
+import com.digitalsignage.backend.device.DeviceConnection;
 import com.digitalsignage.backend.device.DeviceRepository;
 import com.digitalsignage.backend.device.DeviceStatus;
 import com.digitalsignage.backend.device.PlayerConfigResponse;
 import com.digitalsignage.backend.device.PlayerConfigService;
+import com.digitalsignage.backend.monitoring.MonitoringService;
 import com.digitalsignage.backend.security.TokenHasher;
 
 import jakarta.validation.Valid;
@@ -36,11 +41,22 @@ public class PlayerController {
 
 	private final DeviceRepository deviceRepository;
 	private final PlayerConfigService playerConfigService;
+	private final CampaignService campaignService;
+	private final MonitoringService monitoringService;
+	private final Clock clock;
 	private final SecureRandom random = new SecureRandom();
 
-	public PlayerController(DeviceRepository deviceRepository, PlayerConfigService playerConfigService) {
+	public PlayerController(
+			DeviceRepository deviceRepository,
+			PlayerConfigService playerConfigService,
+			CampaignService campaignService,
+			MonitoringService monitoringService,
+			Clock clock) {
 		this.deviceRepository = deviceRepository;
 		this.playerConfigService = playerConfigService;
+		this.campaignService = campaignService;
+		this.monitoringService = monitoringService;
+		this.clock = clock;
 	}
 
 	/** Idempotente: o mesmo token registrado de novo (ex.: após reinício) devolve o estado atual. */
@@ -64,16 +80,25 @@ public class PlayerController {
 	}
 
 	@PostMapping("/heartbeat")
+	@Transactional
 	public PlayerHeartbeatResponse heartbeat(
 			@AuthenticationPrincipal Long deviceId,
 			@Valid @RequestBody PlayerHeartbeatRequest request) {
 		Device device = findOrThrow(deviceId);
-		device.recordHeartbeat(request.playerVersion(), request.configVersion());
+		Instant now = clock.instant();
+		DeviceConnection before = DeviceConnection.of(device, now);
+		Instant previousLastSeen = device.getLastSeenAt();
+		String previousVersion = device.getPlayerVersion();
+
+		device.recordHeartbeat(request.playerVersion(), request.configVersion(), now);
 		deviceRepository.save(device);
 
-		PlayerConfigResponse desired = playerConfigService.buildFor(device);
+		CampaignService.Effective effective = campaignService.effectiveFor(device);
+		monitoringService.onHeartbeat(device, before, previousLastSeen, previousVersion, effective, request, now);
+
+		PlayerConfigResponse desired = playerConfigService.buildFor(device, effective);
 		long updateCheckToken = device.getUpdateRequestedAt() == null ? 0 : device.getUpdateRequestedAt().toEpochMilli();
-		return new PlayerHeartbeatResponse(desired.playlistId(), desired.configVersion(), Instant.now(), updateCheckToken);
+		return new PlayerHeartbeatResponse(desired.playlistId(), desired.configVersion(), now, updateCheckToken);
 	}
 
 	private PlayerStatusResponse registerNew(String tokenHash, String playerVersion) {

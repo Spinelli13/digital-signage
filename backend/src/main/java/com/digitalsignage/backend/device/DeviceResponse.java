@@ -20,6 +20,9 @@ public record DeviceResponse(
 		long configVersion,
 		/** A playlist que a TV deve exibir AGORA: a de uma campanha ativa ou, sem campanha, a base ({@code currentPlaylistId}). */
 		Long effectivePlaylistId,
+		/** O que o Player diz estar na tela agora (id e nome da mídia). */
+		Long currentMediaId,
+		String currentMediaName,
 		/** Campanha que está valendo para a TV agora (vazio = exibe a playlist base). */
 		Long campaignId,
 		String campaignName,
@@ -27,8 +30,7 @@ public record DeviceResponse(
 		Instant createdAt,
 		Instant updatedAt) {
 
-	public static DeviceResponse from(Device device, CampaignService.Effective effective) {
-		Instant now = Instant.now();
+	public static DeviceResponse from(Device device, CampaignService.Effective effective, String currentMediaName, Instant now) {
 
 		return new DeviceResponse(
 				device.getId(),
@@ -43,6 +45,8 @@ public record DeviceResponse(
 				device.getCurrentPlaylistId(),
 				device.getConfigVersion(),
 				effective.playlistId(),
+				device.getCurrentMediaId(),
+				currentMediaName,
 				effective.fromCampaign() ? effective.campaign().getId() : null,
 				effective.fromCampaign() ? effective.campaign().getName() : null,
 				device.getGroupIds().stream().sorted().toList(),

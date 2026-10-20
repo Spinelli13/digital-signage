@@ -69,6 +69,23 @@ public class Device {
 	@Column(name = "update_requested_at")
 	private Instant updateRequestedAt;
 
+	/** Último estado de conexão que o monitoramento já registrou como evento (para gravar só as transições). */
+	@Column(name = "recorded_connection")
+	private String recordedConnection;
+
+	@Column(name = "activated_at")
+	private Instant activatedAt;
+
+	/** O que o Player diz estar exibindo neste momento (sem chave estrangeira: a mídia pode ser apagada). */
+	@Column(name = "current_media_id")
+	private Long currentMediaId;
+
+	@Column(name = "last_playlist_id")
+	private Long lastPlaylistId;
+
+	@Column(name = "last_campaign_id")
+	private Long lastCampaignId;
+
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
 
@@ -97,10 +114,12 @@ public class Device {
 		this.location = location;
 		this.status = DeviceStatus.ACTIVE.name();
 		this.activationCode = null;
+		this.activatedAt = Instant.now();
+		this.recordedConnection = null;
 	}
 
-	public void recordHeartbeat(String playerVersion, long syncedConfigVersion) {
-		this.lastSeenAt = Instant.now();
+	public void recordHeartbeat(String playerVersion, long syncedConfigVersion, Instant now) {
+		this.lastSeenAt = now;
 		this.playerVersion = playerVersion;
 		this.configVersion = syncedConfigVersion;
 	}
@@ -184,6 +203,39 @@ public class Device {
 
 	public Instant getUpdateRequestedAt() {
 		return updateRequestedAt;
+	}
+
+	public String getRecordedConnection() {
+		return recordedConnection;
+	}
+
+	public void setRecordedConnection(String recordedConnection) {
+		this.recordedConnection = recordedConnection;
+	}
+
+	public Instant getActivatedAt() {
+		return activatedAt;
+	}
+
+	public Long getCurrentMediaId() {
+		return currentMediaId;
+	}
+
+	public void setCurrentMediaId(Long currentMediaId) {
+		this.currentMediaId = currentMediaId;
+	}
+
+	public Long getLastPlaylistId() {
+		return lastPlaylistId;
+	}
+
+	public Long getLastCampaignId() {
+		return lastCampaignId;
+	}
+
+	public void setLastContent(Long playlistId, Long campaignId) {
+		this.lastPlaylistId = playlistId;
+		this.lastCampaignId = campaignId;
 	}
 
 	public Instant getCreatedAt() {

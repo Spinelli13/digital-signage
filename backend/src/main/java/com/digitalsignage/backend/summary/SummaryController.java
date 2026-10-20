@@ -21,6 +21,7 @@ import com.digitalsignage.backend.group.DeviceGroupRepository;
 import com.digitalsignage.backend.location.Location;
 import com.digitalsignage.backend.location.LocationRepository;
 import com.digitalsignage.backend.media.MediaRepository;
+import com.digitalsignage.backend.monitoring.AlertRepository;
 import com.digitalsignage.backend.playlist.PlaylistRepository;
 
 @RestController
@@ -36,6 +37,7 @@ public class SummaryController {
 	private final PlaylistRepository playlistRepository;
 	private final CampaignRepository campaignRepository;
 	private final java.time.Clock clock;
+	private final AlertRepository alertRepository;
 
 	public SummaryController(
 			DeviceRepository deviceRepository,
@@ -44,7 +46,8 @@ public class SummaryController {
 			MediaRepository mediaRepository,
 			PlaylistRepository playlistRepository,
 			CampaignRepository campaignRepository,
-			java.time.Clock clock) {
+			java.time.Clock clock,
+			AlertRepository alertRepository) {
 		this.deviceRepository = deviceRepository;
 		this.locationRepository = locationRepository;
 		this.groupRepository = groupRepository;
@@ -52,6 +55,7 @@ public class SummaryController {
 		this.playlistRepository = playlistRepository;
 		this.campaignRepository = campaignRepository;
 		this.clock = clock;
+		this.alertRepository = alertRepository;
 	}
 
 	@GetMapping
@@ -78,6 +82,7 @@ public class SummaryController {
 				mediaRepository.count(),
 				playlistRepository.count(),
 				campaignCounts(),
+				alertRepository.countByResolvedAtIsNull(),
 				byLocation(devices, connections),
 				attention(devices, connections));
 	}
