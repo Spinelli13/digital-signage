@@ -1,6 +1,19 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { connectionOf, deviceState, errorMessage, formatBytes, needsAttention, stateOfConnection, timeAgo } from './format';
+import {
+  connectionOf,
+  daysAgo,
+  deviceState,
+  errorMessage,
+  formatBytes,
+  formatDateTime,
+  formatPercent,
+  humanSeconds,
+  isoDate,
+  needsAttention,
+  stateOfConnection,
+  timeAgo,
+} from './format';
 import { Device } from './models';
 
 const device = (overrides: Partial<Device>): Device => ({
@@ -107,5 +120,44 @@ describe('errorMessage', () => {
 
   it('falls back for unknown errors', () => {
     expect(errorMessage(new Error('x'), 'padrão')).toBe('padrão');
+  });
+});
+
+describe('humanSeconds', () => {
+  it('writes durations the same way the server does', () => {
+    expect(humanSeconds(0)).toBe('0 min');
+    expect(humanSeconds(20)).toBe('menos de 1 min');
+    expect(humanSeconds(300)).toBe('5 min');
+    expect(humanSeconds(3600)).toBe('1 h');
+    expect(humanSeconds(7320)).toBe('2 h 2 min');
+    expect(humanSeconds(86_400)).toBe('1 d');
+    expect(humanSeconds(86_400 + 4 * 3600)).toBe('1 d 4 h');
+  });
+});
+
+describe('formatPercent', () => {
+  it('uses a decimal comma and a dash when there is no data yet', () => {
+    expect(formatPercent(99.5)).toBe('99,5%');
+    expect(formatPercent(100)).toBe('100,0%');
+    expect(formatPercent(null)).toBe('—');
+  });
+});
+
+describe('dates', () => {
+  it('formats the local calendar day, not the UTC one', () => {
+    expect(isoDate(new Date(2026, 10, 5, 23, 30))).toBe('2026-11-05');
+    expect(isoDate(new Date(2026, 0, 2, 0, 5))).toBe('2026-01-02');
+  });
+
+  it('counts days back across month and year boundaries', () => {
+    const now = new Date(2026, 0, 3, 15, 0);
+    expect(daysAgo(0, now)).toBe('2026-01-03');
+    expect(daysAgo(6, now)).toBe('2025-12-28');
+    expect(daysAgo(29, now)).toBe('2025-12-05');
+  });
+
+  it('shows a dash when there is no date', () => {
+    expect(formatDateTime(null)).toBe('—');
+    expect(formatDateTime('2026-11-05T12:00:00Z')).toMatch(/^\d{2}\/\d{2}\/\d{4}/);
   });
 });

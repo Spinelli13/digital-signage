@@ -15,6 +15,8 @@ import { AuthService } from '../core/auth.service';
         <a routerLink="/locais" routerLinkActive="active">📍 Pontos & Locais</a>
         <a routerLink="/grupos" routerLinkActive="active">🗂 Grupos</a>
         <a routerLink="/campanhas" routerLinkActive="active">📣 Campanhas</a>
+        <a routerLink="/alertas" routerLinkActive="active">🔔 Alertas</a>
+        <a routerLink="/relatorios" routerLinkActive="active">📊 Relatórios</a>
         <a routerLink="/biblioteca" routerLinkActive="active">🖼 Biblioteca</a>
         <a routerLink="/playlists" routerLinkActive="active">☷ Playlists</a>
         <a routerLink="/downloads" routerLinkActive="active">⬇ Downloads e manuais</a>

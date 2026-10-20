@@ -39,6 +39,16 @@ const ACTIONS: [method: string, path: RegExp, label: string][] = [
   ['PUT', /\/campaigns\/\d+$/, 'Salvar campanha'],
   ['DELETE', /\/campaigns\/\d+$/, 'Excluir campanha'],
   ['GET', /\/campaigns\/preview$/, 'Simular a agenda'],
+  ['GET', /\/devices\/\d+$/, 'Carregar a TV'],
+  ['GET', /\/devices\/\d+\/events$/, 'Carregar o histórico da TV'],
+  ['GET', /\/alerts$/, 'Carregar os alertas'],
+  ['GET', /\/alerts\/settings$/, 'Carregar as configurações dos alertas'],
+  ['PUT', /\/alerts\/settings$/, 'Salvar as configurações dos alertas'],
+  ['POST', /\/alerts\/settings\/test$/, 'Testar o webhook'],
+  ['GET', /\/reports\/uptime$/, 'Gerar o relatório de disponibilidade'],
+  ['GET', /\/reports\/plays$/, 'Gerar o relatório de exibições'],
+  ['GET', /\/reports\/inventory$/, 'Gerar o inventário das TVs'],
+  ['GET', /\/reports\/events$/, 'Gerar o relatório de eventos'],
 ];
 
 function actionOf(request: HttpRequest<unknown>): string | null {

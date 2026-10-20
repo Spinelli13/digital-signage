@@ -1,4 +1,4 @@
-import { HttpClient, HttpContext, HttpEvent } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpEvent, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
@@ -7,24 +7,49 @@ import { SILENT_ERRORS } from './http-errors';
 import { filtersToParams } from './device-filters';
 import {
   ActivateRequest,
+  Alert,
   BulkRequest,
   Campaign,
   CampaignPreview,
   CampaignRequest,
   Device,
+  DeviceEvent,
+  DeviceEventQuery,
   DeviceFilters,
   DeviceGroup,
   DeviceGroupRequest,
   DeviceUpdateRequest,
+  EventLevel,
+  EventRow,
+  EventType,
+  InventoryRow,
   Location,
   LocationRequest,
   Media,
   MediaUrl,
+  MonitoringSettings,
+  MonitoringSettingsRequest,
   Playlist,
   PlaylistRequest,
+  PlaysGroupBy,
+  PlaysReport,
   ReleaseInfo,
+  ReportRange,
   Summary,
+  UptimeReport,
+  WebhookTestResult,
 } from './models';
+
+/** Os parâmetros preenchidos de um pedido; vazio é descartado. */
+function queryParams(values: Record<string, string | number | null | undefined>): HttpParams {
+  let params = new HttpParams();
+  for (const [key, value] of Object.entries(values)) {
+    if (value !== undefined && value !== null && value !== '') {
+      params = params.set(key, String(value));
+    }
+  }
+  return params;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -106,6 +131,65 @@ export class ApiService {
   previewCampaigns(deviceId: number, at?: string): Observable<CampaignPreview> {
     const query = at ? `?deviceId=${deviceId}&at=${encodeURIComponent(at)}` : `?deviceId=${deviceId}`;
     return this.http.get<CampaignPreview>(this.url(`/campaigns/preview${query}`));
+  }
+
+  // monitoramento (fase 4)
+  device(id: number): Observable<Device> {
+    return this.http.get<Device>(this.url(`/devices/${id}`));
+  }
+
+  /** A história de uma TV, da mais recente para a mais antiga. */
+  deviceEvents(deviceId: number, query: DeviceEventQuery = {}): Observable<DeviceEvent[]> {
+    const params = queryParams({ beforeId: query.beforeId, type: query.type, level: query.level, limit: query.limit });
+    return this.http.get<DeviceEvent[]>(this.url(`/devices/${deviceId}/events`), { params });
+  }
+
+  /** Abertos primeiro. */
+  alerts(onlyOpen: boolean): Observable<Alert[]> {
+    return this.http.get<Alert[]>(this.url('/alerts'), { params: queryParams({ status: onlyOpen ? 'open' : '' }) });
+  }
+
+  alertSettings(): Observable<MonitoringSettings> {
+    return this.http.get<MonitoringSettings>(this.url('/alerts/settings'));
+  }
+
+  updateAlertSettings(body: MonitoringSettingsRequest): Observable<MonitoringSettings> {
+    return this.http.put<MonitoringSettings>(this.url('/alerts/settings'), body);
+  }
+
+  /** Manda uma mensagem de teste ao webhook configurado. */
+  testWebhook(): Observable<WebhookTestResult> {
+    return this.http.post<WebhookTestResult>(this.url('/alerts/settings/test'), {});
+  }
+
+  uptimeReport(range: ReportRange, locationId?: number | null, groupId?: number | null): Observable<UptimeReport> {
+    return this.http.get<UptimeReport>(this.url('/reports/uptime'), {
+      params: queryParams({ from: range.from, to: range.to, locationId, groupId }),
+    });
+  }
+
+  playsReport(range: ReportRange, groupBy: PlaysGroupBy, locationId?: number | null): Observable<PlaysReport> {
+    return this.http.get<PlaysReport>(this.url('/reports/plays'), {
+      params: queryParams({ from: range.from, to: range.to, groupBy, locationId }),
+    });
+  }
+
+  inventoryReport(): Observable<InventoryRow[]> {
+    return this.http.get<InventoryRow[]>(this.url('/reports/inventory'));
+  }
+
+  eventsReport(range: ReportRange, deviceId?: number | null, type?: EventType | '', level?: EventLevel | ''): Observable<EventRow[]> {
+    return this.http.get<EventRow[]>(this.url('/reports/events'), {
+      params: queryParams({ from: range.from, to: range.to, deviceId, type, level }),
+    });
+  }
+
+  /** O mesmo relatório em CSV, baixado com o login do painel (o endereço sozinho não abriria sem o token). */
+  reportCsv(report: 'uptime' | 'plays' | 'inventory' | 'events', values: Record<string, string | number | null | undefined>): Observable<Blob> {
+    return this.http.get(this.url(`/reports/${report}`), {
+      params: queryParams({ ...values, format: 'csv' }),
+      responseType: 'blob',
+    });
   }
 
   // resumo do dashboard

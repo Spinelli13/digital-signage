@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { ApiService } from '../core/api.service';
@@ -28,7 +28,7 @@ type LocationChoice = string;
 
 @Component({
   selector: 'app-devices',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   template: `
     <div class="head">
       <div><h1>Dispositivos</h1><p>Gerencie todas as telas e Players conectados.</p></div>
@@ -163,6 +163,9 @@ type LocationChoice = string;
                   @if (device.campaignName) {
                     <br /><small class="campaign" title="Uma campanha vale agora para esta TV e tem prioridade sobre a playlist dela.">📣 Agora: campanha {{ device.campaignName }}</small>
                   }
+                  @if (device.currentMediaName) {
+                    <br /><small class="onscreen" title="A mídia que o Player disse estar exibindo no último contato.">▶ Na tela: {{ device.currentMediaName }}</small>
+                  }
                   @if (device.currentPlaylistId !== null && device.configVersion < versionOf(device.effectivePlaylistId ?? device.currentPlaylistId)) {
                     <br /><small>sincronizando…</small>
                   }
@@ -171,6 +174,7 @@ type LocationChoice = string;
                 }
               </td>
               <td class="row-actions">
+                <a class="secondary small btn" [routerLink]="['/dispositivos', device.id, 'historico']" title="Quando conectou, caiu, mudou de conteúdo e o que o Player relatou">Histórico</a>
                 <button class="secondary small" (click)="openEdit(device)">Editar</button>
                 @if (device.status === 'ACTIVE') {
                   <button class="secondary small" (click)="checkUpdate(device)" title="Pede que esta TV verifique agora se há versão nova do Player">Atualizar app</button>
@@ -248,6 +252,9 @@ type LocationChoice = string;
     select { min-width: 170px; }
     .stale { color: var(--orange); font-weight: 600; }
     .campaign { color: var(--blue); font-weight: 600; }
+    .onscreen { color: var(--muted); }
+    .btn { display: inline-block; margin-left: 6px; border: 1px solid var(--line); border-radius: 10px; font-weight: 600; color: var(--text); }
+    .btn:hover { background: var(--blue2); }
     .head-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; padding: 14px; }
     .filters .search { flex: 1 1 220px; min-width: 180px; width: auto; }

@@ -12,6 +12,12 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', loadComponent: () => import('./dashboard/dashboard.page').then((m) => m.DashboardPage) },
       { path: 'dispositivos', loadComponent: () => import('./devices/devices.page').then((m) => m.DevicesPage) },
+      {
+        path: 'dispositivos/:id/historico',
+        loadComponent: () => import('./devices/device-history.page').then((m) => m.DeviceHistoryPage),
+      },
+      { path: 'alertas', loadComponent: () => import('./alerts/alerts.page').then((m) => m.AlertsPage) },
+      { path: 'relatorios', loadComponent: () => import('./reports/reports.page').then((m) => m.ReportsPage) },
       { path: 'campanhas', loadComponent: () => import('./campaigns/campaigns.page').then((m) => m.CampaignsPage) },
       { path: 'locais', loadComponent: () => import('./locations/locations.page').then((m) => m.LocationsPage) },
       { path: 'grupos', loadComponent: () => import('./groups/groups.page').then((m) => m.GroupsPage) },

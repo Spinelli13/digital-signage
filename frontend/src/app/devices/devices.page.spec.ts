@@ -91,8 +91,8 @@ function setup(queryParams: Record<string, string> = {}) {
   config.apiBaseUrl = 'http://api.test';
   config.downloadsUrl = DOWNLOADS;
   const backend = TestBed.inject(HttpTestingController);
-  const page = TestBed.createComponent(DevicesPage).componentInstance;
-  return { page, backend };
+  const fixture = TestBed.createComponent(DevicesPage);
+  return { page: fixture.componentInstance, backend, fixture };
 }
 
 /** Responde às quatro consultas que a tela refaz a cada atualização. */
@@ -597,5 +597,34 @@ describe('DevicesPage — activating and editing', () => {
     expect(request.request.body).toEqual({ name: 'TV Recepção', groupIds: [], location: '' });
     request.flush(device());
     flushRefresh(backend);
+  });
+});
+
+describe('DevicesPage — monitoring hints', () => {
+  it('shows what the Player says is on screen and links each TV to its history', async () => {
+    const { backend, fixture } = setup();
+    // desenhando, é o primeiro detectChanges que chama o ngOnInit
+    fixture.detectChanges();
+    backend.expectOne(`${DOWNLOADS}/releases.json`).flush({ releases: [release('0.3.0')] });
+    flushRefresh(backend, [device({ currentMediaName: 'Promoção de Natal' })]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.textContent).toContain('Na tela: Promoção de Natal');
+    expect(element.querySelector('a[href="/dispositivos/1/historico"]')?.textContent).toContain('Histórico');
+    backend.verify();
+  });
+
+  it('shows nothing about the screen when the Player has not reported a media yet', async () => {
+    const { backend, fixture } = setup();
+    fixture.detectChanges();
+    backend.expectOne(`${DOWNLOADS}/releases.json`).flush({ releases: [] });
+    flushRefresh(backend, [device({ currentMediaName: null })]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Na tela');
+    backend.verify();
   });
 });

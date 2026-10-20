@@ -21,6 +21,9 @@ export interface Device {
   effectivePlaylistId: number | null;
   campaignId: number | null;
   campaignName: string | null;
+  /** A mídia que o Player disse estar na tela no último contato (ausente em respostas de servidores antigos). */
+  currentMediaId?: number | null;
+  currentMediaName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -169,6 +172,8 @@ export interface Summary {
   media: number;
   playlists: number;
   campaigns: { total: number; activeNow: number };
+  /** Alertas de monitoramento ainda abertos. */
+  openAlerts: number;
   /** id nulo = TVs sem local. */
   byLocation: { id: number | null; name: string; total: number; online: number }[];
   attention: { id: number; name: string; location: string | null; connection: Connection; lastSeenAt: string | null }[];
@@ -234,4 +239,151 @@ export interface CampaignPreview {
   source: 'CAMPAIGN' | 'BASE' | 'NONE';
   campaignId: number | null;
   campaignName: string | null;
+}
+
+// ---------- monitoramento (fase 4) ----------
+
+export type EventType =
+  | 'ACTIVATED'
+  | 'ONLINE'
+  | 'OFFLINE'
+  | 'DISABLED'
+  | 'ENABLED'
+  | 'PLAYLIST_CHANGED'
+  | 'UPDATE_REQUESTED'
+  | 'PLAYER_UPDATED'
+  | 'PLAYER_LOG';
+export type EventLevel = 'INFO' | 'WARN' | 'ERROR';
+
+/** Uma linha da história de uma TV. */
+export interface DeviceEvent {
+  id: number;
+  deviceId: number;
+  type: EventType;
+  level: EventLevel;
+  message: string;
+  occurredAt: string;
+}
+
+export interface DeviceEventQuery {
+  /** Id do último evento recebido: traz os anteriores a ele (próxima página). */
+  beforeId?: number;
+  type?: EventType | '';
+  level?: EventLevel | '';
+  limit?: number;
+}
+
+export type AlertType = 'OFFLINE' | 'NEVER_CONNECTED' | 'PLAYER_ERRORS';
+
+export interface Alert {
+  id: number;
+  deviceId: number;
+  deviceName: string | null;
+  location: string | null;
+  type: AlertType;
+  message: string;
+  openedAt: string;
+  resolvedAt: string | null;
+  open: boolean;
+  /** O aviso já foi entregue ao webhook. */
+  notified: boolean;
+}
+
+export interface MonitoringSettings {
+  offlineAfterMinutes: number;
+  neverConnectedAfterHours: number;
+  errorBurstCount: number;
+  webhookConfigured: boolean;
+  /** Só o endereço do servidor e o final: o webhook completo é um segredo e nunca volta do servidor. */
+  webhookHint: string | null;
+  notifyOnResolve: boolean;
+  eventsRetentionDays: number;
+}
+
+/** Campos ausentes não mudam. webhookUrl: vazio remove o webhook. */
+export interface MonitoringSettingsRequest {
+  offlineAfterMinutes?: number;
+  neverConnectedAfterHours?: number;
+  errorBurstCount?: number;
+  webhookUrl?: string;
+  notifyOnResolve?: boolean;
+  eventsRetentionDays?: number;
+}
+
+export interface WebhookTestResult {
+  ok: boolean;
+  status: number;
+  error: string | null;
+}
+
+/** Datas no formato AAAA-MM-DD, no fuso do relatório; vazias = últimos 7 dias. */
+export interface ReportRange {
+  from?: string;
+  to?: string;
+}
+
+export interface UptimeRow {
+  deviceId: number;
+  name: string;
+  location: string | null;
+  uptimePercent: number | null;
+  onlineSeconds: number;
+  offlineSeconds: number;
+  observedSeconds: number;
+  incidents: number;
+}
+
+export interface UptimeReport {
+  from: string;
+  to: string;
+  timezone: string;
+  fleetUptimePercent: number | null;
+  fleetOnlineSeconds: number;
+  fleetObservedSeconds: number;
+  devices: UptimeRow[];
+}
+
+export interface InventoryRow {
+  id: number;
+  name: string;
+  location: string | null;
+  groups: string[];
+  status: DeviceStatus;
+  connection: Connection;
+  lastSeenAt: string | null;
+  playerVersion: string | null;
+  playlist: string | null;
+  campaign: string | null;
+  currentMedia: string | null;
+  activatedAt: string | null;
+}
+
+export interface EventRow {
+  id: number;
+  deviceId: number;
+  deviceName: string | null;
+  type: EventType;
+  level: EventLevel;
+  message: string;
+  occurredAt: string;
+}
+
+export type PlaysGroupBy = 'media' | 'device' | 'day';
+
+export interface PlayRow {
+  id: number | null;
+  label: string | null;
+  day: string | null;
+  plays: number;
+  seconds: number;
+  devices: number;
+}
+
+export interface PlaysReport {
+  from: string;
+  to: string;
+  groupBy: PlaysGroupBy;
+  totalPlays: number;
+  totalSeconds: number;
+  rows: PlayRow[];
 }
