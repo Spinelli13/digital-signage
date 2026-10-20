@@ -101,6 +101,33 @@ describe('DevicesPage — playlist assignment', () => {
     backend.expectNone(`${API}/devices/1/playlist`);
   });
 
+  it('asks one TV to check for a Player update and confirms to the user', () => {
+    page.checkUpdate(device());
+
+    const request = backend.expectOne(`${API}/devices/1/update-check`);
+    expect(request.request.method).toBe('POST');
+    request.flush(device());
+
+    expect(page.notice()).toContain('TV Recepção');
+  });
+
+  it('asks every active TV and says how many were reached', () => {
+    page.updateAll();
+
+    const request = backend.expectOne(`${API}/devices/update-check`);
+    expect(request.request.method).toBe('POST');
+    request.flush({ requested: 3 });
+
+    expect(page.notice()).toContain('3 TV(s)');
+  });
+
+  it('tells the user when there is no active TV to ask', () => {
+    page.updateAll();
+    backend.expectOne(`${API}/devices/update-check`).flush({ requested: 0 });
+
+    expect(page.notice()).toBe('Nenhuma TV ativa para avisar.');
+  });
+
   it('does nothing when "Nenhuma playlist" is chosen for a device that has none', () => {
     page.assignPlaylist(device({ currentPlaylistId: null }), null);
 

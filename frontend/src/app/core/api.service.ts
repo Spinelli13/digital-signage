@@ -33,6 +33,16 @@ export class ApiService {
     return this.http.delete<Device>(this.url(`/devices/${id}/playlist`));
   }
 
+  /** Manda uma TV verificar agora se há versão nova do Player (ela percebe no próximo heartbeat, até ~30 s). */
+  requestUpdateCheck(id: number): Observable<Device> {
+    return this.http.post<Device>(this.url(`/devices/${id}/update-check`), {});
+  }
+
+  /** O mesmo para todas as TVs ativas; devolve quantas foram avisadas. */
+  requestUpdateCheckAll(): Observable<{ requested: number }> {
+    return this.http.post<{ requested: number }>(this.url('/devices/update-check'), {});
+  }
+
   deleteDevice(id: number): Observable<void> {
     return this.http.delete<void>(this.url(`/devices/${id}`));
   }

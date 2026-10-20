@@ -11,6 +11,8 @@ const ACTIONS: [method: string, path: RegExp, label: string][] = [
   ['POST', /\/devices\/activate$/, 'Ativar dispositivo'],
   ['PUT', /\/devices\/\d+$/, 'Salvar dispositivo'],
   ['DELETE', /\/devices\/\d+\/playlist$/, 'Remover a playlist da TV'],
+  ['POST', /\/devices\/\d+\/update-check$/, 'Pedir atualização da TV'],
+  ['POST', /\/devices\/update-check$/, 'Pedir atualização das TVs'],
   ['DELETE', /\/devices\/\d+$/, 'Excluir dispositivo'],
   ['GET', /\/media$/, 'Carregar a biblioteca'],
   ['POST', /\/media$/, 'Enviar mídia'],

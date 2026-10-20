@@ -15,8 +15,15 @@ const REFRESH_MS = 10_000;
   template: `
     <div class="head">
       <div><h1>Dispositivos</h1><p>Gerencie todas as telas e Players conectados.</p></div>
-      <button class="primary" (click)="openActivate()">+ Adicionar dispositivo</button>
+      <div class="head-actions">
+        <button class="secondary" (click)="updateAll()" title="Pede a todas as TVs que verifiquem agora se há versão nova do Player">⬆ Atualizar todas as TVs</button>
+        <button class="primary" (click)="openActivate()">+ Adicionar dispositivo</button>
+      </div>
     </div>
+
+    @if (notice(); as text) {
+      <div class="notice" role="status">{{ text }}</div>
+    }
 
     <div class="card">
       @if (devices().length === 0) {
@@ -57,6 +64,7 @@ const REFRESH_MS = 10_000;
               <td class="row-actions">
                 <button class="secondary small" (click)="openEdit(device)">Editar</button>
                 @if (device.status === 'ACTIVE') {
+                  <button class="secondary small" (click)="checkUpdate(device)" title="Pede que esta TV verifique agora se há versão nova do Player">Atualizar app</button>
                   <button class="secondary small" (click)="setStatus(device, 'disabled')">Desativar</button>
                 } @else if (device.status === 'DISABLED') {
                   <button class="secondary small" (click)="setStatus(device, 'active')">Reativar</button>
@@ -108,6 +116,8 @@ const REFRESH_MS = 10_000;
     .row-actions button { margin-left: 6px; }
     select { min-width: 170px; }
     .stale { color: var(--orange); font-weight: 600; }
+    .head-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .notice { background: #e8f7f0; border: 1px solid #b6e6d0; color: #0f6b46; border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; }
   `,
 })
 export class DevicesPage implements OnInit {
@@ -121,6 +131,9 @@ export class DevicesPage implements OnInit {
 
   readonly modal = signal<'activate' | 'edit' | null>(null);
   readonly busy = signal(false);
+  /** Confirmação (não é erro) de ações como "verificar atualização"; some sozinha. */
+  readonly notice = signal<string | null>(null);
+  private noticeTimer: ReturnType<typeof setTimeout> | undefined;
   readonly code = signal('');
   readonly name = signal('');
   readonly location = signal('');
@@ -138,7 +151,10 @@ export class DevicesPage implements OnInit {
     this.api.releases(true).subscribe({ next: (list) => this.latest.set(list[0] ?? null), error: () => undefined });
     this.refresh();
     const timer = setInterval(() => this.refresh(), REFRESH_MS);
-    this.destroyRef.onDestroy(() => clearInterval(timer));
+    this.destroyRef.onDestroy(() => {
+      clearInterval(timer);
+      clearTimeout(this.noticeTimer);
+    });
   }
 
   versionOf(playlistId: number): number {
@@ -203,6 +219,31 @@ export class DevicesPage implements OnInit {
       next: () => this.refresh(),
       error: () => undefined,
     });
+  }
+
+  checkUpdate(device: Device): void {
+    this.api.requestUpdateCheck(device.id).subscribe({
+      next: () => this.showNotice(`Pedido enviado a "${device.name}". Ela verifica em até 30 segundos; se houver versão nova, alguém precisa confirmar na TV.`),
+      error: () => undefined,
+    });
+  }
+
+  updateAll(): void {
+    this.api.requestUpdateCheckAll().subscribe({
+      next: ({ requested }) =>
+        this.showNotice(
+          requested === 0
+            ? 'Nenhuma TV ativa para avisar.'
+            : `Pedido enviado a ${requested} TV(s). Elas verificam em até 30 segundos; se houver versão nova, alguém precisa confirmar em cada TV.`,
+        ),
+      error: () => undefined,
+    });
+  }
+
+  private showNotice(text: string): void {
+    this.notice.set(text);
+    clearTimeout(this.noticeTimer);
+    this.noticeTimer = setTimeout(() => this.notice.set(null), 12_000);
   }
 
   remove(device: Device): void {
