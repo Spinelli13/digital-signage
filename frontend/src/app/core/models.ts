@@ -1,5 +1,5 @@
 export type DeviceStatus = 'PENDING' | 'ACTIVE' | 'DISABLED';
-export type MediaType = 'IMAGE' | 'VIDEO';
+export type MediaType = 'IMAGE' | 'VIDEO' | 'WEB';
 /** Situação de comunicação calculada pelo servidor (mesma regra em todo o sistema). */
 export type Connection = 'ONLINE' | 'OFFLINE' | 'NEVER' | 'PENDING' | 'DISABLED';
 
@@ -24,6 +24,11 @@ export interface Device {
   /** A mídia que o Player disse estar na tela no último contato (ausente em respostas de servidores antigos). */
   currentMediaId?: number | null;
   currentMediaName?: string | null;
+  /** Layout da tela (vazio = tela cheia). Ausentes em respostas de servidores antigos. */
+  layoutId?: number | null;
+  layoutName?: string | null;
+  /** A versão do conteúdo que a TV deveria ter sincronizado; diferente de configVersion = ainda sincronizando. */
+  desiredConfigVersion?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -89,6 +94,8 @@ export interface DeviceUpdateRequest {
   currentPlaylistId?: number | null;
   /** Lista completa de grupos da TV; ausente não muda, lista vazia tira de todos. */
   groupIds?: number[];
+  /** Layout da tela; ausente não muda (para voltar à tela cheia use removeDeviceLayout). */
+  layoutId?: number;
 }
 
 export interface ActivateRequest {
@@ -152,7 +159,9 @@ export type BulkAction =
   | 'SET_LOCATION'
   | 'CLEAR_LOCATION'
   | 'ADD_TO_GROUP'
-  | 'REMOVE_FROM_GROUP';
+  | 'REMOVE_FROM_GROUP'
+  | 'ASSIGN_LAYOUT'
+  | 'REMOVE_LAYOUT';
 
 /** Escolha exatamente UM alvo: deviceIds, targetGroupId ou targetLocationId. */
 export interface BulkRequest {
@@ -163,6 +172,7 @@ export interface BulkRequest {
   playlistId?: number;
   locationId?: number;
   groupId?: number;
+  layoutId?: number;
 }
 
 export interface Summary {
@@ -250,6 +260,7 @@ export type EventType =
   | 'DISABLED'
   | 'ENABLED'
   | 'PLAYLIST_CHANGED'
+  | 'LAYOUT_CHANGED'
   | 'UPDATE_REQUESTED'
   | 'PLAYER_UPDATED'
   | 'PLAYER_LOG';
@@ -386,4 +397,52 @@ export interface PlaysReport {
   totalPlays: number;
   totalSeconds: number;
   rows: PlayRow[];
+}
+
+// ---------- layouts e conteúdo web (fase 5) ----------
+
+/** Um retângulo da tela, em % (0-100) a partir do canto superior esquerdo. */
+export interface LayoutZone {
+  id: number | null;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  /** A zona principal exibe a playlist da TV (e a das campanhas); as outras têm playlist fixa. */
+  main: boolean;
+  playlistId: number | null;
+  playlistName?: string | null;
+}
+
+export interface Layout {
+  id: number;
+  name: string;
+  description: string | null;
+  configVersion: number;
+  zones: LayoutZone[];
+  /** Quantas TVs usam este layout. */
+  deviceCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LayoutRequest {
+  name: string;
+  description: string | null;
+  zones: { name: string; x: number; y: number; width: number; height: number; main: boolean; playlistId: number | null }[];
+}
+
+/** Modelo pronto de layout para começar de um deles. */
+export interface LayoutTemplate {
+  id: string;
+  name: string;
+  description: string;
+  zones: { name: string; x: number; y: number; width: number; height: number; main: boolean; playlistId: number | null }[];
+}
+
+export interface WebContentRequest {
+  name: string | null;
+  url: string;
+  durationSeconds: number;
 }

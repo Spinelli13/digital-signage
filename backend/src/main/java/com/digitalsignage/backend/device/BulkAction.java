@@ -19,5 +19,9 @@ public enum BulkAction {
 	/** Coloca as TVs num grupo (exige groupId). */
 	ADD_TO_GROUP,
 	/** Tira as TVs de um grupo (exige groupId). */
-	REMOVE_FROM_GROUP
+	REMOVE_FROM_GROUP,
+	/** Escolhe o layout da tela (exige layoutId). */
+	ASSIGN_LAYOUT,
+	/** Volta as TVs para a tela cheia. */
+	REMOVE_LAYOUT
 }

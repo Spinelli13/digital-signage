@@ -49,6 +49,14 @@ const ACTIONS: [method: string, path: RegExp, label: string][] = [
   ['GET', /\/reports\/plays$/, 'Gerar o relatório de exibições'],
   ['GET', /\/reports\/inventory$/, 'Gerar o inventário das TVs'],
   ['GET', /\/reports\/events$/, 'Gerar o relatório de eventos'],
+  ['GET', /\/layouts$/, 'Carregar os layouts'],
+  ['GET', /\/layouts\/templates$/, 'Carregar os modelos de layout'],
+  ['POST', /\/layouts$/, 'Criar layout'],
+  ['POST', /\/layouts\/from-template$/, 'Criar layout a partir de um modelo'],
+  ['PUT', /\/layouts\/\d+$/, 'Salvar layout'],
+  ['DELETE', /\/layouts\/\d+$/, 'Excluir layout'],
+  ['DELETE', /\/devices\/\d+\/layout$/, 'Voltar a TV para a tela cheia'],
+  ['POST', /\/media\/web$/, 'Adicionar a página da web'],
 ];
 
 function actionOf(request: HttpRequest<unknown>): string | null {

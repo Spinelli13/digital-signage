@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.digitalsignage.backend.group.DeviceGroupRepository;
+import com.digitalsignage.backend.layout.LayoutRepository;
 import com.digitalsignage.backend.location.Location;
 import com.digitalsignage.backend.location.LocationRepository;
 import com.digitalsignage.backend.monitoring.MonitoringService;
@@ -32,6 +33,7 @@ public class DeviceService {
 	private final LocationRepository locationRepository;
 	private final DeviceGroupRepository groupRepository;
 	private final PlaylistRepository playlistRepository;
+	private final LayoutRepository layoutRepository;
 	private final DeviceViews views;
 	private final MonitoringService monitoring;
 	private final Clock clock;
@@ -41,6 +43,7 @@ public class DeviceService {
 			LocationRepository locationRepository,
 			DeviceGroupRepository groupRepository,
 			PlaylistRepository playlistRepository,
+			LayoutRepository layoutRepository,
 			DeviceViews views,
 			MonitoringService monitoring,
 			Clock clock) {
@@ -48,6 +51,7 @@ public class DeviceService {
 		this.locationRepository = locationRepository;
 		this.groupRepository = groupRepository;
 		this.playlistRepository = playlistRepository;
+		this.layoutRepository = layoutRepository;
 		this.views = views;
 		this.monitoring = monitoring;
 		this.clock = clock;
@@ -144,6 +148,11 @@ public class DeviceService {
 			device.setCurrentPlaylistId(requirePlaylist(request.currentPlaylistId()));
 		}
 
+		if (request.layoutId() != null && !request.layoutId().equals(device.getLayoutId())) {
+			device.setLayoutId(requireLayout(request.layoutId()));
+			monitoring.recordLayoutChanged(device, layoutName(device.getLayoutId()), clock.instant());
+		}
+
 		if (request.groupIds() != null) {
 			replaceGroups(device, request.groupIds());
 		}
@@ -203,6 +212,16 @@ public class DeviceService {
 		return playlistRepository.findById(playlistId)
 				.orElseThrow(() -> new NoSuchElementException("Playlist não encontrada: " + playlistId))
 				.getId();
+	}
+
+	private Long requireLayout(Long layoutId) {
+		return layoutRepository.findById(layoutId)
+				.orElseThrow(() -> new NoSuchElementException("Layout não encontrado: " + layoutId))
+				.getId();
+	}
+
+	private String layoutName(Long layoutId) {
+		return layoutId == null ? null : layoutRepository.findById(layoutId).map(layout -> layout.getName()).orElse(null);
 	}
 
 	private Device find(Long id) {
@@ -273,6 +292,25 @@ public class DeviceService {
 			case REMOVE_FROM_GROUP -> {
 				Long groupId = requireGroupParameter(request);
 				targets.forEach(device -> device.getGroupIds().remove(groupId));
+				changed.addAll(targets);
+			}
+			case ASSIGN_LAYOUT -> {
+				if (request.layoutId() == null) {
+					throw new IllegalArgumentException("Informe o layout (layoutId)");
+				}
+				Long layoutId = requireLayout(request.layoutId());
+				String layoutName = layoutName(layoutId);
+				targets.stream().filter(device -> !layoutId.equals(device.getLayoutId())).forEach(device -> {
+					device.setLayoutId(layoutId);
+					monitoring.recordLayoutChanged(device, layoutName, clock.instant());
+				});
+				changed.addAll(targets);
+			}
+			case REMOVE_LAYOUT -> {
+				targets.stream().filter(device -> device.getLayoutId() != null).forEach(device -> {
+					device.setLayoutId(null);
+					monitoring.recordLayoutChanged(device, null, clock.instant());
+				});
 				changed.addAll(targets);
 			}
 		}

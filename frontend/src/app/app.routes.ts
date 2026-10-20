@@ -19,6 +19,7 @@ export const routes: Routes = [
       { path: 'alertas', loadComponent: () => import('./alerts/alerts.page').then((m) => m.AlertsPage) },
       { path: 'relatorios', loadComponent: () => import('./reports/reports.page').then((m) => m.ReportsPage) },
       { path: 'campanhas', loadComponent: () => import('./campaigns/campaigns.page').then((m) => m.CampaignsPage) },
+      { path: 'layouts', loadComponent: () => import('./layouts/layouts.page').then((m) => m.LayoutsPage) },
       { path: 'locais', loadComponent: () => import('./locations/locations.page').then((m) => m.LocationsPage) },
       { path: 'grupos', loadComponent: () => import('./groups/groups.page').then((m) => m.GroupsPage) },
       { path: 'biblioteca', loadComponent: () => import('./media/media.page').then((m) => m.MediaPage) },

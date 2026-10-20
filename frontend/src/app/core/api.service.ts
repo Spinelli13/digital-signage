@@ -23,6 +23,9 @@ import {
   EventRow,
   EventType,
   InventoryRow,
+  Layout,
+  LayoutRequest,
+  LayoutTemplate,
   Location,
   LocationRequest,
   Media,
@@ -37,6 +40,7 @@ import {
   ReportRange,
   Summary,
   UptimeReport,
+  WebContentRequest,
   WebhookTestResult,
 } from './models';
 
@@ -131,6 +135,42 @@ export class ApiService {
   previewCampaigns(deviceId: number, at?: string): Observable<CampaignPreview> {
     const query = at ? `?deviceId=${deviceId}&at=${encodeURIComponent(at)}` : `?deviceId=${deviceId}`;
     return this.http.get<CampaignPreview>(this.url(`/campaigns/preview${query}`));
+  }
+
+  // layouts (fase 5)
+  layouts(): Observable<Layout[]> {
+    return this.http.get<Layout[]>(this.url('/layouts'));
+  }
+
+  layoutTemplates(): Observable<LayoutTemplate[]> {
+    return this.http.get<LayoutTemplate[]>(this.url('/layouts/templates'));
+  }
+
+  createLayout(body: LayoutRequest): Observable<Layout> {
+    return this.http.post<Layout>(this.url('/layouts'), body);
+  }
+
+  /** Cria um layout com as zonas de um modelo pronto (nome vazio = o nome do modelo). */
+  createLayoutFromTemplate(templateId: string, name: string | null): Observable<Layout> {
+    return this.http.post<Layout>(this.url('/layouts/from-template'), { templateId, name });
+  }
+
+  updateLayout(id: number, body: LayoutRequest): Observable<Layout> {
+    return this.http.put<Layout>(this.url(`/layouts/${id}`), body);
+  }
+
+  deleteLayout(id: number): Observable<void> {
+    return this.http.delete<void>(this.url(`/layouts/${id}`));
+  }
+
+  /** Volta a TV para a tela cheia (PUT sem layoutId significa "não mudar"). */
+  removeDeviceLayout(id: number): Observable<Device> {
+    return this.http.delete<Device>(this.url(`/devices/${id}/layout`));
+  }
+
+  /** Conteúdo web: uma página (https) que o Player exibe pelo tempo escolhido. */
+  createWebContent(body: WebContentRequest): Observable<Media> {
+    return this.http.post<Media>(this.url('/media/web'), body);
   }
 
   // monitoramento (fase 4)

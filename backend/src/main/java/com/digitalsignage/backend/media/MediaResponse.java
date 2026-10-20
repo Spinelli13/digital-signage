@@ -20,7 +20,7 @@ public record MediaResponse(
 				media.getName(),
 				media.getType(),
 				media.getMimeType(),
-				"/api/v1/media/" + media.getId() + "/file",
+				media.isWeb() ? media.getWebUrl() : "/api/v1/media/" + media.getId() + "/file",
 				media.getFileSize(),
 				media.getDurationSeconds(),
 				media.getChecksum(),

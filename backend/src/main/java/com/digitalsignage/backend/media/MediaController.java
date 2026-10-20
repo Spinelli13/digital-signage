@@ -15,11 +15,14 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/media")
@@ -66,6 +69,15 @@ public class MediaController {
 		return MediaResponse.from(mediaRepository.save(media));
 	}
 
+	/** Conteúdo web: guarda só o endereço (https). O Player abre a página e a exibe pelo tempo escolhido. */
+	@PostMapping("/web")
+	@ResponseStatus(HttpStatus.CREATED)
+	public MediaResponse createWeb(@Valid @RequestBody WebContent.Request request) {
+		URI uri = WebContent.validate(request.url());
+		Media media = Media.web(WebContent.nameFor(request.name(), uri), uri.toString(), request.durationSeconds());
+		return MediaResponse.from(mediaRepository.save(media));
+	}
+
 	@GetMapping("/{id}")
 	public MediaResponse get(@PathVariable Long id) {
 		return MediaResponse.from(findOrThrow(id));
@@ -78,6 +90,9 @@ public class MediaController {
 	@GetMapping("/{id}/file")
 	public ResponseEntity<Resource> download(@PathVariable Long id) {
 		Media media = findOrThrow(id);
+		if (media.isWeb()) {
+			throw new IllegalArgumentException("Esta mídia é uma página da web: não há arquivo para baixar");
+		}
 
 		Optional<URI> external = storageService.externalDownloadUrl(media.getStorageKey(), media.getMimeType());
 		if (external.isPresent()) {
@@ -94,6 +109,9 @@ public class MediaController {
 	@GetMapping("/{id}/url")
 	public MediaUrlResponse url(@PathVariable Long id) {
 		Media media = findOrThrow(id);
+		if (media.isWeb()) {
+			return new MediaUrlResponse(media.getWebUrl(), false);
+		}
 
 		return storageService.externalDownloadUrl(media.getStorageKey(), media.getMimeType())
 				.map(uri -> new MediaUrlResponse(uri.toString(), false))
@@ -105,7 +123,9 @@ public class MediaController {
 	public void delete(@PathVariable Long id) throws IOException {
 		Media media = findOrThrow(id);
 		mediaRepository.delete(media);
-		storageService.delete(media.getStorageKey());
+		if (!media.isWeb()) {
+			storageService.delete(media.getStorageKey());
+		}
 	}
 
 	private Media findOrThrow(Long id) {

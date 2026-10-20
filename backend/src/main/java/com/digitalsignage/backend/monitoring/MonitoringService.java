@@ -103,6 +103,13 @@ public class MonitoringService {
 		}
 	}
 
+	/** O administrador escolheu (ou tirou) o layout da tela da TV. */
+	@Transactional
+	public void recordLayoutChanged(Device device, String layoutName, Instant now) {
+		record(device.getId(), EventType.LAYOUT_CHANGED, EventLevel.INFO,
+				layoutName == null ? "Layout da tela removido: a TV voltou para a tela cheia" : "Layout da tela: \"" + layoutName + "\"", now);
+	}
+
 	@Transactional
 	public void recordUpdateRequested(Device device, Instant now) {
 		record(device.getId(), EventType.UPDATE_REQUESTED, EventLevel.INFO,

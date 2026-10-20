@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 
 import { ConfigService } from '../core/config.service';
-import { Device, DeviceGroup, Location, Playlist, ReleaseInfo } from '../core/models';
+import { Device, DeviceGroup, Layout, Location, Playlist, ReleaseInfo } from '../core/models';
 import { DevicesPage } from './devices.page';
 
 const API = 'http://api.test/api/v1';
@@ -72,6 +72,17 @@ const group = (id: number, name: string): DeviceGroup => ({
   updatedAt: '',
 });
 
+const layout = (id: number, name: string): Layout => ({
+  id,
+  name,
+  description: null,
+  configVersion: 2,
+  zones: [],
+  deviceCount: 0,
+  createdAt: '',
+  updatedAt: '',
+});
+
 const LOCATIONS = [location(3, 'Térreo'), location(4, 'Loja Centro')];
 const GROUPS = [group(10, 'Recepções'), group(11, 'Vitrines')];
 
@@ -95,13 +106,14 @@ function setup(queryParams: Record<string, string> = {}) {
   return { page: fixture.componentInstance, backend, fixture };
 }
 
-/** Responde às quatro consultas que a tela refaz a cada atualização. */
-function flushRefresh(backend: HttpTestingController, devices: Device[] = [device()]): TestRequest {
+/** Responde às cinco consultas que a tela refaz a cada atualização. */
+function flushRefresh(backend: HttpTestingController, devices: Device[] = [device()], layouts: Layout[] = []): TestRequest {
   const list = backend.expectOne((r) => r.url === `${API}/devices`);
   list.flush(devices);
   backend.expectOne(`${API}/playlists`).flush([playlist(7), playlist(8)]);
   backend.expectOne(`${API}/locations`).flush(LOCATIONS);
   backend.expectOne(`${API}/groups`).flush(GROUPS);
+  backend.expectOne(`${API}/layouts`).flush(layouts);
   return list;
 }
 
@@ -231,6 +243,7 @@ describe('DevicesPage — filters', () => {
     backend.expectOne(`${API}/playlists`).flush([]);
     backend.expectOne(`${API}/locations`).flush(LOCATIONS);
     backend.expectOne(`${API}/groups`).flush(GROUPS);
+    backend.expectOne(`${API}/layouts`).flush([]);
     expect(page.filtersActive()).toBe(true);
   });
 
@@ -242,6 +255,7 @@ describe('DevicesPage — filters', () => {
     backend.expectOne(`${API}/playlists`).flush([]);
     backend.expectOne(`${API}/locations`).flush(LOCATIONS);
     backend.expectOne(`${API}/groups`).flush(GROUPS);
+    backend.expectOne(`${API}/layouts`).flush([]);
 
     page.setLocationFilter('none');
     const none = nextList();
@@ -251,6 +265,7 @@ describe('DevicesPage — filters', () => {
     backend.expectOne(`${API}/playlists`).flush([]);
     backend.expectOne(`${API}/locations`).flush(LOCATIONS);
     backend.expectOne(`${API}/groups`).flush(GROUPS);
+    backend.expectOne(`${API}/layouts`).flush([]);
   });
 
   it('filters by group and clears everything with one click', () => {
@@ -261,6 +276,7 @@ describe('DevicesPage — filters', () => {
     backend.expectOne(`${API}/playlists`).flush([]);
     backend.expectOne(`${API}/locations`).flush(LOCATIONS);
     backend.expectOne(`${API}/groups`).flush(GROUPS);
+    backend.expectOne(`${API}/layouts`).flush([]);
 
     page.clearFilters();
     const cleared = nextList();
@@ -269,6 +285,7 @@ describe('DevicesPage — filters', () => {
     backend.expectOne(`${API}/playlists`).flush([]);
     backend.expectOne(`${API}/locations`).flush(LOCATIONS);
     backend.expectOne(`${API}/groups`).flush(GROUPS);
+    backend.expectOne(`${API}/layouts`).flush([]);
     expect(page.filtersActive()).toBe(false);
   });
 
@@ -289,6 +306,7 @@ describe('DevicesPage — filters', () => {
     backend.expectOne(`${API}/playlists`).flush([]);
     backend.expectOne(`${API}/locations`).flush(LOCATIONS);
     backend.expectOne(`${API}/groups`).flush(GROUPS);
+    backend.expectOne(`${API}/layouts`).flush([]);
   });
 });
 
@@ -309,6 +327,7 @@ describe('DevicesPage — filters coming from links (dashboard, locations, group
     backend.expectOne(`${API}/playlists`).flush([]);
     backend.expectOne(`${API}/locations`).flush(LOCATIONS);
     backend.expectOne(`${API}/groups`).flush(GROUPS);
+    backend.expectOne(`${API}/layouts`).flush([]);
   });
 
   it('understands "sem local" and ignores nonsense in the link', () => {
@@ -325,6 +344,7 @@ describe('DevicesPage — filters coming from links (dashboard, locations, group
     backend.expectOne(`${API}/playlists`).flush([]);
     backend.expectOne(`${API}/locations`).flush(LOCATIONS);
     backend.expectOne(`${API}/groups`).flush(GROUPS);
+    backend.expectOne(`${API}/layouts`).flush([]);
   });
 });
 
@@ -626,5 +646,133 @@ describe('DevicesPage — monitoring hints', () => {
 
     expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Na tela');
     backend.verify();
+  });
+});
+
+describe('DevicesPage — layouts', () => {
+  let page: DevicesPage;
+  let backend: HttpTestingController;
+
+  const LAYOUTS = [layout(20, 'Lateral'), layout(21, 'Rodapé')];
+
+  beforeEach(() => {
+    ({ page, backend } = setup());
+    page.ngOnInit();
+    backend.expectOne(`${DOWNLOADS}/releases.json`).flush({ releases: [] });
+    flushRefresh(backend, [device({ id: 1, layoutId: 20, layoutName: 'Lateral' }), device({ id: 2, name: 'TV 2' })], LAYOUTS);
+  });
+
+  afterEach(() => backend.verify());
+
+  it('knows the layouts and which one each TV uses', () => {
+    expect(page.layouts().map((l) => l.name)).toEqual(['Lateral', 'Rodapé']);
+    expect(page.devices()[0].layoutName).toBe('Lateral');
+  });
+
+  it('chooses the layout in the edit window and sends it only when one is picked', () => {
+    page.openEdit(device({ id: 2, name: 'TV 2' }));
+    expect(page.layoutChoice()).toBe('');
+    page.layoutChoice.set('21');
+
+    page.submitModal();
+
+    const request = backend.expectOne(`${API}/devices/2`);
+    expect(request.request.body.layoutId).toBe(21);
+    request.flush(device({ id: 2 }));
+    flushRefresh(backend, [], LAYOUTS);
+  });
+
+  it('shows the current layout when editing and does not resend it when nothing changed', () => {
+    page.openEdit(device({ id: 1, layoutId: 20, layoutName: 'Lateral' }));
+    expect(page.layoutChoice()).toBe('20');
+
+    page.submitModal();
+
+    const request = backend.expectOne(`${API}/devices/1`);
+    expect(request.request.body.layoutId).toBe(20);
+    request.flush(device());
+    flushRefresh(backend, [], LAYOUTS);
+  });
+
+  /** layoutId ausente no PUT significa "não mudar": voltar à tela cheia precisa do DELETE próprio. */
+  it('goes back to full screen with a DELETE after the save when "Tela cheia" is chosen', () => {
+    page.openEdit(device({ id: 1, layoutId: 20, layoutName: 'Lateral' }));
+    page.layoutChoice.set('');
+
+    page.submitModal();
+
+    const put = backend.expectOne(`${API}/devices/1`);
+    expect('layoutId' in put.request.body).toBe(false);
+    put.flush(device());
+    const remove = backend.expectOne(`${API}/devices/1/layout`);
+    expect(remove.request.method).toBe('DELETE');
+    remove.flush(device());
+    expect(page.modal()).toBeNull();
+    flushRefresh(backend, [], LAYOUTS);
+  });
+
+  it('does not call the DELETE when the TV never had a layout', () => {
+    page.openEdit(device({ id: 2, name: 'TV 2' }));
+
+    page.submitModal();
+
+    backend.expectOne(`${API}/devices/2`).flush(device({ id: 2 }));
+    backend.expectNone(`${API}/devices/2/layout`);
+    flushRefresh(backend, [], LAYOUTS);
+  });
+
+  it('applies a layout, or full screen, to the selected TVs', () => {
+    page.toggle(1);
+    page.toggle(2);
+
+    page.onBulkLayout(selectEvent('21'));
+    const assign = backend.expectOne(`${API}/devices/bulk`);
+    expect(assign.request.body).toEqual({ action: 'ASSIGN_LAYOUT', layoutId: 21, deviceIds: [1, 2] });
+    assign.flush({ affected: 2 });
+    expect(page.notice.text()).toContain('Layout aplicado a 2 TV(s)');
+    flushRefresh(backend, [device({ id: 1 }), device({ id: 2, name: 'TV 2' })], LAYOUTS);
+
+    page.onBulkLayout(selectEvent('none'));
+    const remove = backend.expectOne(`${API}/devices/bulk`);
+    expect(remove.request.body).toEqual({ action: 'REMOVE_LAYOUT', deviceIds: [1, 2] });
+    remove.flush({ affected: 2 });
+    expect(page.notice.text()).toContain('voltaram para a tela cheia');
+    flushRefresh(backend, [device({ id: 1 }), device({ id: 2, name: 'TV 2' })], LAYOUTS);
+
+    page.onBulkLayout(selectEvent(''));
+    backend.expectNone(`${API}/devices/bulk`);
+  });
+
+  it('says "sincronizando" when the TV has not caught up with the version the server wants', () => {
+    expect(page.syncing(device({ configVersion: 3, desiredConfigVersion: 3 }))).toBe(false);
+    expect(page.syncing(device({ configVersion: 3, desiredConfigVersion: 4 }))).toBe(true);
+    // uma versão combinada de layout pode ser "menor" que a anterior: o que vale é ser diferente
+    expect(page.syncing(device({ configVersion: 900, desiredConfigVersion: 5 }))).toBe(true);
+    expect(page.syncing(device({ status: 'DISABLED', configVersion: 1, desiredConfigVersion: 2 }))).toBe(false);
+  });
+
+  it('falls back to comparing with the playlist version when the server does not send the wanted version', () => {
+    // playlist 7 está na versão 1 (ver flushRefresh)
+    expect(page.syncing(device({ configVersion: 0, desiredConfigVersion: undefined }))).toBe(true);
+    expect(page.syncing(device({ configVersion: 1, desiredConfigVersion: undefined }))).toBe(false);
+    expect(page.syncing(device({ currentPlaylistId: null, configVersion: 0, desiredConfigVersion: undefined }))).toBe(false);
+  });
+});
+
+describe('DevicesPage — layout display', () => {
+  it('renders the layout chip and the bulk selector once a layout exists', async () => {
+    const ctx = setup();
+    const LAYOUTS = [layout(20, 'Lateral')];
+    ctx.fixture.detectChanges();
+    ctx.backend.expectOne(`${DOWNLOADS}/releases.json`).flush({ releases: [] });
+    flushRefresh(ctx.backend, [device({ id: 1, layoutId: 20, layoutName: 'Lateral' })], LAYOUTS);
+    ctx.page.toggle(1);
+    ctx.fixture.detectChanges();
+    await ctx.fixture.whenStable();
+
+    const element = ctx.fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('.chip.layout')?.textContent).toContain('Lateral');
+    expect(element.querySelector('select[aria-label="Layout das selecionadas"]')).not.toBeNull();
+    ctx.backend.verify();
   });
 });

@@ -26,11 +26,16 @@ public record DeviceResponse(
 		/** Campanha que está valendo para a TV agora (vazio = exibe a playlist base). */
 		Long campaignId,
 		String campaignName,
+		/** Layout da tela (vazio = tela cheia). */
+		Long layoutId,
+		String layoutName,
+		/** A versão do conteúdo que a TV deveria ter sincronizado; diferente de {@code configVersion} = ainda sincronizando. */
+		long desiredConfigVersion,
 		List<Long> groupIds,
 		Instant createdAt,
 		Instant updatedAt) {
 
-	public static DeviceResponse from(Device device, CampaignService.Effective effective, String currentMediaName, Instant now) {
+	public static DeviceResponse from(Device device, CampaignService.Effective effective, String currentMediaName, String layoutName, long desiredConfigVersion, Instant now) {
 
 		return new DeviceResponse(
 				device.getId(),
@@ -49,6 +54,9 @@ public record DeviceResponse(
 				currentMediaName,
 				effective.fromCampaign() ? effective.campaign().getId() : null,
 				effective.fromCampaign() ? effective.campaign().getName() : null,
+				device.getLayoutId(),
+				layoutName,
+				desiredConfigVersion,
 				device.getGroupIds().stream().sorted().toList(),
 				device.getCreatedAt(),
 				device.getUpdatedAt());

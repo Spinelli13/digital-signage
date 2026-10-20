@@ -126,6 +126,18 @@ public class DeviceController {
 		return views.of(deviceRepository.save(device));
 	}
 
+	/** Volta a TV para a tela cheia (PUT com layoutId ausente significa "não mudar"). Idempotente. */
+	@DeleteMapping("/{id}/layout")
+	@Transactional
+	public DeviceResponse removeLayout(@PathVariable Long id) {
+		Device device = findOrThrow(id);
+		if (device.getLayoutId() != null) {
+			device.setLayoutId(null);
+			monitoring.recordLayoutChanged(device, null, clock.instant());
+		}
+		return views.of(deviceRepository.save(device));
+	}
+
 	/** Manda a TV verificar agora se há versão nova do Player (ela percebe no próximo heartbeat). */
 	@PostMapping("/{id}/update-check")
 	@Transactional

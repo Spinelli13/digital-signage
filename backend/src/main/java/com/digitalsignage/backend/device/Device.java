@@ -63,6 +63,10 @@ public class Device {
 	@Column(name = "current_playlist_id")
 	private Long currentPlaylistId;
 
+	/** Layout da tela (vazio = tela cheia). Só o id: o layout é um cadastro à parte e não pode ser apagado enquanto em uso. */
+	@Column(name = "layout_id")
+	private Long layoutId;
+
 	@Column(name = "config_version", nullable = false)
 	private long configVersion = 0;
 
@@ -195,6 +199,14 @@ public class Device {
 
 	public void setCurrentPlaylistId(Long currentPlaylistId) {
 		this.currentPlaylistId = currentPlaylistId;
+	}
+
+	public Long getLayoutId() {
+		return layoutId;
+	}
+
+	public void setLayoutId(Long layoutId) {
+		this.layoutId = layoutId;
 	}
 
 	public long getConfigVersion() {

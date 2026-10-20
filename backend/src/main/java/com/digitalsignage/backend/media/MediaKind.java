@@ -2,7 +2,9 @@ package com.digitalsignage.backend.media;
 
 public enum MediaKind {
 	IMAGE,
-	VIDEO;
+	VIDEO,
+	/** Página da web (não vem de arquivo: ver Media.web). */
+	WEB;
 
 	static MediaKind fromMimeType(String mimeType) {
 		if (mimeType == null) {

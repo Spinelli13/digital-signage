@@ -13,6 +13,7 @@ import {
   Device,
   DeviceFilters,
   DeviceGroup,
+  Layout,
   Location,
   Playlist,
   ReleaseInfo,
@@ -88,6 +89,15 @@ type LocationChoice = string;
             <option [value]="playlist.id">{{ playlist.name }}</option>
           }
         </select>
+        @if (layouts().length > 0) {
+          <select aria-label="Layout das selecionadas" (change)="onBulkLayout($event)">
+            <option value="">Aplicar layout…</option>
+            <option value="none">Tela cheia</option>
+            @for (layout of layouts(); track layout.id) {
+              <option [value]="layout.id">{{ layout.name }}</option>
+            }
+          </select>
+        }
         <button class="secondary small" (click)="bulkSimple('DISABLE')">Desativar</button>
         <button class="secondary small" (click)="bulkSimple('ENABLE')">Reativar</button>
         <button class="secondary small" (click)="bulkSimple('CHECK_UPDATE')">Atualizar app</button>
@@ -146,6 +156,9 @@ type LocationChoice = string;
                 @for (group of groupsOf(device); track group.id) {
                   <span class="chip">{{ group.name }}</span>
                 }
+                @if (device.layoutName) {
+                  <span class="chip layout" title="Layout da tela desta TV">🧩 {{ device.layoutName }}</span>
+                }
               </td>
               <td><span class="dot" [class]="state(device).tone"></span>{{ state(device).label }}</td>
               <td>{{ ago(device.lastSeenAt) }}<br /><small>{{ device.playerVersion ? 'v' + device.playerVersion : '' }}</small>
@@ -166,7 +179,7 @@ type LocationChoice = string;
                   @if (device.currentMediaName) {
                     <br /><small class="onscreen" title="A mídia que o Player disse estar exibindo no último contato.">▶ Na tela: {{ device.currentMediaName }}</small>
                   }
-                  @if (device.currentPlaylistId !== null && device.configVersion < versionOf(device.effectivePlaylistId ?? device.currentPlaylistId)) {
+                  @if (syncing(device)) {
                     <br /><small>sincronizando…</small>
                   }
                 } @else {
@@ -223,6 +236,17 @@ type LocationChoice = string;
                 [ngModel]="newLocation()" (ngModelChange)="newLocation.set($event)" />
             }
           </div>
+          @if (modal() === 'edit' && layouts().length > 0) {
+            <div class="field">
+              <label for="layout">Layout da tela</label>
+              <select id="layout" name="layout" [ngModel]="layoutChoice()" (ngModelChange)="layoutChoice.set($event)">
+                <option value="">Tela cheia (um conteúdo só)</option>
+                @for (layout of layouts(); track layout.id) {
+                  <option [value]="layout.id">{{ layout.name }}</option>
+                }
+              </select>
+            </div>
+          }
           @if (groups().length > 0) {
             <div class="field">
               <label>Grupos</label>
@@ -264,6 +288,7 @@ type LocationChoice = string;
     .bulk select { min-width: 140px; width: auto; }
     .check-col { width: 34px; }
     tr.selected { background: #f3f7ff; }
+    .chip.layout { background: #e8f7f0; color: #0f6b46; }
     .chip { display: inline-block; background: #eef1f7; color: #44506a; border-radius: 999px; padding: 1px 9px; font-size: 12px; margin: 4px 4px 0 0; }
     .chips { display: flex; gap: 6px 14px; flex-wrap: wrap; }
     .below { margin-top: 8px; }
@@ -278,6 +303,7 @@ export class DevicesPage implements OnInit {
   readonly playlists = signal<Playlist[]>([]);
   readonly locations = signal<Location[]>([]);
   readonly groups = signal<DeviceGroup[]>([]);
+  readonly layouts = signal<Layout[]>([]);
   /** Versão mais recente do Player publicada, para destacar TVs desatualizadas. */
   readonly latest = signal<ReleaseInfo | null>(null);
   readonly loaded = signal(false);
@@ -299,6 +325,8 @@ export class DevicesPage implements OnInit {
   readonly name = signal('');
   readonly locationChoice = signal<LocationChoice>('');
   readonly newLocation = signal('');
+  /** Layout escolhido no formulário: '' = tela cheia, ou o id de um layout. */
+  readonly layoutChoice = signal('');
   readonly modalGroups = signal<Set<number>>(new Set());
   private editing: Device | null = null;
 
@@ -307,6 +335,17 @@ export class DevicesPage implements OnInit {
 
   outdated(device: Device): boolean {
     return isOutdated(device.playerVersion, this.latest()?.versionName);
+  }
+
+  /** A TV ainda não sincronizou o conteúdo que deveria estar exibindo. Servidor antigo (sem a versão desejada): compara com a playlist. */
+  syncing(device: Device): boolean {
+    if (device.status !== 'ACTIVE') {
+      return false;
+    }
+    if (device.desiredConfigVersion !== undefined) {
+      return device.configVersion !== device.desiredConfigVersion;
+    }
+    return device.currentPlaylistId !== null && device.configVersion < this.versionOf(device.effectivePlaylistId ?? device.currentPlaylistId);
   }
 
   groupsOf(device: Device): DeviceGroup[] {
@@ -429,6 +468,18 @@ export class DevicesPage implements OnInit {
     }
   }
 
+  onBulkLayout(event: Event): void {
+    const value = this.takeValue(event);
+    if (!value) {
+      return;
+    }
+    if (value === 'none') {
+      this.runBulk({ action: 'REMOVE_LAYOUT' });
+    } else {
+      this.runBulk({ action: 'ASSIGN_LAYOUT', layoutId: Number(value) });
+    }
+  }
+
   onBulkGroup(event: Event, add: boolean): void {
     const value = this.takeValue(event);
     if (!value) {
@@ -489,6 +540,10 @@ export class DevicesPage implements OnInit {
         return `${affected} TV(s) adicionada(s) ao grupo.`;
       case 'REMOVE_FROM_GROUP':
         return `${affected} TV(s) retirada(s) do grupo.`;
+      case 'ASSIGN_LAYOUT':
+        return `Layout aplicado a ${affected} TV(s). Elas atualizam em até 1 minuto.`;
+      case 'REMOVE_LAYOUT':
+        return `${affected} TV(s) voltaram para a tela cheia.`;
     }
   }
 
@@ -509,6 +564,7 @@ export class DevicesPage implements OnInit {
     this.locationChoice.set(device.locationId === null ? '' : String(device.locationId));
     this.newLocation.set('');
     this.modalGroups.set(new Set(device.groupIds));
+    this.layoutChoice.set(device.layoutId == null ? '' : String(device.layoutId));
     this.editing = device;
     this.modal.set('edit');
   }
@@ -544,17 +600,32 @@ export class DevicesPage implements OnInit {
             groupIds,
             ...(noLocation ? {} : locationFields),
           })
-        : this.api.updateDevice(this.editing!.id, { name: this.name().trim(), groupIds, ...locationFields });
+        : this.api.updateDevice(this.editing!.id, {
+            name: this.name().trim(),
+            groupIds,
+            ...locationFields,
+            ...(this.layoutChoice() === '' ? {} : { layoutId: Number(this.layoutChoice()) }),
+          });
 
     request.subscribe({
       next: () => {
-        this.busy.set(false);
-        this.closeModal();
-        this.refresh();
+        // "Tela cheia" precisa de uma chamada própria: layoutId ausente no PUT significa "não mudar".
+        const leavingLayout = this.modal() === 'edit' && this.layoutChoice() === '' && this.editing?.layoutId != null;
+        if (leavingLayout) {
+          this.api.removeDeviceLayout(this.editing!.id).subscribe({ next: () => this.finishModal(), error: () => this.finishModal() });
+        } else {
+          this.finishModal();
+        }
       },
       // O aviso aparece por cima do formulário (interceptor de erros); o formulário continua aberto.
       error: () => this.busy.set(false),
     });
+  }
+
+  private finishModal(): void {
+    this.busy.set(false);
+    this.closeModal();
+    this.refresh();
   }
 
   // ---------- ações de uma TV ----------
@@ -615,12 +686,14 @@ export class DevicesPage implements OnInit {
       playlists: this.api.playlists(),
       locations: this.api.locations(),
       groups: this.api.groups(),
+      layouts: this.api.layouts(),
     }).subscribe({
-      next: ({ devices, playlists, locations, groups }) => {
+      next: ({ devices, playlists, locations, groups, layouts }) => {
         this.devices.set(devices);
         this.playlists.set(playlists);
         this.locations.set(locations);
         this.groups.set(groups);
+        this.layouts.set(layouts);
         this.loaded.set(true);
         // TVs que saíram da lista (filtro novo, exclusão) deixam de estar selecionadas
         const visible = new Set(devices.map((d) => d.id));

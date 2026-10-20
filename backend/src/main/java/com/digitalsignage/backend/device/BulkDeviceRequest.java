@@ -16,5 +16,6 @@ public record BulkDeviceRequest(
 		Long targetLocationId,
 		Long playlistId,
 		Long locationId,
-		Long groupId) {
+		Long groupId,
+		Long layoutId) {
 }

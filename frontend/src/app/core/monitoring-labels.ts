@@ -13,6 +13,7 @@ export const EVENT_LABELS: Record<EventType, EventLabel> = {
   DISABLED: { icon: '⏸', label: 'Desativada' },
   ENABLED: { icon: '▶', label: 'Reativada' },
   PLAYLIST_CHANGED: { icon: '🎞', label: 'Conteúdo' },
+  LAYOUT_CHANGED: { icon: '🧩', label: 'Layout da tela' },
   UPDATE_REQUESTED: { icon: '⬆', label: 'Atualização pedida' },
   PLAYER_UPDATED: { icon: '📦', label: 'Player atualizado' },
   PLAYER_LOG: { icon: '📝', label: 'Registro do Player' },

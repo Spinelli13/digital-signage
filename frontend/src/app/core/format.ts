@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { Connection, Device } from './models';
+import { Connection, Device, MediaType } from './models';
 
 export interface DeviceState {
   label: string;
@@ -136,4 +136,10 @@ export function isoDate(date: Date): string {
 export function daysAgo(count: number, now: Date = new Date()): string {
   const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - count);
   return isoDate(day);
+}
+
+const MEDIA_TYPE_LABELS: Record<MediaType, string> = { IMAGE: 'Imagem', VIDEO: 'Vídeo', WEB: 'Página web' };
+
+export function mediaTypeLabel(type: MediaType): string {
+  return MEDIA_TYPE_LABELS[type] ?? 'Mídia';
 }

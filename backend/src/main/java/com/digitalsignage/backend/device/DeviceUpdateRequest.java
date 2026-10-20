@@ -14,5 +14,7 @@ public record DeviceUpdateRequest(
 		Long locationId,
 		String status,
 		Long currentPlaylistId,
+		/** Layout da tela; ausente não muda (para voltar à tela cheia use DELETE /devices/{id}/layout). */
+		Long layoutId,
 		List<Long> groupIds) {
 }

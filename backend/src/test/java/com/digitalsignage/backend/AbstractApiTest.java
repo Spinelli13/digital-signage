@@ -77,7 +77,7 @@ public abstract class AbstractApiTest {
 		// O administrador (tabela users) é semeado na subida do contexto e precisa sobreviver.
 		clock.reset();
 		jdbc.update("UPDATE monitoring_settings SET offline_after_minutes = 10, never_connected_after_hours = 24, error_burst_count = 5, webhook_url = NULL, notify_on_resolve = TRUE, events_retention_days = 90");
-		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media, locations, device_groups, campaigns, device_events, alerts, media_plays RESTART IDENTITY CASCADE");
+		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media, locations, device_groups, campaigns, device_events, alerts, media_plays, layouts RESTART IDENTITY CASCADE");
 	}
 
 	protected String adminToken() throws Exception {

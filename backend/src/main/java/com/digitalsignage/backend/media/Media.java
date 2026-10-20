@@ -28,7 +28,8 @@ public class Media {
 	@Column(name = "mime_type", nullable = false)
 	private String mimeType;
 
-	@Column(name = "storage_key", nullable = false)
+	/** Vazio no conteúdo web (um endereço, não um arquivo). */
+	@Column(name = "storage_key")
 	private String storageKey;
 
 	@Column(name = "file_size", nullable = false)
@@ -38,6 +39,10 @@ public class Media {
 	private Integer durationSeconds;
 
 	private String checksum;
+
+	/** Endereço (https) do conteúdo web; vazio nos arquivos. */
+	@Column(name = "web_url")
+	private String webUrl;
 
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
@@ -57,6 +62,17 @@ public class Media {
 		this.fileSize = fileSize;
 		this.durationSeconds = durationSeconds;
 		this.checksum = checksum;
+	}
+
+	/** Uma página da web exibida pelo Player pelo tempo escolhido (sem arquivo para guardar nem baixar). */
+	public static Media web(String name, String url, int durationSeconds) {
+		Media media = new Media(name, MediaKind.WEB.name(), "text/html", null, 0, durationSeconds, null);
+		media.webUrl = url;
+		return media;
+	}
+
+	public boolean isWeb() {
+		return MediaKind.WEB.name().equals(type);
 	}
 
 	@PrePersist
@@ -101,6 +117,10 @@ public class Media {
 
 	public String getChecksum() {
 		return checksum;
+	}
+
+	public String getWebUrl() {
+		return webUrl;
 	}
 
 	public Instant getCreatedAt() {

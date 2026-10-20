@@ -28,4 +28,10 @@ public interface DeviceRepository extends JpaRepository<Device, Long>, JpaSpecif
 
 	List<Device> findByLocationIdOrderById(Long locationId);
 
+	long countByLayoutId(Long layoutId);
+
+	/** Linhas [layoutId, quantidade de TVs] dos layouts em uso. */
+	@Query("select d.layoutId, count(d) from Device d where d.layoutId is not null group by d.layoutId")
+	List<Object[]> countByLayout();
+
 }

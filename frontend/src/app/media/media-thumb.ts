@@ -13,7 +13,7 @@ import { MediaType } from '../core/models';
     @if (type() === 'IMAGE' && src()) {
       <img [src]="src()" [alt]="name()" loading="lazy" />
     } @else {
-      <div class="ph">{{ type() === 'VIDEO' ? '🎬' : '🖼' }}</div>
+      <div class="ph">{{ type() === 'VIDEO' ? '🎬' : type() === 'WEB' ? '🌐' : '🖼' }}</div>
     }
   `,
   styles: `

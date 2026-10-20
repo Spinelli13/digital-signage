@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { ApiService } from '../core/api.service';
+import { mediaTypeLabel } from '../core/format';
 import { Media, Playlist, PlaylistItem } from '../core/models';
 import { MediaThumb } from '../media/media-thumb';
 import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, totalSeconds } from './playlist-editor';
@@ -49,7 +50,7 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
             <div class="thumb"><app-media-thumb [mediaId]="item.mediaId" [type]="item.mediaType" [name]="item.mediaName" /></div>
             <div class="info">
               <b>{{ item.mediaName }}</b>
-              <small>{{ item.mediaType === 'VIDEO' ? 'Vídeo' : 'Imagem' }}</small>
+              <small>{{ typeLabel(item.mediaType) }}</small>
             </div>
             <label class="dur">
               <input type="number" min="1" [ngModel]="item.durationSeconds" (ngModelChange)="changeDuration($index, $event)" />
@@ -98,6 +99,7 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
   `,
 })
 export class PlaylistEditorPage implements OnInit {
+  readonly typeLabel = mediaTypeLabel;
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

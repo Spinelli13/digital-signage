@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import com.digitalsignage.backend.campaign.CampaignService;
+import com.digitalsignage.backend.layout.Layout;
+import com.digitalsignage.backend.layout.LayoutRepository;
 import com.digitalsignage.backend.media.Media;
 import com.digitalsignage.backend.media.MediaRepository;
 
@@ -20,11 +22,20 @@ public class DeviceViews {
 
 	private final CampaignService campaignService;
 	private final MediaRepository mediaRepository;
+	private final LayoutRepository layoutRepository;
+	private final PlayerConfigService playerConfigService;
 	private final Clock clock;
 
-	public DeviceViews(CampaignService campaignService, MediaRepository mediaRepository, Clock clock) {
+	public DeviceViews(
+			CampaignService campaignService,
+			MediaRepository mediaRepository,
+			LayoutRepository layoutRepository,
+			PlayerConfigService playerConfigService,
+			Clock clock) {
 		this.campaignService = campaignService;
 		this.mediaRepository = mediaRepository;
+		this.layoutRepository = layoutRepository;
+		this.playerConfigService = playerConfigService;
 		this.clock = clock;
 	}
 
@@ -40,8 +51,17 @@ public class DeviceViews {
 		Map<Long, String> mediaNames = mediaIds.isEmpty()
 				? Map.of()
 				: mediaRepository.findAllById(mediaIds).stream().collect(Collectors.toMap(Media::getId, Media::getName));
+		Map<Long, String> layoutNames = layoutRepository.findAllById(devices.stream().map(Device::getLayoutId).filter(Objects::nonNull).distinct().toList())
+				.stream().collect(Collectors.toMap(Layout::getId, Layout::getName));
+		Map<Long, Long> desired = playerConfigService.desiredVersions(devices, effective);
 		return devices.stream()
-				.map(device -> DeviceResponse.from(device, effective.get(device.getId()), device.getCurrentMediaId() == null ? null : mediaNames.get(device.getCurrentMediaId()), now))
+				.map(device -> DeviceResponse.from(
+						device,
+						effective.get(device.getId()),
+						device.getCurrentMediaId() == null ? null : mediaNames.get(device.getCurrentMediaId()),
+						device.getLayoutId() == null ? null : layoutNames.get(device.getLayoutId()),
+						desired.get(device.getId()),
+						now))
 				.toList();
 	}
 

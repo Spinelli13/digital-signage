@@ -13,6 +13,7 @@ public enum EventType {
 	ENABLED,
 	/** O conteúdo que a TV exibe mudou (playlist base ou campanha). */
 	PLAYLIST_CHANGED,
+	LAYOUT_CHANGED,
 	/** O administrador pediu que a TV verifique atualização do Player. */
 	UPDATE_REQUESTED,
 	/** A versão do Player da TV mudou. */

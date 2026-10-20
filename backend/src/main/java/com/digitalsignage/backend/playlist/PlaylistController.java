@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.digitalsignage.backend.campaign.CampaignRepository;
 import com.digitalsignage.backend.common.ConflictException;
+import com.digitalsignage.backend.layout.LayoutRepository;
 import com.digitalsignage.backend.media.Media;
 import com.digitalsignage.backend.media.MediaRepository;
 
@@ -32,14 +33,17 @@ public class PlaylistController {
 	private final PlaylistRepository playlistRepository;
 	private final MediaRepository mediaRepository;
 	private final CampaignRepository campaignRepository;
+	private final LayoutRepository layoutRepository;
 
 	public PlaylistController(
 			PlaylistRepository playlistRepository,
 			MediaRepository mediaRepository,
-			CampaignRepository campaignRepository) {
+			CampaignRepository campaignRepository,
+			LayoutRepository layoutRepository) {
 		this.playlistRepository = playlistRepository;
 		this.mediaRepository = mediaRepository;
 		this.campaignRepository = campaignRepository;
+		this.layoutRepository = layoutRepository;
 	}
 
 	@GetMapping
@@ -84,6 +88,10 @@ public class PlaylistController {
 		campaignRepository.findFirstByPlaylistId(id).ifPresent(campaign -> {
 			throw new ConflictException("A playlist \"" + playlist.getName() + "\" está em uso pela campanha \""
 					+ campaign.getName() + "\". Troque a playlist da campanha ou exclua a campanha antes.");
+		});
+		layoutRepository.findUsingPlaylist(id).stream().findFirst().ifPresent(layout -> {
+			throw new ConflictException("A playlist \"" + playlist.getName() + "\" está em uso pelo layout \""
+					+ layout.getName() + "\". Troque a playlist da zona ou exclua o layout antes.");
 		});
 		playlistRepository.delete(playlist);
 	}
