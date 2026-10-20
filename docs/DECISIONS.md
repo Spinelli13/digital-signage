@@ -129,3 +129,26 @@ Registro de decisões que complementam o [documento de contexto](../PROJETO_DIGI
 - **Um único APK universal** (minSdk 21, sem código nativo: nenhuma pasta `lib/` no APK) atende Android 5.0 ao 14 e qualquer processador. Lint de release sem erros e sem avisos de API (`NewApi`). Não há motivo para vários APKs; o que muda entre aparelhos é comportamento do sistema, documentado no anexo do manual.
 - **Achado real (testado em emulador Android 5.1 TV):** o site de downloads usa certificados Let's Encrypt (cadeia terminando na *ISRG Root X1*), que o Android anterior ao 7.1.1 não conhece; o Player antigo falhava com "Trust anchor for certification path not found" e **nunca conseguiria se atualizar** em Fire OS 5 / TV boxes antigos. Correção: `TlsTrust` acrescenta a ISRG Root X1 (impressão digital conferida) às raízes do sistema, sem aceitar mais nada (testes: aceita cadeia que termina só na raiz extra; recusa autoridade desconhecida e certificado autoassinado). Depois da correção o mesmo emulador baixou a versão do site e abriu o instalador. O backend do Render usa Google Trust Services (cadeia cruzada com a GlobalSign) e já funcionava. Ainda não verificado: o app **Downloader** em Android < 7.1.1 (usa o repositório de certificados do aparelho; o manual manda usar o método ADB se der erro).
 - Verificado no emulador Android 5.1: ativação, download e exibição da playlist, diálogo do instalador. Emulador instalado: AVD `signage_tv22` (imagem de ~1,4 GB).
+
+## 2026-10-20 (parte 5) — Fase 2: multi-dispositivo (locais, grupos, status, ações em massa)
+
+### Modelo
+- **Local** (`locations`): ponto físico; cada TV tem no máximo um (`devices.location_id`, `ON DELETE SET NULL`: apagar o local **nunca** apaga a TV). Nome único sem diferenciar maiúsculas/minúsculas (índice em `lower(name)`; a API responde 409 com mensagem legível, não o erro genérico de integridade).
+- **Grupo** (`device_groups` + `device_group_members`): conjunto livre, uma TV pode estar em vários; `ON DELETE CASCADE` nas duas pontas, de modo que apagar grupo ou TV só desfaz o vínculo. A associação é mapeada em `Device.groupIds` (`@ElementCollection` com `@BatchSize`), o que evita N+1 na lista.
+- **Decisão: grupo e local não "herdam" playlist.** A playlist continua sendo da TV (`current_playlist_id`), e "aplicar a todas as TVs do grupo/local" grava a playlist em cada TV. Motivo: o Player e o heartbeat não mudam (nenhum risco para as TVs já em campo) e o comportamento é previsível. A herança/regra por segmento fica para a fase 3 (campanhas, segmentação).
+
+### Migração V3 com dados reais
+- Antes, o local era texto livre em `devices.location`. A V3 cria um local para cada nome distinto (sem diferenciar maiúsculas/minúsculas e espaços nas pontas; vale a grafia da TV mais antiga), aponta as TVs e só então apaga a coluna. Testada de duas formas: teste automatizado que cria o banco **no estado da V2**, insere TVs com grafias diferentes, aplica a V3 e confere (nenhuma TV se perde; espaços em branco não viram local), e uma execução sobre o banco de desenvolvimento que já tinha TVs de testes anteriores.
+- **Compatibilidade de API:** a resposta da TV continua trazendo `location` (o nome) e a criação/edição aceita o local por nome (acha o existente ou cria), então o fluxo de ativação ("local Loja Centro") e o painel antigo continuam funcionando durante o deploy. Na edição, campo de local ausente = "não mudar" (antes limpava), e `location: ""` = sem local.
+
+### Situação das TVs
+- Uma única regra no servidor (`DeviceConnection`): ONLINE (ativa, contato nos últimos 2 min), OFFLINE, NEVER (ativa que nunca falou), PENDING, DISABLED. O painel exibe o que o servidor diz (com um fallback para respostas antigas) e o filtro de situação roda no banco.
+
+### API
+- `GET /devices` com filtros combináveis (`connection`, `locationId`/`noLocation`, `groupId`, `q`); a busca trata `%` e `_` como letras comuns (teste de regressão).
+- `POST /devices/bulk`: uma ação (playlist, remover playlist, ativar/desativar, pedir atualização, mover/limpar local, entrar/sair de grupo) sobre **exatamente um alvo** (lista de TVs, grupo ou local). Uma TV inexistente na lista cancela a ação inteira (nada fica pela metade, testado). Cada ação só alcança as TVs a que se aplica e devolve `affected`.
+- `GET /summary`: contagens por situação, TVs por local e lista de atenção (offline → nunca conectou → aguardando ativação; desativadas não alertam), no servidor.
+
+### Painel
+- Novas páginas **Pontos & Locais** e **Grupos**; **Dispositivos** ganhou busca, filtros (também por link vindo do Dashboard/Locais/Grupos), seleção e barra de ações em massa; o **Dashboard** passou a ser alimentado por `/summary`.
+- Achado pelas capturas de tela reais (não pelos testes): o CSS global fazia todo `input`/`select` ocupar a linha inteira, o que empilhou os filtros e jogou as caixas de marcar acima do texto; corrigido (caixas de marcar com largura automática, rótulo ao lado).

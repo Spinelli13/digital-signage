@@ -10,7 +10,7 @@ Como usar o **painel de administração** do Digital Signage no dia a dia: envia
 
 1. Enviar as mídias para a **Biblioteca** (uma vez só).
 2. Montar uma **Playlist** com as mídias na ordem e com o tempo que você quiser.
-3. Em **Dispositivos**, escolher qual playlist cada TV exibe.
+3. Em **Dispositivos**, escolher qual playlist cada TV exibe. Com várias TVs, organize-as em **Locais** (onde estão) e **Grupos** (conjuntos para agir juntos) e aplique a playlist a todas de uma vez.
 
 ---
 
@@ -29,14 +29,16 @@ Para sair, use o botão **Sair** no canto inferior esquerdo.
 
 ## 2. Conhecendo o painel
 
-![Dashboard: visão geral com dispositivos, TVs online, mídias e playlists (captura real)](manual/img/painel-inicio.png)
+![Dashboard: TVs por situação, TVs por local e quais precisam de atenção (captura real)](manual/img/painel-inicio.png)
 
 O **menu à esquerda** leva a cada área:
 
 | Menu | Para que serve |
 |---|---|
-| **Dashboard** | Visão geral: quantas TVs, quantas estão online, quantas aguardam ativação, e quais precisam de atenção. |
-| **Dispositivos** | As TVs: ativar, dar nome e local, escolher a playlist, desativar, excluir e pedir atualização do aplicativo. |
+| **Dashboard** | Visão geral: quantas TVs estão online, offline, nunca conectaram ou aguardam ativação; quantas há em cada local; e quais precisam de atenção. Clique em qualquer número para ver essas TVs. |
+| **Dispositivos** | As TVs: ativar, dar nome, local e grupos, escolher a playlist, filtrar, agir em várias de uma vez, desativar, excluir e pedir atualização do aplicativo. |
+| **Pontos & Locais** | Onde estão as TVs (ex.: "Loja Centro"). |
+| **Grupos** | Conjuntos de TVs (ex.: "Recepções") para escolher a playlist e atualizar o aplicativo de todas de uma vez. |
 | **Biblioteca** | Suas imagens e vídeos. |
 | **Playlists** | A ordem e o tempo de cada mídia. |
 | **Downloads e manuais** | O aplicativo da TV (sempre a versão mais recente) e estes manuais em PDF. |
@@ -93,9 +95,11 @@ Em **Playlists** você vê todas, com o número de itens, a duração do ciclo e
 
 1. Instale o Player na TV (veja o **Manual de instalação**). Ao abrir, ela mostra um **código de 6 letras e números**.
 2. No painel, abra **Dispositivos** e clique em **+ Adicionar dispositivo**.
-3. Digite o **código**, dê um **nome** (ex.: "TV Recepção") e o **local** (ex.: "Loja Centro") e clique em **Ativar dispositivo**.
+3. Digite o **código** e dê um **nome** (ex.: "TV Recepção").
+4. Escolha o **Local** na lista. Se ainda não existe, escolha **+ Novo local…** e digite o nome (ele é criado na hora). Se a TV não tem local, deixe **Sem local**.
+5. Marque os **Grupos** de que a TV faz parte (opcional) e clique em **Ativar dispositivo**.
 
-![Janela "Adicionar dispositivo" com o código da TV digitado (captura real)](manual/img/painel-adicionar-dispositivo.png)
+![Janela "Adicionar dispositivo": código, nome, local (aqui um local novo) e grupos (captura real)](manual/img/painel-adicionar-dispositivo.png)
 
 O código vale por **24 horas** e só pode ser usado uma vez. Se expirar, reinicie o Player na TV para gerar outro.
 
@@ -106,25 +110,54 @@ Na linha da TV, use a lista da coluna **Playlist**:
 - escolha uma playlist para a TV começar a exibi-la (em até 1 minuto);
 - escolha **Nenhuma playlist** para tirar o conteúdo: a TV passa a mostrar "Aguardando conteúdo". A playlist em si **não** é apagada.
 
-![Lista de dispositivos: status, último contato, versão do aplicativo e playlist de cada TV (captura real)](manual/img/painel-dispositivos.png)
+![Lista de dispositivos: situação, último contato, versão do aplicativo, playlist, local e grupos de cada TV (captura real)](manual/img/painel-dispositivos.png)
 
 ### 5.3 O que significa cada status
 
 ![Significado dos status das TVs no painel](manual/img/estados-tv.svg)
 
-### 5.4 Outras ações
+### 5.4 Buscar e filtrar
+
+Acima da lista ficam a busca e três filtros. Todos funcionam juntos:
+
+- **Buscar:** digite parte do nome da TV ou do local.
+- **Situação:** Online, Offline, Nunca conectou, Aguardando ativação ou Desativado.
+- **Local** (inclui "Sem local") e **Grupo**.
+
+O contador à direita mostra quantas TVs aparecem. **Limpar filtros** volta à lista completa. Os números do Dashboard, a lista de Locais e a lista de Grupos também levam para esta página já filtrada.
+
+![Lista filtrada pelas TVs de um local (captura real)](manual/img/painel-dispositivos-filtros.png)
+
+### 5.5 Agir em várias TVs de uma vez
+
+1. Marque as TVs na primeira coluna (ou a caixa do cabeçalho para marcar **todas as da lista**, respeitando os filtros).
+2. Aparece a barra azul **"N selecionadas"** com as ações:
+
+| Ação | O que faz |
+|---|---|
+| **Escolher playlist…** | Aplica a playlist escolhida a todas as selecionadas (ou **Nenhuma playlist** para tirar). |
+| **Desativar / Reativar** | Pausa ou volta a ativar as TVs. Desativar pede confirmação. TVs que ainda aguardam ativação não são afetadas. |
+| **Atualizar app** | Pede que as TVs verifiquem agora se há versão nova do aplicativo. |
+| **Mover para local…** | Muda o local de todas as selecionadas (ou **Sem local**). |
+| **Adicionar ao grupo… / Tirar do grupo…** | Coloca as TVs num grupo ou as retira dele. |
+
+O painel confirma quantas TVs foram alcançadas. Se uma ação não se aplica a algumas (por exemplo, reativar uma TV que já está ativa), ele avisa quantas ficaram de fora.
+
+![Três TVs marcadas e a barra de ações em várias TVs (captura real)](manual/img/painel-dispositivos-selecao.png)
+
+### 5.6 Outras ações de cada TV
 
 | Botão | O que faz |
 |---|---|
-| **Editar** | Muda o nome e o local da TV. |
+| **Editar** | Muda o nome, o local e os grupos da TV. |
 | **Atualizar app** | Pede que **esta TV** verifique agora se há versão nova do aplicativo (ela percebe em até 30 segundos). |
 | **Atualizar todas as TVs** (no alto da página) | O mesmo pedido para todas as TVs ativas. |
 | **Desativar / Reativar** | Pausa a TV (ela para de exibir) ou volta a ativá-la. |
 | **Excluir** | Remove a TV. Ela esquece o conteúdo e volta a pedir um **novo código de ativação**. |
 
-### 5.5 Atualizar o aplicativo das TVs
+### 5.7 Atualizar o aplicativo das TVs
 
-Quando existe uma versão nova do Player, as TVs descobrem sozinhas em até 30 minutos. Para adiantar, use **Atualizar app** (uma TV) ou **Atualizar todas as TVs**. O painel avisa que o pedido foi enviado:
+Quando existe uma versão nova do Player, as TVs descobrem sozinhas em até 30 minutos. Para adiantar, use **Atualizar app** (uma TV), **Atualizar todas as TVs**, ou a ação em massa. O painel avisa que o pedido foi enviado:
 
 ![Aviso do painel depois de pedir a atualização das TVs (captura real)](manual/img/painel-atualizar-tvs.png)
 
@@ -134,7 +167,45 @@ TVs com versão mais antiga que a última publicada aparecem marcadas com **⬆ 
 
 ---
 
-## 6. Downloads e manuais
+## 6. Pontos & Locais
+
+Um **local** é um ponto físico onde há TVs (ex.: "Loja Centro", "Matriz"). Cada TV pertence a **um** local (ou a nenhum). Usar locais permite ver, por local, quantas TVs estão online e filtrar a lista.
+
+1. Abra **Pontos & Locais**.
+2. Clique em **+ Novo local**, digite o **nome** (e, se quiser, uma descrição como o endereço) e salve.
+3. Na lista você vê quantas TVs há em cada local e quantas estão online. Clique no número de TVs para abrir **Dispositivos** já filtrado por esse local.
+
+![Lista de locais com o número de TVs e quantas estão online (captura real)](manual/img/painel-locais.png)
+
+![Janela para criar um local (captura real)](manual/img/painel-local-novo.png)
+
+- **Editar** muda o nome e a descrição. Dois locais não podem ter o mesmo nome (maiúsculas e minúsculas contam como iguais).
+- **Excluir** apaga só o local. **As TVs continuam funcionando** e ficam "Sem local".
+- Para colocar TVs num local: escolha o local ao ativar a TV, edite a TV, ou use a ação **Mover para local…** em várias TVs.
+
+---
+
+## 7. Grupos
+
+Um **grupo** é um conjunto livre de TVs (ex.: "Recepções", "Vitrines", "Refeitórios"). Uma TV pode estar em vários grupos. Grupos servem para **agir em várias TVs de uma vez**, mesmo de locais diferentes.
+
+1. Abra **Grupos** e clique em **+ Novo grupo**.
+2. Dê um nome (e, se quiser, uma descrição) e **marque as TVs** do grupo. Salve.
+3. Na lista de grupos você pode, para todas as TVs do grupo:
+   - **Escolher uma playlist** (ou **Nenhuma playlist**) na coluna "Playlist para todas as TVs do grupo". O painel pede confirmação antes de aplicar.
+   - **Atualizar app**: pede que verifiquem se há versão nova do aplicativo.
+
+![Lista de grupos, com a escolha de playlist para todas as TVs de cada grupo (captura real)](manual/img/painel-grupos.png)
+
+![Editando um grupo: nome, descrição e as TVs que fazem parte (captura real)](manual/img/painel-grupo-editar.png)
+
+- **Editar** muda o nome, a descrição e quem faz parte.
+- **Excluir** apaga só o grupo. **As TVs não são apagadas**: apenas deixam de fazer parte dele.
+- O número de TVs do grupo abre **Dispositivos** filtrado por esse grupo.
+
+---
+
+## 8. Downloads e manuais
 
 Em **Downloads e manuais** você encontra, sempre atualizados:
 
@@ -146,7 +217,7 @@ Em **Downloads e manuais** você encontra, sempre atualizados:
 
 ---
 
-## 7. Avisos de erro
+## 9. Avisos de erro
 
 Quando algo dá errado, o painel mostra um aviso vermelho no alto da tela, em português, dizendo **o que aconteceu e o que fazer**. O aviso **fica na tela até você clicar em Fechar**.
 
@@ -168,9 +239,10 @@ Todo aviso começa pela **ação** que falhou (por exemplo, "Excluir mídia: …
 
 ---
 
-## 8. Boas práticas
+## 10. Boas práticas
 
-- **Teste com uma TV primeiro**, depois replique para as outras.
+- **Teste com uma TV primeiro**, depois replique para as outras (com grupos, aplicar a mesma playlist a todas é um clique).
+- **Organize desde o começo:** crie os **locais** antes de ativar as TVs e escolha o local na ativação; use **grupos** para o que se repete entre locais (recepções, vitrines…).
 - Prefira imagens **16:9 (1920×1080)** e vídeos **MP4 H.264 até 1080p**, de no máximo 50 MB.
 - Dê **nomes claros** às mídias e playlists (ex.: "Promoção de verão", não "IMG_0231").
 - Nas imagens, **5 a 10 segundos** costumam ser suficientes; textos longos pedem mais tempo.
@@ -179,13 +251,16 @@ Todo aviso começa pela **ação** que falhou (por exemplo, "Excluir mídia: …
 
 ---
 
-## 9. Solução de problemas
+## 11. Solução de problemas
 
 | Problema | O que fazer |
 |---|---|
 | A TV aparece **Offline** mas está exibindo | Normal por até ~2 minutos depois de uma queda de internet. Se persistir, verifique o Wi‑Fi da TV. |
 | A TV mostra **"Aguardando conteúdo"** | Ela está ativa, mas sem playlist. Escolha uma playlist para ela em **Dispositivos**. |
 | Mudei a playlist e a TV não mudou | Confirme que clicou em **Publicar alterações** e aguarde até 1 minuto. |
+| Não acho uma TV na lista | Veja se há **filtros ativos** (aparece "Limpar filtros") ou texto na busca. |
+| Apaguei um local e as TVs sumiram | Elas não somem: ficam **"Sem local"**. Escolha **Sem local** no filtro de Local, ou use o Dashboard. |
+| Uma ação em massa disse "N já estavam no estado pedido" | Normal: a ação só alcança as TVs a que se aplica (por exemplo, "Reativar" só alcança as desativadas). |
 | A TV não aparece na lista depois de digitar o código | Confira se o código está certo (6 caracteres) e dentro de 24 horas. |
 | O painel não abre / "servidor demorou" | Aguarde cerca de 1 minuto e recarregue a página. |
 | Vídeo não toca | Converta para **MP4 com vídeo H.264**. |

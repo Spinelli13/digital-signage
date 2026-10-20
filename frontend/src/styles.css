@@ -65,6 +65,9 @@ input, select, textarea {
   background: #fff; color: var(--text);
 }
 input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue2); border-color: var(--blue); }
+/* caixas de marcar não ocupam a linha toda; o rótulo fica ao lado (também dentro de .field) */
+input[type="checkbox"], input[type="radio"] { width: auto; padding: 0; }
+.field label.check, label.check { display: inline-flex; align-items: center; gap: 8px; font-weight: 400; margin: 0; }
 .field { margin-bottom: 14px; }
 .field label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
 

@@ -760,14 +760,16 @@ Heartbeat
 Sincronização
 ```
 
-### Fase 2 — Multi-dispositivo
+### Fase 2 — Multi-dispositivo ✅ (concluída em 2026-10-20)
 
 ```text
-Várias TVs
-Locais
-Grupos
-Status
+[x] Várias TVs (filtros, busca, seleção e ações em massa)
+[x] Locais (Pontos & Locais)
+[x] Grupos
+[x] Status (online/offline/nunca conectou/pendente/desativada, calculado no servidor; dashboard)
 ```
+
+Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 5).
 
 ### Fase 3 — Campanhas
 
@@ -905,7 +907,7 @@ A IA deve seguir aproximadamente esta ordem:
 19. [~] Deploy inicial (guia completo em [docs/DEPLOY.md](./docs/DEPLOY.md): rede local → túnel → nuvem gratuita; **nada foi publicado ainda**).
 20. [ ] Só depois iniciar expansão.
 
-Transversal: testes de regressão automatizados (backend 81, painel 58, Player 86) rodando no GitHub Actions a cada push. APK publicado numa lista de downloads com atualização automática pelo site (sem Google Play), pedido de atualização pelo painel e um único APK para Android 5.0+; manuais em PDF ilustrados (docs/INSTALACAO_TV.md e docs/MANUAL_PAINEL.md) publicados junto com cada versão; erros tratados e exibidos nos dois clientes (painel: até fechar; TV: 10 s).
+Transversal: testes de regressão automatizados (backend 127, painel 115, Player 86) rodando no GitHub Actions a cada push. APK publicado numa lista de downloads com atualização automática pelo site (sem Google Play), pedido de atualização pelo painel e um único APK para Android 5.0+; manuais em PDF ilustrados (docs/INSTALACAO_TV.md e docs/MANUAL_PAINEL.md) publicados junto com cada versão; erros tratados e exibidos nos dois clientes (painel: até fechar; TV: 10 s).
 
 Detalhes de cada etapa concluída (decisões tomadas, bugs encontrados e corrigidos) ficam em [docs/DECISIONS.md](./docs/DECISIONS.md).
 

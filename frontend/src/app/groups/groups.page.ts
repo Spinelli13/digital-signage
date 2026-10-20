@@ -113,7 +113,7 @@ import { Notice } from '../core/notice';
   styles: `
     .row-actions { white-space: nowrap; text-align: right; }
     .row-actions button { margin-left: 6px; }
-    select { min-width: 190px; }
+    select { min-width: 190px; width: auto; }
     .picker { max-height: 260px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; }
   `,
 })

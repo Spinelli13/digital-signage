@@ -246,16 +246,15 @@ type LocationChoice = string;
     .stale { color: var(--orange); font-weight: 600; }
     .head-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; padding: 14px; }
-    .filters .search { flex: 1 1 220px; min-width: 180px; }
-    .filters select { min-width: 150px; }
+    .filters .search { flex: 1 1 220px; min-width: 180px; width: auto; }
+    .filters select { min-width: 150px; width: auto; }
     .count { color: var(--muted); font-size: 13px; margin-left: auto; }
     .bulk { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; background: #eef3ff; border: 1px solid #c9d8ff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
-    .bulk select { min-width: 140px; }
+    .bulk select { min-width: 140px; width: auto; }
     .check-col { width: 34px; }
     tr.selected { background: #f3f7ff; }
     .chip { display: inline-block; background: #eef1f7; color: #44506a; border-radius: 999px; padding: 1px 9px; font-size: 12px; margin: 4px 4px 0 0; }
     .chips { display: flex; gap: 6px 14px; flex-wrap: wrap; }
-    .check { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; margin: 0; }
     .below { margin-top: 8px; }
   `,
 })
