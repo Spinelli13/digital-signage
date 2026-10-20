@@ -6,7 +6,7 @@ Passo a passo para ligar **uma tela** ao sistema, do mais simples ao mais "de ve
 |---|---|---|---|---|
 | **A** | Backend e painel no seu PC, TV na mesma rede Wi‑Fi | R$ 0 | Não | Validar o Player na TCL (ativação, reprodução, offline, boot) |
 | **B** | Mesmo PC, mas a TV acessa pela internet via túnel | R$ 0 | Não | Provar que funciona fora da sua rede, sem hospedar nada |
-| **C** | Nuvem gratuita 24h (Render + Supabase + Cloudflare Pages) | R$ 0 | Provavelmente não (confirmar no cadastro) | Deixar a TV rodando sem depender do seu PC |
+| **C** | Nuvem gratuita 24h (Render + Supabase + Cloudflare Pages) | R$ 0 | Supabase e Cloudflare: não. **Render pode pedir** (verificação antifraude, ~US$ 1 estornado) | Deixar a TV rodando sem depender do seu PC |
 | **C‑alt** | Servidor próprio gratuito (Oracle Cloud) | R$ 0 | **Sim** | Mais robusto que a C, mas depende de disponibilidade |
 
 > Recomendação: faça **A → C**. A fase B é um atalho útil se quiser testar fora de casa antes de criar contas.
@@ -270,11 +270,12 @@ Observações:
 
 ### C.4 Cloudflare Pages — painel
 
-1. Em dash.cloudflare.com: **Workers & Pages → Create → Pages → Connect to Git** → escolha o repositório.
+1. Em dash.cloudflare.com: **Workers & Pages → Create → Pages → Connect to Git** (se a tela só mostrar Workers, procure o link "Looking to deploy Pages? Get started") → autorize o GitHub e escolha o repositório, branch `master`. O repositório é privado: autorize o acesso a ele.
 2. Configure:
    - **Root directory:** `frontend`
    - **Build command:** `npm ci && npm run build`
    - **Build output directory:** `dist/painel/browser`
+   - **Variável `NODE_VERSION`** = `24` (o Angular 21 exige Node 20.19+/22.12+/24; assim o build não depende da versão padrão do Cloudflare)
 3. Em **Settings → Variables and secrets** (ou na criação do projeto), defina `API_BASE_URL` = `https://<servico>.onrender.com`. O build grava essa URL em `config.json` sozinho (`frontend/scripts/write-config.mjs`); não precisa de commit. Depois de definir a variável, faça um novo deploy.
 4. Volte ao Render e ajuste `CORS_ALLOWED_ORIGINS` para `https://<seu-projeto>.pages.dev` (sem barra no final).
 
