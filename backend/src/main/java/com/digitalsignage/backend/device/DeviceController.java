@@ -1,6 +1,7 @@
 package com.digitalsignage.backend.device;
 
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.springframework.http.HttpStatus;
@@ -96,6 +97,25 @@ public class DeviceController {
 		Device device = findOrThrow(id);
 		device.setCurrentPlaylistId(null);
 		return DeviceResponse.from(deviceRepository.save(device));
+	}
+
+	/** Manda a TV verificar agora se há versão nova do Player (ela percebe no próximo heartbeat). */
+	@PostMapping("/{id}/update-check")
+	public DeviceResponse requestUpdateCheck(@PathVariable Long id) {
+		Device device = findOrThrow(id);
+		device.requestUpdateCheck();
+		return DeviceResponse.from(deviceRepository.save(device));
+	}
+
+	/** O mesmo pedido para todas as TVs ativas. Devolve quantas foram avisadas. */
+	@PostMapping("/update-check")
+	public Map<String, Integer> requestUpdateCheckForAll() {
+		List<Device> active = deviceRepository.findAll().stream()
+				.filter(device -> DeviceStatus.ACTIVE.name().equals(device.getStatus()))
+				.toList();
+		active.forEach(Device::requestUpdateCheck);
+		deviceRepository.saveAll(active);
+		return Map.of("requested", active.size());
 	}
 
 	@GetMapping("/{id}/config")

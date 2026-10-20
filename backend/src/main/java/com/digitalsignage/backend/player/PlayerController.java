@@ -72,7 +72,8 @@ public class PlayerController {
 		deviceRepository.save(device);
 
 		PlayerConfigResponse desired = playerConfigService.buildFor(device);
-		return new PlayerHeartbeatResponse(desired.playlistId(), desired.configVersion(), Instant.now());
+		long updateCheckToken = device.getUpdateRequestedAt() == null ? 0 : device.getUpdateRequestedAt().toEpochMilli();
+		return new PlayerHeartbeatResponse(desired.playlistId(), desired.configVersion(), Instant.now(), updateCheckToken);
 	}
 
 	private PlayerStatusResponse registerNew(String tokenHash, String playerVersion) {

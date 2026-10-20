@@ -357,6 +357,63 @@ class PlayerFlowTest extends AbstractApiTest {
 				.andExpect(jsonPath("$.configVersion").value(0));
 	}
 
+	// --- pedido de verificação de atualização do Player ---
+
+	private String heartbeatBody() throws Exception {
+		return json.writeValueAsString(Map.of("playerVersion", "0.3.0", "configVersion", 0));
+	}
+
+	@Test
+	void heartbeatReportsNoUpdateRequestUntilTheAdminAsks() throws Exception {
+		String token = registerAndActivate("TV");
+
+		mvc.perform(asDevice(post("/api/v1/player/heartbeat"), token)
+				.contentType(MediaType.APPLICATION_JSON).content(heartbeatBody()))
+				.andExpect(jsonPath("$.updateCheckToken").value(0));
+	}
+
+	@Test
+	void adminCanAskOneTvToCheckForPlayerUpdatesAndTheTokenChangesEachTime() throws Exception {
+		String token = registerAndActivate("TV");
+		long deviceId = jdbc.queryForObject("SELECT id FROM devices", Long.class);
+		var heartbeat = asDevice(post("/api/v1/player/heartbeat"), token)
+				.contentType(MediaType.APPLICATION_JSON).content(heartbeatBody());
+
+		mvc.perform(asAdmin(post("/api/v1/devices/" + deviceId + "/update-check"))).andExpect(status().isOk());
+		long first = Long.parseLong(com.jayway.jsonpath.JsonPath.read(
+				mvc.perform(heartbeat).andReturn().getResponse().getContentAsString(), "$.updateCheckToken").toString());
+		org.junit.jupiter.api.Assertions.assertTrue(first > 0);
+
+		Thread.sleep(5);
+		mvc.perform(asAdmin(post("/api/v1/devices/" + deviceId + "/update-check"))).andExpect(status().isOk());
+		long second = Long.parseLong(com.jayway.jsonpath.JsonPath.read(
+				mvc.perform(heartbeat).andReturn().getResponse().getContentAsString(), "$.updateCheckToken").toString());
+		org.junit.jupiter.api.Assertions.assertTrue(second > first, "um novo pedido precisa gerar um valor novo");
+	}
+
+	@Test
+	void adminCanAskEveryActiveTvAndPendingOnesAreLeftAlone() throws Exception {
+		String activeToken = registerAndActivate("TV ativa");
+		String pendingToken = newToken();
+		register(pendingToken);
+
+		mvc.perform(asAdmin(post("/api/v1/devices/update-check")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.requested").value(1));
+
+		mvc.perform(asDevice(post("/api/v1/player/heartbeat"), activeToken)
+				.contentType(MediaType.APPLICATION_JSON).content(heartbeatBody()))
+				.andExpect(jsonPath("$.updateCheckToken", org.hamcrest.Matchers.greaterThan(0L)));
+		org.junit.jupiter.api.Assertions.assertEquals(1,
+				jdbc.queryForObject("SELECT count(*) FROM devices WHERE update_requested_at IS NOT NULL", Integer.class));
+	}
+
+	@Test
+	void updateCheckRequestsNeedAnAdminAndAnExistingTv() throws Exception {
+		mvc.perform(post("/api/v1/devices/update-check")).andExpect(status().isUnauthorized());
+		mvc.perform(asAdmin(post("/api/v1/devices/999999/update-check"))).andExpect(status().isNotFound());
+	}
+
 	@Test
 	void activeDeviceDownloadsMediaButPendingAndAnonymousCannot() throws Exception {
 		byte[] content = "bytes-da-imagem".getBytes();

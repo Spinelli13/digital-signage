@@ -45,6 +45,9 @@ public class Device {
 	@Column(name = "config_version", nullable = false)
 	private long configVersion = 0;
 
+	@Column(name = "update_requested_at")
+	private Instant updateRequestedAt;
+
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
 
@@ -79,6 +82,11 @@ public class Device {
 		this.lastSeenAt = Instant.now();
 		this.playerVersion = playerVersion;
 		this.configVersion = syncedConfigVersion;
+	}
+
+	/** Pede que a TV consulte agora o site de downloads por uma versão nova do Player. */
+	public void requestUpdateCheck() {
+		this.updateRequestedAt = Instant.now();
 	}
 
 	@PrePersist
@@ -147,6 +155,10 @@ public class Device {
 
 	public long getConfigVersion() {
 		return configVersion;
+	}
+
+	public Instant getUpdateRequestedAt() {
+		return updateRequestedAt;
 	}
 
 	public Instant getCreatedAt() {
