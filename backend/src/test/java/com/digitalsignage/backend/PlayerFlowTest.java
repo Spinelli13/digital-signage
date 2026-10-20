@@ -337,6 +337,26 @@ class PlayerFlowTest extends AbstractApiTest {
 				.andExpect(jsonPath("$.configVersion").value(1));
 	}
 
+	/** O Player só percebe a remoção se o heartbeat passar a devolver "sem playlist, versão 0". */
+	@Test
+	void heartbeatReportsNoPlaylistAfterItIsRemovedFromTheDevice() throws Exception {
+		String token = registerAndActivate("TV");
+		long media = uploadPng("img");
+		long playlist = createPlaylist("P", List.of(media));
+		long deviceId = jdbc.queryForObject("SELECT id FROM devices", Long.class);
+		assignPlaylist(deviceId, "TV", playlist);
+
+		mvc.perform(asAdmin(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+				.delete("/api/v1/devices/" + deviceId + "/playlist")))
+				.andExpect(status().isOk());
+
+		mvc.perform(asDevice(post("/api/v1/player/heartbeat"), token)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"configVersion\":1}"))
+				.andExpect(jsonPath("$.playlistId").doesNotExist())
+				.andExpect(jsonPath("$.configVersion").value(0));
+	}
+
 	@Test
 	void activeDeviceDownloadsMediaButPendingAndAnonymousCannot() throws Exception {
 		byte[] content = "bytes-da-imagem".getBytes();

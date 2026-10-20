@@ -30,6 +30,9 @@ services:
         value: "0"
 
       # Segurança
+      # Recusa subir se JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD ou POSTGRES_PASSWORD estiverem no padrão de dev.
+      - key: REQUIRE_STRONG_SECRETS
+        value: "true"
       - key: JWT_SECRET
         generateValue: true
       - key: ADMIN_NAME

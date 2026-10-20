@@ -87,6 +87,17 @@ public class DeviceController {
 		return DeviceResponse.from(deviceRepository.save(device));
 	}
 
+	/**
+	 * Tira a playlist do dispositivo (PUT com currentPlaylistId ausente significa "não mudar", então remover
+	 * precisa de um endpoint próprio). Idempotente. A TV passa a receber playlist vazia no próximo heartbeat.
+	 */
+	@DeleteMapping("/{id}/playlist")
+	public DeviceResponse removePlaylist(@PathVariable Long id) {
+		Device device = findOrThrow(id);
+		device.setCurrentPlaylistId(null);
+		return DeviceResponse.from(deviceRepository.save(device));
+	}
+
 	@GetMapping("/{id}/config")
 	public PlayerConfigResponse config(@PathVariable Long id) {
 		return playerConfigService.buildFor(findOrThrow(id));

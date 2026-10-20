@@ -26,6 +26,9 @@ spring:
       max-request-size: 300MB
 
 app:
+  security:
+    # true na nuvem: recusa subir se algum segredo estiver no valor padrão de desenvolvimento.
+    require-strong-secrets: ${REQUIRE_STRONG_SECRETS:false}
   cors:
     # Origens do painel web autorizadas a chamar a API (separadas por vírgula).
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}

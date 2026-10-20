@@ -88,6 +88,44 @@ class DeviceTest extends AbstractApiTest {
 	}
 
 	@Test
+	void removingThePlaylistLeavesTheDeviceWithoutOneAndWithAnEmptyConfig() throws Exception {
+		long media = uploadPng("img");
+		long playlist = createPlaylist("P", List.of(media));
+		long id = createDevice("TV");
+		assignPlaylist(id, "TV", playlist);
+
+		mvc.perform(asAdmin(delete("/api/v1/devices/" + id + "/playlist")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.currentPlaylistId").doesNotExist());
+
+		mvc.perform(asAdmin(get("/api/v1/devices/" + id + "/config")))
+				.andExpect(jsonPath("$.configVersion").value(0))
+				.andExpect(jsonPath("$.items", hasSize(0)));
+		// a playlist em si não é apagada: só deixa de estar atribuída
+		mvc.perform(asAdmin(get("/api/v1/playlists/" + playlist))).andExpect(status().isOk());
+	}
+
+	@Test
+	void removingThePlaylistIsIdempotent() throws Exception {
+		long id = createDevice("TV");
+
+		mvc.perform(asAdmin(delete("/api/v1/devices/" + id + "/playlist"))).andExpect(status().isOk());
+		mvc.perform(asAdmin(delete("/api/v1/devices/" + id + "/playlist"))).andExpect(status().isOk());
+	}
+
+	@Test
+	void removingThePlaylistOfAnUnknownDeviceIsNotFound() throws Exception {
+		mvc.perform(asAdmin(delete("/api/v1/devices/999999/playlist"))).andExpect(status().isNotFound());
+	}
+
+	@Test
+	void removingThePlaylistRequiresAdmin() throws Exception {
+		long id = createDevice("TV");
+
+		mvc.perform(delete("/api/v1/devices/" + id + "/playlist")).andExpect(status().isUnauthorized());
+	}
+
+	@Test
 	void deletingAPlaylistDetachesItFromTheDevice() throws Exception {
 		long media = uploadPng("img");
 		long playlist = createPlaylist("P", List.of(media));
