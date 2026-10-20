@@ -59,6 +59,28 @@ public class Device {
 		this.location = location;
 	}
 
+	/** Dispositivo que se auto-registrou e aguarda o administrador digitar o código exibido na TV. */
+	public static Device selfRegistered(String activationCode, String deviceTokenHash, String playerVersion) {
+		Device device = new Device("Novo dispositivo", null);
+		device.activationCode = activationCode;
+		device.deviceTokenHash = deviceTokenHash;
+		device.playerVersion = playerVersion;
+		return device;
+	}
+
+	public void activate(String name, String location) {
+		this.name = name;
+		this.location = location;
+		this.status = DeviceStatus.ACTIVE.name();
+		this.activationCode = null;
+	}
+
+	public void recordHeartbeat(String playerVersion, long syncedConfigVersion) {
+		this.lastSeenAt = Instant.now();
+		this.playerVersion = playerVersion;
+		this.configVersion = syncedConfigVersion;
+	}
+
 	@PrePersist
 	void onCreate() {
 		Instant now = Instant.now();

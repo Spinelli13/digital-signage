@@ -1,8 +1,10 @@
 package com.digitalsignage.backend.media;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -24,9 +26,9 @@ import org.springframework.web.multipart.MultipartFile;
 public class MediaController {
 
 	private final MediaRepository mediaRepository;
-	private final MediaStorageService storageService;
+	private final MediaStorage storageService;
 
-	public MediaController(MediaRepository mediaRepository, MediaStorageService storageService) {
+	public MediaController(MediaRepository mediaRepository, MediaStorage storageService) {
 		this.mediaRepository = mediaRepository;
 		this.storageService = storageService;
 	}
@@ -69,15 +71,33 @@ public class MediaController {
 		return MediaResponse.from(findOrThrow(id));
 	}
 
+	/**
+	 * Com armazenamento externo (S3) responde 302 para uma URL assinada, para o arquivo não trafegar pelo
+	 * backend. O Player deve seguir o redirecionamento SEM reenviar o X-Device-Token ao outro host.
+	 */
 	@GetMapping("/{id}/file")
 	public ResponseEntity<Resource> download(@PathVariable Long id) {
 		Media media = findOrThrow(id);
-		Resource resource = storageService.load(media.getStorageKey());
+
+		Optional<URI> external = storageService.externalDownloadUrl(media.getStorageKey(), media.getMimeType());
+		if (external.isPresent()) {
+			return ResponseEntity.status(HttpStatus.FOUND).location(external.get()).build();
+		}
 
 		return ResponseEntity.ok()
 				.contentType(MediaType.parseMediaType(media.getMimeType()))
 				.header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + media.getName() + "\"")
-				.body(resource);
+				.body(storageService.load(media.getStorageKey()));
+	}
+
+	/** Para o painel exibir pré-visualização: URL direta quando externa; senão o endpoint autenticado. */
+	@GetMapping("/{id}/url")
+	public MediaUrlResponse url(@PathVariable Long id) {
+		Media media = findOrThrow(id);
+
+		return storageService.externalDownloadUrl(media.getStorageKey(), media.getMimeType())
+				.map(uri -> new MediaUrlResponse(uri.toString(), false))
+				.orElseGet(() -> new MediaUrlResponse("/api/v1/media/" + media.getId() + "/file", true));
 	}
 
 	@DeleteMapping("/{id}")

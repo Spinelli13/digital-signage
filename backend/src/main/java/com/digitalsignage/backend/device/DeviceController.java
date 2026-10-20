@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,10 +25,15 @@ public class DeviceController {
 
 	private final DeviceRepository deviceRepository;
 	private final PlaylistRepository playlistRepository;
+	private final PlayerConfigService playerConfigService;
 
-	public DeviceController(DeviceRepository deviceRepository, PlaylistRepository playlistRepository) {
+	public DeviceController(
+			DeviceRepository deviceRepository,
+			PlaylistRepository playlistRepository,
+			PlayerConfigService playerConfigService) {
 		this.deviceRepository = deviceRepository;
 		this.playlistRepository = playlistRepository;
+		this.playerConfigService = playerConfigService;
 	}
 
 	@GetMapping
@@ -70,32 +73,23 @@ public class DeviceController {
 		return DeviceResponse.from(deviceRepository.save(device));
 	}
 
+	/**
+	 * Vincula o dispositivo que está exibindo o código na TV: o administrador digita o código no painel,
+	 * dá um nome ao dispositivo e a TV passa a receber configuração na próxima consulta.
+	 */
+	@PostMapping("/activate")
+	public DeviceResponse activate(@Valid @RequestBody ActivateDeviceRequest request) {
+		String code = request.activationCode().trim().toUpperCase();
+		Device device = deviceRepository.findByActivationCodeAndStatus(code, DeviceStatus.PENDING.name())
+				.orElseThrow(() -> new NoSuchElementException("Código de ativação inválido ou expirado"));
+
+		device.activate(request.name(), request.location());
+		return DeviceResponse.from(deviceRepository.save(device));
+	}
+
 	@GetMapping("/{id}/config")
-	@Transactional(readOnly = true)
 	public PlayerConfigResponse config(@PathVariable Long id) {
-		Device device = findOrThrow(id);
-
-		if (device.getCurrentPlaylistId() == null) {
-			return new PlayerConfigResponse(device.getId(), null, 0, List.of());
-		}
-
-		Playlist playlist = playlistRepository.findById(device.getCurrentPlaylistId())
-				.orElseThrow(() -> new NoSuchElementException(
-						"Playlist não encontrada: " + device.getCurrentPlaylistId()));
-
-		List<PlayerConfigMediaItem> items = playlist.getItems().stream()
-				.map(item -> new PlayerConfigMediaItem(
-						item.getMedia().getId(),
-						item.getMedia().getName(),
-						item.getMedia().getType(),
-						"/api/v1/media/" + item.getMedia().getId() + "/file",
-						item.getMedia().getChecksum(),
-						item.getMedia().getFileSize(),
-						item.getPosition(),
-						item.getDurationSeconds()))
-				.toList();
-
-		return new PlayerConfigResponse(device.getId(), playlist.getId(), playlist.getConfigVersion(), items);
+		return playerConfigService.buildFor(findOrThrow(id));
 	}
 
 	@DeleteMapping("/{id}")

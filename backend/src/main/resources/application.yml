@@ -1,13 +1,18 @@
 server:
-  port: 8080
+  # Hosts como Render/Railway injetam a porta em PORT.
+  port: ${PORT:8080}
 
 spring:
   application:
     name: digital-signage-backend
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${POSTGRES_DB:digital_signage}
+    # DB_URL (JDBC completo, ex.: jdbc:postgresql://host/db?sslmode=require) tem prioridade — usado em Neon/Supabase.
+    url: ${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${POSTGRES_DB:digital_signage}}
     username: ${POSTGRES_USER:signage}
     password: ${POSTGRES_PASSWORD:changeme}
+    hikari:
+      # Planos gratuitos de Postgres limitam conexões simultâneas.
+      maximum-pool-size: ${DB_POOL_SIZE:5}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -21,6 +26,9 @@ spring:
       max-request-size: 300MB
 
 app:
+  cors:
+    # Origens do painel web autorizadas a chamar a API (separadas por vírgula).
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
   jwt:
     secret: ${JWT_SECRET:dev-only-secret-change-me-before-any-real-deploy-0123456789}
     expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}
@@ -29,4 +37,15 @@ app:
     email: ${ADMIN_EMAIL:admin@digitalsignage.local}
     password: ${ADMIN_PASSWORD:changeme}
   storage:
+    # local = disco do servidor (dev/Docker com volume); s3 = qualquer armazenamento S3-compatível
+    # (Cloudflare R2, Backblaze B2, Supabase Storage, MinIO...). Hosts gratuitos têm disco efêmero: use s3 lá.
+    type: ${STORAGE_TYPE:local}
     local-path: ${STORAGE_LOCAL_PATH:./data/media}
+    s3:
+      bucket: ${S3_BUCKET:}
+      endpoint: ${S3_ENDPOINT:}
+      region: ${S3_REGION:auto}
+      access-key: ${S3_ACCESS_KEY:}
+      secret-key: ${S3_SECRET_KEY:}
+      # Validade do link assinado de download entregue ao Player/painel.
+      presign-minutes: ${S3_PRESIGN_MINUTES:30}

@@ -1,0 +1,166 @@
+package com.digitalsignage.backend;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
+
+/**
+ * Base dos testes de API: Postgres real embutido (mesmas migrations Flyway de produção, sem Docker),
+ * banco limpo antes de cada teste e helpers para montar cenários.
+ * O contexto Spring e o Postgres são compartilhados por todas as subclasses.
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+public abstract class AbstractApiTest {
+
+	private static final EmbeddedPostgres POSTGRES = startPostgres();
+	private static final Path STORAGE_DIR = createStorageDir();
+
+	@DynamicPropertySource
+	static void properties(DynamicPropertyRegistry registry) {
+		configure(registry);
+	}
+
+	/** Compartilhado com os testes que sobem o servidor HTTP real (ver RealServerTest). */
+	static void configure(DynamicPropertyRegistry registry) {
+		registry.add("spring.datasource.url", () -> POSTGRES.getJdbcUrl("postgres", "postgres"));
+		registry.add("spring.datasource.username", () -> "postgres");
+		registry.add("spring.datasource.password", () -> "postgres");
+		registry.add("app.storage.local-path", STORAGE_DIR::toString);
+	}
+
+	@Autowired
+	protected MockMvc mvc;
+
+	@Autowired
+	protected ObjectMapper json;
+
+	@Autowired
+	protected JdbcTemplate jdbc;
+
+	@BeforeEach
+	void cleanDatabase() {
+		// O administrador (tabela users) é semeado na subida do contexto e precisa sobreviver.
+		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media RESTART IDENTITY CASCADE");
+	}
+
+	protected String adminToken() throws Exception {
+		String body = mvc.perform(post("/api/v1/auth/login")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json.writeValueAsString(Map.of(
+						"email", "admin@digitalsignage.local",
+						"password", "changeme"))))
+				.andExpect(status().isOk())
+				.andReturn().getResponse().getContentAsString();
+		return json.readTree(body).get("token").asText();
+	}
+
+	protected MockHttpServletRequestBuilder asAdmin(MockHttpServletRequestBuilder request) throws Exception {
+		return request.header("Authorization", "Bearer " + adminToken());
+	}
+
+	protected long createDevice(String name) throws Exception {
+		return idOf(mvc.perform(asAdmin(post("/api/v1/devices")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json.writeValueAsString(Map.of("name", name)))))
+				.andExpect(status().isCreated())
+				.andReturn().getResponse().getContentAsString());
+	}
+
+	protected long uploadMedia(String name, String contentType, byte[] content) throws Exception {
+		MockMultipartFile file = new MockMultipartFile("file", name, contentType, content);
+		return idOf(mvc.perform(asAdmin(multipart("/api/v1/media").file(file)))
+				.andExpect(status().isCreated())
+				.andReturn().getResponse().getContentAsString());
+	}
+
+	protected long uploadPng(String name) throws Exception {
+		return uploadMedia(name, "image/png", ("png-bytes-" + name).getBytes());
+	}
+
+	protected long createPlaylist(String name, List<Long> mediaIds) throws Exception {
+		List<Map<String, Object>> items = mediaIds.stream()
+				.map(id -> Map.<String, Object>of("mediaId", id))
+				.toList();
+		return idOf(mvc.perform(asAdmin(post("/api/v1/playlists")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json.writeValueAsString(Map.of("name", name, "items", items)))))
+				.andExpect(status().isCreated())
+				.andReturn().getResponse().getContentAsString());
+	}
+
+	protected void replacePlaylistItems(long playlistId, String name, List<Long> mediaIds) throws Exception {
+		List<Map<String, Object>> items = mediaIds.stream()
+				.map(id -> Map.<String, Object>of("mediaId", id))
+				.toList();
+		mvc.perform(asAdmin(put("/api/v1/playlists/" + playlistId)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json.writeValueAsString(Map.of("name", name, "items", items)))))
+				.andExpect(status().isOk());
+	}
+
+	protected void assignPlaylist(long deviceId, String deviceName, long playlistId) throws Exception {
+		mvc.perform(asAdmin(put("/api/v1/devices/" + deviceId)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json.writeValueAsString(Map.of(
+						"name", deviceName,
+						"currentPlaylistId", playlistId)))))
+				.andExpect(status().isOk());
+	}
+
+	protected long idOf(String responseBody) throws IOException {
+		JsonNode node = json.readTree(responseBody);
+		return node.get("id").asLong();
+	}
+
+	private static EmbeddedPostgres startPostgres() {
+		try {
+			EmbeddedPostgres postgres = EmbeddedPostgres.builder().start();
+			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+				try {
+					postgres.close();
+				} catch (IOException ignored) {
+					// encerrando a JVM; nada a fazer
+				}
+			}));
+			return postgres;
+		} catch (IOException e) {
+			throw new IllegalStateException("Não foi possível iniciar o Postgres embutido dos testes", e);
+		}
+	}
+
+	private static Path createStorageDir() {
+		try {
+			Path dir = Files.createTempDirectory("signage-test-media");
+			dir.toFile().deleteOnExit();
+			return dir;
+		} catch (IOException e) {
+			throw new IllegalStateException(e);
+		}
+	}
+
+}

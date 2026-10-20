@@ -3,32 +3,37 @@ package com.digitalsignage.backend.media;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
-public class MediaStorageService {
+@ConditionalOnProperty(name = "app.storage.type", havingValue = "local", matchIfMissing = true)
+public class LocalMediaStorage implements MediaStorage {
 
 	private final Path basePath;
 
-	public MediaStorageService(@Value("${app.storage.local-path}") String localPath) throws IOException {
+	public LocalMediaStorage(@Value("${app.storage.local-path}") String localPath) throws IOException {
 		this.basePath = Path.of(localPath).toAbsolutePath().normalize();
 		Files.createDirectories(basePath);
 	}
 
+	@Override
 	public StoredFile store(MultipartFile file) throws IOException {
-		String storageKey = UUID.randomUUID() + "." + resolveExtension(file);
+		String storageKey = UUID.randomUUID() + "." + MediaFileNames.extensionOf(file);
 		Path target = basePath.resolve(storageKey);
 
 		String checksum;
@@ -39,10 +44,17 @@ public class MediaStorageService {
 		return new StoredFile(storageKey, checksum, file.getSize());
 	}
 
+	@Override
 	public Resource load(String storageKey) {
 		return new FileSystemResource(resolvePath(storageKey));
 	}
 
+	@Override
+	public Optional<URI> externalDownloadUrl(String storageKey, String mimeType) {
+		return Optional.empty();
+	}
+
+	@Override
 	public void delete(String storageKey) throws IOException {
 		Files.deleteIfExists(resolvePath(storageKey));
 	}
@@ -53,21 +65,6 @@ public class MediaStorageService {
 			throw new SecurityException("Caminho de armazenamento inválido: " + storageKey);
 		}
 		return file;
-	}
-
-	private String resolveExtension(MultipartFile file) {
-		String original = file.getOriginalFilename();
-		if (original != null && original.contains(".")) {
-			return original.substring(original.lastIndexOf('.') + 1).toLowerCase();
-		}
-
-		return switch (file.getContentType()) {
-			case "image/jpeg" -> "jpg";
-			case "image/png" -> "png";
-			case "image/webp" -> "webp";
-			case "video/mp4" -> "mp4";
-			default -> "bin";
-		};
 	}
 
 	private String copyAndHash(InputStream in, Path target) throws IOException {

@@ -20,7 +20,30 @@
   <properties>
     <java.version>21</java.version>
     <jjwt.version>0.13.0</jjwt.version>
+    <aws-sdk.version>2.49.6</aws-sdk.version>
+    <embedded-postgres.version>2.2.2</embedded-postgres.version>
+    <!-- Mesma major do postgres:16-alpine usado no docker-compose. -->
+    <embedded-postgres-binaries.version>16.15.0</embedded-postgres-binaries.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>bom</artifactId>
+        <version>${aws-sdk.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.zonky.test.postgres</groupId>
+        <artifactId>embedded-postgres-binaries-bom</artifactId>
+        <version>${embedded-postgres-binaries.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -59,6 +82,27 @@
       <artifactId>flyway-database-postgresql</artifactId>
     </dependency>
 
+    <!-- Armazenamento S3-compatível (R2, B2, Supabase Storage...). Só o cliente leve (URLConnection):
+         apache-client e netty ficam de fora para economizar memória em hosts gratuitos de 512 MB. -->
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>s3</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>software.amazon.awssdk</groupId>
+          <artifactId>apache-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>software.amazon.awssdk</groupId>
+          <artifactId>netty-nio-client</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>url-connection-client</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-api</artifactId>
@@ -86,6 +130,14 @@
     <dependency>
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Postgres real embutido nos testes: roda as migrations Flyway de verdade, sem exigir Docker. -->
+    <dependency>
+      <groupId>io.zonky.test</groupId>
+      <artifactId>embedded-postgres</artifactId>
+      <version>${embedded-postgres.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
