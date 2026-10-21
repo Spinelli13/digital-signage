@@ -89,7 +89,7 @@ public class OfflinePlanService {
 		}
 		for (Long playlistId : candidatePlaylists(device, relevant)) {
 			hash = mix(hash, playlistId == null ? 0 : playlistId);
-			hash = mix(hash, PlayerConfigService.versionFor(playlistId, layout, versions));
+			hash = mix(hash, PlayerConfigService.versionFor(playlistId, layout, versions, device.getOrientation()));
 		}
 		long version = hash & MASK_53_BITS;
 		return version == 0 ? 1 : version;
@@ -124,7 +124,7 @@ public class OfflinePlanService {
 			}
 			segments.add(new OfflinePlan.Segment(from.toEpochMilli(), to.toEpochMilli(), campaignId,
 					effective.campaign() == null ? null : effective.campaign().getName(), playlistId,
-					PlayerConfigService.versionFor(playlistId, layout, versions)));
+					PlayerConfigService.versionFor(playlistId, layout, versions, device.getOrientation())));
 		}
 
 		long until = end.toEpochMilli();

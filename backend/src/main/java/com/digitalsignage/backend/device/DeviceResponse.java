@@ -29,6 +29,8 @@ public record DeviceResponse(
 		/** Layout da tela (vazio = tela cheia). */
 		Long layoutId,
 		String layoutName,
+		/** Como a TV foi instalada: AUTO, LANDSCAPE, LANDSCAPE_FLIPPED, PORTRAIT_TOP_RIGHT ou PORTRAIT_TOP_LEFT. */
+		String orientation,
 		/** A versão do conteúdo que a TV deveria ter sincronizado; diferente de {@code configVersion} = ainda sincronizando. */
 		long desiredConfigVersion,
 		List<Long> groupIds,
@@ -58,6 +60,7 @@ public record DeviceResponse(
 				effective.fromCampaign() ? effective.campaign().getName() : null,
 				device.getLayoutId(),
 				layoutName,
+				device.getOrientation().name(),
 				desiredConfigVersion,
 				device.getGroupIds().stream().sorted().toList(),
 				device.getOfflinePlanUntil(),

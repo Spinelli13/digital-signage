@@ -27,6 +27,8 @@ export interface Device {
   /** Layout da tela (vazio = tela cheia). Ausentes em respostas de servidores antigos. */
   layoutId?: number | null;
   layoutName?: string | null;
+  /** Como a TV foi instalada (ausente em respostas de servidores antigos = AUTO). */
+  orientation?: ScreenOrientation;
   /** A versão do conteúdo que a TV deveria ter sincronizado; diferente de configVersion = ainda sincronizando. */
   desiredConfigVersion?: number;
   /** Até quando a agenda offline guardada na TV vale (ausente = a TV não tem agenda, ou usa um Player antigo). */
@@ -89,6 +91,9 @@ export interface ReleaseInfo {
   publishedAt: string;
 }
 
+/** Como a TV foi instalada: o Player gira o conteúdo conforme isto. AUTO segue a tela do aparelho. */
+export type ScreenOrientation = 'AUTO' | 'LANDSCAPE' | 'LANDSCAPE_FLIPPED' | 'PORTRAIT_TOP_RIGHT' | 'PORTRAIT_TOP_LEFT';
+
 export interface DeviceUpdateRequest {
   name: string;
   /** Nome do local: um nome novo cria o local; vazio tira a TV do local; ausente não muda. */
@@ -100,6 +105,8 @@ export interface DeviceUpdateRequest {
   groupIds?: number[];
   /** Layout da tela; ausente não muda (para voltar à tela cheia use removeDeviceLayout). */
   layoutId?: number;
+  /** Como a TV foi instalada; ausente não muda (só o Administrador). */
+  orientation?: ScreenOrientation;
 }
 
 export interface ActivateRequest {
@@ -165,7 +172,8 @@ export type BulkAction =
   | 'ADD_TO_GROUP'
   | 'REMOVE_FROM_GROUP'
   | 'ASSIGN_LAYOUT'
-  | 'REMOVE_LAYOUT';
+  | 'REMOVE_LAYOUT'
+  | 'SET_ORIENTATION';
 
 /** Escolha exatamente UM alvo: deviceIds, targetGroupId ou targetLocationId. */
 export interface BulkRequest {
@@ -177,6 +185,7 @@ export interface BulkRequest {
   locationId?: number;
   groupId?: number;
   layoutId?: number;
+  orientation?: ScreenOrientation;
 }
 
 export interface Summary {
@@ -265,6 +274,7 @@ export type EventType =
   | 'ENABLED'
   | 'PLAYLIST_CHANGED'
   | 'LAYOUT_CHANGED'
+  | 'ORIENTATION_CHANGED'
   | 'UPDATE_REQUESTED'
   | 'PLAYER_UPDATED'
   | 'PLAYER_LOG';

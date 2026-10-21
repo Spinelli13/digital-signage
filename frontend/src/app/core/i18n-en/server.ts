@@ -102,6 +102,10 @@ export const SERVER: Record<string, string> = {
   'Informe a playlist (playlistId)': 'Provide the playlist (playlistId)',
   'Informe o grupo (groupId)': 'Provide the group (groupId)',
   'Informe o layout (layoutId)': 'Provide the layout (layoutId)',
+  'Informe a orientação (orientation)': 'Provide the orientation (orientation)',
+  'Orientação inválida: use AUTO, LANDSCAPE, LANDSCAPE_FLIPPED, PORTRAIT_TOP_RIGHT ou PORTRAIT_TOP_LEFT':
+    'Invalid orientation: use AUTO, LANDSCAPE, LANDSCAPE_FLIPPED, PORTRAIT_TOP_RIGHT or PORTRAIT_TOP_LEFT',
+  'A orientação da tela (como a TV foi instalada) é do Administrador.': 'The screen orientation (how the TV was installed) belongs to the Administrator.',
   'Informe o local (locationId)': 'Provide the location (locationId)',
   'Escolha exatamente um alvo: deviceIds, targetGroupId ou targetLocationId': 'Choose exactly one target: deviceIds, targetGroupId or targetLocationId',
   'Situação inválida: {value} (use ONLINE, OFFLINE, NEVER, PENDING ou DISABLED)': 'Invalid status: {value} (use ONLINE, OFFLINE, NEVER, PENDING or DISABLED)',

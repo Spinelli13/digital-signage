@@ -14,6 +14,20 @@ public final class ConfigVersions {
 
 	private static final long MASK_53_BITS = (1L << 53) - 1;
 
+	/**
+	 * Faz a orientação da TV entrar na versão do conteúdo: mudar de "automática" para "vertical" precisa fazer a TV baixar
+	 * a configuração de novo (é nela que vem a orientação). No automático a versão fica exatamente como sempre foi, então
+	 * nenhuma TV existente é reconfigurada por causa disto. Versão 0 (TV sem conteúdo) fica 0: não há o que girar.
+	 */
+	public static long withOrientation(long version, Orientation orientation) {
+		if (orientation == Orientation.AUTO || version == 0) {
+			return version;
+		}
+		long hash = 31 * (version + 7) + orientation.ordinal();
+		long mixed = (hash * 1_000_003L + 17) & MASK_53_BITS;
+		return mixed == 0 ? 1 : mixed;
+	}
+
 	/** playlistId + versão de uma zona que não é a principal (playlistId 0 = zona sem playlist). */
 	public record ZoneVersion(long playlistId, long version) {
 	}

@@ -19,8 +19,10 @@ import {
   Location,
   Playlist,
   ReleaseInfo,
+  ScreenOrientation,
 } from '../core/models';
 import { Notice } from '../core/notice';
+import { ORIENTATIONS, orientationBadge, orientationOption } from '../core/orientation';
 import { isOutdated } from '../core/versions';
 import { SITUATION } from '../shared/connection';
 import { IconComponent } from '../shared/icon';
@@ -111,6 +113,12 @@ type LocationChoice = string;
           <button class="secondary small" (click)="bulkSimple('DISABLE')"><app-icon name="circle-pause" [size]="15" />{{ 'Desativar' | t }}</button>
           <button class="secondary small" (click)="bulkSimple('ENABLE')"><app-icon name="play" [size]="15" />{{ 'Reativar' | t }}</button>
           <button class="secondary small" (click)="bulkSimple('CHECK_UPDATE')"><app-icon name="refresh-cw" [size]="15" />{{ 'Atualizar app' | t }}</button>
+          <select [attr.aria-label]="'Orientação das selecionadas' | t" (change)="onBulkOrientation($event)">
+            <option value="">{{ 'Orientação…' | t }}</option>
+            @for (option of orientations; track option.value) {
+              <option [value]="option.value">{{ option.label | t }}</option>
+            }
+          </select>
           <select [attr.aria-label]="'Mover as selecionadas para um local' | t" (change)="onBulkLocation($event)">
             <option value="">{{ 'Mover para local…' | t }}</option>
             <option value="none">{{ 'Sem local' | t }}</option>
@@ -180,6 +188,9 @@ type LocationChoice = string;
                   }
                   @if (device.layoutName) {
                     <app-pill tone="brand" icon="layout-template" [title]="'Layout da tela desta TV' | t">{{ device.layoutName }}</app-pill>
+                  }
+                  @if (orientationBadge(device.orientation); as badge) {
+                    <app-pill tone="info" icon="smartphone" [title]="'Orientação da tela' | t">{{ badge }}</app-pill>
                   }
                 </div>
               </td>
@@ -292,6 +303,26 @@ type LocationChoice = string;
               </select>
             </div>
           }
+          @if (modal() === 'edit' && auth.can('admin')) {
+            <div class="field">
+              <label for="orientation">{{ 'Como a TV foi instalada' | t }}</label>
+              <div class="orient-pick">
+                <select id="orientation" name="orientation" [ngModel]="orientationChoice()" (ngModelChange)="orientationChoice.set($event)">
+                  @for (option of orientations; track option.value) {
+                    <option [value]="option.value">{{ option.label | t }}</option>
+                  }
+                </select>
+                <div class="tv-draw" role="img" [attr.aria-label]="'Desenho de como a TV está na parede' | t">
+                  <div class="tv-box" [style.transform]="'rotate(' + orientationTurn() + 'deg)'">
+                    <i class="tv-top" [title]="'topo da TV' | t"></i>
+                    <span [style.transform]="'rotate(' + (360 - orientationTurn()) + 'deg)'">{{ sample }}</span>
+                  </div>
+                </div>
+              </div>
+              <p class="label">{{ orientationHint() | t }}</p>
+              <p class="label">{{ 'Escolha como a TV está na parede. O Player gira o conteúdo para ele ficar de pé para quem olha, mesmo que a caixa de TV mande o vídeo sempre deitado. Em TV vertical, o layout usa a versão em pé.' | t }}</p>
+            </div>
+          }
           @if (groups().length > 0 && auth.can('admin')) {
             <div class="field">
               <label>{{ 'Grupos' | t }}</label>
@@ -351,6 +382,12 @@ type LocationChoice = string;
     .tv-icon.warn { background: var(--warn-bg); color: var(--warn-fg); }
     .tv-icon.info { background: var(--info-bg); color: var(--info-fg); }
     .tv-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+    .orient-pick { display: flex; align-items: center; gap: 14px; }
+    .orient-pick select { flex: 1; min-width: 0; }
+    .tv-draw { flex: none; width: 76px; height: 76px; display: grid; place-items: center; }
+    .tv-box { position: relative; width: 62px; height: 36px; border: 2px solid var(--primary); border-radius: 5px; background: var(--panel-2); display: grid; place-items: center; transition: transform 0.25s ease; }
+    .tv-box span { font-weight: 700; font-size: 14px; color: var(--text); transition: transform 0.25s ease; }
+    .tv-top { position: absolute; left: 50%; top: -5px; width: 18px; height: 4px; margin-left: -9px; border-radius: 2px; background: var(--primary); }
     .tv-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; padding-left: 50px; }
     .tv-tags:empty { display: none; }
     .tv-tags app-pill { height: 22px; font-size: 11.5px; max-width: 190px; }
@@ -430,6 +467,13 @@ export class DevicesPage implements OnInit {
   readonly newLocation = signal('');
   /** Layout escolhido no formulário: '' = tela cheia, ou o id de um layout. */
   readonly layoutChoice = signal('');
+  readonly orientations = ORIENTATIONS;
+  /** O texto do desenho da TV (só mostra se o conteúdo fica de pé). */
+  readonly sample = 'Aa';
+  readonly orientationBadge = orientationBadge;
+  readonly orientationChoice = signal<ScreenOrientation>('AUTO');
+  readonly orientationTurn = computed(() => orientationOption(this.orientationChoice()).turn);
+  readonly orientationHint = computed(() => orientationOption(this.orientationChoice()).hint);
   readonly modalGroups = signal<Set<number>>(new Set());
   private editing: Device | null = null;
 
@@ -584,6 +628,14 @@ export class DevicesPage implements OnInit {
     }
   }
 
+  onBulkOrientation(event: Event): void {
+    const value = this.takeValue(event);
+    if (!value) {
+      return;
+    }
+    this.runBulk({ action: 'SET_ORIENTATION', orientation: value as ScreenOrientation });
+  }
+
   onBulkGroup(event: Event, add: boolean): void {
     const value = this.takeValue(event);
     if (!value) {
@@ -649,6 +701,8 @@ export class DevicesPage implements OnInit {
         return tr('Layout aplicado a {n} TV(s). Elas atualizam em até 1 minuto.', { n: affected });
       case 'REMOVE_LAYOUT':
         return tr('{n} TV(s) voltaram para a tela cheia.', { n: affected });
+      case 'SET_ORIENTATION':
+        return tr('Orientação aplicada a {n} TV(s). Elas atualizam em até 1 minuto.', { n: affected });
     }
   }
 
@@ -670,6 +724,7 @@ export class DevicesPage implements OnInit {
     this.newLocation.set('');
     this.modalGroups.set(new Set(device.groupIds));
     this.layoutChoice.set(device.layoutId == null ? '' : String(device.layoutId));
+    this.orientationChoice.set(device.orientation ?? 'AUTO');
     this.editing = device;
     this.modal.set('edit');
   }
@@ -709,6 +764,8 @@ export class DevicesPage implements OnInit {
             name: this.name().trim(),
             // O Editor só escolhe o layout: nome, local e grupos seriam recusados pelo servidor (403).
             ...(this.auth.can('admin') ? { groupIds, ...locationFields } : {}),
+            // A orientação só vai quando mudou (o servidor só deixa o Administrador mexer nela).
+            ...(this.auth.can('admin') && this.orientationChoice() !== (this.editing!.orientation ?? 'AUTO') ? { orientation: this.orientationChoice() } : {}),
             ...(this.layoutChoice() === '' ? {} : { layoutId: Number(this.layoutChoice()) }),
           });
 

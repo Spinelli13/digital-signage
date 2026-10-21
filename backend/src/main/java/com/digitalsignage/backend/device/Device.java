@@ -74,6 +74,10 @@ public class Device {
 	@Column(name = "layout_id")
 	private Long layoutId;
 
+	/** Como a TV foi instalada (ver {@link Orientation}); AUTO = o que a própria tela informar. */
+	@Column(nullable = false)
+	private String orientation = Orientation.AUTO.name();
+
 	@Column(name = "config_version", nullable = false)
 	private long configVersion = 0;
 
@@ -222,6 +226,14 @@ public class Device {
 
 	public void setLayoutId(Long layoutId) {
 		this.layoutId = layoutId;
+	}
+
+	public Orientation getOrientation() {
+		return Orientation.of(orientation);
+	}
+
+	public void setOrientation(Orientation orientation) {
+		this.orientation = orientation.name();
 	}
 
 	public long getConfigVersion() {

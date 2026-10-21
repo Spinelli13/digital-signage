@@ -23,6 +23,7 @@ import com.digitalsignage.backend.device.Device;
 import com.digitalsignage.backend.device.DeviceConnection;
 import com.digitalsignage.backend.device.DeviceRepository;
 import com.digitalsignage.backend.device.DeviceStatus;
+import com.digitalsignage.backend.device.Orientation;
 import com.digitalsignage.backend.player.PlayerHeartbeatRequest;
 import com.digitalsignage.backend.playlist.Playlist;
 import com.digitalsignage.backend.playlist.PlaylistRepository;
@@ -108,6 +109,12 @@ public class MonitoringService {
 	public void recordLayoutChanged(Device device, String layoutName, Instant now) {
 		record(device.getId(), EventType.LAYOUT_CHANGED, EventLevel.INFO,
 				layoutName == null ? "Layout da tela removido: a TV voltou para a tela cheia" : "Layout da tela: \"" + layoutName + "\"", now);
+	}
+
+	/** O administrador mudou como a TV foi instalada (orientação da tela). */
+	@Transactional
+	public void recordOrientationChanged(Device device, Orientation orientation, Instant now) {
+		record(device.getId(), EventType.ORIENTATION_CHANGED, EventLevel.INFO, "Orientação da tela: " + orientation.description(), now);
 	}
 
 	@Transactional

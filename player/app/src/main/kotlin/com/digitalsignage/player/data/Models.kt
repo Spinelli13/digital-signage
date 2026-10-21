@@ -88,6 +88,8 @@ data class PlayerConfig(
     val plan: OfflinePlan? = null,
     /** A versão do layout para TV em pé (vazia = o layout não tem; a TV em pé usa [zones]). */
     val portraitZones: List<ConfigZone> = emptyList(),
+    /** Como a TV foi instalada (ver [ScreenOrientation]); AUTO = o que a própria tela informar. */
+    val orientation: String = ScreenOrientation.AUTO,
 ) {
 
     /**
@@ -187,6 +189,7 @@ object Json {
             items = parseItems(json.getJSONArray("items")),
             zones = zones,
             portraitZones = json.optJSONArray("portraitZones")?.let { array -> (0 until array.length()).map { parseZone(array.getJSONObject(it)) } } ?: emptyList(),
+            orientation = ScreenOrientation.normalize(json.optString("orientation", ScreenOrientation.AUTO)),
             campaignId = if (json.isNull("campaignId")) null else json.optLong("campaignId"),
             campaignName = if (json.isNull("campaignName")) null else json.optString("campaignName"),
             plan = json.optJSONObject("offlinePlan")?.let(::parsePlan),

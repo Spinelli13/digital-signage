@@ -53,7 +53,8 @@ fun rawJson(config: PlayerConfig): String {
         (if (config.portraitZones.isEmpty()) "" else ""","portraitZones":${zonesJson(config.portraitZones)}""")
     val campaign = ""","campaignId":${config.campaignId ?: "null"},"campaignName":${config.campaignName?.let { "\"$it\"" } ?: "null"}"""
     val plan = config.plan?.let { ""","offlinePlan":${planJson(it)}""" } ?: ""
-    return """{"deviceId":${config.deviceId},"playlistId":$playlist,"configVersion":${config.configVersion},"items":[${itemsJson(config.items)}]$zones$campaign$plan}"""
+    val orientation = if (config.orientation == "AUTO") "" else ""","orientation":"${config.orientation}""""
+    return """{"deviceId":${config.deviceId},"playlistId":$playlist,"configVersion":${config.configVersion},"items":[${itemsJson(config.items)}]$zones$campaign$plan$orientation}"""
 }
 
 private fun planJson(plan: OfflinePlan): String {

@@ -799,3 +799,79 @@ describe('DevicesPage — layout display', () => {
     ctx.backend.verify();
   });
 });
+
+describe('DevicesPage — screen orientation', () => {
+  it('sends the orientation only when the administrator changed it, and sends it alone with the rest of the form', () => {
+    const { page, backend } = setup();
+    start(page, backend);
+    page.openEdit(device({ id: 3, name: 'Totem' }));
+    expect(page.orientationChoice()).toBe('AUTO');
+
+    page.submitModal();
+    const unchanged = backend.expectOne(`${API}/devices/3`);
+    expect('orientation' in unchanged.request.body).toBe(false);
+    unchanged.flush(device({ id: 3 }));
+    flushRefresh(backend);
+
+    page.openEdit(device({ id: 3, name: 'Totem' }));
+    page.orientationChoice.set('PORTRAIT_TOP_RIGHT');
+    page.submitModal();
+    const changed = backend.expectOne(`${API}/devices/3`);
+    expect(changed.request.body.orientation).toBe('PORTRAIT_TOP_RIGHT');
+    changed.flush(device({ id: 3 }));
+    flushRefresh(backend);
+    backend.verify();
+  });
+
+  it('opens the edit window with the current orientation and draws the TV turned as installed', () => {
+    const { page, backend } = setup();
+    start(page, backend);
+
+    page.openEdit(device({ id: 3, orientation: 'PORTRAIT_TOP_LEFT' }));
+
+    expect(page.orientationChoice()).toBe('PORTRAIT_TOP_LEFT');
+    expect(page.orientationTurn()).toBe(270);
+    expect(page.orientationHint()).toContain('anti-horário');
+    page.orientationChoice.set('LANDSCAPE_FLIPPED');
+    expect(page.orientationTurn()).toBe(180);
+    backend.verify();
+  });
+
+  it('applies an orientation to the selected TVs and says how many were reached', () => {
+    const { page, backend } = setup();
+    start(page, backend, [device({ id: 1 }), device({ id: 2, name: 'TV 2' })]);
+    page.toggle(1);
+    page.toggle(2);
+
+    page.onBulkOrientation(selectEvent('PORTRAIT_TOP_RIGHT'));
+
+    const request = backend.expectOne(`${API}/devices/bulk`);
+    expect(request.request.body).toEqual({ action: 'SET_ORIENTATION', orientation: 'PORTRAIT_TOP_RIGHT', deviceIds: [1, 2] });
+    request.flush({ affected: 2 });
+    expect(page.notice.text()).toContain('Orientação aplicada a 2 TV(s)');
+    flushRefresh(backend, [device({ id: 1 }), device({ id: 2, name: 'TV 2' })]);
+
+    page.onBulkOrientation(selectEvent(''));
+    backend.expectNone(`${API}/devices/bulk`);
+    backend.verify();
+  });
+
+  it('marks the TVs that are not in the normal position and says nothing about the automatic ones', async () => {
+    const ctx = setup();
+    ctx.fixture.detectChanges();
+    ctx.backend.expectOne(`${DOWNLOADS}/releases.json`).flush({ releases: [] });
+    flushRefresh(ctx.backend, [
+      device({ id: 1, name: 'Totem', orientation: 'PORTRAIT_TOP_RIGHT' }),
+      device({ id: 2, name: 'Teto', orientation: 'LANDSCAPE_FLIPPED' }),
+      device({ id: 3, name: 'Normal', orientation: 'AUTO' }),
+      device({ id: 4, name: 'Antigo' }),
+    ]);
+    await ctx.fixture.whenStable();
+    ctx.fixture.detectChanges();
+
+    const rows = Array.from((ctx.fixture.nativeElement as HTMLElement).querySelectorAll('.tv-tags')).map((tags) => tags.textContent?.trim());
+    expect(rows.filter((text) => text?.includes('Vertical'))).toHaveLength(1);
+    expect(rows.filter((text) => text?.includes('De cabeça para baixo'))).toHaveLength(1);
+    ctx.backend.verify();
+  });
+});

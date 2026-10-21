@@ -23,5 +23,7 @@ public enum BulkAction {
 	/** Escolhe o layout da tela (exige layoutId). */
 	ASSIGN_LAYOUT,
 	/** Volta as TVs para a tela cheia. */
-	REMOVE_LAYOUT
+	REMOVE_LAYOUT,
+	/** Escolhe como as TVs foram instaladas (exige orientation). */
+	SET_ORIENTATION
 }

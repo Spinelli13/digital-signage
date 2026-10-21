@@ -47,7 +47,7 @@ public class PlayerConfigService {
 	/** Com o que a TV exibe agora já decidido (campanha ativa que a alcança ou, sem campanha, a playlist base). */
 	@Transactional(readOnly = true)
 	public PlayerConfigResponse buildFor(Device device, CampaignService.Effective effective) {
-		PlayerConfigResponse base = build(device, effective);
+		PlayerConfigResponse base = build(device, effective).withOrientation(device.getOrientation());
 		return effective.fromCampaign() ? base.withCampaign(effective.campaign().getId(), effective.campaign().getName()) : base;
 	}
 
@@ -60,7 +60,7 @@ public class PlayerConfigService {
 		if (layout == null) {
 			return main == null
 					? new PlayerConfigResponse(device.getId(), null, 0, List.of())
-					: new PlayerConfigResponse(device.getId(), main.getId(), main.getConfigVersion(), itemsOf(main));
+					: new PlayerConfigResponse(device.getId(), main.getId(), ConfigVersions.withOrientation(main.getConfigVersion(), device.getOrientation()), itemsOf(main));
 		}
 
 		Map<Long, Long> versions = new HashMap<>();
@@ -70,7 +70,7 @@ public class PlayerConfigService {
 		List<PlayerConfigMediaItem> mainItems = zones.stream().filter(PlayerConfigZone::main).findFirst()
 				.map(PlayerConfigZone::items).orElse(List.of());
 		return new PlayerConfigResponse(device.getId(), main == null ? null : main.getId(),
-				versionFor(mainPlaylistId, layout, versions), mainItems, zones, portraitZones);
+				versionFor(mainPlaylistId, layout, versions, device.getOrientation()), mainItems, zones, portraitZones);
 	}
 
 	private List<PlayerConfigZone> zonesOf(List<LayoutZone> layoutZones, Playlist main, Map<Long, Long> versions) {
@@ -109,9 +109,14 @@ public class PlayerConfigService {
 		Map<Long, Long> result = new HashMap<>();
 		for (Device device : devices) {
 			Layout layout = device.getLayoutId() == null ? null : layouts.get(device.getLayoutId());
-			result.put(device.getId(), versionFor(effective.get(device.getId()).playlistId(), layout, versions));
+			result.put(device.getId(), versionFor(effective.get(device.getId()).playlistId(), layout, versions, device.getOrientation()));
 		}
 		return result;
+	}
+
+	/** A versão do conteúdo já com a orientação da TV (no automático é a mesma de sempre). */
+	static long versionFor(Long mainPlaylistId, Layout layout, Map<Long, Long> playlistVersions, Orientation orientation) {
+		return ConfigVersions.withOrientation(versionFor(mainPlaylistId, layout, playlistVersions), orientation);
 	}
 
 	/**

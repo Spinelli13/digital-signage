@@ -15,6 +15,7 @@ import { METHOD_LABELS } from './platform/platform-invoices.page';
 import { TABS } from './reports/reports.page';
 import { THEME_LABELS } from './shared/preferences';
 import { WIDGET_KINDS } from './core/widgets';
+import { ORIENTATIONS } from './core/orientation';
 
 /**
  * O painel tem dois idiomas (português é a chave, inglês fica em core/i18n-en). Este teste lê o código-fonte e garante:
@@ -219,6 +220,7 @@ const TABLES: Record<string, string[]> = {
   'ações dos avisos de erro': ACTIONS.map((action) => action[2]),
   'tipos de widget': WIDGET_KINDS.flatMap((info) => [info.label, info.description]),
   'cores dos widgets': [...WIDGET_THEMES, ...WIDGET_ACCENTS].map((color) => color.label),
+  'orientação da TV': ORIENTATIONS.flatMap((option) => [option.label, option.hint]),
 };
 
 const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();

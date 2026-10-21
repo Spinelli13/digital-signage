@@ -196,8 +196,8 @@ import {
                 </td>
                 <td [attr.data-label]="'Ajuste da mídia' | t">
                   <select [attr.aria-label]="'Ajuste da mídia na zona {n}' | t: { n: i + 1 }" [name]="'zf' + zone.key" [ngModel]="zone.fit" (ngModelChange)="change(zone.key, 'fit', $event)">
-                    <option value="CONTAIN">{{ 'Caber inteira (com faixas)' | t }}</option>
-                    <option value="COVER">{{ 'Preencher (corta as bordas)' | t }}</option>
+                    <option value="CONTAIN">{{ 'Caber inteira' | t }}</option>
+                    <option value="COVER">{{ 'Preencher' | t }}</option>
                   </select>
                 </td>
                 <td class="row-actions"><button type="button" class="danger small" [disabled]="active().length <= 1" (click)="dropZone(zone.key)" [attr.aria-label]="'Remover a zona {n}' | t: { n: i + 1 }"><app-icon name="trash" [size]="15" /></button></td>
@@ -205,6 +205,7 @@ import {
             }
           </table>
           <button type="button" class="secondary small" (click)="newZone()"><app-icon name="plus" [size]="15" />{{ 'Adicionar zona' | t }}</button>
+          <p class="label">{{ 'Caber inteira: a imagem ou o vídeo aparece inteiro, com faixas pretas se a proporção for outra. Preencher: cobre a zona toda e corta o que passar da borda.' | t }}</p>
           }
 
           @if (problem(); as text) {
@@ -225,7 +226,7 @@ import {
     .item { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
     .screen { position: relative; width: 100%; aspect-ratio: 16 / 9; background: var(--screen); border: 2px solid var(--line); border-radius: 8px; overflow: hidden; }
     .screen.big { max-width: 560px; margin: 4px auto 16px; }
-    .screen.big.tall { aspect-ratio: 9 / 16; max-width: 250px; }
+    .screen.big.tall { aspect-ratio: 9 / 16; max-width: 200px; }
     .orient-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 4px 0 8px; }
     .orient { display: inline-flex; padding: 3px; gap: 2px; background: var(--panel-3); border: 1px solid var(--line); border-radius: var(--r); }
     .orient button { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; padding: 6px 12px; border-radius: 8px; color: var(--muted); font-weight: 600; font-size: 13px; cursor: pointer; }
@@ -242,7 +243,7 @@ import {
     .linkpill { text-decoration: none; }
     .buttons { display: flex; gap: 8px; align-items: center; }
     .buttons .push { margin-left: auto; }
-    .modal-box.wide { max-width: 860px; }
+    .modal-box.wide { max-width: 960px; }
     .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
     .templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin: 12px 0; }
     .template { text-align: left; background: var(--panel); border: 2px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 2px; color: var(--text); }
@@ -250,8 +251,9 @@ import {
     .template.picked { border-color: var(--primary); background: var(--primary-soft); }
     table.zones { margin-bottom: 10px; }
     table.zones td { padding: 6px 4px; }
-    .name-input { width: 130px; }
-    .num { width: 70px; }
+    .name-input { width: 96px; }
+    .num { width: 62px; padding-left: 8px; padding-right: 8px; }
+    table.zones select { min-width: 132px; }
     .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
     .center { text-align: center; }
     select { min-width: 150px; }

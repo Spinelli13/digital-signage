@@ -163,6 +163,14 @@ class PermissionsTest extends AbstractApiTest {
 					.andExpect(status().isForbidden())
 					.andExpect(jsonPath("$.error").value("O papel Editor só pode escolher a playlist e o layout das TVs. Nome, local, grupos e situação são do Administrador."));
 		}
+		// como a TV foi instalada (orientação) também é do Administrador
+		mvc.perform(withToken(team.editor(), put("/api/v1/devices/" + tv).contentType(MediaType.APPLICATION_JSON)
+				.content(json.writeValueAsString(Map.of("name", "TV 1", "orientation", "PORTRAIT_TOP_RIGHT")))))
+				.andExpect(status().isForbidden())
+				.andExpect(jsonPath("$.error").value("A orientação da tela (como a TV foi instalada) é do Administrador."));
+		mvc.perform(withToken(team.editor(), post("/api/v1/devices/bulk").contentType(MediaType.APPLICATION_JSON)
+				.content(json.writeValueAsString(Map.of("action", "SET_ORIENTATION", "deviceIds", List.of(tv), "orientation", "LANDSCAPE")))))
+				.andExpect(status().isForbidden());
 		mvc.perform(withToken(team.editor(), post("/api/v1/devices/bulk").contentType(MediaType.APPLICATION_JSON)
 				.content(json.writeValueAsString(Map.of("action", "DISABLE", "deviceIds", List.of(tv))))))
 				.andExpect(status().isForbidden())

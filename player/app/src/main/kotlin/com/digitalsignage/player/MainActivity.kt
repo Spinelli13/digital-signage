@@ -18,6 +18,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.ui.PlayerView
 import com.digitalsignage.player.cache.MediaCache
 import com.digitalsignage.player.data.HttpPlayerApi
+import com.digitalsignage.player.data.ScreenOrientation
 import com.digitalsignage.player.data.Settings
 import com.digitalsignage.player.engine.EngineState
 import com.digitalsignage.player.errors.ErrorMessages
@@ -59,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var code: TextView
     private lateinit var serverInfo: TextView
     private lateinit var errorBanner: TextView
+    private lateinit var screen: RotatedFrame
     private val reporter = ErrorReporter.shared
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,9 +75,11 @@ class MainActivity : AppCompatActivity() {
         code = findViewById(R.id.code)
         serverInfo = findViewById(R.id.serverInfo)
         errorBanner = findViewById(R.id.errorBanner)
+        screen = findViewById(R.id.screen)
 
         settings = Settings(this)
-        applyLaunchExtras(intent)
+        // Só na abertura de verdade: ao recriar a tela (girar, mudar o tamanho) a intenção de antes volta, e um "reset" dela apagaria o registro da TV de novo.
+        if (savedInstanceState == null) applyLaunchExtras(intent)
         // Aberto de novo (por alguém, pelo boot ou pelo vigia): apaga a "saída de propósito" e marca que está vivo.
         Restarter.opened(settings)
         Restarter.scheduleWatchdog(this)
@@ -235,14 +239,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Gira o conteúdo conforme a TV foi instalada (painel: Orientação da tela). Antes de desenhar a configuração nova, para
+     * que as zonas já nasçam no tamanho certo. Sem configuração à vista (código de ativação, erro) vale a última guardada.
+     */
+    private fun applyOrientation(orientation: String) {
+        val metrics = resources.displayMetrics
+        screen.degrees = ScreenOrientation.rotationDegrees(orientation, metrics.heightPixels > metrics.widthPixels)
+    }
+
     private fun render(state: EngineState) {
         when (state) {
             is EngineState.Playing -> {
                 overlay.visibility = View.GONE
+                applyOrientation(state.config.orientation)
                 slideshow.start(state.config)
             }
 
             else -> {
+                applyOrientation(settings.load()?.orientation ?: ScreenOrientation.AUTO)
                 slideshow.stop()
                 overlay.visibility = View.VISIBLE
                 showMessage(state)

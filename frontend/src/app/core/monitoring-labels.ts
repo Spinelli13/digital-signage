@@ -18,6 +18,7 @@ export const EVENT_LABELS: Record<EventType, EventLabel> = {
   ENABLED: { icon: 'play', tone: 'ok', label: 'Reativada' },
   PLAYLIST_CHANGED: { icon: 'list-video', tone: 'brand', label: 'Conteúdo' },
   LAYOUT_CHANGED: { icon: 'layout-template', tone: 'brand', label: 'Layout da tela' },
+  ORIENTATION_CHANGED: { icon: 'smartphone', tone: 'brand', label: 'Orientação da tela' },
   UPDATE_REQUESTED: { icon: 'download', tone: 'info', label: 'Atualização pedida' },
   PLAYER_UPDATED: { icon: 'package', tone: 'info', label: 'Player atualizado' },
   PLAYER_LOG: { icon: 'file-text', tone: 'neutral', label: 'Registro do Player' },

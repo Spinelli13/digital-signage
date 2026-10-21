@@ -286,11 +286,30 @@ Cada linha tem o ícone de **relógio com seta** (Histórico), o **lápis** (Edi
 | Botão | O que faz |
 |---|---|
 | **Histórico** | Abre a linha do tempo da TV: quando conectou, caiu, mudou de conteúdo, atualizou e o que o Player relatou (veja 9.1). |
-| **Editar** | Muda o nome, o local e os grupos da TV. |
+| **Editar** | Muda o nome, o local, os grupos, o layout da tela e **como a TV foi instalada** (horizontal ou vertical, veja 5.6.3). |
 | **Atualizar app** (menu **⋮**) | Pede que **esta TV** verifique agora se há versão nova do aplicativo (ela percebe em até 30 segundos). |
 | **Atualizar todas as TVs** (no alto da página) | O mesmo pedido para todas as TVs ativas. |
 | **Desativar / Reativar** (menu **⋮**) | Pausa a TV (ela para de exibir) ou volta a ativá-la. |
 | **Excluir** (menu **⋮**) | Remove a TV. Ela esquece o conteúdo e volta a pedir um **novo código de ativação**. |
+
+### 5.6.3 TV instalada na vertical (orientação da tela)
+
+Uma TV presa na parede **em pé** continua recebendo da caixa de TV um vídeo **deitado** (a maioria das caixas não gira sozinha). Por isso você diz ao Smartplay como a TV está instalada, e o **Player gira o conteúdo** para ele ficar de pé para quem olha.
+
+1. Em **Dispositivos**, clique em **Editar** na TV (é preciso ser **Administrador**).
+2. Em **Como a TV foi instalada**, escolha:
+   - **Automática** (padrão): nada é girado. É a opção das TVs deitadas.
+   - **Horizontal**: a TV está deitada, na posição normal.
+   - **Vertical, topo da TV para a direita** ou **para a esquerda**: a TV está em pé. O **topo da TV** é o lado do botão de ligar ou da logomarca; conte para que lado ele aponta, **de frente para a TV**. O desenho ao lado da lista mostra a TV girada e a palavra "Aa" de pé: se ficou como a sua TV, está certo.
+   - **Horizontal, de cabeça para baixo**: TV deitada, mas invertida (instalada no teto, por exemplo).
+3. **Salvar.** Em até 1 minuto a TV gira o conteúdo. Se a escolha ficou de cabeça para baixo, é só trocar entre as duas opções verticais.
+
+Para várias TVs de uma vez, marque-as e use **Orientação…** na barra verde (só Administrador).
+
+- Em TV **vertical**, o **layout** usa a **versão em pé** (veja 10.1.1); sem versão em pé, o layout horizontal é girado junto, como está.
+- As TVs verticais mostram um selo **Vertical** (ou **De cabeça para baixo**) na lista, e o **Histórico** registra a mudança.
+- **Vídeo:** numa TV girada o vídeo passa a ser desenhado de outro jeito (mais exigente para o aparelho). Em caixas muito simples, teste um vídeo pesado antes de instalar.
+- Use só a opção do Smartplay: **não** gire a tela nas configurações do Android da caixa. O Player é travado na horizontal e não foi testado com a tela do Android girada.
 
 ### 5.6.1 O que acontece na TV quando você troca a playlist
 
@@ -530,7 +549,7 @@ Abra **Layouts** no menu. Cada cartão mostra um desenho da divisão da tela, qu
 
 #### 10.1.1 TV em pé (totem, painel na vertical) e ajuste da mídia
 
-Uma faixa lateral que fica boa numa TV deitada vira um "canudo" numa TV em pé. Por isso um layout pode ter **duas versões**: a **horizontal** (a de sempre) e uma **em pé**, e a TV usa sozinha a que combina com a forma da tela dela (mais alta que larga = em pé). Você não precisa configurar nada na TV.
+Uma faixa lateral que fica boa numa TV deitada vira um "canudo" numa TV em pé. Por isso um layout pode ter **duas versões**: a **horizontal** (a de sempre) e uma **em pé**, e a TV usa a que combina com a forma em que ela foi instalada: em **Dispositivos**, **Editar**, **Como a TV foi instalada** (veja 5.6.3).
 
 1. No editor do layout, escolha **Tela em pé** no alto (ao lado de **Tela horizontal**) e clique em **Criar a versão em pé**. O painel começa com a horizontal "deitada" (uma lateral vira um rodapé, duas metades viram uma em cima da outra), e o desenho passa a ser 9:16. Ajuste posição, tamanho e playlists como na horizontal.
 2. **Salvar.** As TVs em pé passam a mostrar a versão em pé; as deitadas continuam com a horizontal.

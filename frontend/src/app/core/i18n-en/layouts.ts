@@ -12,7 +12,9 @@ export const LAYOUTS: Record<string, string> = {
   'Criar a versão em pé': 'Create the portrait version',
   'Ajuste da mídia': 'Media fit',
   'Ajuste da mídia na zona {n}': 'Media fit in zone {n}',
-  'Caber inteira (com faixas)': 'Fit whole (with bars)',
-  'Preencher (corta as bordas)': 'Fill (crops the edges)',
+  'Caber inteira': 'Fit whole',
+  Preencher: 'Fill',
+  'Caber inteira: a imagem ou o vídeo aparece inteiro, com faixas pretas se a proporção for outra. Preencher: cobre a zona toda e corta o que passar da borda.':
+    'Fit whole: the image or video is shown whole, with black bars if the proportions differ. Fill: covers the whole zone and crops whatever goes past the edge.',
   'Versão em pé: {message}': 'Portrait version: {message}',
 };

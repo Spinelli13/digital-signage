@@ -165,11 +165,27 @@ public class DeviceService {
 			monitoring.recordLayoutChanged(device, layoutName(device.getLayoutId()), clock.instant());
 		}
 
+		if (request.orientation() != null) {
+			Orientation orientation = Orientation.parse(request.orientation());
+			if (orientation != device.getOrientation()) {
+				requireAdminForOrientation();
+				device.setOrientation(orientation);
+				monitoring.recordOrientationChanged(device, orientation, clock.instant());
+			}
+		}
+
 		if (request.groupIds() != null) {
 			replaceGroups(device, request.groupIds());
 		}
 
 		return deviceRepository.save(device);
+	}
+
+	/** Como a TV foi instalada é fato da instalação, não de conteúdo: o Editor não muda. */
+	private static void requireAdminForOrientation() {
+		if (!CurrentUser.isAtLeast(Role.ADMIN)) {
+			throw new ForbiddenException("A orientação da tela (como a TV foi instalada) é do Administrador.");
+		}
 	}
 
 	/**
@@ -351,6 +367,17 @@ public class DeviceService {
 				targets.stream().filter(device -> device.getLayoutId() != null).forEach(device -> {
 					device.setLayoutId(null);
 					monitoring.recordLayoutChanged(device, null, clock.instant());
+				});
+				changed.addAll(targets);
+			}
+			case SET_ORIENTATION -> {
+				if (request.orientation() == null) {
+					throw new IllegalArgumentException("Informe a orientação (orientation)");
+				}
+				Orientation orientation = Orientation.parse(request.orientation());
+				targets.stream().filter(device -> device.getOrientation() != orientation).forEach(device -> {
+					device.setOrientation(orientation);
+					monitoring.recordOrientationChanged(device, orientation, clock.instant());
 				});
 				changed.addAll(targets);
 			}

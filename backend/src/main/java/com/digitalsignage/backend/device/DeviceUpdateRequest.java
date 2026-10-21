@@ -16,5 +16,7 @@ public record DeviceUpdateRequest(
 		Long currentPlaylistId,
 		/** Layout da tela; ausente não muda (para voltar à tela cheia use DELETE /devices/{id}/layout). */
 		Long layoutId,
-		List<Long> groupIds) {
+		List<Long> groupIds,
+		/** Como a TV foi instalada (AUTO, LANDSCAPE, LANDSCAPE_FLIPPED, PORTRAIT_TOP_RIGHT ou PORTRAIT_TOP_LEFT); ausente não muda. */
+		String orientation) {
 }

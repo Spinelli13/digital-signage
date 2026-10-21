@@ -17,5 +17,7 @@ public record BulkDeviceRequest(
 		Long playlistId,
 		Long locationId,
 		Long groupId,
-		Long layoutId) {
+		Long layoutId,
+		/** Para SET_ORIENTATION: AUTO, LANDSCAPE, LANDSCAPE_FLIPPED, PORTRAIT_TOP_RIGHT ou PORTRAIT_TOP_LEFT. */
+		String orientation) {
 }

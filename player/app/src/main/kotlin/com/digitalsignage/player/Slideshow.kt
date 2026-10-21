@@ -1,6 +1,7 @@
 package com.digitalsignage.player
 
 import android.graphics.Color
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -9,6 +10,7 @@ import androidx.media3.ui.PlayerView
 import com.digitalsignage.player.cache.MediaCache
 import com.digitalsignage.player.data.ConfigZone
 import com.digitalsignage.player.data.PlayerConfig
+import com.digitalsignage.player.data.ScreenOrientation
 import com.digitalsignage.player.data.ZoneGeometry
 import com.digitalsignage.player.memory.MemoryProfile
 import com.digitalsignage.player.memory.TrimLevels
@@ -49,16 +51,19 @@ class Slideshow(
     fun start(config: PlayerConfig) {
         stop()
         val context = PlayContext(config.deviceId, config.playlistId, config.campaignId, config.campaignName)
-        // Tela em pé (mais alta que larga) usa a versão do layout para TV em pé, se o layout tiver uma.
-        val layout = config.zonesFor(isPortrait())
-        if (layout.size == 1 && layout[0].isFullScreen) {
+        // TV em pé (instalada assim, ou com a tela mais alta que larga) usa a versão do layout para TV em pé, se o layout tiver uma.
+        val displayPortrait = isDisplayPortrait()
+        val layout = config.zonesFor(ScreenOrientation.contentPortrait(config.orientation, displayPortrait))
+        // Com o conteúdo girado o vídeo precisa ser TextureView (o SurfaceView da tela não gira): vai pelo caminho das zonas.
+        val rotated = ScreenOrientation.rotationDegrees(config.orientation, displayPortrait) != 0
+        if (layout.size == 1 && layout[0].isFullScreen && !rotated) {
             startSingle(layout[0], context)
         } else {
-            startZones(layout, context)
+            startZones(layout, context, texture = rotated)
         }
     }
 
-    private fun isPortrait(): Boolean {
+    private fun isDisplayPortrait(): Boolean {
         val metrics = zonesRoot.resources.displayMetrics
         return metrics.heightPixels > metrics.widthPixels
     }
@@ -98,7 +103,7 @@ class Slideshow(
         player.start(zone.items, context)
     }
 
-    private fun startZones(layout: List<ConfigZone>, context: PlayContext) {
+    private fun startZones(layout: List<ConfigZone>, context: PlayContext, texture: Boolean = false) {
         zonesRoot.visibility = View.VISIBLE
         val containers = layout.map { zone ->
             val container = FrameLayout(zonesRoot.context).apply { setBackgroundColor(Color.BLACK) }
@@ -107,10 +112,14 @@ class Slideshow(
                 setBackgroundColor(Color.BLACK)
                 visibility = View.INVISIBLE
             }
-            val video = PlayerView(zonesRoot.context).apply {
-                useController = false
-                setShutterBackgroundColor(Color.BLACK)
-                visibility = View.INVISIBLE
+            val video = if (texture) {
+                LayoutInflater.from(zonesRoot.context).inflate(R.layout.player_view_texture, null, false) as PlayerView
+            } else {
+                PlayerView(zonesRoot.context).apply {
+                    useController = false
+                    setShutterBackgroundColor(Color.BLACK)
+                    visibility = View.INVISIBLE
+                }
             }
             container.addView(image, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
             container.addView(video, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
