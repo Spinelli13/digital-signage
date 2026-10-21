@@ -10,6 +10,8 @@ export const PLAN: PlanInfo = {
   maxDevices: 5,
   maxStorageMb: 2048,
   maxUsers: 5,
+  maxUploadMb: null,
+  features: ['CAMPAIGNS', 'LAYOUTS', 'WIDGETS', 'PRICES', 'QUEUE', 'PROOF_OF_PLAY'],
 };
 
 export function tenantFixture(overrides: Partial<TenantSummary> = {}): TenantSummary {

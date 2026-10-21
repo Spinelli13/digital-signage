@@ -1,0 +1,36 @@
+/** Permissões por plano: recursos que cada plano inclui e o limite de tamanho por arquivo. */
+export const PLANS: Record<string, string> = {
+  'Este recurso não está no seu plano': 'This feature is not in your plan',
+  'O plano {plan} não inclui {feature}. Peça um plano que inclua este recurso em "Plano e cobrança".':
+    'The {plan} plan does not include {feature}. Ask for a plan that includes this feature in "Plan & billing".',
+  'Ver planos': 'See plans',
+  Gestores: 'Managers',
+  'Novo gestor': 'New manager',
+  'Editar gestor': 'Edit manager',
+  'Nenhum gestor.': 'No managers.',
+  'Quem opera a plataforma: clientes, planos, cupons e faturas. Cada gestor entra com o próprio e-mail e senha.':
+    'Who runs the platform: clients, plans, coupons and invoices. Each manager signs in with their own email and password.',
+  'O gestor tem acesso a tudo da plataforma: clientes, planos, cupons, faturas e configurações.':
+    'A manager has access to everything on the platform: clients, plans, coupons, invoices and settings.',
+  'Gestor "{name}" salvo.': 'Manager "{name}" saved.',
+  'Gestor "{name}" adicionado.': 'Manager "{name}" added.',
+  'Excluir o gestor "{name}" ({email})? Ele perde o acesso ao painel na hora.': 'Delete the manager "{name}" ({email})? They lose access to the panel right away.',
+  'Gestor "{name}" excluído.': 'Manager "{name}" deleted.',
+  'Voltar ao início': 'Back to the start',
+  Recursos: 'Features',
+  'Nenhum recurso opcional': 'No optional features',
+  'Tamanho máximo de cada arquivo (MB)': 'Maximum size of each file (MB)',
+  'O que o plano inclui': 'What the plan includes',
+  'Arquivo de até': 'File up to',
+  'Layouts com zonas': 'Layouts with zones',
+  'Dividir a tela em várias áreas.': 'Split the screen into several areas.',
+  'Agendar conteúdo por período, horário e prioridade.': 'Schedule content by period, time and priority.',
+  'Widgets (conteúdo dinâmico)': 'Widgets (dynamic content)',
+  'Clima, cotações, notícias e senhas na tela.': 'Weather, quotes, news and ticket numbers on screen.',
+  'Tabelas de preços': 'Price tables',
+  'Quadro de preços que se atualiza sozinho.': 'A price board that updates itself.',
+  'Fila de atendimento': 'Service queue',
+  'Senhas, guichês e painel de chamadas.': 'Tickets, counters and the call board.',
+  'Comprovação de exibição': 'Proof of play',
+  'Relatório que prova o que foi exibido.': 'A report that proves what was shown.',
+};

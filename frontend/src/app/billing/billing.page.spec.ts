@@ -38,8 +38,8 @@ const billing = (overrides: Partial<BillingInfo> = {}): BillingInfo => ({
   paymentInstructions: 'PIX: 00.000.000/0001-00\nEnvie o comprovante.',
   supportEmail: 'suporte@plataforma.com',
   plans: [
-    { id: 3, code: 'basico', name: 'Básico', description: null, priceCents: 4900, currency: 'BRL', maxDevices: 5, maxStorageMb: 2048, maxUsers: 5 },
-    { id: 4, code: 'pro', name: 'Profissional', description: 'Para redes', priceCents: 14900, currency: 'BRL', maxDevices: null, maxStorageMb: null, maxUsers: 20 },
+    { id: 3, code: 'basico', name: 'Básico', description: null, priceCents: 4900, currency: 'BRL', maxDevices: 5, maxStorageMb: 2048, maxUsers: 5, maxUploadMb: null, features: ['CAMPAIGNS', 'QUEUE'] },
+    { id: 4, code: 'pro', name: 'Profissional', description: 'Para redes', priceCents: 14900, currency: 'BRL', maxDevices: null, maxStorageMb: null, maxUsers: 20, maxUploadMb: 100, features: ['CAMPAIGNS', 'LAYOUTS', 'WIDGETS', 'PRICES', 'QUEUE', 'PROOF_OF_PLAY'] },
   ],
   ...overrides,
 });

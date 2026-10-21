@@ -51,7 +51,7 @@ O **menu à esquerda** leva a cada área:
 | **Equipe** | *(Administrador)* As pessoas que acessam o painel e o papel de cada uma. |
 | **Plano e cobrança** | *(Administrador)* O plano, o uso dos limites, as faturas e como pagar. |
 | **Downloads e manuais** | O aplicativo da TV (sempre a versão mais recente) e estes manuais em PDF. |
-| **Plataforma** | *(Operador da plataforma)* Clientes, planos, faturas e configurações do serviço. |
+| **Plataforma** | *(Gestor da plataforma)* Clientes, planos, faturas, gestores e configurações do serviço. |
 
 No alto do menu aparece o **cliente** em que você está, o **plano** e a **situação** da assinatura. O menu é dividido por assunto: **Operação** (TVs, locais, grupos), **Conteúdo** (biblioteca, playlists, campanhas, layouts), **Monitoramento** (alertas e relatórios) e **Administração**. O painel mostra **só o que o seu papel pode usar** (capítulo 11).
 
@@ -703,6 +703,8 @@ Quando um limite é atingido, o painel **recusa o que passaria dele**, explicand
 
 O que já existe **nunca é apagado** por causa de um limite: as TVs continuam exibindo normalmente.
 
+Além dos limites, cada plano **inclui ou não alguns recursos**: Campanhas, Layouts com zonas, Widgets, Tabelas de preços, Fila de atendimento e Comprovação de exibição. O que o seu plano não inclui **some do menu** e, se alguém abrir o endereço, aparece a mensagem "Este recurso não está no seu plano" com o caminho para ver os planos. Há também um **tamanho máximo para cada arquivo** enviado (quando o plano define um). Em "Planos disponíveis" cada plano mostra o que inclui, para você comparar antes de pedir a troca. Rebaixar de plano **não apaga nada**: o que já foi montado continua aparecendo nas TVs; só o painel deixa de oferecer o recurso novo.
+
 ### 12.2 Situação da assinatura
 
 | Situação | O que significa |
@@ -735,7 +737,7 @@ Em **Planos disponíveis** você compara preços e limites. O botão **Pedir est
 
 ## 13. Plataforma (para quem opera o serviço)
 
-Esta área aparece **só para o Operador da plataforma**, quem vende e dá suporte ao serviço. Os clientes não a veem.
+Esta área aparece **só para o Gestor da plataforma**, quem vende e dá suporte ao serviço. Os clientes não a veem.
 
 ![Plataforma: visão geral dos clientes, da receita mensal e das faturas em aberto e vencidas (captura real)](manual/img/painel-plataforma.png)
 
@@ -756,13 +758,17 @@ Cada cliente é uma empresa com os **seus próprios dados**: um cliente nunca v�
 
 ![Janela para cadastrar um cliente novo (captura real)](manual/img/painel-cliente-novo.png)
 
-![Operador dentro do painel de um cliente: o aviso verde lembra em qual cliente ele está atuando (captura real)](manual/img/painel-atuando-como.png)
+![Gestor dentro do painel de um cliente: o aviso verde lembra em qual cliente ele está atuando (captura real)](manual/img/painel-atuando-como.png)
 
 ### 13.3 Planos
 
-Define o **preço** e os **limites** (TVs, espaço em MB e usuários) de cada plano. Deixe um limite em branco para "ilimitado". O **código** é um nome curto (ex.: `basico`); **ordem** define a posição na lista; planos **desativados** deixam de ser oferecidos a novos clientes (quem já está neles continua). Não dá para excluir um plano que ainda tem clientes.
+Define o **preço**, os **limites** (TVs, espaço em MB, usuários e tamanho máximo de cada arquivo) e **o que o plano inclui** (marque ou desmarque Campanhas, Layouts, Widgets, Tabelas de preços, Fila de atendimento e Comprovação de exibição). Deixe um limite em branco para "ilimitado". Mudar um plano vale para todos os clientes que o usam **já na próxima ação deles**. O Gestor nunca é barrado, mesmo ao entrar num cliente cujo plano não inclui o recurso (para poder dar suporte). O **código** é um nome curto (ex.: `basico`); **ordem** define a posição na lista; planos **desativados** deixam de ser oferecidos a novos clientes (quem já está neles continua). Não dá para excluir um plano que ainda tem clientes.
 
 ![Lista de planos: preço, limites e quantos clientes usam cada um (captura real)](manual/img/painel-planos.png)
+
+### 13.3.1 Gestores
+
+Em **Plataforma → Gestores** ficam as pessoas que operam o serviço. Cada gestor entra **com o próprio e-mail e senha** (não é preciso dividir o login) e tem acesso a tudo da plataforma. **Novo gestor** pede nome, e-mail (que é o login) e uma senha inicial de pelo menos 8 caracteres; a pessoa pode trocá-la depois em **Minha conta**. Em **Editar** dá para trocar o nome, definir uma senha nova (se ela esquecer) e **desativar** o acesso, que vale na hora. Você não consegue desativar nem excluir o seu próprio usuário (ficaria sem acesso).
 
 ### 13.4 Faturas e pagamentos
 

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.digitalsignage.backend.common.ConflictException;
+import com.digitalsignage.backend.plan.Feature;
 import com.digitalsignage.backend.plan.Plan;
 import com.digitalsignage.backend.plan.PlanRepository;
 import com.digitalsignage.backend.tenant.TenantRepository;
@@ -39,13 +40,17 @@ public class PlatformPlanController {
 			@Min(0) Integer maxDevices,
 			@Min(0) Integer maxStorageMb,
 			@Min(0) Integer maxUsers,
+			@Min(1) Integer maxUploadMb,
+			/** Recursos incluídos. Ausente: na criação vale tudo; na edição, não muda. */
+			List<Feature> features,
 			Boolean active,
 			Integer sortOrder) {
 	}
 
 	public record PlanResponse(
 			Long id, String code, String name, String description, int priceCents, String currency,
-			Integer maxDevices, Integer maxStorageMb, Integer maxUsers, boolean active, int sortOrder, long tenantCount) {
+			Integer maxDevices, Integer maxStorageMb, Integer maxUsers, Integer maxUploadMb, List<String> features, boolean active, int sortOrder,
+			long tenantCount) {
 	}
 
 	private final PlanRepository plans;
@@ -105,6 +110,10 @@ public class PlatformPlanController {
 	}
 
 	private void apply(Plan plan, PlanRequest request) {
+		plan.setMaxUploadMb(request.maxUploadMb());
+		if (request.features() != null) {
+			plan.setFeatures(request.features());
+		}
 		if (request.active() != null) {
 			plan.setActive(request.active());
 		}
@@ -119,7 +128,8 @@ public class PlatformPlanController {
 
 	private PlanResponse toResponse(Plan plan) {
 		return new PlanResponse(plan.getId(), plan.getCode(), plan.getName(), plan.getDescription(), plan.getPriceCents(), plan.getCurrency(),
-				plan.getMaxDevices(), plan.getMaxStorageMb(), plan.getMaxUsers(), plan.isActive(), plan.getSortOrder(), tenants.countByPlanId(plan.getId()));
+				plan.getMaxDevices(), plan.getMaxStorageMb(), plan.getMaxUsers(), plan.getMaxUploadMb(),
+				plan.getFeatures().stream().sorted().map(Feature::name).toList(), plan.isActive(), plan.getSortOrder(), tenants.countByPlanId(plan.getId()));
 	}
 
 	private static String blankToNull(String text) {

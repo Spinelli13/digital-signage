@@ -45,6 +45,9 @@ import {
   MonitoringSettings,
   MonitoringSettingsRequest,
   PlatformOverview,
+  Manager,
+  ManagerRequest,
+  ManagerUpdate,
   PlatformPlan,
   PlatformPlanRequest,
   PlatformSettings,
@@ -238,6 +241,22 @@ export class ApiService {
 
   deletePlatformPlan(id: number): Observable<void> {
     return this.http.delete<void>(this.url(`/platform/plans/${id}`));
+  }
+
+  managers(): Observable<Manager[]> {
+    return this.http.get<Manager[]>(this.url('/platform/managers'));
+  }
+
+  createManager(body: ManagerRequest): Observable<Manager> {
+    return this.http.post<Manager>(this.url('/platform/managers'), body);
+  }
+
+  updateManager(id: number, body: ManagerUpdate): Observable<Manager> {
+    return this.http.put<Manager>(this.url(`/platform/managers/${id}`), body);
+  }
+
+  deleteManager(id: number): Observable<void> {
+    return this.http.delete<void>(this.url(`/platform/managers/${id}`));
   }
 
   platformInvoices(status?: string, tenantId?: number | null): Observable<Invoice[]> {

@@ -7,10 +7,11 @@ import { AuthService } from '../core/auth.service';
 import { ConfigService } from '../core/config.service';
 import { errorInterceptor } from '../core/error.interceptor';
 import { ErrorService } from '../core/error.service';
-import { Invoice, PlatformOverview, PlatformPlan, PlatformSettings } from '../core/models';
+import { Invoice, Manager, PlatformOverview, PlatformPlan, PlatformSettings } from '../core/models';
 import { meFixture, tenantFixture } from '../testing/fixtures';
 import { PlatformClientsPage } from './platform-clients.page';
 import { PlatformInvoicesPage } from './platform-invoices.page';
+import { PlatformManagersPage } from './platform-managers.page';
 import { PlatformOverviewPage } from './platform-overview.page';
 import { PlatformPlansPage } from './platform-plans.page';
 import { PlatformSettingsPage } from './platform-settings.page';
@@ -27,6 +28,8 @@ const plan = (id: number, name: string, overrides: Partial<PlatformPlan> = {}): 
   maxDevices: 5,
   maxStorageMb: 2048,
   maxUsers: 5,
+  maxUploadMb: null,
+  features: ['CAMPAIGNS', 'LAYOUTS', 'WIDGETS', 'PRICES', 'QUEUE', 'PROOF_OF_PLAY'],
   active: true,
   sortOrder: 10,
   tenantCount: 0,
@@ -272,6 +275,37 @@ describe('PlatformPlansPage', () => {
     expect(page.storage(2048)).toBe('2,0 GB');
   });
 
+  it('picks which features the plan includes and the maximum size of a file', () => {
+    page.openNew();
+    expect(page.features().length).toBe(6);
+    page.toggleFeature('QUEUE', false);
+    page.toggleFeature('PROOF_OF_PLAY', false);
+    page.toggleFeature('QUEUE', true);
+    expect(page.hasFeature('QUEUE')).toBe(true);
+    expect(page.hasFeature('PROOF_OF_PLAY')).toBe(false);
+    page.name.set('Vitrine');
+    page.code.set('vitrine');
+    page.price.set('10');
+    page.maxUploadMb.set(25);
+
+    page.submit();
+
+    const request = backend.expectOne(`${API}/platform/plans`);
+    expect(request.request.body.maxUploadMb).toBe(25);
+    expect([...request.request.body.features].sort()).toEqual(['CAMPAIGNS', 'LAYOUTS', 'PRICES', 'QUEUE', 'WIDGETS']);
+    request.flush(plan(9, 'Vitrine'));
+    backend.expectOne(`${API}/platform/plans`).flush([]);
+  });
+
+  it('opens a plan with its own features and describes them', () => {
+    const only = plan(7, 'Mínimo', { features: ['CAMPAIGNS'], maxUploadMb: 10 });
+    page.openEdit(only);
+    expect(page.features()).toEqual(['CAMPAIGNS']);
+    expect(page.maxUploadMb()).toBe(10);
+    expect(page.featureNames(only)).toBe('Campanhas');
+    expect(page.featureNames(plan(8, 'Nada', { features: [] }))).toBe('Nenhum recurso opcional');
+  });
+
   it('creates a plan: price in cents and empty limits as unlimited', () => {
     page.openNew();
     expect(page.sortOrder()).toBe(30);
@@ -294,6 +328,8 @@ describe('PlatformPlansPage', () => {
       maxDevices: null,
       maxStorageMb: 10240,
       maxUsers: 50,
+      maxUploadMb: null,
+      features: ['CAMPAIGNS', 'LAYOUTS', 'WIDGETS', 'PRICES', 'QUEUE', 'PROOF_OF_PLAY'],
       active: true,
       sortOrder: 30,
     });
@@ -472,5 +508,91 @@ describe('PlatformSettingsPage', () => {
     page.save();
 
     backend.expectNone(`${API}/platform/settings`);
+  });
+});
+
+describe('PlatformManagersPage', () => {
+  const manager = (id: number, name: string, overrides: Partial<Manager> = {}): Manager => ({
+    id,
+    name,
+    email: `${name.toLowerCase()}@x.com`,
+    active: true,
+    createdAt: '2026-10-21T10:00:00Z',
+    ...overrides,
+  });
+  let backend: HttpTestingController;
+  let page: PlatformManagersPage;
+
+  beforeEach(() => {
+    backend = configure();
+    TestBed.inject(AuthService).me.set(meFixture('PLATFORM_ADMIN', { id: 1 }));
+    page = TestBed.createComponent(PlatformManagersPage).componentInstance;
+    page.ngOnInit();
+    backend.expectOne(`${API}/platform/managers`).flush([manager(1, 'Ana'), manager(2, 'Beto')]);
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+    backend.verify();
+  });
+
+  it('lists the managers and recognizes the logged-in one', () => {
+    expect(page.items().map((item) => item.name)).toEqual(['Ana', 'Beto']);
+    expect(page.isMe(page.items()[0])).toBe(true);
+    expect(page.isMe(page.items()[1])).toBe(false);
+    expect(page.initials('Maria da Silva')).toBe('MD');
+  });
+
+  it('adds a manager only with name, email and a password of 8+ characters', () => {
+    page.openNew();
+    page.name.set('Sócio');
+    page.email.set('socio@x.com');
+    page.password.set('curta');
+    expect(page.canSubmit()).toBe(false);
+    page.password.set('senha-forte-1');
+    expect(page.canSubmit()).toBe(true);
+
+    page.submit();
+
+    const request = backend.expectOne(`${API}/platform/managers`);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ name: 'Sócio', email: 'socio@x.com', password: 'senha-forte-1' });
+    request.flush(manager(3, 'Sócio'));
+    expect(page.notice.text()).toBe('Gestor "Sócio" adicionado.');
+    backend.expectOne(`${API}/platform/managers`).flush([]);
+  });
+
+  it('changes only what was typed and never lets a manager turn off their own access', () => {
+    page.openEdit(page.items()[0]);
+    expect(page.editingSelf()).toBe(true);
+    page.name.set('Ana Maria');
+
+    page.submit();
+
+    const request = backend.expectOne(`${API}/platform/managers/1`);
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({ name: 'Ana Maria', active: true });
+    request.flush(manager(1, 'Ana Maria'));
+    backend.expectOne(`${API}/platform/managers`).flush([manager(1, 'Ana Maria'), manager(2, 'Beto')]);
+
+    page.openEdit(page.items()[1]);
+    expect(page.editingSelf()).toBe(false);
+    page.password.set('nova-senha-2');
+    page.active.set(false);
+    page.submit();
+    const other = backend.expectOne(`${API}/platform/managers/2`);
+    expect(other.request.body).toEqual({ name: 'Beto', active: false, password: 'nova-senha-2' });
+    other.flush(manager(2, 'Beto', { active: false }));
+    backend.expectOne(`${API}/platform/managers`).flush([]);
+  });
+
+  it('deletes a manager after confirming', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    page.remove(page.items()[1]);
+
+    backend.expectOne(`${API}/platform/managers/2`).flush(null);
+    expect(page.notice.text()).toBe('Gestor "Beto" excluído.');
+    backend.expectOne(`${API}/platform/managers`).flush([]);
   });
 });

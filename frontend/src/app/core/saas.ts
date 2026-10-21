@@ -1,12 +1,12 @@
 import { currentLocale, tr, trServer } from './i18n';
-import { InvoiceStatus, PlanInfo, Role, TenantStatus, Usage } from './models';
+import { FeatureCode, InvoiceStatus, PlanInfo, Role, TenantStatus, Usage } from './models';
 
 /** Os textos abaixo são as chaves em português; use roleLabel() etc. para obter o texto no idioma atual. */
 export const ROLE_LABELS: Record<Role, string> = {
   VIEWER: 'Visualizador',
   EDITOR: 'Editor',
   ADMIN: 'Administrador',
-  PLATFORM_ADMIN: 'Operador da plataforma',
+  PLATFORM_ADMIN: 'Gestor da plataforma',
 };
 
 /** O que cada papel pode (para o formulário de equipe e o manual). */
@@ -14,8 +14,20 @@ export const ROLE_HELP: Record<Role, string> = {
   VIEWER: 'Só consulta: vê TVs, conteúdo, alertas e relatórios.',
   EDITOR: 'Cuida do conteúdo (mídias, playlists, campanhas, layouts) e escolhe o que cada TV exibe.',
   ADMIN: 'Administra o cliente: TVs, locais, grupos, alertas, equipe, plano e cobrança.',
-  PLATFORM_ADMIN: 'Opera a plataforma (clientes, planos e faturas).',
+  PLATFORM_ADMIN: 'Opera a plataforma (clientes, planos, cupons, faturas e gestores).',
 };
+
+/** Os recursos que cada plano liga ou desliga, na ordem em que aparecem. */
+export const FEATURES: { code: FeatureCode; label: string; help: string }[] = [
+  { code: 'CAMPAIGNS', label: 'Campanhas', help: 'Agendar conteúdo por período, horário e prioridade.' },
+  { code: 'LAYOUTS', label: 'Layouts com zonas', help: 'Dividir a tela em várias áreas.' },
+  { code: 'WIDGETS', label: 'Widgets (conteúdo dinâmico)', help: 'Clima, cotações, notícias e senhas na tela.' },
+  { code: 'PRICES', label: 'Tabelas de preços', help: 'Quadro de preços que se atualiza sozinho.' },
+  { code: 'QUEUE', label: 'Fila de atendimento', help: 'Senhas, guichês e painel de chamadas.' },
+  { code: 'PROOF_OF_PLAY', label: 'Comprovação de exibição', help: 'Relatório que prova o que foi exibido.' },
+];
+
+export const featureLabel = (code: FeatureCode): string => tr(FEATURES.find((feature) => feature.code === code)?.label ?? code);
 
 /** Os papéis que um Administrador de cliente pode dar à equipe. */
 export const TEAM_ROLES: Role[] = ['VIEWER', 'EDITOR', 'ADMIN'];

@@ -2,12 +2,12 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '../core/api.service';
-import { PlatformPlan, PlatformPlanRequest } from '../core/models';
+import { FeatureCode, PlatformPlan, PlatformPlanRequest } from '../core/models';
 import { TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
 import { IconComponent } from '../shared/icon';
 import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent, SkeletonComponent } from '../shared/ui';
-import { formatLimit, formatMoney, formatStorage, moneyInput, parseMoney, planText } from '../core/saas';
+import { FEATURES, featureLabel, formatLimit, formatMoney, formatStorage, moneyInput, parseMoney, planText } from '../core/saas';
 
 @Component({
   selector: 'app-platform-plans',
@@ -32,7 +32,7 @@ import { formatLimit, formatMoney, formatStorage, moneyInput, parseMoney, planTe
         }
       } @else {
         <table class="stack">
-          <tr><th>{{ 'Plano' | t }}</th><th>{{ 'Preço/mês' | t }}</th><th>{{ 'TVs' | t }}</th><th>{{ 'Espaço' | t }}</th><th>{{ 'Usuários' | t }}</th><th>{{ 'Clientes' | t }}</th><th></th></tr>
+          <tr><th>{{ 'Plano' | t }}</th><th>{{ 'Preço/mês' | t }}</th><th>{{ 'TVs' | t }}</th><th>{{ 'Espaço' | t }}</th><th>{{ 'Usuários' | t }}</th><th>{{ 'Recursos' | t }}</th><th>{{ 'Clientes' | t }}</th><th></th></tr>
           @for (plan of items(); track plan.id) {
             <tr>
               <td class="first">
@@ -48,6 +48,7 @@ import { formatLimit, formatMoney, formatStorage, moneyInput, parseMoney, planTe
               <td [attr.data-label]="'TVs' | t"><span class="num">{{ limit(plan.maxDevices) }}</span></td>
               <td [attr.data-label]="'Espaço' | t"><span class="num">{{ storage(plan.maxStorageMb) }}</span></td>
               <td [attr.data-label]="'Usuários' | t"><span class="num">{{ limit(plan.maxUsers) }}</span></td>
+              <td [attr.data-label]="'Recursos' | t"><span class="num" [title]="featureNames(plan)">{{ plan.features.length }}/{{ allFeatures.length }}</span></td>
               <td [attr.data-label]="'Clientes' | t"><app-pill icon="building"><span class="num">{{ plan.tenantCount }}</span></app-pill></td>
               <td class="row-actions">
                 <button class="secondary small" (click)="openEdit(plan)"><app-icon name="pencil" [size]="15" />{{ 'Editar' | t }}</button>
@@ -104,6 +105,19 @@ import { formatLimit, formatMoney, formatStorage, moneyInput, parseMoney, planTe
             </div>
           </div>
           <div class="field">
+            <label for="p-upl">{{ 'Tamanho máximo de cada arquivo (MB)' | t }}</label>
+            <input id="p-upl" name="maxUploadMb" type="number" min="1" [placeholder]="'ilimitado' | t" [ngModel]="maxUploadMb()" (ngModelChange)="maxUploadMb.set($event)" />
+          </div>
+          <fieldset class="features">
+            <legend>{{ 'O que o plano inclui' | t }}</legend>
+            @for (feature of allFeatures; track feature.code) {
+              <label class="check feature">
+                <input type="checkbox" [name]="'f-' + feature.code" [ngModel]="hasFeature(feature.code)" (ngModelChange)="toggleFeature(feature.code, $event)" />
+                <span><b>{{ feature.label | t }}</b><small>{{ feature.help | t }}</small></span>
+              </label>
+            }
+          </fieldset>
+          <div class="field">
             <label class="check">
               <input type="checkbox" name="active" [ngModel]="active()" (ngModelChange)="active.set($event)" />
               {{ 'Disponível para novos clientes e para o cliente comparar' | t }}
@@ -128,6 +142,11 @@ import { formatLimit, formatMoney, formatStorage, moneyInput, parseMoney, planTe
     .off { color: var(--warn-fg); font-weight: 600; }
     .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .features { border: 1px solid var(--line); border-radius: var(--r); padding: 10px 14px 6px; margin: 0 0 14px; }
+    .features legend { padding: 0 6px; font-weight: 600; }
+    .feature { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+    .feature span { display: flex; flex-direction: column; }
+    .feature small { color: var(--muted); }
   `,
 })
 export class PlatformPlansPage implements OnInit {
@@ -148,6 +167,9 @@ export class PlatformPlansPage implements OnInit {
   readonly maxDevices = signal<number | string | null>(null);
   readonly maxStorageMb = signal<number | string | null>(null);
   readonly maxUsers = signal<number | string | null>(null);
+  readonly maxUploadMb = signal<number | string | null>(null);
+  readonly features = signal<FeatureCode[]>(FEATURES.map((feature) => feature.code));
+  readonly allFeatures = FEATURES;
   readonly active = signal(true);
   private editing: PlatformPlan | null = null;
 
@@ -174,6 +196,18 @@ export class PlatformPlansPage implements OnInit {
 
   readonly planName = planText;
 
+  hasFeature(code: FeatureCode): boolean {
+    return this.features().includes(code);
+  }
+
+  toggleFeature(code: FeatureCode, on: boolean): void {
+    this.features.update((list) => (on ? [...list.filter((item) => item !== code), code] : list.filter((item) => item !== code)));
+  }
+
+  featureNames(plan: PlatformPlan): string {
+    return plan.features.length === 0 ? tr('Nenhum recurso opcional') : plan.features.map(featureLabel).join(', ');
+  }
+
   openNew(): void {
     this.editing = null;
     this.name.set('');
@@ -184,6 +218,8 @@ export class PlatformPlansPage implements OnInit {
     this.maxDevices.set(null);
     this.maxStorageMb.set(null);
     this.maxUsers.set(null);
+    this.maxUploadMb.set(null);
+    this.features.set(FEATURES.map((feature) => feature.code));
     this.active.set(true);
     this.modal.set('new');
   }
@@ -198,6 +234,8 @@ export class PlatformPlansPage implements OnInit {
     this.maxDevices.set(plan.maxDevices);
     this.maxStorageMb.set(plan.maxStorageMb);
     this.maxUsers.set(plan.maxUsers);
+    this.maxUploadMb.set(plan.maxUploadMb);
+    this.features.set([...plan.features]);
     this.active.set(plan.active);
     this.modal.set('edit');
   }
@@ -219,6 +257,8 @@ export class PlatformPlansPage implements OnInit {
       maxDevices: limitValue(this.maxDevices()),
       maxStorageMb: limitValue(this.maxStorageMb()),
       maxUsers: limitValue(this.maxUsers()),
+      maxUploadMb: limitValue(this.maxUploadMb()),
+      features: this.features(),
       active: this.active(),
       sortOrder: this.sortOrder(),
     };

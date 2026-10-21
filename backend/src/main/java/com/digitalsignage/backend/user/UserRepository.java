@@ -19,4 +19,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	Optional<User> findByIdAndTenantId(Long id, Long tenantId);
 
+	List<User> findByRoleOrderByName(String role);
+
 }

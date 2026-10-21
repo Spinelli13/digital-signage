@@ -800,6 +800,9 @@ export type Role = 'VIEWER' | 'EDITOR' | 'ADMIN' | 'PLATFORM_ADMIN';
 export type TenantStatus = 'SYSTEM' | 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'SUSPENDED' | 'CANCELED';
 
 /** Limite nulo = sem limite. */
+/** Recursos que um plano pode incluir ou não (o servidor barra o que o plano não tem). */
+export type FeatureCode = 'CAMPAIGNS' | 'LAYOUTS' | 'WIDGETS' | 'PRICES' | 'QUEUE' | 'PROOF_OF_PLAY';
+
 export interface PlanInfo {
   id: number;
   code: string;
@@ -809,6 +812,9 @@ export interface PlanInfo {
   maxDevices: number | null;
   maxStorageMb: number | null;
   maxUsers: number | null;
+  /** Tamanho máximo de cada arquivo enviado (MB); nulo = sem limite. */
+  maxUploadMb: number | null;
+  features: FeatureCode[];
 }
 
 /** O que o cliente está usando do plano (TVs ativadas, espaço das mídias em bytes, usuários ativos). */
@@ -864,6 +870,28 @@ export interface TeamMemberUpdate {
   password?: string;
 }
 
+/** Gestor da plataforma (quem opera clientes, planos, cupons e faturas). */
+export interface Manager {
+  id: number;
+  name: string;
+  email: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface ManagerRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
+/** Campos ausentes não mudam. */
+export interface ManagerUpdate {
+  name?: string;
+  active?: boolean;
+  password?: string;
+}
+
 export type InvoiceStatus = 'OPEN' | 'PAID' | 'VOID';
 
 export interface Invoice {
@@ -896,6 +924,8 @@ export interface PlanOption {
   maxDevices: number | null;
   maxStorageMb: number | null;
   maxUsers: number | null;
+  maxUploadMb: number | null;
+  features: FeatureCode[];
 }
 
 /** "Plano e cobrança" do cliente. */
@@ -923,6 +953,8 @@ export interface PlatformPlanRequest {
   maxDevices: number | null;
   maxStorageMb: number | null;
   maxUsers: number | null;
+  maxUploadMb: number | null;
+  features: FeatureCode[];
   active: boolean;
   sortOrder: number;
 }

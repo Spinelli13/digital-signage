@@ -66,13 +66,13 @@ export const CORE: Record<string, string> = {
   Visualizador: 'Viewer',
   Editor: 'Editor',
   Administrador: 'Administrator',
-  'Operador da plataforma': 'Platform operator',
+  'Gestor da plataforma': 'Platform manager',
   'Só consulta: vê TVs, conteúdo, alertas e relatórios.': 'Read-only: sees TVs, content, alerts and reports.',
   'Cuida do conteúdo (mídias, playlists, campanhas, layouts) e escolhe o que cada TV exibe.':
     'Manages content (media, playlists, campaigns, layouts) and chooses what each TV shows.',
   'Administra o cliente: TVs, locais, grupos, alertas, equipe, plano e cobrança.':
     'Administers the client: TVs, locations, groups, alerts, team, plan and billing.',
-  'Opera a plataforma (clientes, planos e faturas).': 'Operates the platform (clients, plans and invoices).',
+  'Opera a plataforma (clientes, planos, cupons, faturas e gestores).': 'Operates the platform (clients, plans, coupons, invoices and managers).',
   Reserva: 'Reserve',
   'Em teste': 'On trial',
   'Em dia': 'Up to date',

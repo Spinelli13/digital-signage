@@ -4,6 +4,7 @@ import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
 
+import com.digitalsignage.backend.plan.Feature;
 import com.digitalsignage.backend.plan.Plan;
 
 /** Confere o que o plano do cliente permite antes de acrescentar TV, mídia ou usuário. Limite nulo = sem limite. */
@@ -28,6 +29,10 @@ public class PlanLimits {
 
 	public void requireRoomForUpload(long tenantId, long bytes) {
 		Plan plan = planOf(tenantId);
+		if (plan.getMaxUploadMb() != null && bytes > plan.getMaxUploadMb() * 1024L * 1024L) {
+			throw new PlanLimitException("O plano " + plan.getName() + " aceita arquivos de até " + plan.getMaxUploadMb()
+					+ " MB e este é maior. Comprima o arquivo ou peça um plano maior.");
+		}
 		if (plan.getMaxStorageMb() != null) {
 			long limit = plan.getMaxStorageMb() * 1024L * 1024L;
 			if (usage.of(tenantId).storageBytes() + bytes > limit) {
@@ -42,6 +47,13 @@ public class PlanLimits {
 		if (plan.getMaxUsers() != null && usage.of(tenantId).users() >= plan.getMaxUsers()) {
 			throw new PlanLimitException("O plano " + plan.getName() + " permite até " + plan.getMaxUsers()
 					+ " usuário(s) e todos já estão em uso. Desative um usuário ou peça um plano maior.");
+		}
+	}
+
+	public void requireFeature(long tenantId, Feature feature) {
+		Plan plan = planOf(tenantId);
+		if (!plan.includes(feature)) {
+			throw new PlanLimitException("O plano " + plan.getName() + " não inclui " + feature.label() + ". Peça um plano que inclua este recurso.");
 		}
 	}
 

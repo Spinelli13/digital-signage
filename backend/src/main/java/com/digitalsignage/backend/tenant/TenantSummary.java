@@ -1,9 +1,11 @@
 package com.digitalsignage.backend.tenant;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import com.digitalsignage.backend.plan.Feature;
 import com.digitalsignage.backend.plan.Plan;
 
 /** Um cliente com o plano dele e o que está usando: o que o painel mostra em "Plano e cobrança" e na lista de clientes. */
@@ -18,12 +20,14 @@ public record TenantSummary(
 		Instant currentPeriodEnd,
 		String billingEmail) {
 
-	/** Limite nulo = sem limite. */
-	public record PlanInfo(Long id, String code, String name, int priceCents, String currency, Integer maxDevices, Integer maxStorageMb, Integer maxUsers) {
+	/** Limite nulo = sem limite. {@code features} são os recursos incluídos (códigos de {@link Feature}). */
+	public record PlanInfo(Long id, String code, String name, int priceCents, String currency, Integer maxDevices, Integer maxStorageMb, Integer maxUsers,
+			Integer maxUploadMb, List<String> features) {
 
 		public static PlanInfo of(Plan plan) {
 			return new PlanInfo(plan.getId(), plan.getCode(), plan.getName(), plan.getPriceCents(), plan.getCurrency(),
-					plan.getMaxDevices(), plan.getMaxStorageMb(), plan.getMaxUsers());
+					plan.getMaxDevices(), plan.getMaxStorageMb(), plan.getMaxUsers(), plan.getMaxUploadMb(),
+					plan.getFeatures().stream().sorted().map(Feature::name).toList());
 		}
 	}
 

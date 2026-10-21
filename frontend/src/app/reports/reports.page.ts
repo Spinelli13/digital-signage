@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { ApiService } from '../core/api.service';
+import { AuthService } from '../core/auth.service';
 import { FileSaver } from '../core/download';
 import { daysAgo, formatDateTime, formatPercent, humanSeconds, stateOfConnection } from '../core/format';
 import { FDatePipe, TPipe, tr, trServer } from '../core/i18n';
@@ -48,7 +49,7 @@ export const TABS: { id: ReportTab; label: string; icon: IconName }[] = [
     </app-page-header>
 
     <div class="tabs" role="tablist">
-      @for (item of tabs; track item.id) {
+      @for (item of tabs(); track item.id) {
         <button role="tab" [attr.aria-selected]="tab() === item.id" [class.on]="tab() === item.id" (click)="select(item.id)"><app-icon [name]="item.icon" [size]="17" />{{ item.label | t }}</button>
       }
     </div>
@@ -279,7 +280,10 @@ export class ReportsPage implements OnInit {
   private readonly api = inject(ApiService);
   private readonly files = inject(FileSaver);
 
-  readonly tabs = TABS;
+  private readonly auth = inject(AuthService);
+
+  /** A aba de comprovação só aparece se o plano inclui o recurso. */
+  readonly tabs = computed(() => TABS.filter((item) => item.id !== 'proof' || this.auth.has('PROOF_OF_PLAY')));
   readonly tab = signal<ReportTab>('uptime');
   readonly from = signal(daysAgo(6));
   readonly to = signal(daysAgo(0));

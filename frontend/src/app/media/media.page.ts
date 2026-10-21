@@ -31,7 +31,9 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
     <app-page-header [title]="'Biblioteca de Mídia' | t" [subtitle]="'Imagens (JPG, PNG, WEBP), vídeos (MP4 ou MOV do iPhone: a conversão para MP4 Full HD é feita ao enviar), páginas da web e QR Codes disponíveis para as playlists.' | t" icon="image">
       @if (auth.can('content')) {
         <div class="head-actions">
-          <button class="secondary" (click)="openWidget()"><app-icon name="puzzle" />{{ 'Widget' | t }}</button>
+          @if (auth.has('WIDGETS')) {
+            <button class="secondary" (click)="openWidget()"><app-icon name="puzzle" />{{ 'Widget' | t }}</button>
+          }
           <button class="secondary" (click)="openWeb()"><app-icon name="globe" />{{ 'Página web' | t }}</button>
           <button class="secondary" (click)="openQr()"><app-icon name="qr-code" />{{ 'QR Code' | t }}</button>
           <label class="primary upload">

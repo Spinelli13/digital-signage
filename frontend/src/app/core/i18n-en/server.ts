@@ -27,6 +27,10 @@ export const SERVER: Record<string, string> = {
     'The {plan} plan allows up to {n} MB of media and this file would exceed it. Delete media you no longer use or ask for a bigger plan.',
   'O plano {plan} permite até {n} usuário(s) e todos já estão em uso. Desative um usuário ou peça um plano maior.':
     'The {plan} plan allows up to {n} user(s) and all of them are in use. Deactivate a user or ask for a bigger plan.',
+  'O plano {plan} não inclui {feature}. Peça um plano que inclua este recurso.':
+    'The {plan} plan does not include {feature}. Ask for a plan that includes this feature.',
+  'O plano {plan} aceita arquivos de até {n} MB e este é maior. Comprima o arquivo ou peça um plano maior.':
+    'The {plan} plan accepts files up to {n} MB and this one is larger. Compress the file or ask for a bigger plan.',
   'A conta "{name}" foi encerrada.': 'The account "{name}" has been closed.',
   'A assinatura de "{name}" está suspensa. Regularize a cobrança para voltar a usar o painel (as TVs continuam exibindo o que já têm).':
     'The subscription of "{name}" is suspended. Settle the billing to use the panel again (the TVs keep playing what they already have).',
@@ -34,6 +38,7 @@ export const SERVER: Record<string, string> = {
   'Esta fatura já foi paga': 'This invoice has already been paid',
   'Uma fatura paga não pode ser cancelada': 'A paid invoice cannot be canceled',
   'Fatura não encontrada: {id}': 'Invoice not found: {id}',
+  'Gestor não encontrado: {id}': 'Manager not found: {id}',
   'Já existe um cliente chamado "{name}"': 'A client named "{name}" already exists',
   'Já existe um plano com o código "{code}"': 'A plan with the code "{code}" already exists',
   'O código de um plano não pode ser alterado': 'A plan code cannot be changed',

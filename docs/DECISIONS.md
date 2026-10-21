@@ -544,3 +544,21 @@ Pedido: olhar de UX/UI sênior + tech lead de frontend, pesquisar e criar um lay
 
 ### Não feito (próximas etapas)
 - **Voz** (TTS) dizendo a senha na TV, aviso por **WhatsApp ou SMS** (custa por mensagem), papel **Atendente**, **transferir** senha, **relatório** por período e **tempo máximo de espera** com alerta, **agendamento**.
+
+
+## 2026-10-21 (parte 23) — Permissões por plano (recursos incluídos e tamanho de arquivo)
+
+- Pedido: "configuração de planos, limitações, permissões, nomes, valores e etc dentro do painel no login de gestor". O gestor já editava nome, descrição, preço e limites de TVs, espaço e usuários (Plataforma → Planos); faltavam as **permissões** (quais recursos o plano inclui) e mais um limite.
+- **Modelo (V18):** `plans.features` (lista de códigos separados por vírgula, como `CAMPAIGNS,QUEUE`) e `plans.max_upload_mb` (tamanho máximo de cada arquivo; nulo = sem limite). Os planos que já existiam **ficam com tudo** (o valor padrão da coluna lista todos os recursos): nenhum cliente perde nada ao atualizar; o gestor desmarca o que quiser.
+- **Recursos** (`plan/Feature`): Campanhas, Layouts com zonas, Widgets, Tabelas de preços, Fila de atendimento e Comprovação de exibição. Cada um conhece os endereços do painel que protege. TVs, mídias, playlists, locais, grupos, alertas e equipe fazem parte de qualquer plano (só têm limite de quantidade).
+- **Quem barra é o servidor** (`FeatureGate`, um interceptador do Spring MVC): usuário do painel pedindo um recurso que o plano não tem recebe **402** com "O plano X não inclui Y". **Consultar** campanhas, layouts e preços continua liberado, porque outras telas dependem dessas listas (ex.: escolher o layout de uma TV); gravar é barrado. O **operador da plataforma nunca é barrado** (suporte) e as **TVs não passam por aqui**: rebaixar de plano não apaga nem desliga nada, o Player segue exibindo o que já tem (mesma regra dos limites). A mudança de um plano vale na requisição seguinte, sem esperar token.
+- **Tamanho de arquivo:** `PlanLimits.requireRoomForUpload` também confere o limite de cada arquivo (402 "aceita arquivos de até N MB").
+- **Painel:** o menu esconde o que o plano não inclui e a rota abre `/recurso/:código` ("Este recurso não está no seu plano", com o caminho para os planos); o botão de widget, a aba Comprovação dos relatórios e os cartões de plano de "Plano e cobrança" seguem a mesma regra; a janela de plano do gestor ganhou o campo do tamanho do arquivo e as caixas de cada recurso. `/auth/me` e a lista de planos do cliente trazem `features` e `maxUploadMb`.
+- **Testes:** backend `PlanFeaturesTest` (8); painel +10 (recursos do plano, `auth.has`, guarda de rota).
+- **Não feito:** limites de quantidade para campanhas, layouts e widgets (hoje são só liga/desliga) e um preço anual; ambos cabem aqui sem mudar a estrutura.
+
+### Gestores da plataforma (mesma etapa)
+- O papel `PLATFORM_ADMIN` passa a se chamar **Gestor da plataforma** na tela (antes "Operador"), que é como o dono do produto o chama; o código do papel não mudou, então nenhum login e nenhum token foram afetados.
+- **Plataforma → Gestores** (`/api/v1/platform/managers`): listar, cadastrar (nome, e-mail que é o login, senha de 8+ caracteres), trocar nome e senha, desativar e excluir. Cada gestor tem o próprio login, então o sócio não divide a senha. O gestor novo mora no mesmo cliente de quem o cadastrou (o cliente da própria operação). Ninguém desativa nem exclui a si mesmo; desativar vale na hora (o papel e a situação são lidos do banco a cada requisição). Um administrador de cliente recebe 403 em tudo isso. Antes só dava para criar outro operador pela tela Equipe, atuando no cliente certo: agora há um lugar próprio.
+- O gestor tem acesso a **tudo** da plataforma (decisão do dono: "tudo, igual ao meu"). Um perfil limitado (só cupons, sem faturas) cabe depois sem mudar a estrutura: bastaria um papel novo entre ADMIN e PLATFORM_ADMIN.
+- **Testes:** backend `PlatformManagerTest` (7); painel +4.

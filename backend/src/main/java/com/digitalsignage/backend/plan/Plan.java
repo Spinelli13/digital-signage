@@ -1,6 +1,8 @@
 package com.digitalsignage.backend.plan;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -42,6 +44,14 @@ public class Plan {
 
 	@Column(name = "max_users")
 	private Integer maxUsers;
+
+	/** Tamanho máximo de cada arquivo enviado (MB). Nulo = sem limite. */
+	@Column(name = "max_upload_mb")
+	private Integer maxUploadMb;
+
+	/** Recursos incluídos, como "CAMPAIGNS,QUEUE" (ver {@link Feature}). */
+	@Column(nullable = false)
+	private String features = Feature.joinAll();
 
 	@Column(nullable = false)
 	private boolean active = true;
@@ -142,6 +152,26 @@ public class Plan {
 
 	public void setMaxUsers(Integer maxUsers) {
 		this.maxUsers = maxUsers;
+	}
+
+	public Integer getMaxUploadMb() {
+		return maxUploadMb;
+	}
+
+	public void setMaxUploadMb(Integer maxUploadMb) {
+		this.maxUploadMb = maxUploadMb;
+	}
+
+	public Set<Feature> getFeatures() {
+		return Feature.parse(features);
+	}
+
+	public void setFeatures(Collection<Feature> features) {
+		this.features = Feature.join(features);
+	}
+
+	public boolean includes(Feature feature) {
+		return getFeatures().contains(feature);
 	}
 
 	public boolean isActive() {

@@ -99,6 +99,8 @@ public abstract class AbstractApiTest {
 		jdbc.update("UPDATE platform_settings SET company_name = 'Smartplay', payment_instructions = 'Pague por PIX ou boleto e envie o comprovante para o suporte.', support_email = NULL, trial_days = 14, grace_days = 7, invoice_lead_days = 5");
 		jdbc.update("DELETE FROM monitoring_settings WHERE tenant_id > 2");
 		jdbc.update("DELETE FROM users WHERE tenant_id > 2");
+		// gestores criados por testes (o da instalação, semeado na subida, fica)
+		jdbc.update("DELETE FROM users WHERE role = 'PLATFORM_ADMIN' AND email <> 'admin@digitalsignage.local'");
 		jdbc.update("DELETE FROM tenants WHERE id > 2");
 		jdbc.update("UPDATE tenants SET plan_id = (SELECT id FROM plans WHERE code = 'interno'), status = 'ACTIVE', current_period_end = NULL, trial_ends_at = NULL WHERE id = 2");
 		jdbc.update("DELETE FROM plans WHERE code NOT IN ('interno', 'gratis', 'basico', 'profissional')");

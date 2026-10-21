@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { ConfigService } from './config.service';
-import { Me, Role } from './models';
+import { FeatureCode, Me, Role } from './models';
 
 const TOKEN_KEY = 'signage.token';
 const ACTING_KEY = 'signage.acting-tenant';
@@ -74,6 +74,15 @@ export class AuthService {
       return capability !== 'platform';
     }
     return RANK[me.role] >= RANK[NEEDS[capability]];
+  }
+
+  /**
+   * O plano do cliente inclui este recurso? O operador da plataforma vê tudo, e enquanto a conta não chegou a resposta é "sim"
+   * (nada some por engano; o servidor é quem realmente barra).
+   */
+  has(feature: FeatureCode): boolean {
+    const me = this.me();
+    return !me || me.platformAdmin || (me.tenant.plan.features?.includes(feature) ?? true);
   }
 
   /** O operador entra no cliente indicado (todas as chamadas passam a atuar nele). */

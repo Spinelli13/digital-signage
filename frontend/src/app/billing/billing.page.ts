@@ -11,6 +11,7 @@ import { IconName } from '../shared/icons';
 import { EmptyStateComponent, LEGACY_TONE, PageHeaderComponent, PillComponent, SkeletonComponent, Tone } from '../shared/ui';
 import {
   daysUntil,
+  FEATURES,
   formatLimit,
   formatMoney,
   formatStorage,
@@ -120,6 +121,16 @@ import {
                 <li><app-icon name="monitor" [size]="15" />{{ 'TVs' | t }}: <b class="num">{{ limitText(plan.maxDevices) }}</b></li>
                 <li><app-icon name="hard-drive" [size]="15" />{{ 'Espaço de mídias' | t }}: <b class="num">{{ storageText(plan) }}</b></li>
                 <li><app-icon name="users" [size]="15" />{{ 'Usuários' | t }}: <b class="num">{{ limitText(plan.maxUsers) }}</b></li>
+                @if (plan.maxUploadMb !== null) {
+                  <li><app-icon name="upload" [size]="15" />{{ 'Arquivo de até' | t }}: <b class="num">{{ uploadText(plan) }}</b></li>
+                }
+              </ul>
+              <ul class="features">
+                @for (feature of allFeatures; track feature.code) {
+                  <li [class.off]="!plan.features.includes(feature.code)">
+                    <app-icon [name]="plan.features.includes(feature.code) ? 'check' : 'circle-x'" [size]="15" />{{ feature.label | t }}
+                  </li>
+                }
               </ul>
               @if (plan.id === billing.tenant.plan.id) {
                 <app-pill tone="brand" icon="badge-check" class="current-tag">{{ 'Seu plano' | t }}</app-pill>
@@ -184,6 +195,9 @@ import {
     .plan-card ul { margin: 8px 0; padding: 0; list-style: none; display: grid; gap: 8px; }
     .plan-card li { display: flex; align-items: center; gap: 8px; }
     .plan-card li app-icon { color: var(--primary); flex: none; }
+    .plan-card ul.features { margin-top: 0; padding-top: 8px; border-top: 1px dashed var(--line); gap: 6px; }
+    .plan-card li.off { color: var(--muted); }
+    .plan-card li.off app-icon { color: var(--muted); }
     :host-context(:root[data-theme='dark']) .plan-card li app-icon { color: var(--link); }
     .ask { display: inline-flex; align-items: center; justify-content: center; gap: 7px; text-decoration: none; color: var(--text); margin-top: auto; }
     .current-tag { align-self: flex-start; margin-top: auto; }
@@ -250,6 +264,7 @@ export class BillingPage implements OnInit {
   readonly usageIcons: IconName[] = ['monitor', 'hard-drive', 'users'];
   readonly look = computed(() => LEGACY_TONE[this.tone() as 'on' | 'warn' | 'off']);
   readonly planName = planText;
+  readonly allFeatures = FEATURES;
   readonly date = (value: string | null) => formatDate(value);
 
   invoiceLook(status: 'OPEN' | 'PAID' | 'VOID', overdue: boolean): { tone: Tone; icon: IconName } {
@@ -264,6 +279,10 @@ export class BillingPage implements OnInit {
 
   limitText(value: number | null): string {
     return formatLimit(value);
+  }
+
+  uploadText(plan: PlanOption): string {
+    return plan.maxUploadMb === null ? tr('ilimitado') : `${plan.maxUploadMb} MB`;
   }
 
   storageText(plan: PlanOption): string {

@@ -3,11 +3,11 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
 
-import { meFixture } from '../testing/fixtures';
+import { PLAN, meFixture, tenantFixture } from '../testing/fixtures';
 import { AuthService } from './auth.service';
 import { ConfigService } from './config.service';
 import { Role } from './models';
-import { capabilityGuard } from './role.guard';
+import { capabilityGuard, featureGuard } from './role.guard';
 
 const API = 'http://api.test/api/v1';
 
@@ -172,5 +172,55 @@ describe('capabilityGuard', () => {
     auth.me.set(meFixture('ADMIN'));
 
     expect(await run('platform')).toBeInstanceOf(UrlTree);
+  });
+});
+
+describe('plan features', () => {
+  const withFeatures = (role: 'ADMIN' | 'PLATFORM_ADMIN', features: string[]) =>
+    meFixture(role, { tenant: tenantFixture({ plan: { ...PLAN, features: features as typeof PLAN.features } }) });
+
+  it('is optimistic while the account has not arrived', () => {
+    const { auth } = open('jwt');
+
+    expect(auth.has('QUEUE')).toBe(true);
+  });
+
+  it('only offers what the plan includes', () => {
+    const { auth } = open('jwt');
+    auth.me.set(withFeatures('ADMIN', ['CAMPAIGNS']));
+
+    expect(auth.has('CAMPAIGNS')).toBe(true);
+    expect(auth.has('QUEUE')).toBe(false);
+    expect(auth.has('PROOF_OF_PLAY')).toBe(false);
+  });
+
+  it('shows everything to the platform operator, whatever the plan of the client being visited', () => {
+    const { auth } = open('jwt');
+    auth.me.set(withFeatures('PLATFORM_ADMIN', []));
+
+    expect(auth.has('QUEUE')).toBe(true);
+  });
+});
+
+describe('featureGuard', () => {
+  const run = (feature: 'QUEUE' | 'CAMPAIGNS') =>
+    TestBed.runInInjectionContext(() => featureGuard(feature)({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)) as Promise<boolean | UrlTree>;
+
+  it('lets the page open when the plan includes the feature', async () => {
+    const { auth } = open('jwt');
+    auth.me.set(meFixture('ADMIN'));
+
+    expect(await run('QUEUE')).toBe(true);
+  });
+
+  it('explains instead of opening a feature the plan does not include', async () => {
+    const { auth } = open('jwt');
+    auth.me.set(meFixture('ADMIN', { tenant: tenantFixture({ plan: { ...PLAN, features: ['CAMPAIGNS'] } }) }));
+
+    const result = await run('QUEUE');
+
+    expect(result).toBeInstanceOf(UrlTree);
+    expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/recurso/QUEUE');
+    expect(await run('CAMPAIGNS')).toBe(true);
   });
 });

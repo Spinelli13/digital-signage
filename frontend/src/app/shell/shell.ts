@@ -56,14 +56,22 @@ import { UserMenuComponent } from '../shared/user-menu';
           <a routerLink="/dispositivos" routerLinkActive="active"><app-icon name="monitor" /><span>{{ 'Dispositivos' | t }}</span></a>
           <a routerLink="/locais" routerLinkActive="active"><app-icon name="map-pin" /><span>{{ 'Pontos & Locais' | t }}</span></a>
           <a routerLink="/grupos" routerLinkActive="active"><app-icon name="layers" /><span>{{ 'Grupos' | t }}</span></a>
-          <a routerLink="/atendimento" routerLinkActive="active"><app-icon name="hourglass" /><span>{{ 'Atendimento' | t }}</span></a>
+          @if (auth.has('QUEUE')) {
+            <a routerLink="/atendimento" routerLinkActive="active"><app-icon name="hourglass" /><span>{{ 'Atendimento' | t }}</span></a>
+          }
 
           <div class="section">{{ 'Conteúdo' | t }}</div>
           <a routerLink="/biblioteca" routerLinkActive="active"><app-icon name="image" /><span>{{ 'Biblioteca' | t }}</span></a>
           <a routerLink="/playlists" routerLinkActive="active"><app-icon name="list-video" /><span>{{ 'Playlists' | t }}</span></a>
-          <a routerLink="/campanhas" routerLinkActive="active"><app-icon name="megaphone" /><span>{{ 'Campanhas' | t }}</span></a>
-          <a routerLink="/layouts" routerLinkActive="active"><app-icon name="layout-template" /><span>{{ 'Layouts' | t }}</span></a>
-          <a routerLink="/precos" routerLinkActive="active"><app-icon name="badge-dollar-sign" /><span>{{ 'Preços' | t }}</span></a>
+          @if (auth.has('CAMPAIGNS')) {
+            <a routerLink="/campanhas" routerLinkActive="active"><app-icon name="megaphone" /><span>{{ 'Campanhas' | t }}</span></a>
+          }
+          @if (auth.has('LAYOUTS')) {
+            <a routerLink="/layouts" routerLinkActive="active"><app-icon name="layout-template" /><span>{{ 'Layouts' | t }}</span></a>
+          }
+          @if (auth.has('PRICES')) {
+            <a routerLink="/precos" routerLinkActive="active"><app-icon name="badge-dollar-sign" /><span>{{ 'Preços' | t }}</span></a>
+          }
 
           <div class="section">{{ 'Monitoramento' | t }}</div>
           <a routerLink="/alertas" routerLinkActive="active">
@@ -88,6 +96,7 @@ import { UserMenuComponent } from '../shared/user-menu';
           <a routerLink="/plataforma/clientes" routerLinkActive="active"><app-icon name="building" /><span>{{ 'Clientes' | t }}</span></a>
           <a routerLink="/plataforma/planos" routerLinkActive="active"><app-icon name="tag" /><span>{{ 'Planos' | t }}</span></a>
           <a routerLink="/plataforma/faturas" routerLinkActive="active"><app-icon name="receipt-text" /><span>{{ 'Faturas' | t }}</span></a>
+          <a routerLink="/plataforma/gestores" routerLinkActive="active"><app-icon name="key-round" /><span>{{ 'Gestores' | t }}</span></a>
           <a routerLink="/plataforma/configuracoes" routerLinkActive="active"><app-icon name="settings" /><span>{{ 'Configurações' | t }}</span></a>
         }
       </nav>

@@ -33,11 +33,12 @@ import jakarta.validation.constraints.Size;
 public class BillingController {
 
 	public record PlanOption(Long id, String code, String name, String description, int priceCents, String currency,
-			Integer maxDevices, Integer maxStorageMb, Integer maxUsers) {
+			Integer maxDevices, Integer maxStorageMb, Integer maxUsers, Integer maxUploadMb, List<String> features) {
 
 		static PlanOption of(Plan plan) {
 			return new PlanOption(plan.getId(), plan.getCode(), plan.getName(), plan.getDescription(), plan.getPriceCents(), plan.getCurrency(),
-					plan.getMaxDevices(), plan.getMaxStorageMb(), plan.getMaxUsers());
+					plan.getMaxDevices(), plan.getMaxStorageMb(), plan.getMaxUsers(), plan.getMaxUploadMb(),
+					plan.getFeatures().stream().sorted().map(com.digitalsignage.backend.plan.Feature::name).toList());
 		}
 	}
 
