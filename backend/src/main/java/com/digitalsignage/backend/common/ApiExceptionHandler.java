@@ -34,6 +34,11 @@ public class ApiExceptionHandler {
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
 	}
 
+	@ExceptionHandler(RateLimitException.class)
+	public ResponseEntity<Map<String, String>> handleRateLimit(RateLimitException ex) {
+		return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("error", ex.getMessage()));
+	}
+
 	/** O papel do usuário não permite a operação. */
 	@ExceptionHandler(ForbiddenException.class)
 	public ResponseEntity<Map<String, String>> handleForbidden(ForbiddenException ex) {

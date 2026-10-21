@@ -1,0 +1,35 @@
+/** Inglês: senha pelo celular (páginas públicas e o QR Code da fila). */
+export const ATTENDANCE_REMOTE: Record<string, string> = {
+  'Permitir pegar a senha pelo celular (QR Code)': 'Allow taking the ticket on the phone (QR Code)',
+  'Quem escanear o QR Code da fila pega a senha no próprio celular e vê a posição na fila, sem instalar nada.':
+    'Whoever scans the queue QR Code takes the ticket on their own phone and sees the position in the queue, with nothing to install.',
+  'QR Code da fila': 'Queue QR Code',
+  'Imprima e cole perto da entrada. O endereço abaixo abre a mesma página.': 'Print it and stick it near the entrance. The address below opens the same page.',
+  'Endereço da fila': 'Queue address',
+  'Copiar o endereço': 'Copy the address',
+  'Baixar o QR Code': 'Download the QR Code',
+  'Escaneie para pegar a sua senha': 'Scan to take your ticket',
+  'Endereço copiado.': 'Address copied.',
+  'Não foi possível copiar. Selecione o endereço e copie à mão.': 'Could not copy. Select the address and copy it by hand.',
+  'Fila "{name}" salva. Abra a fila de novo para baixar o QR Code.': 'Queue "{name}" saved. Open the queue again to download the QR Code.',
+  // páginas públicas
+  '{n} pessoa(s) aguardando agora.': '{n} person(s) waiting right now.',
+  'Seu nome (opcional)': 'Your name (optional)',
+  'Pegar minha senha': 'Take my ticket',
+  'Esta fila não está recebendo senhas pelo celular agora. Procure o atendimento.': 'This queue is not giving tickets on the phone right now. Please ask the service desk.',
+  'Carregando…': 'Loading…',
+  'Não foi possível falar com o servidor agora. Confira a internet e tente de novo.': 'Could not reach the server right now. Check the internet and try again.',
+  'A página se atualiza sozinha. Fique por perto: quando for a sua vez, ela avisa.': 'The page updates by itself. Stay close: it tells you when it is your turn.',
+  'É a sua vez! Vá ao {counter}.': 'It is your turn! Go to {counter}.',
+  guichê: 'counter',
+  'Você está sendo atendido.': 'You are being served.',
+  'Atendimento concluído. Obrigado!': 'Service finished. Thank you!',
+  'Sua senha foi chamada e você não compareceu. Procure o atendimento.': 'Your ticket was called and you did not show up. Please ask the service desk.',
+  'Esta senha foi cancelada ou expirou.': 'This ticket was canceled or expired.',
+  'Sair da fila': 'Leave the queue',
+  'Você é o próximo da fila.': 'You are next in the queue.',
+  'Há 1 pessoa na sua frente.': 'There is 1 person ahead of you.',
+  'Há {n} pessoas na sua frente.': 'There are {n} people ahead of you.',
+  'Sair da fila? Você perde o seu lugar.': 'Leave the queue? You lose your place.',
+  // mensagens do servidor (ver server.ts)
+};

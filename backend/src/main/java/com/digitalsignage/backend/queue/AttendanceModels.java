@@ -9,7 +9,13 @@ public final class AttendanceModels {
 	private AttendanceModels() {
 	}
 
-	public record QueueResponse(Long id, String name, String prefix, boolean priority, boolean active, String timezone, long waiting) {
+	public record QueueResponse(Long id, String name, String prefix, boolean priority, boolean active, String timezone, long waiting,
+			boolean remoteEnabled, String publicToken) {
+
+		/** O segredo do QR Code é do Administrador: os outros papéis não o veem. */
+		public QueueResponse withoutToken() {
+			return new QueueResponse(id, name, prefix, priority, active, timezone, waiting, remoteEnabled, null);
+		}
 	}
 
 	public record CounterResponse(Long id, String name, List<Long> queueIds, boolean active, TicketResponse current) {
@@ -31,6 +37,19 @@ public final class AttendanceModels {
 
 	public record Overview(List<QueueResponse> queues, List<CounterResponse> counters, List<WaitingResponse> waiting, Today today,
 			long serverTimeMs) {
+
+		public Overview withoutTokens() {
+			return new Overview(queues.stream().map(QueueResponse::withoutToken).toList(), counters, waiting, today, serverTimeMs);
+		}
+	}
+
+	/** O que a pessoa vê na página pública da fila (sem entrar no painel). */
+	public record PublicQueue(String name, boolean open, long waiting) {
+	}
+
+	/** O que a pessoa vê da própria senha: nunca o nome nem os dados de outras pessoas. */
+	public record PublicTicket(String ticketToken, String label, String queueName, String status, String counter, int ahead, long waiting,
+			Long calledAtMs, int callCount) {
 	}
 
 }

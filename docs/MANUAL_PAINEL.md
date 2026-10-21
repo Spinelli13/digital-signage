@@ -626,13 +626,21 @@ Para lojas, clínicas, cartórios e qualquer lugar com fila: o Smartplay emite *
 
 **4. Mostrar na TV: o painel de chamadas.** Em **Biblioteca**, clique em **Widget** e escolha **Painel de chamadas**: dê um título, marque as filas (ou nenhuma, para todas), o número de chamadas na lista (3 a 8) e se a TV deve **tocar um aviso** a cada chamada. Coloque o widget **sozinho numa playlist** e a playlist numa **zona de um layout** (por exemplo, a lateral direita) ou na TV inteira. Enquanto está na tela, o painel **se atualiza em até 3 segundos**: mostra a senha chamada em letras grandes, o guichê e as últimas chamadas, e a senha **pisca por 20 segundos** para chamar a atenção.
 
+**5. Senha pelo celular (QR Code).** Na janela da fila (Administrador), marque **Permitir pegar a senha pelo celular (QR Code)** e salve; abra a fila de novo para ver o **QR Code** e o **endereço**: **Baixar o QR Code**, imprimir e colar perto da entrada (ou **Copiar o endereço** e mandar por mensagem). Quem escanear:
+
+1. Vê o nome da fila e quantas pessoas aguardam, escreve o nome (opcional) e toca em **Pegar minha senha**.
+2. Fica numa página que **se atualiza sozinha** com a senha em letras grandes e **quantas pessoas estão na frente**. Quando o atendente chama, a página mostra **"É a sua vez! Vá ao Guichê 2"** e o celular **vibra**. Dá para **Sair da fila** enquanto a senha ainda não foi chamada.
+3. Se escanear de novo, volta para a mesma senha (não emite outra). Terminado o atendimento, pode pegar uma nova.
+
+A senha pelo celular aparece na **Fila de espera** como as outras (com o nome, que só os atendentes veem). **Segurança:** o QR Code leva um código secreto da fila; quem o tiver pode pegar senha, então imprima só onde o cliente está. Cada celular pode pegar **até 4 senhas por hora** por fila (o aparelho é reconhecido por um código guardado no navegador, então clientes no mesmo Wi-Fi da loja não atrapalham uns aos outros), uma mesma rede **até 60 por hora**, e a fila aceita **até 300 senhas de celular esperando** ao mesmo tempo. **Desligar** a opção fecha a página na hora (os QR Codes impressos deixam de funcionar até religar). O QR Code só pode ser visto pelo Administrador.
+
 **Números do dia.** No alto da página: senhas emitidas, atendidas, aguardando, quantas **não compareceram**, a **espera média** e o **atendimento médio**.
 
 **Quem pode o quê.** O **Visualizador** só acompanha; o **Editor** emite, chama e conclui senhas; o **Administrador** monta as filas e os guichês. Por enquanto o atendente precisa do papel **Editor** (que também mexe em conteúdo); um papel só para atendimento é um próximo passo.
 
 **Privacidade.** O nome digitado na senha é um dado pessoal: as senhas são **apagadas depois de 30 dias**. Prefira não pedir o nome quando não for necessário.
 
-> **Requisito:** o painel de chamadas na TV exige o Player **0.14 ou mais novo** (Dispositivos > **Atualizar app**). **Limites desta versão:** o aviso é um **duplo bip** (a TV não fala o número); a pessoa **não** tira a senha pelo celular (isso fica para uma próxima etapa); a TV precisa de internet para se atualizar (sem internet ela mostra a última chamada que recebeu).
+> **Requisito:** o painel de chamadas na TV exige o Player **0.14 ou mais novo** (Dispositivos > **Atualizar app**). **Limites desta versão:** o aviso é um **duplo bip** (a TV não fala o número); a TV precisa de internet para se atualizar (sem internet ela mostra a última chamada que recebeu).
 
 ---
 

@@ -5,6 +5,9 @@ import { capabilityGuard } from './core/role.guard';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./login/login.page').then((m) => m.LoginPage) },
+  // Senha pelo celular: páginas abertas a quem escaneia o QR Code da fila (sem login e fora do menu do painel).
+  { path: 'fila/:token', loadComponent: () => import('./public-ticket/public-ticket.page').then((m) => m.QueueTakePage) },
+  { path: 'senha/:token', loadComponent: () => import('./public-ticket/public-ticket.page').then((m) => m.TicketStatusPage) },
   {
     path: '',
     canActivate: [authGuard],

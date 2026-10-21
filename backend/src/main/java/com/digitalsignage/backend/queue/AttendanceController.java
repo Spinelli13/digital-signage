@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.digitalsignage.backend.queue.AttendanceModels.Overview;
 import com.digitalsignage.backend.queue.AttendanceModels.TicketResponse;
+import com.digitalsignage.backend.security.CurrentUser;
+import com.digitalsignage.backend.user.Role;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -32,7 +34,8 @@ public class AttendanceController {
 
 	@GetMapping("/overview")
 	public Overview overview() {
-		return service.overview();
+		Overview overview = service.overview();
+		return CurrentUser.isAtLeast(Role.ADMIN) ? overview : overview.withoutTokens();
 	}
 
 	@PostMapping("/tickets")

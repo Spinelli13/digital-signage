@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '../core/api.service';
@@ -9,6 +9,7 @@ import { AttendanceToday, CounterInfo, QueueInfo, Ticket, TicketAction, WaitingT
 import { TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
 import { IconComponent } from '../shared/icon';
+import { QR_IMAGE_SIZE, drawQr } from '../media/qr';
 import { EmptyStateComponent, PageHeaderComponent, PillComponent, SkeletonComponent } from '../shared/ui';
 
 const POLL_MS = 4000;
@@ -242,6 +243,23 @@ export function formatWait(seconds: number | null | undefined): string {
               <label class="check"><input type="checkbox" name="active" [ngModel]="queueActive()" (ngModelChange)="queueActive.set($event)" /> {{ 'Fila ativa (emite senhas)' | t }}</label>
             </div>
           }
+          <div class="field">
+            <label class="check"><input type="checkbox" name="remote" [ngModel]="queueRemote()" (ngModelChange)="queueRemote.set($event)" /> {{ 'Permitir pegar a senha pelo celular (QR Code)' | t }}</label>
+            <p class="label">{{ 'Quem escanear o QR Code da fila pega a senha no próprio celular e vê a posição na fila, sem instalar nada.' | t }}</p>
+          </div>
+          @if (editingQueue && editingQueue.remoteEnabled && editingQueue.publicToken && queueRemote()) {
+            <div class="qr-box">
+              <canvas #qrCanvas [width]="imageSize" [height]="imageSize" [attr.aria-label]="'QR Code da fila' | t"></canvas>
+              <div class="qr-side">
+                <p class="label">{{ 'Imprima e cole perto da entrada. O endereço abaixo abre a mesma página.' | t }}</p>
+                <input readonly [value]="publicLink()" [attr.aria-label]="'Endereço da fila' | t" />
+                <div class="actions">
+                  <button type="button" class="secondary small" (click)="copyLink()"><app-icon name="copy" [size]="15" />{{ 'Copiar o endereço' | t }}</button>
+                  <button type="button" class="secondary small" (click)="downloadQr()"><app-icon name="download" [size]="15" />{{ 'Baixar o QR Code' | t }}</button>
+                </div>
+              </div>
+            </div>
+          }
           <div class="actions">
             <button type="button" class="secondary" (click)="closeModal()">{{ 'Cancelar' | t }}</button>
             <button type="submit" class="primary" [disabled]="busy() || !queueName().trim() || !queuePrefix().trim()">{{ 'Salvar' | t }}</button>
@@ -303,6 +321,10 @@ export function formatWait(seconds: number | null | undefined): string {
     .issue-button span { font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
     .issue-button small { color: var(--muted); }
     .prefix { max-width: 110px; text-transform: uppercase; }
+    .qr-box { display: flex; gap: 16px; align-items: flex-start; margin: 4px 0 14px; }
+    .qr-box canvas { width: 180px; height: 180px; flex: none; border: 1px solid var(--line); border-radius: 10px; }
+    .qr-side { display: flex; flex-direction: column; gap: 8px; min-width: 0; flex: 1; }
+    @media (max-width: 560px) { .qr-box { flex-direction: column; } }
     td app-pill { margin-left: 8px; }
     .chips { display: flex; flex-wrap: wrap; gap: 6px 14px; }
     @media (max-width: 860px) {
@@ -337,12 +359,66 @@ export class AttendancePage implements OnInit {
   readonly queuePrefix = signal('');
   readonly queuePriority = signal(false);
   readonly queueActive = signal(true);
+  readonly queueRemote = signal(false);
+  readonly imageSize = QR_IMAGE_SIZE;
+  private readonly qrCanvas = viewChild<ElementRef<HTMLCanvasElement>>('qrCanvas');
   editingCounter: CounterInfo | null = null;
   readonly counterName = signal('');
   readonly counterQueues = signal<number[]>([]);
   readonly counterActive = signal(true);
 
   private started = false;
+
+  constructor() {
+    // O QR Code da fila se desenha sozinho quando a janela abre (e se o segredo mudar).
+    effect(() => {
+      const canvas = this.qrCanvas()?.nativeElement;
+      const link = this.publicLink();
+      const ctx = canvas?.getContext('2d');
+      if (canvas && ctx && link) {
+        try {
+          drawQr(ctx, { text: link, title: this.editingQueue?.name ?? '', caption: tr('Escaneie para pegar a sua senha'), theme: 'claro' });
+        } catch {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+    });
+  }
+
+  /** O endereço público da fila (o do QR Code): o painel e a página da senha ficam no mesmo site. */
+  publicLink(): string {
+    const token = this.editingQueue?.publicToken;
+    return token ? `${location.origin}/fila/${token}` : '';
+  }
+
+  copyLink(): void {
+    const link = this.publicLink();
+    if (!link) {
+      return;
+    }
+    navigator.clipboard?.writeText(link).then(
+      () => this.notice.show(tr('Endereço copiado.')),
+      () => this.notice.show(tr('Não foi possível copiar. Selecione o endereço e copie à mão.')),
+    );
+  }
+
+  downloadQr(): void {
+    const canvas = this.qrCanvas()?.nativeElement;
+    if (!canvas) {
+      return;
+    }
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `qr-fila-${(this.editingQueue?.prefix ?? 'fila').toLowerCase()}.png`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  }
 
   ngOnInit(): void {
     // Uma vez só: a detecção automática de mudanças pode chamar de novo depois de uma chamada manual (testes).
@@ -438,18 +514,29 @@ export class AttendancePage implements OnInit {
     this.queuePrefix.set(queue?.prefix ?? '');
     this.queuePriority.set(queue?.priority ?? false);
     this.queueActive.set(queue?.active ?? true);
+    this.queueRemote.set(queue?.remoteEnabled ?? false);
     this.modal.set('queue');
   }
 
   saveQueue(): void {
-    const body = { name: this.queueName().trim(), prefix: this.queuePrefix().trim().toUpperCase(), priority: this.queuePriority(), active: this.queueActive() };
+    const body = {
+      name: this.queueName().trim(),
+      prefix: this.queuePrefix().trim().toUpperCase(),
+      priority: this.queuePriority(),
+      active: this.queueActive(),
+      remoteEnabled: this.queueRemote(),
+    };
     const request = this.editingQueue ? this.api.updateQueue(this.editingQueue.id, body) : this.api.createQueue(body);
     this.busy.set(true);
     request.subscribe({
       next: (queue) => {
         this.busy.set(false);
         this.closeModal();
-        this.notice.show(tr('Fila "{name}" salva.', { name: queue.name }));
+        this.notice.show(
+          queue.remoteEnabled
+            ? tr('Fila "{name}" salva. Abra a fila de novo para baixar o QR Code.', { name: queue.name })
+            : tr('Fila "{name}" salva.', { name: queue.name }),
+        );
         this.refresh();
       },
       error: () => this.busy.set(false),

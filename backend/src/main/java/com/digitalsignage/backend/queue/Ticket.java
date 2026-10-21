@@ -76,6 +76,10 @@ public class Ticket {
 	@Column(name = "call_count", nullable = false)
 	private int callCount;
 
+	/** O segredo de quem pegou a senha pelo celular (acompanhar e sair da fila); nulo nas senhas emitidas no balcão. */
+	@Column(name = "public_token", updatable = false)
+	private String publicToken;
+
 	protected Ticket() {
 	}
 
@@ -87,6 +91,14 @@ public class Ticket {
 		this.customerName = customerName;
 		this.source = source;
 		this.issuedAt = issuedAt;
+	}
+
+	public void assignPublicToken(String token) {
+		this.publicToken = token;
+	}
+
+	public String getPublicToken() {
+		return publicToken;
 	}
 
 	public void call(Long counterId, Instant now) {

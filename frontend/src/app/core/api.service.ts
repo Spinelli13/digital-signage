@@ -30,6 +30,8 @@ import {
   CounterRequest,
   Layout,
   LayoutRequest,
+  PublicQueue,
+  PublicTicket,
   QueueInfo,
   QueueRequest,
   Ticket,
@@ -527,6 +529,28 @@ export class ApiService {
 
   ticketAction(id: number, action: TicketAction): Observable<Ticket> {
     return this.http.post<Ticket>(this.url(`/attendance/tickets/${id}/${action}`), {});
+  }
+
+  // ---------- senha pelo celular (páginas públicas: sem login, erros tratados pela própria página) ----------
+
+  publicQueue(token: string): Observable<PublicQueue> {
+    return this.http.get<PublicQueue>(this.url(`/public/queues/${token}`), { context: new HttpContext().set(SILENT_ERRORS, true) });
+  }
+
+  /** O código do aparelho vai junto: o servidor limita as senhas por aparelho sem confundir os clientes que dividem o mesmo Wi-Fi. */
+  takePublicTicket(token: string, customerName: string | null, deviceId: string): Observable<PublicTicket> {
+    return this.http.post<PublicTicket>(this.url(`/public/queues/${token}/tickets`), { customerName }, {
+      context: new HttpContext().set(SILENT_ERRORS, true),
+      headers: { 'X-Client-Id': deviceId },
+    });
+  }
+
+  publicTicket(token: string): Observable<PublicTicket> {
+    return this.http.get<PublicTicket>(this.url(`/public/tickets/${token}`), { context: new HttpContext().set(SILENT_ERRORS, true) });
+  }
+
+  leavePublicQueue(token: string): Observable<PublicTicket> {
+    return this.http.post<PublicTicket>(this.url(`/public/tickets/${token}/cancel`), {}, { context: new HttpContext().set(SILENT_ERRORS, true) });
   }
 
   deleteMedia(id: number): Observable<void> {

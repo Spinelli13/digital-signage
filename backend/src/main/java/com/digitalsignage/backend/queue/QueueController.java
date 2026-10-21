@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.digitalsignage.backend.queue.AttendanceModels.CounterResponse;
 import com.digitalsignage.backend.queue.AttendanceModels.QueueResponse;
+import com.digitalsignage.backend.security.CurrentUser;
+import com.digitalsignage.backend.user.Role;
 
 import jakarta.validation.Valid;
 
@@ -31,18 +33,19 @@ public class QueueController {
 
 	@GetMapping("/queues")
 	public List<QueueResponse> queues() {
-		return service.listQueues();
+		boolean admin = CurrentUser.isAtLeast(Role.ADMIN);
+		return service.listQueues().stream().map(queue -> admin ? queue : queue.withoutToken()).toList();
 	}
 
 	@PostMapping("/queues")
 	@ResponseStatus(HttpStatus.CREATED)
 	public QueueResponse createQueue(@Valid @RequestBody AttendanceService.QueueRequest request) {
-		return asResponse(service.createQueue(request));
+		return AttendanceService.responseOf(service.createQueue(request));
 	}
 
 	@PutMapping("/queues/{id}")
 	public QueueResponse updateQueue(@PathVariable Long id, @Valid @RequestBody AttendanceService.QueueRequest request) {
-		return asResponse(service.updateQueue(id, request));
+		return AttendanceService.responseOf(service.updateQueue(id, request));
 	}
 
 	@DeleteMapping("/queues/{id}")
@@ -73,10 +76,6 @@ public class QueueController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteCounter(@PathVariable Long id) {
 		service.deleteCounter(id);
-	}
-
-	private static QueueResponse asResponse(ServiceQueue queue) {
-		return new QueueResponse(queue.getId(), queue.getName(), queue.getPrefix(), queue.isPriority(), queue.isActive(), queue.getTimezone(), 0);
 	}
 
 }

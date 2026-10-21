@@ -51,7 +51,7 @@ public class AttendanceService {
 	private static final String DEFAULT_ZONE = "America/Sao_Paulo";
 
 	public record QueueRequest(@NotBlank @Size(max = 60) String name, @NotBlank @Size(max = 3) String prefix, Boolean priority, Boolean active,
-			@Size(max = 60) String timezone) {
+			@Size(max = 60) String timezone, Boolean remoteEnabled) {
 	}
 
 	public record CounterRequest(@NotBlank @Size(max = 40) String name, List<Long> queueIds, Boolean active) {
@@ -86,7 +86,7 @@ public class AttendanceService {
 		if (queues.existsByPrefixIgnoreCase(prefix)) {
 			throw new ConflictException("A letra \"" + prefix + "\" já é de outra fila: cada fila precisa de uma letra diferente");
 		}
-		return queues.save(new ServiceQueue(name, prefix, Boolean.TRUE.equals(request.priority()), zone(request.timezone())));
+		return queues.save(new ServiceQueue(name, prefix, Boolean.TRUE.equals(request.priority()), zone(request.timezone()), Boolean.TRUE.equals(request.remoteEnabled())));
 	}
 
 	@Transactional
@@ -106,7 +106,8 @@ public class AttendanceService {
 				throw new ConflictException("Só dá para trocar a letra da fila quando não há senhas esperando nem em atendimento");
 			}
 		}
-		queue.change(name, prefix, Boolean.TRUE.equals(request.priority()), request.active() == null || request.active(), zone(request.timezone()));
+		queue.change(name, prefix, Boolean.TRUE.equals(request.priority()), request.active() == null || request.active(), zone(request.timezone()),
+				Boolean.TRUE.equals(request.remoteEnabled()));
 		return queues.save(queue);
 	}
 
@@ -180,7 +181,59 @@ public class AttendanceService {
 			tickets.deleteBefore(day.minusDays(RETENTION_DAYS));
 		}
 		String label = queue.getPrefix() + String.format("%03d", number);
-		return tickets.save(new Ticket(queueId, day, number, label, cleanCustomer(customerName), source, now));
+		Ticket ticket = new Ticket(queueId, day, number, label, cleanCustomer(customerName), source, now);
+		if ("REMOTE".equals(source)) {
+			ticket.assignPublicToken(Tokens.random());
+		}
+		return tickets.save(ticket);
+	}
+
+	// ---------- senha pelo celular (chamado pela área pública, já com o cliente definido) ----------
+
+	/** Teto de senhas pegas pelo celular que podem estar esperando ao mesmo tempo numa fila. */
+	static final int MAX_REMOTE_WAITING = 300;
+
+	@Transactional(readOnly = true)
+	public AttendanceModels.PublicQueue publicQueue(Long queueId) {
+		ServiceQueue queue = findQueue(queueId);
+		return new AttendanceModels.PublicQueue(queue.getName(), queue.isActive() && queue.isRemoteEnabled(), openWaiting(queue));
+	}
+
+	@Transactional
+	public AttendanceModels.PublicTicket issueRemote(Long queueId, String customerName) {
+		ServiceQueue queue = findQueue(queueId);
+		if (!queue.isRemoteEnabled() || !queue.isActive()) {
+			throw new NoSuchElementException("Este QR Code não está mais ativo. Procure o atendimento.");
+		}
+		if (tickets.remoteWaiting(queueId) >= MAX_REMOTE_WAITING) {
+			throw new com.digitalsignage.backend.common.RateLimitException("A fila está cheia no momento. Procure o atendimento.");
+		}
+		return publicTicket(issue(queueId, customerName, "REMOTE"));
+	}
+
+	@Transactional(readOnly = true)
+	public AttendanceModels.PublicTicket publicTicket(Long ticketId) {
+		return publicTicket(findTicket(ticketId));
+	}
+
+	/** A pessoa desistiu: sai da fila (só enquanto a senha ainda não foi chamada). */
+	@Transactional
+	public AttendanceModels.PublicTicket cancelRemote(Long ticketId) {
+		return publicTicket(cancel(ticketId));
+	}
+
+	private AttendanceModels.PublicTicket publicTicket(Ticket ticket) {
+		ServiceQueue queue = findQueue(ticket.getQueueId());
+		String counter = null;
+		if (ticket.getCounterId() != null) {
+			counter = counters.findById(ticket.getCounterId()).map(ServiceCounter::getName).orElse(null);
+		}
+		List<Ticket> waiting = tickets.waitingIn(List.of(queue.getId()));
+		int ahead = ticket.getStatus() == Ticket.Status.WAITING
+				? (int) waiting.stream().filter(other -> other.getIssuedAt().isBefore(ticket.getIssuedAt()) || (other.getIssuedAt().equals(ticket.getIssuedAt()) && other.getId() < ticket.getId())).count()
+				: 0;
+		return new AttendanceModels.PublicTicket(ticket.getPublicToken(), ticket.getLabel(), queue.getName(), ticket.getStatus().name(), counter, ahead,
+				waiting.size(), ticket.getCalledAt() == null ? null : ticket.getCalledAt().toEpochMilli(), ticket.getCallCount());
 	}
 
 	/** O guichê chama a próxima senha das filas que atende (prioritárias primeiro, com a rodada de justiça). */
@@ -369,7 +422,13 @@ public class AttendanceService {
 	}
 
 	private static QueueResponse queueResponse(ServiceQueue queue, long waiting) {
-		return new QueueResponse(queue.getId(), queue.getName(), queue.getPrefix(), queue.isPriority(), queue.isActive(), queue.getTimezone(), waiting);
+		return new QueueResponse(queue.getId(), queue.getName(), queue.getPrefix(), queue.isPriority(), queue.isActive(), queue.getTimezone(), waiting,
+				queue.isRemoteEnabled(), queue.getPublicToken());
+	}
+
+	/** Só o que o painel mostra de uma fila recém-salva (a quantidade que espera vem na consulta seguinte). */
+	public static QueueResponse responseOf(ServiceQueue queue) {
+		return queueResponse(queue, 0);
 	}
 
 	private static CounterResponse counterResponse(ServiceCounter counter, TicketResponse current) {

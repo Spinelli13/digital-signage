@@ -53,4 +53,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 	@Query("select count(t) from Ticket t where t.queueId = :queueId and t.status in ('WAITING', 'CALLING', 'SERVING')")
 	long openCount(@Param("queueId") Long queueId);
 
+	/** Quantas senhas pegas pelo celular ainda esperam nesta fila (um teto contra enchente de senhas falsas). */
+	@Query("select count(t) from Ticket t where t.queueId = :queueId and t.source = 'REMOTE' and t.status = 'WAITING'")
+	long remoteWaiting(@Param("queueId") Long queueId);
+
 }

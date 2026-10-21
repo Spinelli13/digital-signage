@@ -566,6 +566,8 @@ export type WidgetSettings = Record<string, string | number | boolean | string[]
 
 // ---------- atendimento (filas e senhas) ----------
 
+export type TicketStatus = 'WAITING' | 'CALLING' | 'SERVING' | 'DONE' | 'NO_SHOW' | 'CANCELED';
+
 export interface QueueInfo {
   id: number;
   name: string;
@@ -576,6 +578,10 @@ export interface QueueInfo {
   timezone: string;
   /** Quantas senhas esperam agora. */
   waiting: number;
+  /** Aberta a quem escaneia o QR Code (senha pelo celular). Ausente em servidores antigos. */
+  remoteEnabled?: boolean;
+  /** O segredo do endereço público da fila (só o Administrador recebe). */
+  publicToken?: string | null;
 }
 
 export interface QueueRequest {
@@ -584,9 +590,30 @@ export interface QueueRequest {
   priority: boolean;
   active: boolean;
   timezone?: string;
+  remoteEnabled?: boolean;
 }
 
-export type TicketStatus = 'WAITING' | 'CALLING' | 'SERVING' | 'DONE' | 'NO_SHOW' | 'CANCELED';
+/** O que a pessoa vê ao escanear o QR Code da fila. */
+export interface PublicQueue {
+  name: string;
+  open: boolean;
+  waiting: number;
+}
+
+/** A própria senha de quem a pegou pelo celular (sem nome nem dados de outras pessoas). */
+export interface PublicTicket {
+  ticketToken: string | null;
+  label: string;
+  queueName: string;
+  status: TicketStatus;
+  counter: string | null;
+  /** Quantas pessoas estão na frente (só enquanto a senha espera). */
+  ahead: number;
+  waiting: number;
+  calledAtMs: number | null;
+  callCount: number;
+}
+
 
 export interface Ticket {
   id: number;

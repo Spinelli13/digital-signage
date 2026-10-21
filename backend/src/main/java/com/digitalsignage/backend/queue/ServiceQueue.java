@@ -41,6 +41,14 @@ public class ServiceQueue {
 	@Column(nullable = false)
 	private String timezone = "America/Sao_Paulo";
 
+	/** Aberta a quem escaneia o QR Code da fila (senha pelo celular). */
+	@Column(name = "remote_enabled", nullable = false)
+	private boolean remoteEnabled;
+
+	/** O segredo que vai no QR Code: quem o tem pode pegar senha desta fila (quando a senha pelo celular está ligada). */
+	@Column(name = "public_token", nullable = false, updatable = false)
+	private String publicToken = Tokens.random();
+
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
 
@@ -50,11 +58,12 @@ public class ServiceQueue {
 	protected ServiceQueue() {
 	}
 
-	public ServiceQueue(String name, String prefix, boolean priority, String timezone) {
+	public ServiceQueue(String name, String prefix, boolean priority, String timezone, boolean remoteEnabled) {
 		this.name = name;
 		this.prefix = prefix;
 		this.priority = priority;
 		this.timezone = timezone;
+		this.remoteEnabled = remoteEnabled;
 	}
 
 	@PrePersist
@@ -68,12 +77,13 @@ public class ServiceQueue {
 		updatedAt = Instant.now();
 	}
 
-	public void change(String name, String prefix, boolean priority, boolean active, String timezone) {
+	public void change(String name, String prefix, boolean priority, boolean active, String timezone, boolean remoteEnabled) {
 		this.name = name;
 		this.prefix = prefix;
 		this.priority = priority;
 		this.active = active;
 		this.timezone = timezone;
+		this.remoteEnabled = remoteEnabled;
 	}
 
 	public Long getId() {
@@ -98,6 +108,14 @@ public class ServiceQueue {
 
 	public String getTimezone() {
 		return timezone;
+	}
+
+	public boolean isRemoteEnabled() {
+		return remoteEnabled;
+	}
+
+	public String getPublicToken() {
+		return publicToken;
 	}
 
 }

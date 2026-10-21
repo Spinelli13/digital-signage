@@ -58,6 +58,8 @@ public class SecurityConfig {
 						// despacho, o status verdadeiro (400, 403, 500...) é mascarado como 401 anônimo.
 						.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
 						.requestMatchers("/api/v1/health", "/api/v1/auth/login", "/api/v1/player/register").permitAll()
+						// Senha pelo celular: quem escaneia o QR Code não tem login (o segredo está no endereço).
+						.requestMatchers("/api/v1/public/**").permitAll()
 						// Player ainda não ativado só pode consultar o próprio estado (para exibir o código).
 						.requestMatchers("/api/v1/player/status").hasAnyRole("DEVICE", "DEVICE_PENDING")
 						.requestMatchers("/api/v1/player/**").hasRole("DEVICE")
@@ -93,7 +95,7 @@ public class SecurityConfig {
 		CorsConfiguration configuration = new CorsConfiguration();
 		configuration.setAllowedOrigins(allowedOrigins);
 		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-		configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Device-Token", "X-Tenant-Id"));
+		configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Device-Token", "X-Tenant-Id", "X-Client-Id"));
 		configuration.setMaxAge(3600L);
 
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

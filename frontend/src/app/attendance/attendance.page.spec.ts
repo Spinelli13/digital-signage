@@ -261,7 +261,7 @@ describe('AttendancePage', () => {
 
     const request = backend.expectOne(`${API}/queues`);
     expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({ name: 'Prioritário', prefix: 'P', priority: true, active: true });
+    expect(request.request.body).toEqual({ name: 'Prioritário', prefix: 'P', priority: true, active: true, remoteEnabled: false });
     request.flush(queue(3, 'Prioritário', 'P', { priority: true }));
     expect(page.modal()).toBeNull();
     expect(page.notice.text()).toBe('Fila "Prioritário" salva.');
@@ -282,6 +282,43 @@ describe('AttendancePage', () => {
     request.flush({ error: 'Só dá para trocar a letra da fila quando não há senhas esperando nem em atendimento' }, { status: 409, statusText: 'Conflict' });
     expect(page.modal()).toBe('queue');
     expect(page.busy()).toBe(false);
+    backend.verify();
+  });
+
+  it('turns on the ticket by phone and shows the public address of the queue for the QR Code', () => {
+    const data = overview({ queues: [queue(1, 'Atendimento geral', 'A', { remoteEnabled: true, publicToken: 'f'.repeat(32) }), queue(2, 'Prioritário', 'P')] });
+    const { page, backend } = setup('ADMIN', data);
+
+    page.openQueue(page.queues()[0]);
+    expect(page.queueRemote()).toBe(true);
+    expect(page.publicLink()).toBe(`${location.origin}/fila/${'f'.repeat(32)}`);
+    page.closeModal();
+
+    page.openQueue(page.queues()[1]);
+    expect(page.queueRemote()).toBe(false);
+    expect(page.publicLink()).toBe('');
+    page.queueRemote.set(true);
+    page.saveQueue();
+
+    const request = backend.expectOne(`${API}/queues/2`);
+    expect(request.request.body.remoteEnabled).toBe(true);
+    request.flush(queue(2, 'Prioritário', 'P', { remoteEnabled: true, publicToken: 'e'.repeat(32) }));
+    expect(page.notice.text()).toBe('Fila "Prioritário" salva. Abra a fila de novo para baixar o QR Code.');
+    backend.expectOne(`${API}/attendance/overview`).flush(data);
+    backend.verify();
+  });
+
+  it('copies the public address of the queue', async () => {
+    const data = overview({ queues: [queue(1, 'Geral', 'A', { remoteEnabled: true, publicToken: 'd'.repeat(32) })] });
+    const { page, backend } = setup('ADMIN', data);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+
+    page.openQueue(page.queues()[0]);
+    page.copyLink();
+    await Promise.resolve();
+
+    expect(writeText).toHaveBeenCalledWith(`${location.origin}/fila/${'d'.repeat(32)}`);
     backend.verify();
   });
 
