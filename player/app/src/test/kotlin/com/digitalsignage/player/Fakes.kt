@@ -1,6 +1,7 @@
 package com.digitalsignage.player
 
 import com.digitalsignage.player.data.ConfigItem
+import com.digitalsignage.player.data.ConfigZone
 import com.digitalsignage.player.data.Desired
 import com.digitalsignage.player.data.FetchedConfig
 import com.digitalsignage.player.data.Json
@@ -45,9 +46,11 @@ private fun itemsJson(items: List<ConfigItem>) = items.joinToString(",") {
 
 fun rawJson(config: PlayerConfig): String {
     val playlist = config.playlistId?.toString() ?: "null"
-    val zones = if (config.zones.isEmpty()) "" else config.zones.joinToString(",", prefix = ""","zones":[""", postfix = "]") {
-        """{"id":${it.id},"name":"${it.name}","x":${it.x},"y":${it.y},"width":${it.width},"height":${it.height},"main":${it.main},"items":[${itemsJson(it.items)}]}"""
+    fun zonesJson(zones: List<ConfigZone>) = zones.joinToString(",", prefix = "[", postfix = "]") {
+        """{"id":${it.id},"name":"${it.name}","x":${it.x},"y":${it.y},"width":${it.width},"height":${it.height},"main":${it.main},"fit":"${it.fit}","items":[${itemsJson(it.items)}]}"""
     }
+    val zones = (if (config.zones.isEmpty()) "" else ""","zones":${zonesJson(config.zones)}""") +
+        (if (config.portraitZones.isEmpty()) "" else ""","portraitZones":${zonesJson(config.portraitZones)}""")
     val campaign = ""","campaignId":${config.campaignId ?: "null"},"campaignName":${config.campaignName?.let { "\"$it\"" } ?: "null"}"""
     val plan = config.plan?.let { ""","offlinePlan":${planJson(it)}""" } ?: ""
     return """{"deviceId":${config.deviceId},"playlistId":$playlist,"configVersion":${config.configVersion},"items":[${itemsJson(config.items)}]$zones$campaign$plan}"""

@@ -9,6 +9,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.FrameLayout
 import android.widget.ImageView
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 
 /**
@@ -54,6 +55,12 @@ class ZoneViews(
             webContainer.addView(web, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
             webView = web
         }
+
+    /** Como a mídia ocupa a zona: cabe inteira (faixas pretas se a proporção for outra) ou preenche cortando as bordas. */
+    fun applyFit(covers: Boolean) {
+        imageView.scaleType = if (covers) ImageView.ScaleType.CENTER_CROP else ImageView.ScaleType.FIT_CENTER
+        playerView.resizeMode = if (covers) AspectRatioFrameLayout.RESIZE_MODE_ZOOM else AspectRatioFrameLayout.RESIZE_MODE_FIT
+    }
 
     fun showImage() {
         playerView.visibility = View.INVISIBLE

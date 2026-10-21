@@ -12,5 +12,11 @@ public record PlayerConfigZone(
 		int height,
 		boolean main,
 		Long playlistId,
-		List<PlayerConfigMediaItem> items) {
+		List<PlayerConfigMediaItem> items,
+		/** CONTAIN (a mídia cabe inteira) ou COVER (preenche a zona, cortando as bordas). */
+		String fit) {
+
+	public PlayerConfigZone(Long id, String name, int x, int y, int width, int height, boolean main, Long playlistId, List<PlayerConfigMediaItem> items) {
+		this(id, name, x, y, width, height, main, playlistId, items, "CONTAIN");
+	}
 }

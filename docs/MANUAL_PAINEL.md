@@ -516,7 +516,7 @@ Abra **Layouts** no menu. Cada cartão mostra um desenho da divisão da tela, qu
 
 **Criar um layout**
 
-1. Clique em **Novo layout** e escolha um **modelo pronto**: *Tela cheia*, *Principal + faixa lateral*, *Principal + rodapé*, *Principal + lateral + rodapé*, *Duas metades* ou *Quatro quadros*. Dê um nome e clique em **Criar e ajustar**. (Ou **Começar do zero**.)
+1. Clique em **Novo layout** e escolha um **modelo pronto**: *Tela cheia*, *Principal + faixa lateral*, *Principal + rodapé*, *Principal + lateral + rodapé*, *Duas metades*, *Quatro quadros* ou *Totem em pé*. Os modelos marcados com **inclui versão em pé** já vêm com a divisão para TV na vertical (veja 10.1.1). Dê um nome e clique em **Criar e ajustar**. (Ou **Começar do zero**.)
 
 ![Escolha de um modelo de layout (captura real)](manual/img/painel-layout-novo.png)
 
@@ -526,7 +526,22 @@ Abra **Layouts** no menu. Cada cartão mostra um desenho da divisão da tela, qu
 
 ![Editor de layout: desenho da tela, posição e tamanho de cada zona, zona principal e playlist das outras (captura real)](manual/img/painel-layout-editor.png)
 
-**Regras do layout:** de 1 a 6 zonas; exatamente uma zona principal; as zonas não podem se sobrepor nem sair da tela; cada uma tem no mínimo 5% de largura e de altura.
+**Regras do layout:** de 1 a 6 zonas; exatamente uma zona principal; as zonas não podem se sobrepor nem sair da tela; cada uma tem no mínimo 5% de largura e de altura. Essas regras valem separadamente para a versão horizontal e para a versão em pé.
+
+#### 10.1.1 TV em pé (totem, painel na vertical) e ajuste da mídia
+
+Uma faixa lateral que fica boa numa TV deitada vira um "canudo" numa TV em pé. Por isso um layout pode ter **duas versões**: a **horizontal** (a de sempre) e uma **em pé**, e a TV usa sozinha a que combina com a forma da tela dela (mais alta que larga = em pé). Você não precisa configurar nada na TV.
+
+1. No editor do layout, escolha **Tela em pé** no alto (ao lado de **Tela horizontal**) e clique em **Criar a versão em pé**. O painel começa com a horizontal "deitada" (uma lateral vira um rodapé, duas metades viram uma em cima da outra), e o desenho passa a ser 9:16. Ajuste posição, tamanho e playlists como na horizontal.
+2. **Salvar.** As TVs em pé passam a mostrar a versão em pé; as deitadas continuam com a horizontal.
+3. **Remover a versão em pé** volta ao comportamento antigo: a TV em pé usa a horizontal.
+
+Sem versão em pé, a TV em pé continua mostrando o layout horizontal como antes. A **zona principal** das duas versões mostra a mesma playlist da TV (e a campanha, quando vale).
+
+**Ajuste da mídia** (uma opção por zona, nas duas versões):
+
+- **Caber inteira (com faixas)**: a imagem ou o vídeo aparece **inteiro**; se a proporção da mídia não for a da zona, sobram faixas pretas. É o padrão e o comportamento de sempre.
+- **Preencher (corta as bordas)**: a mídia cobre a zona toda e o que passa da borda é cortado. Fica bonito em fotos e vídeos; **não use** em imagens com texto perto da borda.
 
 **Usar o layout numa TV:** em **Dispositivos**, clique em **Editar** na TV e escolha o **Layout da tela** (ou **Tela cheia** para voltar ao normal). Para várias TVs de uma vez, marque-as e use **Aplicar layout…** na barra verde. A TV mostra um selo com o ícone de layout e o nome dele, e o **Histórico** dela registra a mudança.
 

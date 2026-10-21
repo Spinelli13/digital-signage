@@ -39,6 +39,10 @@ public final class LayoutValidator {
 			if (zone.main() && zone.playlistId() != null) {
 				throw new IllegalArgumentException(label + " é a principal: ela exibe a playlist da TV, não uma playlist fixa");
 			}
+			String fit = zone.fit();
+			if (fit != null && !fit.isBlank() && !LayoutZone.FIT_CONTAIN.equals(fit) && !LayoutZone.FIT_COVER.equals(fit)) {
+				throw new IllegalArgumentException(label + " tem um ajuste de mídia desconhecido (use CONTAIN ou COVER)");
+			}
 		}
 
 		for (int i = 0; i < zones.size(); i++) {

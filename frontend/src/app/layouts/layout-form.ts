@@ -1,5 +1,5 @@
 import { tr, trServer } from '../core/i18n';
-import { Layout, LayoutRequest, LayoutTemplate } from '../core/models';
+import { Layout, LayoutRequest, LayoutTemplate, LayoutZoneRequest } from '../core/models';
 
 export const MAX_ZONES = 6;
 export const MIN_SIZE = 5;
@@ -14,9 +14,11 @@ export interface ZoneDraft {
   height: number;
   main: boolean;
   playlistId: number | null;
+  /** Como a mídia ocupa a zona: cabe inteira (CONTAIN) ou preenche, cortando as bordas (COVER). */
+  fit: 'CONTAIN' | 'COVER';
 }
 
-type ZoneShape = { name: string; x: number; y: number; width: number; height: number; main: boolean; playlistId: number | null };
+type ZoneShape = { name: string; x: number; y: number; width: number; height: number; main: boolean; playlistId: number | null; fit?: 'CONTAIN' | 'COVER' };
 
 let nextKey = 1;
 
@@ -25,7 +27,25 @@ export function newKey(): number {
 }
 
 function toDraft(zone: ZoneShape): ZoneDraft {
-  return { key: newKey(), name: zone.name, x: zone.x, y: zone.y, width: zone.width, height: zone.height, main: zone.main, playlistId: zone.playlistId };
+  return { key: newKey(), name: zone.name, x: zone.x, y: zone.y, width: zone.width, height: zone.height, main: zone.main, playlistId: zone.playlistId, fit: zone.fit === 'COVER' ? 'COVER' : 'CONTAIN' };
+}
+
+/** A versão para TV em pé de um layout (nula se ele não tem uma). */
+export function portraitDraftsFromLayout(layout: Pick<Layout, 'portraitZones'>): ZoneDraft[] | null {
+  return layout.portraitZones && layout.portraitZones.length > 0 ? layout.portraitZones.map(toDraft) : null;
+}
+
+/** A sugestão para TV em pé de um modelo (nula se o modelo serve como está). */
+export function portraitDraftsFromTemplate(template: Pick<LayoutTemplate, 'portraitZones'>): ZoneDraft[] | null {
+  return template.portraitZones && template.portraitZones.length > 0 ? template.portraitZones.map(toDraft) : null;
+}
+
+/**
+ * Um ponto de partida para a versão em pé: a horizontal "deitada" (x vira y, largura vira altura). Uma faixa lateral vira uma
+ * faixa embaixo, as duas metades viram uma em cima da outra. É só o começo: a pessoa ajusta.
+ */
+export function rotateZones(zones: ZoneDraft[]): ZoneDraft[] {
+  return zones.map((zone) => ({ ...zone, key: newKey(), x: zone.y, y: zone.x, width: zone.height, height: zone.width }));
 }
 
 export function draftsFromLayout(layout: Pick<Layout, 'zones'>): ZoneDraft[] {
@@ -38,7 +58,7 @@ export function draftsFromTemplate(template: Pick<LayoutTemplate, 'zones'>): Zon
 
 /** Um layout novo, do zero: uma zona principal ocupando a tela toda. */
 export function blankDrafts(): ZoneDraft[] {
-  return [{ key: newKey(), name: tr('Principal'), x: 0, y: 0, width: 100, height: 100, main: true, playlistId: null }];
+  return [{ key: newKey(), name: tr('Principal'), x: 0, y: 0, width: 100, height: 100, main: true, playlistId: null, fit: 'CONTAIN' }];
 }
 
 export function overlaps(a: ZoneDraft, b: ZoneDraft): boolean {
@@ -92,20 +112,26 @@ export function validateZones(zones: ZoneDraft[]): string | null {
   return null;
 }
 
-export function toLayoutRequest(name: string, description: string, zones: ZoneDraft[]): LayoutRequest {
+function toZoneRequest(zone: ZoneDraft): LayoutZoneRequest {
+  return {
+    name: zone.name.trim(),
+    x: zone.x,
+    y: zone.y,
+    width: zone.width,
+    height: zone.height,
+    main: zone.main,
+    // a principal usa a playlist da TV: nunca leva playlist fixa
+    playlistId: zone.main ? null : zone.playlistId,
+    fit: zone.fit,
+  };
+}
+
+export function toLayoutRequest(name: string, description: string, zones: ZoneDraft[], portraitZones: ZoneDraft[] | null = null): LayoutRequest {
   return {
     name: name.trim(),
     description: description.trim() || null,
-    zones: zones.map((zone) => ({
-      name: zone.name.trim(),
-      x: zone.x,
-      y: zone.y,
-      width: zone.width,
-      height: zone.height,
-      main: zone.main,
-      // a principal usa a playlist da TV: nunca leva playlist fixa
-      playlistId: zone.main ? null : zone.playlistId,
-    })),
+    zones: zones.map(toZoneRequest),
+    portraitZones: portraitZones ? portraitZones.map(toZoneRequest) : [],
   };
 }
 
@@ -134,7 +160,7 @@ export function addZone(zones: ZoneDraft[]): ZoneDraft[] | null {
   for (const size of [25, 20, 15, 10]) {
     for (let y = 0; y + size <= 100; y += 5) {
       for (let x = 0; x + size <= 100; x += 5) {
-        const candidate: ZoneDraft = { key: newKey(), name: uniqueName(zones, tr('Zona')), x, y, width: size, height: size, main: false, playlistId: null };
+        const candidate: ZoneDraft = { key: newKey(), name: uniqueName(zones, tr('Zona')), x, y, width: size, height: size, main: false, playlistId: null, fit: 'CONTAIN' };
         if (!zones.some((zone) => overlaps(zone, candidate))) {
           return [...zones, candidate];
         }

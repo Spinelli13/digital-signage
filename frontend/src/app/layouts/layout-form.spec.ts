@@ -6,7 +6,10 @@ import {
   draftsFromLayout,
   draftsFromTemplate,
   overlaps,
+  portraitDraftsFromLayout,
+  portraitDraftsFromTemplate,
   removeZone,
+  rotateZones,
   setMain,
   toLayoutRequest,
   validateZones,
@@ -23,6 +26,7 @@ const zone = (name: string, x: number, y: number, width: number, height: number,
   height,
   main,
   playlistId,
+  fit: 'CONTAIN',
 });
 
 describe('validateZones', () => {
@@ -126,8 +130,41 @@ describe('conversions', () => {
 
     expect(request.name).toBe('Meu layout');
     expect(request.description).toBeNull();
-    expect(request.zones[0]).toEqual({ name: 'Principal', x: 0, y: 0, width: 75, height: 100, main: true, playlistId: null });
+    expect(request.zones[0]).toEqual({ name: 'Principal', x: 0, y: 0, width: 75, height: 100, main: true, playlistId: null, fit: 'CONTAIN' });
     expect(request.zones[1].playlistId).toBe(9);
+    expect(request.portraitZones).toEqual([]); // sem versão em pé o pedido manda vazio (tira a que existia)
+  });
+
+  it('sends the portrait version and the fit of each zone when there is one', () => {
+    const horizontal = [zone('Principal', 0, 0, 75, 100, true), { ...zone('Lateral', 75, 0, 25, 100, false, 9), fit: 'COVER' as const }];
+    const vertical = [zone('Principal', 0, 0, 100, 75, true), { ...zone('Rodapé', 0, 75, 100, 25, false, 9), fit: 'COVER' as const }];
+
+    const request = toLayoutRequest('Meu layout', '', horizontal, vertical);
+
+    expect(request.zones[1].fit).toBe('COVER');
+    expect(request.portraitZones).toHaveLength(2);
+    expect(request.portraitZones![1]).toEqual({ name: 'Rodapé', x: 0, y: 75, width: 100, height: 25, main: false, playlistId: 9, fit: 'COVER' });
+  });
+
+  it('reads the portrait version of a layout and of a template, if they have one', () => {
+    const portraitZone = { id: 3, name: 'A', x: 0, y: 0, width: 100, height: 100, main: true, playlistId: null, fit: 'COVER' as const };
+
+    expect(portraitDraftsFromLayout({ portraitZones: [portraitZone] })![0]).toMatchObject({ name: 'A', fit: 'COVER' });
+    expect(portraitDraftsFromLayout({ portraitZones: [] })).toBeNull();
+    expect(portraitDraftsFromLayout({})).toBeNull();
+    expect(portraitDraftsFromTemplate({ portraitZones: [portraitZone] })).toHaveLength(1);
+    expect(portraitDraftsFromTemplate({})).toBeNull();
+  });
+
+  it('starts the portrait version by laying the horizontal one down, with new keys and a valid result', () => {
+    const horizontal = [zone('Principal', 0, 0, 75, 100, true), zone('Lateral', 75, 0, 25, 100, false, 9)];
+
+    const vertical = rotateZones(horizontal);
+
+    expect(vertical[0]).toMatchObject({ name: 'Principal', x: 0, y: 0, width: 100, height: 75, main: true });
+    expect(vertical[1]).toMatchObject({ name: 'Lateral', x: 0, y: 75, width: 100, height: 25, playlistId: 9 });
+    expect(validateZones(vertical)).toBeNull();
+    expect(new Set([...horizontal, ...vertical].map((z) => z.key)).size).toBe(4);
   });
 
   it('builds drafts from a layout and from a template with unique keys', () => {

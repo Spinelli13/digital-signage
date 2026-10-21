@@ -164,7 +164,8 @@ describe('LayoutsPage', () => {
     expect(request.request.body).toEqual({
       name: 'Do zero',
       description: null,
-      zones: [{ name: 'Principal', x: 0, y: 0, width: 100, height: 100, main: true, playlistId: null }],
+      zones: [{ name: 'Principal', x: 0, y: 0, width: 100, height: 100, main: true, playlistId: null, fit: 'CONTAIN' }],
+      portraitZones: [],
     });
     request.flush(layout(5, 'Do zero'));
     expect(page.notice.text()).toBe('Layout "Do zero" salvo.');
@@ -225,6 +226,68 @@ describe('LayoutsPage', () => {
     expect(page.modal()).toBeNull();
     backend.expectOne(`${API}/layouts`).flush([]);
     backend.expectOne(`${API}/playlists`).flush([]);
+    backend.verify();
+  });
+
+  it('creates a portrait version from the horizontal one, edits it apart and saves both', () => {
+    const { page, backend } = setup([layout(1, 'Loja com lateral', 2)]);
+    page.openEdit(page.layouts()[0]);
+    expect(page.portraitZones()).toBeNull();
+
+    page.createPortrait();
+
+    expect(page.view()).toBe('portrait');
+    expect(page.portraitZones()).toHaveLength(2);
+    expect(page.active()).toBe(page.portraitZones());
+    expect(page.portraitZones()![0]).toMatchObject({ x: 0, y: 0, width: 100, height: 75 });
+    expect(page.problem()).toBeNull();
+
+    // mexer na versão em pé não mexe na horizontal
+    const rodape = page.portraitZones()![1];
+    page.change(rodape.key, 'fit', 'COVER');
+    page.change(rodape.key, 'playlistId', 4);
+    expect(page.portraitZones()![1]).toMatchObject({ fit: 'COVER', playlistId: 4 });
+    expect(page.zones()[1]).toMatchObject({ fit: 'CONTAIN', playlistId: 3 });
+
+    page.save();
+    const request = backend.expectOne(`${API}/layouts/1`);
+    expect(request.request.body.zones[1]).toMatchObject({ name: 'Lateral', x: 75, fit: 'CONTAIN' });
+    expect(request.request.body.portraitZones).toHaveLength(2);
+    expect(request.request.body.portraitZones[1]).toMatchObject({ name: 'Lateral', y: 75, fit: 'COVER', playlistId: 4 });
+    request.flush(layout(1, 'Loja com lateral', 2));
+    backend.expectOne(`${API}/layouts`).flush([]);
+    backend.expectOne(`${API}/playlists`).flush([]);
+    backend.verify();
+  });
+
+  it('opens a layout that already has a portrait version and can remove it', () => {
+    const withPortrait: Layout = {
+      ...layout(1, 'Totem', 1),
+      portraitZones: [{ id: 99, name: 'Principal', x: 0, y: 0, width: 100, height: 100, main: true, playlistId: null, fit: 'COVER' }],
+    };
+    const { page, backend } = setup([withPortrait]);
+    page.openEdit(page.layouts()[0]);
+
+    expect(page.portraitZones()).toHaveLength(1);
+    expect(page.portraitZones()![0].fit).toBe('COVER');
+    expect(page.view()).toBe('landscape');
+
+    page.removePortrait();
+    expect(page.portraitZones()).toBeNull();
+    page.save();
+    expect(backend.expectOne(`${API}/layouts/1`).request.body.portraitZones).toEqual([]);
+  });
+
+  it('blocks saving when the portrait version has a problem and says it is the portrait one', () => {
+    const { page, backend } = setup();
+    page.openEdit(page.layouts()[0]);
+    page.createPortrait();
+
+    page.change(page.portraitZones()![0].key, 'height', 90); // passa por cima do rodapé
+
+    expect(page.problem()).toBe('Versão em pé: As zonas "Principal" e "Lateral" se sobrepõem');
+    page.save();
+    backend.expectNone(`${API}/layouts/1`);
     backend.verify();
   });
 

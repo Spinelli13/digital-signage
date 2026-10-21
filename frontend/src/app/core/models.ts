@@ -500,6 +500,8 @@ export interface LayoutZone {
   main: boolean;
   playlistId: number | null;
   playlistName?: string | null;
+  /** CONTAIN: a mídia cabe inteira (com faixas); COVER: preenche a zona, cortando as bordas. */
+  fit?: 'CONTAIN' | 'COVER';
 }
 
 export interface Layout {
@@ -508,16 +510,31 @@ export interface Layout {
   description: string | null;
   configVersion: number;
   zones: LayoutZone[];
+  /** A versão para TV em pé (vazia = o layout não tem; a TV em pé usa a horizontal). Ausente em servidores antigos. */
+  portraitZones?: LayoutZone[];
   /** Quantas TVs usam este layout. */
   deviceCount: number;
   createdAt: string;
   updatedAt: string;
 }
 
+export interface LayoutZoneRequest {
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  main: boolean;
+  playlistId: number | null;
+  fit?: 'CONTAIN' | 'COVER';
+}
+
 export interface LayoutRequest {
   name: string;
   description: string | null;
-  zones: { name: string; x: number; y: number; width: number; height: number; main: boolean; playlistId: number | null }[];
+  zones: LayoutZoneRequest[];
+  /** A versão para TV em pé (opcional); vazio ou ausente = sem versão em pé. */
+  portraitZones?: LayoutZoneRequest[];
 }
 
 /** Modelo pronto de layout para começar de um deles. */
@@ -525,7 +542,9 @@ export interface LayoutTemplate {
   id: string;
   name: string;
   description: string;
-  zones: { name: string; x: number; y: number; width: number; height: number; main: boolean; playlistId: number | null }[];
+  zones: LayoutZoneRequest[];
+  /** A sugestão do modelo para TV em pé (vazio = serve como está nas duas orientações). */
+  portraitZones?: LayoutZoneRequest[];
 }
 
 // ---------- widgets (conteúdo dinâmico) ----------

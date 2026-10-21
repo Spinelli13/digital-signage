@@ -16,7 +16,9 @@ import {
   blankDrafts,
   draftsFromLayout,
   draftsFromTemplate,
+  portraitDraftsFromLayout,
   removeZone,
+  rotateZones,
   setMain,
   templateText,
   toLayoutRequest,
@@ -70,6 +72,9 @@ import {
               }
               <span class="facts">
                 <app-pill icon="layers">{{ '{n} zona(s)' | t: { n: layout.zones.length } }}</app-pill>
+                @if (layout.portraitZones && layout.portraitZones.length > 0) {
+                  <app-pill tone="brand" icon="smartphone">{{ 'com versão em pé' | t }}</app-pill>
+                }
                 @if (layout.deviceCount > 0) {
                   <a routerLink="/dispositivos" class="linkpill"><app-pill tone="brand" icon="monitor">{{ '{n} TV(s)' | t: { n: layout.deviceCount } }}</app-pill></a>
                 } @else {
@@ -105,6 +110,9 @@ import {
                 </div>
                 <b>{{ templateText(template.name) }}</b>
                 <small>{{ templateText(template.description) }}</small>
+                @if (template.portraitZones && template.portraitZones.length > 0) {
+                  <app-pill tone="brand" icon="smartphone">{{ 'inclui versão em pé' | t }}</app-pill>
+                }
               </button>
             }
           </div>
@@ -136,17 +144,37 @@ import {
             </div>
           </div>
 
-          <div class="screen big" [attr.aria-label]="'Pré-visualização do layout' | t">
-            @for (zone of zones(); track zone.key; let i = $index) {
-              <div class="zone" [style.left.%]="zone.x" [style.top.%]="zone.y" [style.width.%]="zone.width" [style.height.%]="zone.height" [style.background]="color(zones(), i)">
+          <div class="orient-bar">
+            <div class="orient" role="group" [attr.aria-label]="'Versão do layout' | t">
+              <button type="button" [class.on]="view() === 'landscape'" (click)="view.set('landscape')"><app-icon name="monitor" [size]="15" />{{ 'Tela horizontal' | t }}</button>
+              <button type="button" [class.on]="view() === 'portrait'" (click)="view.set('portrait')"><app-icon name="smartphone" [size]="15" />{{ 'Tela em pé' | t }}</button>
+            </div>
+            @if (portraitZones() !== null) {
+              <button type="button" class="secondary small" (click)="removePortrait()"><app-icon name="trash" [size]="15" />{{ 'Remover a versão em pé' | t }}</button>
+            }
+          </div>
+
+          @if (view() === 'portrait' && portraitZones() === null) {
+            <div class="portrait-empty">
+              <app-icon name="smartphone" [size]="28" />
+              <div>
+                <b>{{ 'Este layout ainda não tem versão para TV em pé' | t }}</b>
+                <p class="label">{{ 'Uma TV em pé (totem, painel na vertical) usa hoje a versão horizontal, que costuma ficar apertada. Crie uma versão em pé e ajuste as zonas para a tela vertical.' | t }}</p>
+                <button type="button" class="primary small" (click)="createPortrait()"><app-icon name="plus" [size]="15" />{{ 'Criar a versão em pé' | t }}</button>
+              </div>
+            </div>
+          } @else {
+          <div class="screen big" [class.tall]="view() === 'portrait'" [attr.aria-label]="'Pré-visualização do layout' | t">
+            @for (zone of active(); track zone.key; let i = $index) {
+              <div class="zone" [style.left.%]="zone.x" [style.top.%]="zone.y" [style.width.%]="zone.width" [style.height.%]="zone.height" [style.background]="color(active(), i)">
                 <span>@if (zone.main) {<app-icon name="star" [size]="11" />}{{ zone.name }}</span>
               </div>
             }
           </div>
 
           <table class="zones stack">
-            <tr><th>{{ 'Zona' | t }}</th><th>X %</th><th>Y %</th><th>{{ 'Largura %' | t }}</th><th>{{ 'Altura %' | t }}</th><th>{{ 'Principal' | t }}</th><th>{{ 'Playlist' | t }}</th><th></th></tr>
-            @for (zone of zones(); track zone.key; let i = $index) {
+            <tr><th>{{ 'Zona' | t }}</th><th>X %</th><th>Y %</th><th>{{ 'Largura %' | t }}</th><th>{{ 'Altura %' | t }}</th><th>{{ 'Principal' | t }}</th><th>{{ 'Playlist' | t }}</th><th>{{ 'Ajuste da mídia' | t }}</th><th></th></tr>
+            @for (zone of active(); track zone.key; let i = $index) {
               <tr>
                 <td class="first"><span class="swatch" [style.background]="color(zones(), i)"></span><input class="name-input" [attr.aria-label]="'Nome da zona {n}' | t: { n: i + 1 }" [name]="'zname' + zone.key" [ngModel]="zone.name" (ngModelChange)="change(zone.key, 'name', $event)" /></td>
                 <td data-label="X %"><input type="number" class="num" min="0" max="95" [attr.aria-label]="'X da zona {n}' | t: { n: i + 1 }" [name]="'zx' + zone.key" [ngModel]="zone.x" (ngModelChange)="change(zone.key, 'x', $event)" /></td>
@@ -166,11 +194,18 @@ import {
                     </select>
                   }
                 </td>
-                <td class="row-actions"><button type="button" class="danger small" [disabled]="zones().length <= 1" (click)="dropZone(zone.key)" [attr.aria-label]="'Remover a zona {n}' | t: { n: i + 1 }"><app-icon name="trash" [size]="15" /></button></td>
+                <td [attr.data-label]="'Ajuste da mídia' | t">
+                  <select [attr.aria-label]="'Ajuste da mídia na zona {n}' | t: { n: i + 1 }" [name]="'zf' + zone.key" [ngModel]="zone.fit" (ngModelChange)="change(zone.key, 'fit', $event)">
+                    <option value="CONTAIN">{{ 'Caber inteira (com faixas)' | t }}</option>
+                    <option value="COVER">{{ 'Preencher (corta as bordas)' | t }}</option>
+                  </select>
+                </td>
+                <td class="row-actions"><button type="button" class="danger small" [disabled]="active().length <= 1" (click)="dropZone(zone.key)" [attr.aria-label]="'Remover a zona {n}' | t: { n: i + 1 }"><app-icon name="trash" [size]="15" /></button></td>
               </tr>
             }
           </table>
           <button type="button" class="secondary small" (click)="newZone()"><app-icon name="plus" [size]="15" />{{ 'Adicionar zona' | t }}</button>
+          }
 
           @if (problem(); as text) {
             <div class="error" role="alert"><app-icon name="circle-alert" [size]="18" /><span>{{ text }}</span></div>
@@ -190,6 +225,15 @@ import {
     .item { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
     .screen { position: relative; width: 100%; aspect-ratio: 16 / 9; background: var(--screen); border: 2px solid var(--line); border-radius: 8px; overflow: hidden; }
     .screen.big { max-width: 560px; margin: 4px auto 16px; }
+    .screen.big.tall { aspect-ratio: 9 / 16; max-width: 250px; }
+    .orient-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 4px 0 8px; }
+    .orient { display: inline-flex; padding: 3px; gap: 2px; background: var(--panel-3); border: 1px solid var(--line); border-radius: var(--r); }
+    .orient button { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; padding: 6px 12px; border-radius: 8px; color: var(--muted); font-weight: 600; font-size: 13px; cursor: pointer; }
+    .orient button.on { background: var(--panel); color: var(--primary); box-shadow: var(--sh-1); }
+    :host-context(:root[data-theme='dark']) .orient button.on { color: var(--link); }
+    .portrait-empty { display: flex; gap: 14px; align-items: flex-start; padding: 16px; margin: 8px 0 14px; border: 1px dashed var(--line-strong); border-radius: var(--r-lg); background: var(--panel-2); }
+    .portrait-empty > app-icon { color: var(--primary); flex: none; margin-top: 2px; }
+    .portrait-empty p { margin: 4px 0 10px; }
     .small-screen { margin-bottom: 8px; }
     .zone { position: absolute; border: 1px solid #fff; box-sizing: border-box; display: flex; align-items: center; justify-content: center; overflow: hidden; }
     .zone span { display: inline-flex; align-items: center; gap: 3px; color: #fff; font-size: 12px; font-weight: 600; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); padding: 2px; text-align: center; }
@@ -238,9 +282,23 @@ export class LayoutsPage implements OnInit {
   readonly name = signal('');
   readonly description = signal('');
   readonly zones = signal<ZoneDraft[]>([]);
+  /** A versão para TV em pé em edição (nula = o layout não tem uma). */
+  readonly portraitZones = signal<ZoneDraft[] | null>(null);
+  /** Qual versão a tela de edição está mostrando. */
+  readonly view = signal<'landscape' | 'portrait'>('landscape');
   readonly pickedTemplate = signal<LayoutTemplate | null>(null);
 
-  readonly problem = computed(() => validateZones(this.zones()));
+  /** As zonas da versão que está na tela (as telas e as funções de edição trabalham sempre com estas). */
+  readonly active = computed(() => (this.view() === 'portrait' ? (this.portraitZones() ?? []) : this.zones()));
+  readonly problem = computed(() => {
+    const horizontal = validateZones(this.zones());
+    if (horizontal) {
+      return horizontal;
+    }
+    const portrait = this.portraitZones();
+    const vertical = portrait ? validateZones(portrait) : null;
+    return vertical ? tr('Versão em pé: {message}', { message: vertical }) : null;
+  });
   readonly color = zoneColor;
   readonly templateText = templateText;
 
@@ -291,6 +349,8 @@ export class LayoutsPage implements OnInit {
     this.editing.set(null);
     this.description.set('');
     this.zones.set(blankDrafts());
+    this.portraitZones.set(null);
+    this.view.set('landscape');
     this.modal.set('edit');
   }
 
@@ -301,6 +361,8 @@ export class LayoutsPage implements OnInit {
     this.name.set(layout.name);
     this.description.set(layout.description ?? '');
     this.zones.set(draftsFromLayout(layout));
+    this.portraitZones.set(portraitDraftsFromLayout(layout));
+    this.view.set('landscape');
     this.modal.set('edit');
   }
 
@@ -308,14 +370,36 @@ export class LayoutsPage implements OnInit {
     this.modal.set(null);
   }
 
-  change(key: number, field: 'name' | 'x' | 'y' | 'width' | 'height' | 'playlistId', value: unknown): void {
-    this.zones.update((zones) =>
+  /** Aplica uma mudança na versão que está na tela (horizontal ou em pé). */
+  private updateActive(change: (zones: ZoneDraft[]) => ZoneDraft[]): void {
+    if (this.view() === 'portrait') {
+      this.portraitZones.update((zones) => (zones === null ? zones : change(zones)));
+    } else {
+      this.zones.update(change);
+    }
+  }
+
+  createPortrait(): void {
+    this.portraitZones.set(rotateZones(this.zones()));
+    this.view.set('portrait');
+  }
+
+  removePortrait(): void {
+    this.portraitZones.set(null);
+    this.view.set('landscape');
+  }
+
+  change(key: number, field: 'name' | 'x' | 'y' | 'width' | 'height' | 'playlistId' | 'fit', value: unknown): void {
+    this.updateActive((zones) =>
       zones.map((zone) => {
         if (zone.key !== key) {
           return zone;
         }
         if (field === 'name') {
           return { ...zone, name: String(value ?? '') };
+        }
+        if (field === 'fit') {
+          return { ...zone, fit: value === 'COVER' ? 'COVER' : 'CONTAIN' };
         }
         if (field === 'playlistId') {
           return { ...zone, playlistId: value === null || value === undefined || value === '' ? null : Number(value) };
@@ -327,27 +411,27 @@ export class LayoutsPage implements OnInit {
   }
 
   makeMain(key: number): void {
-    this.zones.update((zones) => setMain(zones, key));
+    this.updateActive((zones) => setMain(zones, key));
   }
 
   dropZone(key: number): void {
-    this.zones.update((zones) => removeZone(zones, key));
+    this.updateActive((zones) => removeZone(zones, key));
   }
 
   newZone(): void {
-    const next = addZone(this.zones());
+    const next = addZone(this.active());
     if (next === null) {
       this.notice.show(tr('Não há espaço livre para outra zona (ou o limite de 6 zonas foi atingido). Reduza uma zona primeiro.'));
       return;
     }
-    this.zones.set(next);
+    this.updateActive(() => next);
   }
 
   save(): void {
     if (this.problem() || !this.name().trim()) {
       return;
     }
-    const body = toLayoutRequest(this.name(), this.description(), this.zones());
+    const body = toLayoutRequest(this.name(), this.description(), this.zones(), this.portraitZones());
     const editing = this.editing();
     this.busy.set(true);
     const request = editing ? this.api.updateLayout(editing.id, body) : this.api.createLayout(body);

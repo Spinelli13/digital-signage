@@ -7,15 +7,20 @@ export const LAYOUT_TEMPLATES: Record<string, string> = {
   'Tela cheia': 'Full screen',
   'Um único conteúdo ocupando a tela toda (o comportamento de sempre).': 'A single content item filling the whole screen (the usual behavior).',
   'Principal + faixa lateral': 'Main + side strip',
-  'Conteúdo principal à esquerda e uma faixa à direita (avisos, promoções, QR Code).':
-    'Main content on the left and a strip on the right (notices, promotions, QR Code).',
+  'Conteúdo principal à esquerda e uma faixa à direita (avisos, promoções, QR Code). Em TV em pé, a faixa vai para baixo.':
+    'Main content on the left and a strip on the right (notices, promotions, QR Code). On a portrait TV, the strip goes to the bottom.',
   'Principal + rodapé': 'Main + footer',
-  'Conteúdo principal em cima e uma faixa embaixo (avisos, horários, notícias).':
-    'Main content on top and a strip at the bottom (notices, schedules, news).',
+  'Conteúdo principal em cima e uma faixa embaixo (avisos, horários, notícias). Serve também para TV em pé.':
+    'Main content on top and a strip at the bottom (notices, schedules, news). Also works on a portrait TV.',
   'Principal + lateral + rodapé': 'Main + side + footer',
-  'Conteúdo principal, uma faixa à direita e um rodapé.': 'Main content, a strip on the right and a footer.',
+  'Conteúdo principal, uma faixa à direita e um rodapé. Em TV em pé, a faixa lateral vira uma faixa acima do rodapé.':
+    'Main content, a strip on the right and a footer. On a portrait TV, the side strip becomes a strip above the footer.',
   'Duas metades': 'Two halves',
-  'A tela dividida ao meio: dois conteúdos lado a lado.': 'The screen split in half: two contents side by side.',
+  'A tela dividida ao meio: dois conteúdos lado a lado (em TV em pé, um em cima do outro).':
+    'The screen split in half: two contents side by side (on a portrait TV, one above the other).',
+  'Totem em pé: topo, principal e rodapé': 'Portrait totem: top, main and footer',
+  'Para TV em pé (totem): uma faixa no topo, o conteúdo principal no meio e um rodapé. Na horizontal, as três faixas ficam empilhadas do mesmo jeito.':
+    'For a portrait TV (totem): a strip on top, the main content in the middle and a footer. On a landscape screen the three bands are stacked the same way.',
   'Quatro quadros': 'Four quadrants',
   'Quatro conteúdos iguais (bom para painéis de informação).': 'Four equal contents (good for information boards).',
 };

@@ -208,7 +208,7 @@ public class OfflinePlanService {
 	private Map<Long, Long> playlistVersions(Device device, List<Campaign> campaigns, Layout layout) {
 		Set<Long> ids = new LinkedHashSet<>(candidatePlaylists(device, campaigns));
 		if (layout != null) {
-			layout.getZones().stream().map(LayoutZone::getPlaylistId).filter(Objects::nonNull).forEach(ids::add);
+			PlayerConfigService.allZones(layout).stream().map(LayoutZone::getPlaylistId).filter(Objects::nonNull).forEach(ids::add);
 		}
 		ids.remove(null);
 		Map<Long, Long> versions = new HashMap<>();

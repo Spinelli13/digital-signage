@@ -14,7 +14,9 @@ import jakarta.validation.constraints.Size;
 public record LayoutRequest(
 		@NotBlank @Size(max = 100) String name,
 		@Size(max = 500) String description,
-		@NotNull @Valid List<ZoneRequest> zones) {
+		@NotNull @Valid List<ZoneRequest> zones,
+		/** A versão do layout para TV em pé (opcional): as mesmas regras das zonas horizontais. Vazio = sem versão em pé. */
+		@Valid List<ZoneRequest> portraitZones) {
 
 	public record ZoneRequest(
 			@NotBlank @Size(max = 50) String name,
@@ -23,7 +25,17 @@ public record LayoutRequest(
 			int width,
 			int height,
 			boolean main,
-			Long playlistId) {
+			Long playlistId,
+			/** CONTAIN (cabe inteira) ou COVER (preenche, cortando); vazio = CONTAIN. */
+			@Size(max = 10) String fit) {
+
+		public ZoneRequest(String name, int x, int y, int width, int height, boolean main, Long playlistId) {
+			this(name, x, y, width, height, main, playlistId, null);
+		}
+	}
+
+	public LayoutRequest(String name, String description, List<ZoneRequest> zones) {
+		this(name, description, zones, null);
 	}
 
 }

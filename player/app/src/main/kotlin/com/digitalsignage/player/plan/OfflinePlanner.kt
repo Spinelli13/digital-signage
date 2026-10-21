@@ -22,6 +22,7 @@ object OfflinePlanner {
             configVersion = segment.configVersion,
             items = items,
             zones = base.zones.map { if (it.main) it.copy(items = items) else it },
+            portraitZones = base.portraitZones.map { if (it.main) it.copy(items = items) else it },
             campaignId = segment.campaignId,
             campaignName = segment.campaignName,
         )

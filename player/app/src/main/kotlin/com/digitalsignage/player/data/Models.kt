@@ -64,8 +64,11 @@ data class ConfigZone(
     val height: Int,
     val main: Boolean,
     val items: List<ConfigItem>,
+    /** CONTAIN: a mídia cabe inteira (com faixas pretas); COVER: preenche a zona, cortando as bordas. */
+    val fit: String = "CONTAIN",
 ) {
     val isFullScreen get() = x == 0 && y == 0 && width == 100 && height == 100
+    val covers get() = fit == "COVER"
 }
 
 /**
@@ -83,6 +86,8 @@ data class PlayerConfig(
     val campaignName: String? = null,
     /** A agenda dos próximos dias (modo offline); nula quando nenhuma campanha vale para a TV. */
     val plan: OfflinePlan? = null,
+    /** A versão do layout para TV em pé (vazia = o layout não tem; a TV em pé usa [zones]). */
+    val portraitZones: List<ConfigZone> = emptyList(),
 ) {
 
     /**
@@ -90,6 +95,10 @@ data class PlayerConfig(
      * reiniciar a exibição que está no ar.
      */
     fun forScreen(): PlayerConfig = if (plan == null) this else copy(plan = null)
+
+    /** As zonas para a forma da tela: a versão em pé só vale em tela em pé E se o layout tem uma. */
+    fun zonesFor(portrait: Boolean): List<ConfigZone> =
+        if (portrait && portraitZones.isNotEmpty()) portraitZones else zonesOrDefault()
 
     /** Toda mídia que precisa ficar no aparelho: a da configuração e a da agenda. */
     fun retainable(): List<ConfigItem> = (allItems() + (plan?.allItems() ?: emptyList())).distinctBy { it.mediaId }
@@ -99,7 +108,7 @@ data class PlayerConfig(
         zones.ifEmpty { listOf(ConfigZone(0, "Principal", 0, 0, 100, 100, true, items)) }
 
     /** Toda mídia da configuração (de todas as zonas), sem repetir a que aparece em mais de uma. */
-    fun allItems(): List<ConfigItem> = (items + zones.flatMap { it.items }).distinctBy { it.mediaId }
+    fun allItems(): List<ConfigItem> = (items + zones.flatMap { it.items } + portraitZones.flatMap { it.items }).distinctBy { it.mediaId }
 
     /** Há algo para exibir em alguma zona? */
     fun hasContent(): Boolean = items.isNotEmpty() || zones.any { it.items.isNotEmpty() }
@@ -177,6 +186,7 @@ object Json {
             configVersion = json.optLong("configVersion"),
             items = parseItems(json.getJSONArray("items")),
             zones = zones,
+            portraitZones = json.optJSONArray("portraitZones")?.let { array -> (0 until array.length()).map { parseZone(array.getJSONObject(it)) } } ?: emptyList(),
             campaignId = if (json.isNull("campaignId")) null else json.optLong("campaignId"),
             campaignName = if (json.isNull("campaignName")) null else json.optString("campaignName"),
             plan = json.optJSONObject("offlinePlan")?.let(::parsePlan),
@@ -217,6 +227,7 @@ object Json {
         height = json.getInt("height"),
         main = json.optBoolean("main"),
         items = parseItems(json.getJSONArray("items")),
+        fit = if (json.optString("fit") == "COVER") "COVER" else "CONTAIN",
     )
 
     private fun parseItems(array: JSONArray): List<ConfigItem> =

@@ -72,18 +72,27 @@ public class Layout {
 		updatedAt = Instant.now();
 	}
 
-	public void replaceZones(List<LayoutZone> newZones) {
+	/** Troca as zonas das duas versões (horizontal e, se houver, em pé) e avisa as TVs que usam o layout. */
+	public void replaceZones(List<LayoutZone> landscape, List<LayoutZone> portrait) {
 		zones.clear();
 		int position = 0;
-		for (LayoutZone zone : newZones) {
+		for (LayoutZone zone : landscape) {
+			zone.assignTo(this, position++);
+			zones.add(zone);
+		}
+		for (LayoutZone zone : portrait) {
 			zone.assignTo(this, position++);
 			zones.add(zone);
 		}
 		configVersion++;
 	}
 
+	public void replaceZones(List<LayoutZone> newZones) {
+		replaceZones(newZones, List.of());
+	}
+
 	public LayoutZone mainZone() {
-		return zones.stream().filter(LayoutZone::isMain).findFirst().orElse(null);
+		return getZones().stream().filter(LayoutZone::isMain).findFirst().orElse(null);
 	}
 
 	public Long getTenantId() {
@@ -114,8 +123,14 @@ public class Layout {
 		return configVersion;
 	}
 
+	/** As zonas da versão horizontal (a de sempre, e a única das TVs que não são em pé). */
 	public List<LayoutZone> getZones() {
-		return zones;
+		return zones.stream().filter(zone -> !zone.isPortrait()).toList();
+	}
+
+	/** As zonas da versão para TV em pé; vazio = o layout não tem versão em pé (a TV em pé usa a horizontal). */
+	public List<LayoutZone> getPortraitZones() {
+		return zones.stream().filter(LayoutZone::isPortrait).toList();
 	}
 
 	public Instant getCreatedAt() {

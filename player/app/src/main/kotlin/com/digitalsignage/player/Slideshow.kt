@@ -49,12 +49,18 @@ class Slideshow(
     fun start(config: PlayerConfig) {
         stop()
         val context = PlayContext(config.deviceId, config.playlistId, config.campaignId, config.campaignName)
-        val layout = config.zonesOrDefault()
+        // Tela em pé (mais alta que larga) usa a versão do layout para TV em pé, se o layout tiver uma.
+        val layout = config.zonesFor(isPortrait())
         if (layout.size == 1 && layout[0].isFullScreen) {
             startSingle(layout[0], context)
         } else {
             startZones(layout, context)
         }
+    }
+
+    private fun isPortrait(): Boolean {
+        val metrics = zonesRoot.resources.displayMetrics
+        return metrics.heightPixels > metrics.widthPixels
     }
 
     fun stop() {
@@ -87,6 +93,7 @@ class Slideshow(
         val views = singleViews ?: ZoneViews(imageView, playerView, zonesRoot).also { singleViews = it }
         // O WebView da zona única fica dentro do zonesRoot (que é transparente e só aparece quando ele aparece).
         zonesRoot.visibility = View.VISIBLE
+        views.applyFit(zone.covers)
         val player = single ?: ZonePlayer(scope, cache, views, telemetry, onError = onError, profile = profile, recorder = recorder, zoneName = zone.name.ifBlank { "Principal" }, widgets = widgets).also { single = it }
         player.start(zone.items, context)
     }
@@ -108,7 +115,7 @@ class Slideshow(
             container.addView(image, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
             container.addView(video, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
             zonesRoot.addView(container, FrameLayout.LayoutParams(1, 1))
-            Triple(zone, container, ZoneViews(image, video, container))
+            Triple(zone, container, ZoneViews(image, video, container).also { it.applyFit(zone.covers) })
         }
 
         // As posições dependem do tamanho da tela. As zonas só começam a tocar DEPOIS de dimensionadas: uma página da web

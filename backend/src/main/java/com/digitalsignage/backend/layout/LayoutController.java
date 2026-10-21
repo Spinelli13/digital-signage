@@ -68,7 +68,7 @@ public class LayoutController {
 		String name = request.name().trim();
 		requireFreeName(name, null);
 		Layout layout = new Layout(name, blankToNull(request.description()));
-		applyZones(layout, request.zones());
+		applyZones(layout, request.zones(), request.portraitZones());
 		return responseFor(layoutRepository.save(layout));
 	}
 
@@ -82,7 +82,7 @@ public class LayoutController {
 		String name = request.name() == null || request.name().isBlank() ? template.name() : request.name().trim();
 		requireFreeName(name, null);
 		Layout layout = new Layout(name, template.description());
-		applyZones(layout, template.zones());
+		applyZones(layout, template.zones(), template.portraitZones());
 		return responseFor(layoutRepository.save(layout));
 	}
 
@@ -100,7 +100,7 @@ public class LayoutController {
 		requireFreeName(name, id);
 		layout.setName(name);
 		layout.setDescription(blankToNull(request.description()));
-		applyZones(layout, request.zones());
+		applyZones(layout, request.zones(), request.portraitZones());
 		return responseFor(layoutRepository.save(layout));
 	}
 
@@ -119,16 +119,26 @@ public class LayoutController {
 
 	// ---------- utilidades ----------
 
-	private void applyZones(Layout layout, List<LayoutRequest.ZoneRequest> zones) {
+	private void applyZones(Layout layout, List<LayoutRequest.ZoneRequest> zones, List<LayoutRequest.ZoneRequest> portraitZones) {
+		List<LayoutRequest.ZoneRequest> portrait = portraitZones == null ? List.of() : portraitZones;
 		LayoutValidator.validate(zones);
+		if (!portrait.isEmpty()) {
+			LayoutValidator.validate(portrait);
+		}
 		Set<Long> playlistIds = new HashSet<>();
 		zones.stream().map(LayoutRequest.ZoneRequest::playlistId).filter(java.util.Objects::nonNull).forEach(playlistIds::add);
+		portrait.stream().map(LayoutRequest.ZoneRequest::playlistId).filter(java.util.Objects::nonNull).forEach(playlistIds::add);
 		if (!playlistIds.isEmpty() && playlistRepository.findAllById(playlistIds).size() != playlistIds.size()) {
 			throw new NoSuchElementException("Playlist não encontrada entre: " + playlistIds);
 		}
-		layout.replaceZones(zones.stream()
-				.map(zone -> new LayoutZone(zone.name().trim(), zone.x(), zone.y(), zone.width(), zone.height(), zone.main(), zone.playlistId()))
-				.toList());
+		layout.replaceZones(zonesOf(zones, false), zonesOf(portrait, true));
+	}
+
+	private static List<LayoutZone> zonesOf(List<LayoutRequest.ZoneRequest> requested, boolean portrait) {
+		return requested.stream()
+				.map(zone -> new LayoutZone(zone.name().trim(), zone.x(), zone.y(), zone.width(), zone.height(), zone.main(), zone.playlistId(),
+						zone.fit(), portrait))
+				.toList();
 	}
 
 	private void requireFreeName(String name, Long ownId) {

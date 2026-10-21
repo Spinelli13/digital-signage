@@ -63,20 +63,27 @@ public class PlayerConfigService {
 					: new PlayerConfigResponse(device.getId(), main.getId(), main.getConfigVersion(), itemsOf(main));
 		}
 
-		List<PlayerConfigZone> zones = new ArrayList<>();
 		Map<Long, Long> versions = new HashMap<>();
-		for (LayoutZone zone : layout.getZones()) {
+		List<PlayerConfigZone> zones = zonesOf(layout.getZones(), main, versions);
+		// A versão para TV em pé (se o layout tiver) viaja junto: a TV escolhe pela forma da tela dela.
+		List<PlayerConfigZone> portraitZones = zonesOf(layout.getPortraitZones(), main, versions);
+		List<PlayerConfigMediaItem> mainItems = zones.stream().filter(PlayerConfigZone::main).findFirst()
+				.map(PlayerConfigZone::items).orElse(List.of());
+		return new PlayerConfigResponse(device.getId(), main == null ? null : main.getId(),
+				versionFor(mainPlaylistId, layout, versions), mainItems, zones, portraitZones);
+	}
+
+	private List<PlayerConfigZone> zonesOf(List<LayoutZone> layoutZones, Playlist main, Map<Long, Long> versions) {
+		List<PlayerConfigZone> zones = new ArrayList<>();
+		for (LayoutZone zone : layoutZones) {
 			Playlist playlist = zone.isMain() ? main : playlistOf(zone.getPlaylistId());
 			if (playlist != null) {
 				versions.put(playlist.getId(), playlist.getConfigVersion());
 			}
 			zones.add(new PlayerConfigZone(zone.getId(), zone.getName(), zone.getX(), zone.getY(), zone.getWidth(), zone.getHeight(),
-					zone.isMain(), playlist == null ? null : playlist.getId(), playlist == null ? List.of() : itemsOf(playlist)));
+					zone.isMain(), playlist == null ? null : playlist.getId(), playlist == null ? List.of() : itemsOf(playlist), zone.getFit()));
 		}
-		List<PlayerConfigMediaItem> mainItems = zones.stream().filter(PlayerConfigZone::main).findFirst()
-				.map(PlayerConfigZone::items).orElse(List.of());
-		return new PlayerConfigResponse(device.getId(), main == null ? null : main.getId(),
-				versionFor(mainPlaylistId, layout, versions), mainItems, zones);
+		return zones;
 	}
 
 	/**
@@ -95,7 +102,7 @@ public class PlayerConfigService {
 				playlistIds.add(main);
 			}
 		});
-		layouts.values().forEach(layout -> layout.getZones().stream().map(LayoutZone::getPlaylistId).filter(Objects::nonNull).forEach(playlistIds::add));
+		layouts.values().forEach(layout -> allZones(layout).stream().map(LayoutZone::getPlaylistId).filter(Objects::nonNull).forEach(playlistIds::add));
 		Map<Long, Long> versions = playlistRepository.findAllById(playlistIds.stream().distinct().toList()).stream()
 				.collect(Collectors.toMap(Playlist::getId, Playlist::getConfigVersion));
 
@@ -116,13 +123,20 @@ public class PlayerConfigService {
 		if (layout == null) {
 			return mainVersion;
 		}
-		List<ConfigVersions.ZoneVersion> others = layout.getZones().stream()
+		List<ConfigVersions.ZoneVersion> others = allZones(layout).stream()
 				.filter(zone -> !zone.isMain())
 				.map(zone -> zone.getPlaylistId() == null
 						? new ConfigVersions.ZoneVersion(0, 0)
 						: new ConfigVersions.ZoneVersion(zone.getPlaylistId(), playlistVersions.getOrDefault(zone.getPlaylistId(), 0L)))
 				.toList();
 		return ConfigVersions.composite(mainPlaylistId == null ? 0 : mainPlaylistId, mainVersion, layout.getId(), layout.getConfigVersion(), others);
+	}
+
+	/** As zonas das duas versões do layout (horizontal e em pé): tudo que muda alguma delas muda a versão do conteúdo. */
+	static List<LayoutZone> allZones(Layout layout) {
+		List<LayoutZone> all = new ArrayList<>(layout.getZones());
+		all.addAll(layout.getPortraitZones());
+		return all;
 	}
 
 	private Playlist playlistOf(Long playlistId) {
