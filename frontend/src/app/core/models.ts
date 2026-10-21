@@ -843,6 +843,8 @@ export interface Me {
   email: string;
   role: Role;
   platformAdmin: boolean;
+  /** Senha provisória: o painel pede a troca antes de qualquer outra coisa. */
+  mustChangePassword: boolean;
   tenant: TenantSummary;
 }
 
@@ -876,6 +878,8 @@ export interface Manager {
   name: string;
   email: string;
   active: boolean;
+  /** Ainda não trocou a senha provisória que recebeu. */
+  mustChangePassword: boolean;
   createdAt: string;
 }
 

@@ -205,6 +205,38 @@ describe('Shell', () => {
     expect(component.newPassword()).toBe('');
   });
 
+  it('holds everything behind a screen to set the password while the one received is temporary', async () => {
+    const fixture = TestBed.createComponent(Shell);
+    backend.expectOne(`${API}/auth/me`).flush(meFixture('PLATFORM_ADMIN', { mustChangePassword: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    const component = fixture.componentInstance;
+
+    // nenhuma página abre e nenhuma consulta é feita (o servidor recusaria), e a janela não pode ser fechada
+    expect(component.showOutlet()).toBe(false);
+    expect(element.querySelector('.modal-box h2')?.textContent).toContain('Defina a sua senha');
+    expect(element.querySelector('.modal-box .secondary')).toBeNull();
+    component.closeAccount();
+    fixture.detectChanges();
+    expect(element.querySelector('.modal-box')).not.toBeNull();
+    backend.expectNone(`${API}/summary`);
+
+    component.currentPassword.set('123456');
+    component.newPassword.set('senha-do-socio-1');
+    component.confirmPassword.set('senha-do-socio-1');
+    component.changePassword();
+    backend.expectOne(`${API}/auth/password`).flush(null, { status: 204, statusText: 'No Content' });
+    // a conta é recarregada sem a marca e o painel abre
+    backend.expectOne(`${API}/auth/me`).flush(meFixture('PLATFORM_ADMIN'));
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+    expect(component.showOutlet()).toBe(true);
+    expect(element.querySelector('.modal-box')).toBeNull();
+  });
+
   it('refuses a short or mismatched new password before calling the server', async () => {
     const { component } = await renderShell(meFixture('ADMIN'));
 

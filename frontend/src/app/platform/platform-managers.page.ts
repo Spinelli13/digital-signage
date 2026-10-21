@@ -9,6 +9,9 @@ import { Notice } from '../core/notice';
 import { IconComponent } from '../shared/icon';
 import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent, SkeletonComponent } from '../shared/ui';
 
+/** A senha que um gestor define para outra pessoa é provisória e pode ser curta: a pessoa é obrigada a trocá-la ao entrar. */
+const TEMPORARY_MIN = 6;
+
 /** Os gestores da plataforma: quem opera clientes, planos, cupons e faturas. Cada um entra com o próprio e-mail e senha. */
 @Component({
   selector: 'app-platform-managers',
@@ -45,6 +48,9 @@ import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent,
               </td>
               <td [attr.data-label]="'Situação' | t">
                 <app-pill [tone]="manager.active ? 'ok' : 'neutral'" [icon]="manager.active ? 'circle-check' : 'circle-pause'">{{ (manager.active ? 'Ativo' : 'Desativado') | t }}</app-pill>
+                @if (manager.mustChangePassword) {
+                  <app-pill tone="warn" icon="key-round">{{ 'Vai trocar a senha ao entrar' | t }}</app-pill>
+                }
               </td>
               <td class="row-actions">
                 <button class="secondary small" (click)="openEdit(manager)"><app-icon name="pencil" [size]="15" />{{ 'Editar' | t }}</button>
@@ -73,9 +79,9 @@ import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent,
           </div>
           <div class="field">
             <label for="mg-pass">{{ (modal() === 'new' ? 'Senha inicial' : 'Nova senha (deixe em branco para manter)') | t }}</label>
-            <input id="mg-pass" name="password" type="password" autocomplete="new-password" minlength="8"
+            <input id="mg-pass" name="password" type="password" autocomplete="new-password" minlength="6"
               [ngModel]="password()" (ngModelChange)="password.set($event)" />
-            <small>{{ 'Pelo menos 8 caracteres. A pessoa pode trocá-la em "Minha conta".' | t }}</small>
+            <small>{{ (editingSelf() ? 'Pelo menos 8 caracteres.' : 'Senha provisória, com pelo menos 6 caracteres: a pessoa será obrigada a trocá-la ao entrar.') | t }}</small>
           </div>
           @if (modal() === 'edit') {
             <div class="field">
@@ -126,9 +132,9 @@ export class PlatformManagersPage implements OnInit {
       return false;
     }
     if (this.modal() === 'new') {
-      return this.email().trim().length > 0 && this.password().length >= 8;
+      return this.email().trim().length > 0 && this.password().length >= TEMPORARY_MIN;
     }
-    return this.password().length === 0 || this.password().length >= 8;
+    return this.password().length === 0 || this.password().length >= (this.editingSelf() ? 8 : TEMPORARY_MIN);
   });
 
   ngOnInit(): void {

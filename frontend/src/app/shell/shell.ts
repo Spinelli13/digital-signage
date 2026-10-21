@@ -145,21 +145,26 @@ import { UserMenuComponent } from '../shared/user-menu';
       </nav>
     }
 
-    @if (accountOpen()) {
+    @if (accountOpen() || mustChange()) {
       <div class="modal" (click)="closeAccount()">
         <form class="modal-box" (click)="$event.stopPropagation()" (ngSubmit)="changePassword()">
-          <h2>{{ 'Minha conta' | t }}</h2>
+          <h2>{{ (mustChange() ? 'Defina a sua senha' : 'Minha conta') | t }}</h2>
+          @if (mustChange()) {
+            <p class="notice" role="status">{{ 'Você entrou com uma senha provisória. Defina uma senha nova para continuar usando o painel.' | t }}</p>
+          }
           @if (auth.me(); as me) {
             <p class="label">{{ me.name }} · {{ me.email }} · {{ roleText() }}</p>
           }
           @if (notice.text(); as text) {
             <div class="notice" role="status">{{ text }}</div>
           }
-          <h3 class="sub">{{ 'Preferências' | t }}</h3>
-          <app-preferences [full]="true" />
-          <h3 class="sub">{{ 'Trocar a senha' | t }}</h3>
+          @if (!mustChange()) {
+            <h3 class="sub">{{ 'Preferências' | t }}</h3>
+            <app-preferences [full]="true" />
+            <h3 class="sub">{{ 'Trocar a senha' | t }}</h3>
+          }
           <div class="field">
-            <label for="pw-current">{{ 'Senha atual' | t }}</label>
+            <label for="pw-current">{{ (mustChange() ? 'Senha provisória (a que você recebeu)' : 'Senha atual') | t }}</label>
             <input id="pw-current" name="current" type="password" autocomplete="current-password" required
               [ngModel]="currentPassword()" (ngModelChange)="currentPassword.set($event)" />
           </div>
@@ -177,7 +182,9 @@ import { UserMenuComponent } from '../shared/user-menu';
             <small class="problem">{{ problem }}</small>
           }
           <div class="actions">
-            <button type="button" class="secondary" (click)="closeAccount()">{{ 'Fechar' | t }}</button>
+            @if (!mustChange()) {
+              <button type="button" class="secondary" (click)="closeAccount()">{{ 'Fechar' | t }}</button>
+            }
             <button type="submit" class="primary" [disabled]="busy() || passwordProblem() !== null || !currentPassword()">{{ 'Trocar senha' | t }}</button>
           </div>
         </form>
@@ -333,6 +340,9 @@ export class Shell {
   /** A conta já chegou (ou falhou): só então as páginas abrem, para não pedirem dados que o servidor vai recusar. */
   readonly ready = signal(false);
 
+  /** Entrou com uma senha provisória: nada abre antes de ela ser trocada (o servidor também recusa o resto). */
+  readonly mustChange = computed(() => this.auth.me()?.mustChangePassword === true);
+
   private readonly url = toSignal(
     this.router.events.pipe(
       filter((event) => event instanceof NavigationEnd),
@@ -343,7 +353,7 @@ export class Shell {
 
   /** Com a assinatura suspensa o administrador só vê "Plano e cobrança" (e os downloads); o resto espera o redirecionamento. */
   readonly showOutlet = computed(() => {
-    if (!this.ready()) {
+    if (!this.ready() || this.mustChange()) {
       return false;
     }
     const url = this.url();
@@ -417,7 +427,7 @@ export class Shell {
     });
     // A bolinha dos alertas só faz sentido (e só é permitida) com o painel liberado.
     effect(() => {
-      if (this.auth.me() && !this.blocked()) {
+      if (this.auth.me() && !this.blocked() && !this.mustChange()) {
         this.attention.start();
       } else {
         this.attention.stop();
@@ -447,7 +457,9 @@ export class Shell {
   }
 
   closeAccount(): void {
-    this.accountOpen.set(false);
+    if (!this.mustChange()) {
+      this.accountOpen.set(false);
+    }
   }
 
   changePassword(): void {
@@ -462,6 +474,10 @@ export class Shell {
         this.newPassword.set('');
         this.confirmPassword.set('');
         this.notice.show(tr('Senha trocada.'));
+        if (this.mustChange()) {
+          // a conta volta sem a marca de senha provisória e o painel abre
+          void this.auth.loadMe();
+        }
       },
       // A mensagem (ex.: "senha atual incorreta") aparece por cima da janela, que continua aberta.
       error: () => this.busy.set(false),

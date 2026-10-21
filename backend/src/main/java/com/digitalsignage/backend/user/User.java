@@ -42,6 +42,10 @@ public class User {
 	@Column(nullable = false)
 	private boolean active = true;
 
+	/** Senha provisória (definida por outra pessoa): até trocá-la, o usuário só consegue ver quem é e trocar a senha. */
+	@Column(name = "must_change_password", nullable = false)
+	private boolean mustChangePassword;
+
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
 
@@ -113,6 +117,14 @@ public class User {
 
 	public void setActive(boolean active) {
 		this.active = active;
+	}
+
+	public boolean isMustChangePassword() {
+		return mustChangePassword;
+	}
+
+	public void setMustChangePassword(boolean mustChangePassword) {
+		this.mustChangePassword = mustChangePassword;
 	}
 
 	public Instant getCreatedAt() {

@@ -517,6 +517,7 @@ describe('PlatformManagersPage', () => {
     name,
     email: `${name.toLowerCase()}@x.com`,
     active: true,
+    mustChangePassword: false,
     createdAt: '2026-10-21T10:00:00Z',
     ...overrides,
   });
@@ -560,6 +561,25 @@ describe('PlatformManagersPage', () => {
     request.flush(manager(3, 'Sócio'));
     expect(page.notice.text()).toBe('Gestor "Sócio" adicionado.');
     backend.expectOne(`${API}/platform/managers`).flush([]);
+  });
+
+  it('accepts a short temporary password for someone else, but the own password keeps the normal rule', () => {
+    page.openNew();
+    page.name.set('Sócio');
+    page.email.set('socio@x.com');
+    page.password.set('123456');
+    expect(page.canSubmit()).toBe(true);
+    page.password.set('12345');
+    expect(page.canSubmit()).toBe(false);
+
+    page.openEdit(page.items()[0]);
+    page.password.set('123456');
+    expect(page.canSubmit()).toBe(false);
+    page.password.set('12345678');
+    expect(page.canSubmit()).toBe(true);
+    page.openEdit(page.items()[1]);
+    page.password.set('123456');
+    expect(page.canSubmit()).toBe(true);
   });
 
   it('changes only what was typed and never lets a manager turn off their own access', () => {

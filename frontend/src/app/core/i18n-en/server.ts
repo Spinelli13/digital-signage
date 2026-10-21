@@ -39,6 +39,8 @@ export const SERVER: Record<string, string> = {
   'Uma fatura paga não pode ser cancelada': 'A paid invoice cannot be canceled',
   'Fatura não encontrada: {id}': 'Invoice not found: {id}',
   'Gestor não encontrado: {id}': 'Manager not found: {id}',
+  'Defina uma senha nova para continuar usando o painel.': 'Set a new password to keep using the panel.',
+  'A senha provisória precisa ter pelo menos 6 caracteres': 'The temporary password needs at least 6 characters',
   'Já existe um cliente chamado "{name}"': 'A client named "{name}" already exists',
   'Já existe um plano com o código "{code}"': 'A plan with the code "{code}" already exists',
   'O código de um plano não pode ser alterado': 'A plan code cannot be changed',

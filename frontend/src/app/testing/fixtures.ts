@@ -36,6 +36,7 @@ export function meFixture(role: Role = 'ADMIN', overrides: Partial<Me> = {}): Me
     email: 'ana@empresa.com',
     role,
     platformAdmin: role === 'PLATFORM_ADMIN',
+    mustChangePassword: false,
     tenant: tenantFixture(),
     ...overrides,
   };

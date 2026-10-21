@@ -768,7 +768,7 @@ Define o **preço**, os **limites** (TVs, espaço em MB, usuários e tamanho má
 
 ### 13.3.1 Gestores
 
-Em **Plataforma → Gestores** ficam as pessoas que operam o serviço. Cada gestor entra **com o próprio e-mail e senha** (não é preciso dividir o login) e tem acesso a tudo da plataforma. **Novo gestor** pede nome, e-mail (que é o login) e uma senha inicial de pelo menos 8 caracteres; a pessoa pode trocá-la depois em **Minha conta**. Em **Editar** dá para trocar o nome, definir uma senha nova (se ela esquecer) e **desativar** o acesso, que vale na hora. Você não consegue desativar nem excluir o seu próprio usuário (ficaria sem acesso).
+Em **Plataforma → Gestores** ficam as pessoas que operam o serviço. Cada gestor entra **com o próprio e-mail e senha** (não é preciso dividir o login) e tem acesso a tudo da plataforma. **Novo gestor** pede nome, e-mail (que é o login) e uma **senha provisória** de pelo menos 6 caracteres. Ao entrar pela primeira vez, a pessoa vê a tela **Defina a sua senha** e **precisa trocar a senha provisória** (a nova tem pelo menos 8 caracteres) antes de usar qualquer outra parte do painel. O mesmo vale quando você define uma senha nova para alguém que esqueceu a dela; a sua própria senha você troca em **Minha conta**. Em **Editar** dá para trocar o nome, definir uma senha nova (se ela esquecer) e **desativar** o acesso, que vale na hora. Você não consegue desativar nem excluir o seu próprio usuário (ficaria sem acesso).
 
 ### 13.4 Faturas e pagamentos
 

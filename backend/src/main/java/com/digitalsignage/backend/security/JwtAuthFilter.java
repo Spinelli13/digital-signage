@@ -64,6 +64,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 				Optional<User> found = userRepository.findByEmail(jwtService.extractEmail(header.substring(7))).filter(User::isActive);
 				if (found.isPresent()) {
 					User user = found.get();
+					if (user.isMustChangePassword() && !allowedWhileTemporaryPassword(request)) {
+						refuseTemporaryPassword(response);
+						return;
+					}
 					Optional<Tenant> acting = actingTenant(user, request);
 					if (acting.isPresent()) {
 						Tenant tenant = acting.get();
@@ -117,6 +121,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 		String path = request.getRequestURI();
 		boolean read = "GET".equals(request.getMethod());
 		return path.equals("/api/v1/auth/me") || (read && path.startsWith("/api/v1/billing"));
+	}
+
+	/** Com a senha provisória o usuário só vê quem é e troca a senha; o resto espera. */
+	private static boolean allowedWhileTemporaryPassword(HttpServletRequest request) {
+		String path = request.getRequestURI();
+		return path.equals("/api/v1/auth/me") || path.equals("/api/v1/auth/password");
+	}
+
+	private void refuseTemporaryPassword(HttpServletResponse response) throws IOException {
+		response.setStatus(403);
+		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+		response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		response.getWriter().write(json.writeValueAsString(Map.of("error", "Defina uma senha nova para continuar usando o painel.")));
 	}
 
 	private void refuse(HttpServletResponse response, Tenant tenant) throws IOException {

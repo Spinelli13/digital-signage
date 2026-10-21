@@ -38,10 +38,13 @@ import jakarta.validation.constraints.Size;
 @RequestMapping("/api/v1/platform/managers")
 public class PlatformManagerController {
 
-	public record ManagerResponse(Long id, String name, String email, boolean active, Instant createdAt) {
+	/** A senha que o gestor define para outra pessoa é provisória: pode ser curta, porque a pessoa é obrigada a trocá-la no primeiro acesso. */
+	public static final int MIN_TEMPORARY_PASSWORD = 6;
+
+	public record ManagerResponse(Long id, String name, String email, boolean active, boolean mustChangePassword, Instant createdAt) {
 
 		static ManagerResponse of(User user) {
-			return new ManagerResponse(user.getId(), user.getName(), user.getEmail(), user.isActive(), user.getCreatedAt());
+			return new ManagerResponse(user.getId(), user.getName(), user.getEmail(), user.isActive(), user.isMustChangePassword(), user.getCreatedAt());
 		}
 	}
 
@@ -76,9 +79,10 @@ public class PlatformManagerController {
 		if (users.existsByEmailIgnoreCase(email)) {
 			throw new ConflictException("Já existe um usuário com o e-mail " + email);
 		}
-		requirePassword(request.password());
+		requireTemporaryPassword(request.password());
 		// o gestor mora no mesmo cliente de quem o cadastrou (o cliente da própria operação)
 		User manager = new User(request.name().trim(), email, encoder.encode(request.password()), caller.homeTenantId(), Role.PLATFORM_ADMIN);
+		manager.setMustChangePassword(true);
 		return ManagerResponse.of(users.save(manager));
 	}
 
@@ -90,8 +94,15 @@ public class PlatformManagerController {
 			manager.setName(request.name().trim());
 		}
 		if (request.password() != null) {
-			requirePassword(request.password());
+			boolean self = manager.getId().equals(caller.id());
+			// a própria senha segue a regra normal; a de outra pessoa é provisória e ela troca ao entrar
+			if (self) {
+				requirePassword(request.password());
+			} else {
+				requireTemporaryPassword(request.password());
+			}
 			manager.setPasswordHash(encoder.encode(request.password()));
+			manager.setMustChangePassword(!self);
 		}
 		if (request.active() != null) {
 			if (!request.active() && manager.getId().equals(caller.id())) {
@@ -116,6 +127,12 @@ public class PlatformManagerController {
 	private User find(Long id) {
 		return users.findById(id).filter(user -> user.getRole() == Role.PLATFORM_ADMIN)
 				.orElseThrow(() -> new NoSuchElementException("Gestor não encontrado: " + id));
+	}
+
+	private static void requireTemporaryPassword(String password) {
+		if (password == null || password.length() < MIN_TEMPORARY_PASSWORD) {
+			throw new IllegalArgumentException("A senha provisória precisa ter pelo menos " + MIN_TEMPORARY_PASSWORD + " caracteres");
+		}
 	}
 
 	private static void requirePassword(String password) {

@@ -33,6 +33,8 @@ public class AuthController {
 			String email,
 			String role,
 			boolean platformAdmin,
+			/** Senha provisória: o painel pede a troca antes de qualquer outra coisa. */
+			boolean mustChangePassword,
 			TenantSummary tenant) {
 	}
 
@@ -83,6 +85,7 @@ public class AuthController {
 			throw new IllegalArgumentException("A senha nova precisa ter pelo menos " + com.digitalsignage.backend.user.UserController.MIN_PASSWORD + " caracteres");
 		}
 		user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+		user.setMustChangePassword(false);
 		userRepository.save(user);
 		return ResponseEntity.noContent().build();
 	}
@@ -91,7 +94,8 @@ public class AuthController {
 	public MeResponse me(@AuthenticationPrincipal PanelUser user) {
 		Tenant tenant = tenantRepository.findById(user.tenantId())
 				.orElseThrow(() -> new NoSuchElementException("Cliente não encontrado"));
-		return new MeResponse(user.id(), user.name(), user.email(), user.role().name(), user.isPlatformAdmin(), summaries.of(tenant));
+		boolean mustChange = userRepository.findById(user.id()).map(User::isMustChangePassword).orElse(false);
+		return new MeResponse(user.id(), user.name(), user.email(), user.role().name(), user.isPlatformAdmin(), mustChange, summaries.of(tenant));
 	}
 
 }
