@@ -39,7 +39,7 @@ Auditoria das telas anteriores, com a gravidade de cada achado:
 | 9 | **Alvos de toque** menores que o recomendado em alguns botões | Erro de toque no celular, que é o uso principal | Média |
 | 10 | **Contraste** do botão primário com gradiente claro (texto branco sobre `#1b9468` = 3,8:1) | Abaixo do mínimo AA (4,5:1) no canto mais claro | Média |
 
-O que já estava bom e foi mantido: a paleta verde/prata/preto, o modo escuro, as tabelas que viram cartões no celular, o idioma
+O que já estava bom e foi mantido: a base preta/prata (a marca mudou depois para violeta, veja `MARCA_VYZZU.md`), o modo escuro, as tabelas que viram cartões no celular, o idioma
 PT/EN e a lógica de papéis (cada tela só mostra o que o papel pode fazer).
 
 ## 2. Princípios adotados
@@ -91,7 +91,7 @@ Nenhum componente usa cor fixa (exceções documentadas: cores das zonas na pré
 | Grupo | Tokens |
 |---|---|
 | Superfície e texto | `--bg`, `--panel`, `--panel-2`, `--panel-3`, `--line`, `--line-strong`, `--text`, `--text-2`, `--muted`, `--silver` |
-| Marca | `--primary` (verde `#14774f`; `#2a8f63` no escuro), `--primary-soft`, `--primary-line`, `--link`, `--accent`, `--grad-primary`, `--grad-hero` |
+| Marca | `--primary` (violeta `#7c3aed`), `--violet`, `--magenta`, `--lavender`, `--primary-soft`, `--primary-line`, `--link`, `--accent`, `--grad-primary`, `--grad-hero`, `--glow`, `--nav-active` (valores e regras em `MARCA_VYZZU.md`) |
 | Estados | `--ok-*`, `--warn-*`, `--err-*`, `--info-*` (fundo, texto e borda de cada) |
 | Forma | `--r-sm` 8, `--r` 12, `--r-lg` 16, `--r-xl` 22 px |
 | Elevação | `--sh-1`, `--sh-2`, `--sh-3`, `--ring` (foco) |
