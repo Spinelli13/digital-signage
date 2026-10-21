@@ -24,7 +24,7 @@ Como usar o **painel de administração** do Digital Signage no dia a dia: envia
 
 ![Tela de entrada do painel (captura real)](manual/img/painel-login.png)
 
-> **Na primeira vez do dia, o painel pode demorar até 1 minuto** para responder. O servidor gratuito "dorme" quando fica sem uso e leva um tempo para acordar. É normal, e **não afeta as TVs**: elas continuam exibindo o que já baixaram.
+> **Na primeira vez do dia, o painel pode demorar até 1 minuto** para responder. O servidor gratuito "dorme" quando fica sem uso e leva um tempo para acordar. É normal, e **não afeta as TVs**: elas continuam exibindo o que já baixaram. Quando isso acontece, o painel mostra um **alerta amarelo "O servidor está acordando"** na parte de baixo da tela (já na tela de entrada) e o tira sozinho, com um aviso "Servidor pronto", assim que o servidor responde. Se passar de uns 3 minutos sem resposta, o alerta vira vermelho ("O servidor não respondeu") com o botão **Tentar de novo**: confira a sua internet.
 
 Para sair, clique no seu **nome** (a bolinha com as iniciais, no pé do menu à esquerda; no celular, no canto do alto) e escolha **Sair**. No mesmo menu ficam **Minha conta** (troca de senha), o **tema** e o **idioma**. O tema (claro/escuro) e o idioma (português/inglês) também podem ser trocados nos botões do alto da tela de entrada (veja 2.2 e 2.3).
 

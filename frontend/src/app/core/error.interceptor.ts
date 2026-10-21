@@ -2,7 +2,9 @@ import { HttpErrorResponse, HttpEventType, HttpInterceptorFn } from '@angular/co
 import { inject } from '@angular/core';
 import { catchError, filter, throwError, timeout, TimeoutError } from 'rxjs';
 
+import { ConfigService } from './config.service';
 import { ErrorService } from './error.service';
+import { ServerStatusService } from './server-status.service';
 import { REQUEST_TIMEOUT_MS, SILENT_ERRORS, describeHttpError, describeTimeout } from './http-errors';
 
 /**
@@ -12,6 +14,8 @@ import { REQUEST_TIMEOUT_MS, SILENT_ERRORS, describeHttpError, describeTimeout }
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const errors = inject(ErrorService);
+  const server = inject(ServerStatusService);
+  const apiBase = inject(ConfigService).apiBaseUrl;
   const silent = req.context.get(SILENT_ERRORS);
 
   // Envios de arquivo podem levar muito tempo legitimamente: só as demais requisições têm limite.
@@ -26,6 +30,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return stream.pipe(
     catchError((error: unknown) => {
+      // Sem conexão, 502/503/504 ou tempo esgotado numa chamada à API: pode ser o servidor acordando
+      // (a própria consulta de saúde e os outros sites, como o de downloads, não contam).
+      if (req.url.startsWith(apiBase) && !req.url.endsWith('/health') && isConnectionFailure(error)) {
+        server.suspect();
+      }
       if (!silent) {
         if (error instanceof HttpErrorResponse) {
           errors.show(describeHttpError(error, req));
@@ -39,3 +48,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     }),
   );
 };
+
+const CONNECTION_STATUSES = [0, 502, 503, 504];
+
+function isConnectionFailure(error: unknown): boolean {
+  return error instanceof TimeoutError || (error instanceof HttpErrorResponse && CONNECTION_STATUSES.includes(error.status));
+}

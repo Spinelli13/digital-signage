@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { ConfigService } from './config.service';
 import { ErrorService } from './error.service';
+import { ServerStatusService } from './server-status.service';
 import { errorInterceptor } from './error.interceptor';
 import { REQUEST_TIMEOUT_MS, SILENT_ERRORS } from './http-errors';
 
@@ -26,6 +27,9 @@ describe('errorInterceptor', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    // uma falha de conexão faz o painel conferir o servidor (/health): aqui só interessa que não sobre nada pendente
+    backend.match((request) => request.url.endsWith('/health')).forEach((request) => request.flush({}));
+    TestBed.inject(ServerStatusService).stop();
     backend.verify();
   });
 
@@ -102,5 +106,53 @@ describe('errorInterceptor', () => {
     vi.advanceTimersByTime(REQUEST_TIMEOUT_MS * 5);
 
     expect(messages()).toEqual([]);
+  });
+
+  describe('servidor acordando', () => {
+    it('uma falha de conexão faz o painel conferir o servidor (/health)', () => {
+      http.get(`${API}/devices`).subscribe({ error: () => undefined });
+      backend.expectOne(`${API}/devices`).error(new ProgressEvent('error'), { status: 0 });
+
+      backend.expectOne(`${API}/health`);
+    });
+
+    it.each([502, 503, 504])('o status %s também (é o que a hospedagem devolve enquanto acorda)', (status) => {
+      http.get(`${API}/devices`).subscribe({ error: () => undefined });
+      backend.expectOne(`${API}/devices`).flush('', { status, statusText: 'x' });
+
+      backend.expectOne(`${API}/health`);
+    });
+
+    it('a falha de outro site (como o de downloads) não é o servidor da API dormindo', () => {
+      http.get('https://downloads.test/releases.json').subscribe({ error: () => undefined });
+      backend.expectOne('https://downloads.test/releases.json').error(new ProgressEvent('error'), { status: 0 });
+
+      backend.expectNone(`${API}/health`);
+    });
+
+    it('um erro do próprio sistema (404, 409, 500) não é falta de conexão', () => {
+      http.get(`${API}/devices`).subscribe({ error: () => undefined });
+      backend.expectOne(`${API}/devices`).flush({ error: 'x' }, { status: 409, statusText: 'Conflict' });
+
+      backend.expectNone(`${API}/health`);
+    });
+
+    it('a própria consulta de saúde falhando não gera outra consulta (sem laço)', () => {
+      http.get(`${API}/health`, { context: new HttpContext().set(SILENT_ERRORS, true) }).subscribe({ error: () => undefined });
+      backend.expectOne(`${API}/health`).error(new ProgressEvent('error'), { status: 0 });
+
+      backend.expectNone(`${API}/health`);
+    });
+
+    it('com o servidor já marcado como acordando não abre uma consulta a cada falha', () => {
+      http.get(`${API}/devices`).subscribe({ error: () => undefined });
+      backend.expectOne(`${API}/devices`).error(new ProgressEvent('error'), { status: 0 });
+      backend.expectOne(`${API}/health`).error(new ProgressEvent('error'), { status: 0 });
+
+      http.get(`${API}/media`).subscribe({ error: () => undefined });
+      backend.expectOne(`${API}/media`).error(new ProgressEvent('error'), { status: 0 });
+
+      backend.expectNone(`${API}/health`);
+    });
   });
 });

@@ -95,4 +95,14 @@ export const REDESIGN: Record<string, string> = {
   'A primeira é gerada perto do fim do período de teste.': 'The first one is generated near the end of the trial period.',
   'Nenhum cliente ainda': 'No clients yet',
   'Cadastre o primeiro.': 'Add the first one.',
+
+  // servidor acordando
+  'O servidor está acordando': 'The server is waking up',
+  'Na primeira vez do dia isso pode levar até 1 minuto. As suas TVs não são afetadas: elas continuam exibindo o que já baixaram.':
+    'The first time each day this can take up to 1 minute. Your TVs are not affected: they keep showing what they already downloaded.',
+  'Servidor pronto': 'Server ready',
+  'Já pode continuar.': 'You can continue now.',
+  'O servidor não respondeu': 'The server did not respond',
+  'Confira a sua internet. Vamos continuar tentando.': 'Check your internet connection. We will keep trying.',
+  'Tentar de novo': 'Try again',
 };
