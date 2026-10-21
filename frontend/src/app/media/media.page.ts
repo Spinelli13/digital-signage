@@ -15,6 +15,7 @@ import { IconName } from '../shared/icons';
 import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent } from '../shared/ui';
 import { MediaThumb } from './media-thumb';
 import { WidgetEditorComponent } from './widget-editor';
+import { MAX_UPLOAD_BYTES, VIDEO_CONVERTER, planConversion } from './video-convert';
 import { VideoInfo, exceedsFullHd, looksLikeVideo, probeVideo } from './video-probe';
 import { QR_THEMES, QR_IMAGE_SIZE, QrTheme, drawQr, qrFileName } from './qr';
 
@@ -27,7 +28,7 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
   selector: 'app-media',
   imports: [MediaThumb, FormsModule, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, MenuComponent, WidgetEditorComponent],
   template: `
-    <app-page-header [title]="'Biblioteca de Mídia' | t" [subtitle]="'Imagens (JPG, PNG, WEBP), vídeos (MP4 ou MOV do iPhone, até 1080p), páginas da web e QR Codes disponíveis para as playlists.' | t" icon="image">
+    <app-page-header [title]="'Biblioteca de Mídia' | t" [subtitle]="'Imagens (JPG, PNG, WEBP), vídeos (MP4 ou MOV do iPhone: a conversão para MP4 Full HD é feita ao enviar), páginas da web e QR Codes disponíveis para as playlists.' | t" icon="image">
       @if (auth.can('content')) {
         <div class="head-actions">
           <button class="secondary" (click)="openWidget()"><app-icon name="puzzle" />{{ 'Widget' | t }}</button>
@@ -61,10 +62,20 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
       <div class="card progress">
         <div class="prog-row">
           <app-icon name="cloud-upload" [size]="20" />
-          <span class="prog-text">{{ 'Enviando' | t }} <b>{{ currentFile() }}</b>…</span>
+          <span class="prog-text">
+            @if (phase() === 'converting') {
+              {{ 'Convertendo para MP4 Full HD' | t }}
+            } @else {
+              {{ 'Enviando' | t }}
+            }
+            <b>{{ currentFile() }}</b>…
+          </span>
           <span class="num prog-pct">{{ progress() }}%</span>
         </div>
         <div class="bar"><div class="fill" [style.width.%]="progress()"></div></div>
+        @if (phase() === 'converting') {
+          <p class="label prog-note">{{ 'A conversão acontece neste aparelho e pode levar alguns minutos, conforme o tamanho do vídeo. Mantenha esta página aberta.' | t }}</p>
+        }
       </div>
     }
 
@@ -198,6 +209,7 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
     .prog-pct { font-weight: 700; color: var(--primary); }
     .head-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .progress { margin-bottom: 16px; }
+    .prog-note { margin: 8px 0 0; }
     .bar { height: 8px; background: var(--primary-soft); border-radius: 8px; margin-top: 10px; overflow: hidden; }
     .fill { height: 100%; background: var(--primary); transition: width 0.2s; }
     .item { padding: 0; display: flex; flex-direction: column; }
@@ -223,11 +235,14 @@ export class MediaPage implements OnInit {
   private readonly api = inject(ApiService);
   protected readonly auth = inject(AuthService);
   private readonly errors = inject(ErrorService);
+  private readonly converter = inject(VIDEO_CONVERTER);
 
   readonly accepted = ACCEPTED;
   readonly items = signal<Media[]>([]);
   readonly uploading = signal(false);
   readonly progress = signal(0);
+  /** O que está acontecendo com o arquivo atual: convertendo (no próprio aparelho) ou enviando. */
+  readonly phase = signal<'converting' | 'uploading'>('uploading');
   readonly currentFile = signal('');
   readonly size = formatBytes;
   readonly typeLabel = mediaTypeLabel;
@@ -392,17 +407,32 @@ export class MediaPage implements OnInit {
     }
     this.uploading.set(true);
     this.warnings.set([]);
-    for (const file of files) {
+    const converted: string[] = [];
+    for (const original of files) {
+      let file = original;
       this.currentFile.set(file.name);
       this.progress.set(0);
+      this.phase.set('uploading');
       try {
         let duration: number | null = null;
         if (looksLikeVideo(file)) {
           // O arquivo diz o que é (codec, tamanho, duração) sem precisar tocá-lo: o navegador nem sempre toca HEVC.
-          const info = await probeVideo(file);
-          if (info && exceedsFullHd(info)) {
+          let info = await probeVideo(file);
+          if (info) {
+            const result = await this.convertIfNeeded(file, info);
+            if (result === 'skip') {
+              continue;
+            }
+            if (result) {
+              converted.push(tr('"{name}" virou MP4 Full HD (de {before} para {after}).', { name: original.name, before: formatBytes(original.size), after: formatBytes(result.file.size) }));
+              file = result.file;
+              info = (await probeVideo(file)) ?? info;
+            }
+          }
+          const wasConverted = file !== original;
+          if (info && !wasConverted && exceedsFullHd(info)) {
             this.errors.show(
-              tr('O vídeo "{name}" tem {width}×{height}, mais que 1080p. Regrave ou reduza para 1080p antes de enviar (no iPhone: Ajustes > Câmera > Gravar vídeo > 1080p HD).', {
+              tr('O vídeo "{name}" tem {width}×{height}, mais que 1080p, e este navegador não conseguiu reduzi-lo. Regrave ou reduza para 1080p antes de enviar (no iPhone: Ajustes > Câmera > Gravar vídeo > 1080p HD).', {
                 name: file.name,
                 width: info.width,
                 height: info.height,
@@ -410,20 +440,101 @@ export class MediaPage implements OnInit {
             );
             continue;
           }
-          if (info) {
+          if (info && !wasConverted) {
             this.warnAbout(file.name, info);
           }
           duration = info?.durationSeconds ? Math.max(1, Math.round(info.durationSeconds)) : await readVideoDuration(file);
         }
+        this.phase.set('uploading');
+        this.progress.set(0);
         await this.upload(file, duration);
       } catch {
         // O motivo já foi mostrado pelo interceptor; aqui dizemos qual arquivo falhou e o que aconteceu com a fila.
-        this.errors.show(tr('Não foi possível enviar "{name}". Os arquivos seguintes da fila não foram enviados.', { name: file.name }));
+        this.errors.show(tr('Não foi possível enviar "{name}". Os arquivos seguintes da fila não foram enviados.', { name: original.name }));
         break;
       }
     }
     this.uploading.set(false);
+    if (converted.length > 0) {
+      this.notice.show(converted.join(' '));
+    }
     this.load();
+  }
+
+  /**
+   * Converte para MP4 Full HD o que precisa (MOV, HEVC, acima de Full HD, HDR, acima do limite de tamanho). Devolve o
+   * resultado, nulo quando não precisa (ou não deu e o original ainda serve) e 'skip' quando o arquivo não pode ser enviado.
+   */
+  private async convertIfNeeded(file: File, info: VideoInfo): Promise<{ file: File } | null | 'skip'> {
+    const plan = planConversion(file, info);
+    if (!plan) {
+      return null;
+    }
+    if (!plan.fits) {
+      if (file.size > MAX_UPLOAD_BYTES) {
+        this.errors.show(
+          tr('O vídeo "{name}" tem {seconds} s e {size}: é longo demais para caber no limite de {limit} do servidor, mesmo convertido. Divida-o em partes menores.', {
+            name: file.name,
+            seconds: Math.round(info.durationSeconds ?? 0),
+            size: formatBytes(file.size),
+            limit: formatBytes(MAX_UPLOAD_BYTES),
+          }),
+        );
+        return 'skip';
+      }
+      return null; // o original cabe no limite: vai como está, com os avisos de sempre
+    }
+    if (!this.converter.canConvert()) {
+      return this.cannotConvert(file, info);
+    }
+    this.phase.set('converting');
+    this.progress.set(0);
+    try {
+      const result = await this.converter.convert(file, plan, info, (fraction) => this.progress.set(Math.round(fraction * 100)));
+      if (result.file.size > MAX_UPLOAD_BYTES) {
+        if (file.size <= MAX_UPLOAD_BYTES) {
+          return null;
+        }
+        this.errors.show(
+          tr('"{name}" convertido ainda tem {size}, acima do limite de {limit}. Divida o vídeo em partes menores.', {
+            name: file.name,
+            size: formatBytes(result.file.size),
+            limit: formatBytes(MAX_UPLOAD_BYTES),
+          }),
+        );
+        return 'skip';
+      }
+      if (result.warnings.includes('no-audio')) {
+        this.warnings.update((current) => [...current, tr('"{name}" ficou sem som: este navegador não consegue regravar o áudio desse vídeo.', { name: file.name })]);
+      }
+      return result;
+    } catch {
+      return this.cannotConvert(file, info);
+    } finally {
+      this.phase.set('uploading');
+    }
+  }
+
+  /** O navegador não conseguiu converter: o original segue (com os avisos) se for aceito, senão a pessoa é avisada. */
+  private cannotConvert(file: File, info: VideoInfo): null | 'skip' {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      this.errors.show(
+        tr('O vídeo "{name}" tem {size}, acima do limite de {limit}, e este navegador não conseguiu convertê-lo. Tente pelo celular (Safari ou Chrome atualizados) ou reduza o vídeo antes de enviar.', {
+          name: file.name,
+          size: formatBytes(file.size),
+          limit: formatBytes(MAX_UPLOAD_BYTES),
+        }),
+      );
+      return 'skip';
+    }
+    // Acima de Full HD o envio é recusado logo adiante, com a própria explicação: um segundo aviso só atrapalharia.
+    if (!exceedsFullHd(info)) {
+      this.warnings.update((current) => [
+        ...current,
+        tr('Este navegador não conseguiu converter "{name}" para MP4 Full HD ({codec}): o arquivo vai como está.', { name: file.name, codec: info.codecName }),
+      ]);
+    }
+    return null;
   }
 
   private warnAbout(name: string, info: VideoInfo): void {

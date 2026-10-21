@@ -104,11 +104,25 @@ export const CONTENT: Record<string, string> = {
 
   // biblioteca de mídia e QR Code
   'Biblioteca de Mídia': 'Media library',
-  'Imagens (JPG, PNG, WEBP), vídeos (MP4 ou MOV do iPhone, até 1080p), páginas da web e QR Codes disponíveis para as playlists.':
-    'Images (JPG, PNG, WEBP), videos (MP4 or iPhone MOV, up to 1080p), web pages and QR Codes available for playlists.',
+  'Imagens (JPG, PNG, WEBP), vídeos (MP4 ou MOV do iPhone: a conversão para MP4 Full HD é feita ao enviar), páginas da web e QR Codes disponíveis para as playlists.':
+    'Images (JPG, PNG, WEBP), videos (MP4 or iPhone MOV: converted to Full HD MP4 when you upload), web pages and QR Codes available for playlists.',
   Entendi: 'Got it',
-  'O vídeo "{name}" tem {width}×{height}, mais que 1080p. Regrave ou reduza para 1080p antes de enviar (no iPhone: Ajustes > Câmera > Gravar vídeo > 1080p HD).':
-    'The video "{name}" is {width}×{height}, above 1080p. Re-record or shrink it to 1080p before uploading (on iPhone: Settings > Camera > Record Video > 1080p HD).',
+  'O vídeo "{name}" tem {width}×{height}, mais que 1080p, e este navegador não conseguiu reduzi-lo. Regrave ou reduza para 1080p antes de enviar (no iPhone: Ajustes > Câmera > Gravar vídeo > 1080p HD).':
+    'The video "{name}" is {width}×{height}, above 1080p, and this browser could not shrink it. Re-record or shrink it to 1080p before uploading (on iPhone: Settings > Camera > Record Video > 1080p HD).',
+  'Convertendo para MP4 Full HD': 'Converting to Full HD MP4',
+  'A conversão acontece neste aparelho e pode levar alguns minutos, conforme o tamanho do vídeo. Mantenha esta página aberta.':
+    'The conversion happens on this device and can take a few minutes, depending on the size of the video. Keep this page open.',
+  '"{name}" virou MP4 Full HD (de {before} para {after}).': '"{name}" became a Full HD MP4 (from {before} to {after}).',
+  'O vídeo "{name}" tem {seconds} s e {size}: é longo demais para caber no limite de {limit} do servidor, mesmo convertido. Divida-o em partes menores.':
+    'The video "{name}" is {seconds} s long and {size}: too long to fit the server limit of {limit}, even converted. Split it into smaller parts.',
+  '"{name}" convertido ainda tem {size}, acima do limite de {limit}. Divida o vídeo em partes menores.':
+    'The converted "{name}" is still {size}, above the {limit} limit. Split the video into smaller parts.',
+  '"{name}" ficou sem som: este navegador não consegue regravar o áudio desse vídeo.':
+    '"{name}" lost its sound: this browser cannot re-record the audio of that video.',
+  'O vídeo "{name}" tem {size}, acima do limite de {limit}, e este navegador não conseguiu convertê-lo. Tente pelo celular (Safari ou Chrome atualizados) ou reduza o vídeo antes de enviar.':
+    'The video "{name}" is {size}, above the {limit} limit, and this browser could not convert it. Try from your phone (updated Safari or Chrome) or shrink the video before uploading.',
+  'Este navegador não conseguiu converter "{name}" para MP4 Full HD ({codec}): o arquivo vai como está.':
+    'This browser could not convert "{name}" to Full HD MP4 ({codec}): the file goes as it is.',
   '"{name}" está em HEVC (H.265), o formato padrão do iPhone. Funciona na maioria das TVs, mas aparelhos mais antigos não tocam: se a TV mostrar erro, grave em "Mais compatível" (H.264) em Ajustes > Câmera > Formatos.':
     '"{name}" is HEVC (H.265), the iPhone default. It works on most TVs, but older devices cannot play it: if the TV shows an error, record using "Most Compatible" (H.264) under Settings > Camera > Formats.',
   '"{name}" tem HDR (Dolby Vision, HLG ou HDR10): em TVs sem HDR as cores podem ficar apagadas. Prefira gravar sem HDR.':

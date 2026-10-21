@@ -118,15 +118,17 @@ O que **você** digitou (nomes de TVs, playlists, locais, campanhas…) nunca é
 | Tipo | Formatos | Recomendação |
 |---|---|---|
 | Imagem | JPG, PNG, WEBP | Proporção **16:9**, de preferência **1920×1080**. Imagens fora dessa proporção aparecem inteiras, com faixas pretas. |
-| Vídeo | **MP4** e **MOV** (o que o **iPhone** grava), em H.264 ou HEVC | Até **1080p** (1920×1080, deitado ou em pé) e **no máximo 50 MB** por arquivo (limite do armazenamento gratuito; um vídeo de iPhone em 1080p tem cerca de 50 MB por minuto, então corte ou grave clipes curtos). Outros formatos (AVI, MKV, WEBM) não são aceitos. |
+| Vídeo | **MP4** e **MOV** (o que o **iPhone** grava), em H.264 ou HEVC | O painel **converte para MP4 Full HD (H.264)** ao enviar, quando precisa (veja abaixo). O arquivo que fica na biblioteca tem até **1080p** (1920×1080, deitado ou em pé) e **no máximo 50 MB** (limite do armazenamento gratuito). Outros formatos (AVI, MKV, WEBM) não são aceitos. |
 
-**Vídeos do iPhone.** Pode enviar o arquivo direto da galeria, em **.MOV**. Antes de enviar, o painel lê o arquivo (sem tocá-lo) e avisa:
+**Vídeos do iPhone: a conversão é automática.** Pode enviar o arquivo direto da galeria, em **.MOV**. O vídeo do iPhone costuma ser pesado (4K, 60 quadros, HEVC, HDR): passa do limite de 50 MB em poucos segundos e muitas TVs e caixas não o tocam bem. Por isso, **antes de enviar**, o próprio painel o converte, **neste aparelho** (o servidor gratuito não aguentaria), para **MP4 em H.264, no máximo Full HD**, com qualidade boa para TV:
 
-- **Acima de 1080p** (por exemplo 4K): o painel **não envia** e explica como regravar (no iPhone: **Ajustes > Câmera > Gravar vídeo > 1080p HD**). Vídeos menores deixam a TV mais leve e o envio mais rápido.
-- **HEVC (H.265)**, o padrão do iPhone: **envia**, mas avisa que TVs e aparelhos mais antigos podem não tocar. Se a TV mostrar a mensagem de que não consegue tocar o vídeo, regrave em **Ajustes > Câmera > Formatos > Mais compatível** (H.264).
-- **HDR** (Dolby Vision, HLG): envia, mas as cores podem ficar apagadas em TVs sem HDR. O ideal é gravar sem HDR.
+- **O que dispara a conversão:** arquivo **.MOV**, vídeo em **HEVC ou outro formato que não seja H.264**, **acima de 1080p**, com **HDR** ou **acima de 50 MB**. Um MP4 em H.264 até 1080p e dentro do limite **não é mexido** (converter de novo só perderia qualidade).
+- **O que muda no vídeo:** passa a **MP4 (H.264)**, cabe em **1920×1080** (ou 1080×1920 se foi gravado em pé; nunca é ampliado), vai a **no máximo 30 quadros por segundo** e **até 8 Mbps**. Para caber em 50 MB, vídeos mais longos usam uma taxa menor (um vídeo de 1 minuto fica por volta de 5 Mbps). O **som** é mantido, e o HDR é convertido para as cores normais.
+- **Como acompanhar:** o painel mostra **Convertendo para MP4 Full HD** com a porcentagem, e depois **Enviando**. **Mantenha a página aberta**: a conversão roda no navegador e pode levar de segundos a alguns minutos, conforme o tamanho do vídeo e o aparelho (no iPhone e no Mac costuma ser rápido: usam o chip de vídeo). Ao terminar, um aviso diz o tamanho antes e depois. O arquivo vira **nome.mp4** na biblioteca.
+- **Quando não dá para converter:** é preciso um navegador atual (**Safari** ou **Chrome/Edge** recentes; o **Firefox** costuma não conseguir). Se o navegador não consegue abrir o vídeo (por exemplo HEVC no Chrome do Windows sem o suporte instalado), o painel avisa e **envia o original**, desde que ele tenha até 1080p e 50 MB; senão explica o que fazer (**enviar pelo celular** costuma resolver). Um vídeo tão longo que não cabe em 50 MB nem convertido (mais de uns 2 minutos em Full HD) é recusado: divida-o em partes.
+- **Dica:** se o vídeo ficou sem som depois de convertido, o navegador não conseguiu regravar o áudio; o painel avisa.
 
-A duração do vídeo é preenchida sozinha a partir do próprio arquivo, mesmo quando o computador não consegue tocar HEVC.
+A duração do vídeo é preenchida sozinha a partir do próprio arquivo.
 
 Além de arquivos, a Biblioteca também guarda **widgets** (botão **Widget**, seção 3.1), **QR Codes** (botão **QR Code**) e **páginas da web** (botão **Página web**): veja o capítulo 10.
 
@@ -771,7 +773,7 @@ Todo aviso começa pela **ação** que falhou (por exemplo, "Excluir mídia: …
 | …sua sessão expirou. Entre novamente. | Passou muito tempo logado. | Entre de novo com e-mail e senha. |
 | …existe outro registro que depende deste item | Você tentou excluir algo em uso (por exemplo, uma mídia que está numa playlist). | Retire o item de onde ele está sendo usado e tente de novo. |
 | Ativar dispositivo: Código de ativação inválido ou expirado | O código da TV venceu ou foi digitado errado. | Confira o código na TV; se preciso, reinicie o Player para gerar outro. |
-| …o arquivo é grande demais | A mídia passa do limite de tamanho. | Comprima o vídeo (até 50 MB) e envie de novo. |
+| …o arquivo é grande demais | A mídia passa do limite de tamanho. | Vídeos são reduzidos sozinhos ao enviar (veja o capítulo 3); se ainda assim passar de 50 MB, divida o vídeo em partes menores. Imagens: reduza e envie de novo. |
 | …o plano … permite até N TV(s) / MB de mídias / usuário(s) | O limite do plano foi atingido. | Exclua o que não usa mais ou peça um plano maior (capítulo 12). |
 | …a assinatura de "…" está suspensa | A cobrança está em atraso além da tolerância. | O administrador abre **Plano e cobrança**, paga a fatura e avisa a operação (capítulo 12). |
 | …o papel Editor só pode… / …não tem permissão | O seu papel não permite essa ação. | Peça a um Administrador (capítulo 11). |
@@ -825,7 +827,7 @@ Todo aviso começa pela **ação** que falhou (por exemplo, "Excluir mídia: …
 | Uma ação em massa disse "N já estavam no estado pedido" | Normal: a ação só alcança as TVs a que se aplica (por exemplo, "Reativar" só alcança as desativadas). |
 | A TV não aparece na lista depois de digitar o código | Confira se o código está certo (6 caracteres) e dentro de 24 horas. |
 | O painel não abre / "servidor demorou" | Aguarde cerca de 1 minuto e recarregue a página. |
-| Vídeo não toca (a TV avisa "não consegue tocar este vídeo") | Quase sempre é o formato: **HEVC (H.265)** em TV antiga, **4K** ou **HDR**. Regrave ou converta para **H.264 de até 1080p** (MP4 ou MOV). No iPhone: **Ajustes > Câmera > Formatos > Mais compatível**. |
+| Vídeo não toca (a TV avisa "não consegue tocar este vídeo") | Quase sempre é o formato: **HEVC (H.265)** em TV antiga, **4K** ou **HDR**. Vídeos enviados pelo painel já são convertidos para **MP4 H.264 de até 1080p**; se o vídeo foi enviado antes disso, ou o navegador não conseguiu converter, envie de novo pelo celular (Safari) ou regrave. No iPhone: **Ajustes > Câmera > Formatos > Mais compatível**. |
 | A TV não se atualiza | Veja o **Manual de instalação**, seção "Atualização automática" (precisa liberar "instalar apps desconhecidos" e alguém confirmar na TV). |
 
 <!-- fim-do-manual -->
