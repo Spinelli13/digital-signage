@@ -61,6 +61,9 @@ data class PlayerConfig(
     val configVersion: Long,
     val items: List<ConfigItem>,
     val zones: List<ConfigZone> = emptyList(),
+    /** A campanha que está no ar (nula = a playlist da própria TV): entra na comprovação de exibição. */
+    val campaignId: Long? = null,
+    val campaignName: String? = null,
 ) {
 
     /** As zonas a exibir: as do layout ou, sem layout, uma zona principal em tela cheia com [items]. */
@@ -79,7 +82,7 @@ data class PlayerConfig(
  * [updateCheckToken] muda quando o administrador pede, no painel, que a TV verifique atualização do Player
  * (0 = nunca pediu). A TV só reage a valores que ainda não tratou.
  */
-data class Desired(val playlistId: Long?, val configVersion: Long, val updateCheckToken: Long = 0)
+data class Desired(val playlistId: Long?, val configVersion: Long, val updateCheckToken: Long = 0, val campaignId: Long? = null)
 
 /** Config junto com o JSON original, que é o que fica persistido no aparelho. */
 data class FetchedConfig(val config: PlayerConfig, val raw: String)
@@ -106,6 +109,8 @@ object Json {
             configVersion = json.optLong("configVersion"),
             items = parseItems(json.getJSONArray("items")),
             zones = zones,
+            campaignId = if (json.isNull("campaignId")) null else json.optLong("campaignId"),
+            campaignName = if (json.isNull("campaignName")) null else json.optString("campaignName"),
         )
     }
 
@@ -174,6 +179,7 @@ object Json {
             playlistId = if (json.isNull("playlistId")) null else json.getLong("playlistId"),
             configVersion = json.optLong("configVersion"),
             updateCheckToken = json.optLong("updateCheckToken", 0),
+            campaignId = if (json.isNull("campaignId")) null else json.optLong("campaignId"),
         )
     }
 

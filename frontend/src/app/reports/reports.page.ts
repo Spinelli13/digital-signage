@@ -25,22 +25,26 @@ import { SITUATION } from '../shared/connection';
 import { IconComponent } from '../shared/icon';
 import { IconName } from '../shared/icons';
 import { EmptyStateComponent, PageHeaderComponent, PillComponent, SkeletonComponent } from '../shared/ui';
+import { ProofReportComponent } from './proof-report';
 
-export type ReportTab = 'uptime' | 'plays' | 'inventory' | 'events';
+export type ReportTab = 'uptime' | 'plays' | 'proof' | 'inventory' | 'events';
 
 export const TABS: { id: ReportTab; label: string; icon: IconName }[] = [
   { id: 'uptime', label: 'Disponibilidade', icon: 'activity' },
   { id: 'plays', label: 'Exibições', icon: 'monitor-play' },
+  { id: 'proof', label: 'Comprovação', icon: 'shield-check' },
   { id: 'inventory', label: 'Inventário', icon: 'package' },
   { id: 'events', label: 'Eventos', icon: 'list' },
 ];
 
 @Component({
   selector: 'app-reports',
-  imports: [FormsModule, RouterLink, TPipe, FDatePipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, SkeletonComponent],
+  imports: [FormsModule, RouterLink, TPipe, FDatePipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, SkeletonComponent, ProofReportComponent],
   template: `
     <app-page-header [title]="'Relatórios' | t" [subtitle]="'Quanto tempo as TVs ficaram no ar, o que foi exibido e o que aconteceu. Cada relatório pode ser baixado em CSV para abrir no Excel.' | t" icon="chart-column">
-      <button class="secondary" (click)="downloadCsv()" [disabled]="downloading()"><app-icon name="download" [size]="17" />{{ (downloading() ? 'Gerando…' : 'Baixar CSV') | t }}</button>
+      @if (tab() !== 'proof') {
+        <button class="secondary" (click)="downloadCsv()" [disabled]="downloading()"><app-icon name="download" [size]="17" />{{ (downloading() ? 'Gerando…' : 'Baixar CSV') | t }}</button>
+      }
     </app-page-header>
 
     <div class="tabs" role="tablist">
@@ -169,6 +173,9 @@ export const TABS: { id: ReportTab; label: string; icon: IconName }[] = [
           } @else {
             <app-skeleton [rows]="4" />
           }
+        }
+        @case ('proof') {
+          <app-proof-report [from]="from()" [to]="to()" [devices]="devices()" />
         }
         @case ('inventory') {
           @if (inventory(); as rows) {
@@ -375,6 +382,8 @@ export class ReportsPage implements OnInit {
       case 'plays':
         this.api.playsReport(range, this.groupBy(), this.locationId()).subscribe({ next: (r) => this.plays.set(r), error: () => undefined });
         break;
+      case 'proof':
+        break; // a aba carrega sozinha (período vem daqui, os demais filtros são dela)
       case 'inventory':
         this.api.inventoryReport().subscribe({ next: (r) => this.inventory.set(r), error: () => undefined });
         break;
@@ -393,6 +402,7 @@ export class ReportsPage implements OnInit {
     const filters: Record<ReportTab, Record<string, string | number | null | undefined>> = {
       uptime: { from: range.from, to: range.to, locationId: this.locationId(), groupId: this.groupId() },
       plays: { from: range.from, to: range.to, groupBy: this.groupBy(), locationId: this.locationId() },
+      proof: {},
       inventory: {},
       events: { from: range.from, to: range.to, deviceId: this.eventDevice(), type: this.eventType(), level: this.eventLevel() },
     };
@@ -407,7 +417,7 @@ export class ReportsPage implements OnInit {
   }
 
   private filename(tab: ReportTab, range: ReportRange): string {
-    const names: Record<ReportTab, string> = { uptime: 'disponibilidade', plays: 'exibicoes', inventory: 'inventario', events: 'eventos' };
+    const names: Record<ReportTab, string> = { uptime: 'disponibilidade', plays: 'exibicoes', proof: 'comprovacao', inventory: 'inventario', events: 'eventos' };
     return tab === 'inventory' ? `inventario-${daysAgo(0)}.csv` : `${names[tab]}-${range.from}-a-${range.to}.csv`;
   }
 

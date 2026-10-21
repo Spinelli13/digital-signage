@@ -92,6 +92,10 @@ const REFRESH_MS = 15_000;
           <label for="retention">{{ 'Guardar o histórico por (dias)' | t }}</label>
           <input id="retention" type="number" min="7" max="730" [ngModel]="eventsRetentionDays()" (ngModelChange)="eventsRetentionDays.set($event)" />
         </div>
+        <div class="field">
+          <label for="playlog">{{ 'Guardar cada exibição (comprovação) por (dias)' | t }}</label>
+          <input id="playlog" type="number" min="7" max="365" [ngModel]="playLogRetentionDays()" (ngModelChange)="playLogRetentionDays.set($event)" />
+        </div>
       </div>
 
       <h3 class="sub sec"><app-icon name="send" [size]="18" />{{ 'Aviso externo (webhook)' | t }}</h3>
@@ -166,6 +170,7 @@ export class AlertsPage implements OnInit {
   readonly neverConnectedAfterHours = signal<number | null>(24);
   readonly errorBurstCount = signal<number | null>(5);
   readonly eventsRetentionDays = signal<number | null>(90);
+  readonly playLogRetentionDays = signal<number | null>(14);
   readonly notifyOnResolve = signal(true);
   readonly webhookUrl = signal('');
 
@@ -254,11 +259,11 @@ export class AlertsPage implements OnInit {
     });
   }
 
-  /** Os quatro limites precisam ser números inteiros; os intervalos exatos quem confere é o servidor. */
+  /** Os limites precisam ser números inteiros; os intervalos exatos quem confere é o servidor. */
   private settingsBody(): MonitoringSettingsRequest | null {
-    const numbers = [this.offlineAfterMinutes(), this.neverConnectedAfterHours(), this.errorBurstCount(), this.eventsRetentionDays()];
+    const numbers = [this.offlineAfterMinutes(), this.neverConnectedAfterHours(), this.errorBurstCount(), this.eventsRetentionDays(), this.playLogRetentionDays()];
     if (numbers.some((value) => value === null || !Number.isInteger(value))) {
-      this.notice.show(tr('Preencha os quatro limites com números inteiros.'));
+      this.notice.show(tr('Preencha todos os limites com números inteiros.'));
       return null;
     }
     return {
@@ -266,6 +271,7 @@ export class AlertsPage implements OnInit {
       neverConnectedAfterHours: this.neverConnectedAfterHours() as number,
       errorBurstCount: this.errorBurstCount() as number,
       eventsRetentionDays: this.eventsRetentionDays() as number,
+      playLogRetentionDays: this.playLogRetentionDays() as number,
       notifyOnResolve: this.notifyOnResolve(),
     };
   }
@@ -276,6 +282,7 @@ export class AlertsPage implements OnInit {
     this.neverConnectedAfterHours.set(settings.neverConnectedAfterHours);
     this.errorBurstCount.set(settings.errorBurstCount);
     this.eventsRetentionDays.set(settings.eventsRetentionDays);
+    this.playLogRetentionDays.set(settings.playLogRetentionDays);
     this.notifyOnResolve.set(settings.notifyOnResolve);
   }
 

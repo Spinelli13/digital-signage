@@ -161,6 +161,28 @@ describe('ReportsPage', () => {
     backend.verify();
   });
 
+  it('opens the proof of play tab with the period of the page, and leaves the CSV to the tab itself', async () => {
+    const { page, fixture, backend } = start(true);
+
+    page.select('proof');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    backend.match(`${API}/media`).forEach((r) => r.flush([]));
+    backend.match(`${API}/campaigns`).forEach((r) => r.flush([]));
+    const proof = backend.match((r) => r.url === `${API}/reports/proof`);
+    expect(proof.length).toBeGreaterThan(0);
+    expect(proof[0].request.params.get('from')).toBe(daysAgo(6));
+    proof.forEach((r) => r.flush({ from: '', to: '', timezone: 'America/Sao_Paulo', total: 0, completed: 0, totalDurationMs: 0, devices: 0, offset: 0, limit: 100, rows: [] }));
+    backend.match((r) => r.url === `${API}/reports/proof/daily`).forEach((r) => r.flush([]));
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('app-proof-report')).not.toBeNull();
+    // o botão de CSV do cabeçalho some: a aba tem o seu, com os filtros dela
+    expect(element.querySelector('app-page-header button')).toBeNull();
+    backend.verify();
+  });
+
   it('shows the inventory without a period filter', async () => {
     const { page, fixture, backend } = start(true);
 

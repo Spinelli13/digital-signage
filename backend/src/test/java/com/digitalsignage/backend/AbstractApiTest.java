@@ -83,7 +83,7 @@ public abstract class AbstractApiTest {
 	void cleanDatabase() {
 		// O administrador (tabela users) é semeado na subida do contexto e precisa sobreviver.
 		clock.reset();
-		jdbc.update("UPDATE monitoring_settings SET offline_after_minutes = 10, never_connected_after_hours = 24, error_burst_count = 5, webhook_url = NULL, notify_on_resolve = TRUE, events_retention_days = 90");
+		jdbc.update("UPDATE monitoring_settings SET offline_after_minutes = 10, never_connected_after_hours = 24, error_burst_count = 5, webhook_url = NULL, notify_on_resolve = TRUE, events_retention_days = 90, play_log_retention_days = 14");
 		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media, locations, device_groups, campaigns, device_events, alerts, media_plays, layouts RESTART IDENTITY CASCADE");
 		// Clientes, usuários e planos criados pelos testes (o cliente 1 = reserva e o 2 = original, com o administrador, ficam).
 		jdbc.update("DELETE FROM invoices");

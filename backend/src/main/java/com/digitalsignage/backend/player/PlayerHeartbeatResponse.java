@@ -13,5 +13,7 @@ public record PlayerHeartbeatResponse(
 		Long playlistId,
 		long configVersion,
 		Instant serverTime,
-		long updateCheckToken) {
+		long updateCheckToken,
+		/** A campanha no ar (nula = playlist da TV): o Player refaz a configuração se ela mudar, para a comprovação citar a campanha certa. */
+		Long campaignId) {
 }

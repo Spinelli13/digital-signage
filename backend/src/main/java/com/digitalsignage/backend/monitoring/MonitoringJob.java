@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
+import com.digitalsignage.backend.proof.PlayProofService;
 import com.digitalsignage.backend.tenant.Tenant;
 import com.digitalsignage.backend.tenant.TenantContext;
 import com.digitalsignage.backend.tenant.TenantRepository;
@@ -27,13 +28,15 @@ public class MonitoringJob {
 
 	private final MonitoringService monitoring;
 	private final AlertNotifier notifier;
+	private final PlayProofService proof;
 	private final TenantRepository tenants;
 	private final Clock clock;
 	private volatile Instant lastPurge = Instant.EPOCH;
 
-	public MonitoringJob(MonitoringService monitoring, AlertNotifier notifier, TenantRepository tenants, Clock clock) {
+	public MonitoringJob(MonitoringService monitoring, AlertNotifier notifier, PlayProofService proof, TenantRepository tenants, Clock clock) {
 		this.monitoring = monitoring;
 		this.notifier = notifier;
+		this.proof = proof;
 		this.tenants = tenants;
 		this.clock = clock;
 	}
@@ -67,6 +70,10 @@ public class MonitoringJob {
 			int removed = monitoring.purge(now);
 			if (removed > 0) {
 				log.info("Histórico antigo apagado: {} evento(s)", removed);
+			}
+			int plays = proof.purge(now, monitoring.settings().getPlayLogRetentionDays());
+			if (plays > 0) {
+				log.info("Comprovação de exibição antiga apagada: {} registro(s)", plays);
 			}
 		}
 	}

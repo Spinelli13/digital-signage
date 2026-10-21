@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { currentLocale, formatDateTimeLocal, tr, trServer } from './i18n';
+import { currentLocale, formatDateTimeLocal, formatDateTimeMsLocal, tr, trServer } from './i18n';
 import { Connection, Device, MediaType } from './models';
 
 export interface DeviceState {
@@ -96,6 +96,8 @@ export function errorMessage(error: unknown, fallback = 'Algo deu errado. Tente 
 export function formatDateTime(iso: string | null): string {
   return formatDateTimeLocal(iso);
 }
+
+export const formatDateTimeMs = formatDateTimeMsLocal;
 
 /** "5 min", "2 h 10 min", "3 d 4 h" — a mesma escrita do servidor nos alertas e no CSV. */
 export function humanSeconds(totalSeconds: number): string {

@@ -1,5 +1,7 @@
 package com.digitalsignage.player.data
 
+import com.digitalsignage.player.proof.PlayLog
+import com.digitalsignage.player.proof.PlayRecord
 import com.digitalsignage.player.telemetry.HeartbeatReport
 import java.io.IOException
 import java.io.InputStream
@@ -29,6 +31,9 @@ interface PlayerApi {
         syncedConfigVersion: Long,
         report: HeartbeatReport = HeartbeatReport.EMPTY,
     ): Desired
+
+    /** Entrega registros de exibição; devolve até que número de ordem o servidor já tem. */
+    suspend fun sendPlays(token: String, deviceTimeMs: Long, records: List<PlayRecord>): Long = records.maxOfOrNull { it.seq } ?: 0
 }
 
 interface MediaDownloader {
@@ -62,6 +67,12 @@ class HttpPlayerApi(
     ): Desired {
         val body = Json.heartbeatBody(playerVersion, syncedConfigVersion, report)
         return Json.parseDesired(send(post("/api/v1/player/heartbeat", body, token)))
+    }
+
+    override suspend fun sendPlays(token: String, deviceTimeMs: Long, records: List<PlayRecord>): Long {
+        val entries = org.json.JSONArray().also { array -> records.forEach { array.put(PlayLog.toJson(it)) } }
+        val body = JSONObject().put("deviceTimeMs", deviceTimeMs).put("entries", entries)
+        return JSONObject(send(post("/api/v1/player/plays", body, token))).getLong("acknowledgedSeq")
     }
 
     override suspend fun <T> download(token: String, url: String, consume: (InputStream) -> T): T =

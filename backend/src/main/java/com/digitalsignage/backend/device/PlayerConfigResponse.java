@@ -11,10 +11,21 @@ public record PlayerConfigResponse(
 		Long playlistId,
 		long configVersion,
 		List<PlayerConfigMediaItem> items,
-		List<PlayerConfigZone> zones) {
+		List<PlayerConfigZone> zones,
+		/** A campanha que está no ar agora (nula = a playlist da própria TV): entra na comprovação de exibição. */
+		Long campaignId,
+		String campaignName) {
 
 	public PlayerConfigResponse(Long deviceId, Long playlistId, long configVersion, List<PlayerConfigMediaItem> items) {
-		this(deviceId, playlistId, configVersion, items, List.of());
+		this(deviceId, playlistId, configVersion, items, List.of(), null, null);
+	}
+
+	public PlayerConfigResponse(Long deviceId, Long playlistId, long configVersion, List<PlayerConfigMediaItem> items, List<PlayerConfigZone> zones) {
+		this(deviceId, playlistId, configVersion, items, zones, null, null);
+	}
+
+	public PlayerConfigResponse withCampaign(Long id, String name) {
+		return new PlayerConfigResponse(deviceId, playlistId, configVersion, items, zones, id, name);
 	}
 
 }

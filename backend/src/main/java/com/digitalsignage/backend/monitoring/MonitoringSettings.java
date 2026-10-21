@@ -45,6 +45,10 @@ public class MonitoringSettings {
 	@Column(name = "events_retention_days", nullable = false)
 	private int eventsRetentionDays = 90;
 
+	/** Quanto tempo o detalhe de cada exibição (comprovação) fica guardado; o resumo diário fica um ano. */
+	@Column(name = "play_log_retention_days", nullable = false)
+	private int playLogRetentionDays = 14;
+
 	@Column(name = "updated_at", nullable = false)
 	private Instant updatedAt;
 
@@ -104,6 +108,14 @@ public class MonitoringSettings {
 
 	public void setEventsRetentionDays(int value) {
 		this.eventsRetentionDays = value;
+	}
+
+	public int getPlayLogRetentionDays() {
+		return playLogRetentionDays;
+	}
+
+	public void setPlayLogRetentionDays(int value) {
+		this.playLogRetentionDays = value;
 	}
 
 	public Instant getUpdatedAt() {

@@ -38,7 +38,9 @@ class ConfigSync(
      */
     fun needsSync(desired: Desired): Boolean {
         val current = store.load() ?: return true
-        return current.playlistId != desired.playlistId || current.configVersion != desired.configVersion
+        // A campanha também conta: a mesma playlist pode vir de uma campanha ou da própria TV, e a comprovação cita qual.
+        return current.playlistId != desired.playlistId || current.configVersion != desired.configVersion ||
+            current.campaignId != desired.campaignId
     }
 
     /**

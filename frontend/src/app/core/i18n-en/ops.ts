@@ -59,7 +59,7 @@ export const OPS: Record<string, string> = {
   'Remover o webhook? Os alertas continuam aparecendo aqui, mas deixam de ser enviados para fora.':
     'Remove the webhook? Alerts keep showing up here but stop being sent out.',
   'Webhook removido.': 'Webhook removed.',
-  'Preencha os quatro limites com números inteiros.': 'Fill in the four limits with whole numbers.',
+  'Preencha todos os limites com números inteiros.': 'Fill in all the limits with whole numbers.',
 
   // dispositivos
   'Gerencie todas as telas e Players conectados.': 'Manage all connected screens and Players.',

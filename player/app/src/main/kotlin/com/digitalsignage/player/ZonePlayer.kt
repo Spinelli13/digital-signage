@@ -19,6 +19,9 @@ import com.digitalsignage.player.cache.MediaCache
 import com.digitalsignage.player.data.ConfigItem
 import com.digitalsignage.player.errors.ErrorMessages
 import com.digitalsignage.player.memory.MemoryProfile
+import com.digitalsignage.player.proof.PlayContext
+import com.digitalsignage.player.proof.PlayInfo
+import com.digitalsignage.player.proof.PlayRecorder
 import com.digitalsignage.player.telemetry.Telemetry
 import java.io.File
 import kotlinx.coroutines.CompletableDeferred
@@ -50,16 +53,22 @@ class ZonePlayer(
     private val profile: MemoryProfile = MemoryProfile.NORMAL,
     /** Falso nas zonas secundárias de aparelhos com pouca memória: vídeos dessa zona são pulados. */
     private val allowVideo: Boolean = true,
+    /** Recebe cada exibição, medida em milissegundos (comprovação de exibição). */
+    private val recorder: PlayRecorder = PlayRecorder.NONE,
+    /** O nome da zona nos registros de exibição (a zona única da tela é a "Principal"). */
+    private val zoneName: String = "Principal",
 ) {
 
     private var job: Job? = null
     private var warnedSkippedVideo = false
+    private var context = PlayContext.NONE
     private var player: ExoPlayer? = null
     private var shownImage: File? = null
     private var lastFailure: String? = null
 
-    fun start(items: List<ConfigItem>) {
+    fun start(items: List<ConfigItem>, context: PlayContext = PlayContext.NONE) {
         stop()
+        this.context = context
         // Exceção inesperada na reprodução: avisa na tela em vez de matar o app.
         val handler = kotlinx.coroutines.CoroutineExceptionHandler { _, e -> onError(prefixed(ErrorMessages.describe(e))) }
         job = scope.launch(handler) { loop(items) }
@@ -173,7 +182,15 @@ class ZonePlayer(
         if (reportsCurrentMedia) telemetry.mediaShown(item.mediaId)
 
         val seconds = item.durationSeconds.coerceAtLeast(1)
-        delay(seconds * 1000L)
+        val watch = Stopwatch()
+        var finished = false
+        try {
+            delay(seconds * 1000L)
+            finished = true
+        } finally {
+            // Até a exibição interrompida (troca de playlist, tela fechada) fica registrada, com o tempo que de fato durou.
+            report(item, watch, finished)
+        }
         // Só conta a exibição que foi até o fim (parar no meio cancela a corrotina antes desta linha).
         telemetry.played(item.mediaId, seconds.toLong())
         return true
@@ -186,7 +203,13 @@ class ZonePlayer(
         }
         exo.volume = if (muted) 0f else 1f
         val done = CompletableDeferred<Boolean>()
+        // A exibição começa quando o primeiro quadro aparece de fato (não quando mandamos tocar).
+        var watch: Stopwatch? = null
         val listener = object : Player.Listener {
+            override fun onRenderedFirstFrame() {
+                if (watch == null) watch = Stopwatch()
+            }
+
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_ENDED) done.complete(true)
             }
@@ -195,6 +218,8 @@ class ZonePlayer(
                 // Vídeo único em repetição nunca "termina": cada volta ao início é uma exibição completa.
                 if (loop && reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
                     telemetry.played(item.mediaId, oldPosition.positionMs / 1000)
+                    watch?.let { report(item, it, true) }
+                    watch = Stopwatch()
                 }
             }
 
@@ -205,6 +230,7 @@ class ZonePlayer(
         }
 
         exo.addListener(listener)
+        var completedVideo = false
         try {
             exo.repeatMode = if (loop) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
             exo.setMediaItem(MediaItem.fromUri(Uri.fromFile(cache.fileFor(item))))
@@ -226,11 +252,40 @@ class ZonePlayer(
                 if (finished == true) {
                     telemetry.played(item.mediaId, (SystemClock.elapsedRealtime() - startedAt) / 1000)
                 }
+                completedVideo = finished == true
                 finished == true
             }
         } finally {
             exo.removeListener(listener)
+            // Se o primeiro quadro chegou a aparecer, a exibição (inteira ou interrompida) fica registrada.
+            watch?.let { report(item, it, completedVideo) }
         }
+    }
+
+    /** Uma medição de exibição: o relógio de parede marca o INÍCIO (para o relatório) e o relógio monotônico mede a DURAÇÃO. */
+    private class Stopwatch {
+        val wallMs: Long = System.currentTimeMillis()
+        private val startedMono: Long = SystemClock.elapsedRealtime()
+        fun elapsedMs(): Long = SystemClock.elapsedRealtime() - startedMono
+    }
+
+    private fun report(item: ConfigItem, watch: Stopwatch, completed: Boolean) {
+        recorder.record(
+            PlayInfo(
+                deviceId = context.deviceId,
+                mediaId = item.mediaId,
+                mediaName = item.name,
+                mediaType = item.type,
+                playlistId = context.playlistId,
+                campaignId = context.campaignId,
+                campaignName = context.campaignName,
+                zoneName = zoneName,
+                startedAtMs = watch.wallMs,
+                durationMs = watch.elapsedMs(),
+                plannedMs = item.durationSeconds.coerceAtLeast(1) * 1000L,
+                completed = completed,
+            ),
+        )
     }
 
     /** Abre a página e a exibe pelo tempo escolhido. Sem internet, ou se a página falhar, o item é pulado. */
@@ -275,7 +330,14 @@ class ZonePlayer(
         views.showWeb()
         if (reportsCurrentMedia) telemetry.mediaShown(item.mediaId)
         val seconds = item.durationSeconds.coerceAtLeast(1)
-        delay(seconds * 1000L)
+        val watch = Stopwatch()
+        var finished = false
+        try {
+            delay(seconds * 1000L)
+            finished = true
+        } finally {
+            report(item, watch, finished)
+        }
         telemetry.played(item.mediaId, seconds.toLong())
         return true
     }

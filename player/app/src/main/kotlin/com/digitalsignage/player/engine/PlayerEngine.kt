@@ -6,8 +6,10 @@ import com.digitalsignage.player.errors.ErrorMessages
 import com.digitalsignage.player.data.PlayerConfig
 import com.digitalsignage.player.data.PlayerStatus
 import com.digitalsignage.player.data.UnauthorizedException
+import com.digitalsignage.player.proof.PlayLog
 import com.digitalsignage.player.sync.ConfigStore
 import com.digitalsignage.player.sync.ConfigSync
+import com.digitalsignage.player.telemetry.Level
 import com.digitalsignage.player.telemetry.Telemetry
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
@@ -61,6 +63,9 @@ class PlayerEngine(
     private val onUpdateCheckRequested: (Long) -> Unit = {},
     /** O que o Player conta ao servidor a cada heartbeat (ocorrências, mídia na tela, exibições). */
     private val telemetry: Telemetry = Telemetry.shared,
+    /** O diário de exibição (comprovação): entregue ao servidor depois de cada heartbeat. */
+    private val plays: PlayLog? = null,
+    private val wallClock: () -> Long = { System.currentTimeMillis() },
 ) {
 
     private val mutableState = MutableStateFlow<EngineState>(EngineState.Starting)
@@ -135,6 +140,7 @@ class PlayerEngine(
             }
             telemetry.acknowledge(report)
             if (desired.updateCheckToken > 0) onUpdateCheckRequested(desired.updateCheckToken)
+            uploadPlays()
 
             // A sincronização roda à parte para o heartbeat continuar mesmo durante downloads longos.
             if (syncJob?.isActive != true && sync.needsSync(desired)) {
@@ -156,12 +162,38 @@ class PlayerEngine(
         }
     }
 
+    /**
+     * Entrega o diário de exibição em lotes. Falha de rede deixa tudo como está (tenta no próximo ciclo); um lote que o
+     * servidor RECUSA (HTTP 400) é descartado e avisado no histórico, para nunca travar os envios seguintes.
+     */
+    private suspend fun uploadPlays() {
+        val log = plays ?: return
+        var rounds = 0
+        while (rounds++ < MAX_PLAY_BATCHES_PER_CYCLE) {
+            val batch = log.pending(PlayLog.BATCH)
+            if (batch.isEmpty()) return
+            try {
+                val acknowledged = api.sendPlays(token(), wallClock(), batch)
+                log.acknowledge(minOf(acknowledged, batch.last().seq))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: ApiException) {
+                if (e.code != 400) return
+                log.acknowledge(batch.last().seq)
+                telemetry.event(Level.WARN, "O servidor recusou ${batch.size} registro(s) de exibição (descartados): ${e.message}")
+            } catch (e: Exception) {
+                return
+            }
+        }
+    }
+
     private fun publish(config: PlayerConfig) {
         mutableState.value = if (config.hasContent()) EngineState.Playing(config) else EngineState.NoContent
     }
 
     companion object {
         private const val UNAUTHORIZED_RETRY_MS = 2_000L
+        private const val MAX_PLAY_BATCHES_PER_CYCLE = 10
     }
 
 }

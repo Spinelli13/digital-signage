@@ -6,7 +6,7 @@ import com.digitalsignage.player.sync.ConfigStore
 import java.security.SecureRandom
 
 /** Preferências do aparelho: servidor, token do dispositivo e a última configuração sincronizada. */
-class Settings(context: Context) : ConfigStore {
+class Settings(context: Context) : ConfigStore, com.digitalsignage.player.proof.PlayLogState {
 
     private val prefs = context.getSharedPreferences("player", Context.MODE_PRIVATE)
 
@@ -55,6 +55,20 @@ class Settings(context: Context) : ConfigStore {
         get() = prefs.getString(KEY_LAST_CRASH, null)
         set(value) {
             prefs.edit().putString(KEY_LAST_CRASH, value).commit()
+        }
+
+    /** O próximo número de ordem do diário de exibição (nunca volta, mesmo depois de o servidor confirmar e o arquivo esvaziar). */
+    override var nextSeq: Long
+        get() = prefs.getLong(KEY_PLAY_SEQ, 1)
+        set(value) {
+            prefs.edit().putLong(KEY_PLAY_SEQ, value).commit()
+        }
+
+    /** O hash do último registro do diário: o próximo registro aponta para ele. */
+    override var lastHash: String
+        get() = prefs.getString(KEY_PLAY_HASH, null) ?: com.digitalsignage.player.proof.PlayHash.GENESIS
+        set(value) {
+            prefs.edit().putString(KEY_PLAY_HASH, value).commit()
         }
 
     /** "Reabrir sozinho" (depois de uma queda e pelo vigia). Ligado por padrão; ver restart/Restarter. */
@@ -146,6 +160,8 @@ class Settings(context: Context) : ConfigStore {
         const val KEY_UPDATE_STATUS = "update_status"
         const val KEY_UPDATE_TOKEN = "update_token"
         const val KEY_LAST_CRASH = "last_crash"
+        const val KEY_PLAY_SEQ = "play_seq"
+        const val KEY_PLAY_HASH = "play_hash"
         const val KEY_AUTO_RESTART = "auto_restart"
         const val KEY_ALIVE_AT = "alive_at"
         const val KEY_USER_EXIT_UNTIL = "user_exit_until"

@@ -47,7 +47,8 @@ public class AlertController {
 			/** Só o host e o final do endereço: a URL inteira é um segredo e nunca volta para o painel. */
 			String webhookHint,
 			boolean notifyOnResolve,
-			int eventsRetentionDays) {
+			int eventsRetentionDays,
+			int playLogRetentionDays) {
 	}
 
 	/** Campos ausentes não mudam. {@code webhookUrl}: vazio ("") remove o webhook. */
@@ -57,7 +58,8 @@ public class AlertController {
 			Integer errorBurstCount,
 			String webhookUrl,
 			Boolean notifyOnResolve,
-			Integer eventsRetentionDays) {
+			Integer eventsRetentionDays,
+			Integer playLogRetentionDays) {
 	}
 
 	public record TestResult(boolean ok, int status, String error) {
@@ -126,6 +128,9 @@ public class AlertController {
 		if (request.eventsRetentionDays() != null) {
 			settings.setEventsRetentionDays(inRange(request.eventsRetentionDays(), 7, 730, "O prazo de guarda do histórico"));
 		}
+		if (request.playLogRetentionDays() != null) {
+			settings.setPlayLogRetentionDays(inRange(request.playLogRetentionDays(), 7, 365, "O prazo de guarda das exibições detalhadas"));
+		}
 		if (request.notifyOnResolve() != null) {
 			settings.setNotifyOnResolve(request.notifyOnResolve());
 		}
@@ -171,7 +176,8 @@ public class AlertController {
 				configured,
 				configured ? WebhookUrlPolicy.hint(settings.getWebhookUrl()) : null,
 				settings.isNotifyOnResolve(),
-				settings.getEventsRetentionDays());
+				settings.getEventsRetentionDays(),
+				settings.getPlayLogRetentionDays());
 	}
 
 	private static AlertResponse toResponse(Alert alert, Device device) {

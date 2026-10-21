@@ -109,7 +109,7 @@ public class PlayerController {
 
 		PlayerConfigResponse desired = playerConfigService.buildFor(device, effective);
 		long updateCheckToken = device.getUpdateRequestedAt() == null ? 0 : device.getUpdateRequestedAt().toEpochMilli();
-		return new PlayerHeartbeatResponse(desired.playlistId(), desired.configVersion(), now, updateCheckToken);
+		return new PlayerHeartbeatResponse(desired.playlistId(), desired.configVersion(), now, updateCheckToken, desired.campaignId());
 	}
 
 	private PlayerStatusResponse registerNew(String tokenHash, String playerVersion) {

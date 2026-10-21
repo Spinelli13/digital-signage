@@ -24,6 +24,7 @@ import com.digitalsignage.player.errors.ErrorMessages
 import com.digitalsignage.player.errors.ErrorReporter
 import com.digitalsignage.player.engine.PlayerEngine
 import com.digitalsignage.player.memory.MemoryProfile
+import com.digitalsignage.player.proof.PlayLog
 import com.digitalsignage.player.restart.RestartPolicy
 import com.digitalsignage.player.restart.Restarter
 import com.digitalsignage.player.sync.ConfigSync
@@ -81,6 +82,12 @@ class MainActivity : AppCompatActivity() {
         })
 
         val cache = MediaCache(java.io.File(filesDir, "media"))
+        // O diário de exibição (comprovação): sobrevive a reinício e a falta de internet; o motor o entrega ao servidor.
+        val playLog = PlayLog(
+            file = java.io.File(filesDir, "playlog.jsonl"),
+            state = settings,
+            onDropped = { reporter.report("O diário de exibição ficou cheio sem internet: $it registro(s) mais antigo(s) foram descartados.", 0) },
+        )
         val api = HttpPlayerApi(baseUrl = { settings.serverUrl })
         val updates = UpdateManager(applicationContext, settings)
         val updateTrigger = UpdateRequestTrigger(
@@ -96,6 +103,7 @@ class MainActivity : AppCompatActivity() {
             playerVersion = BuildConfig.VERSION_NAME,
             onError = { reporter.report(it) },
             onUpdateCheckRequested = updateTrigger::onHeartbeat,
+            plays = playLog,
         )
         // O mesmo ConfigSync não é compartilhado com a Activity: o Slideshow só lê o cache.
         slideshow = Slideshow(
@@ -106,6 +114,7 @@ class MainActivity : AppCompatActivity() {
             findViewById<FrameLayout>(R.id.zonesRoot),
             onError = { reporter.report(it) },
             profile = MemoryProfile.detect(this),
+            recorder = playLog,
         )
         // Sinal de vida enquanto a tela está aberta: é o que o vigia confere (ver restart/Restarter).
         lifecycleScope.launch {

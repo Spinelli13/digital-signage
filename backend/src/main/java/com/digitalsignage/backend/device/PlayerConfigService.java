@@ -47,6 +47,11 @@ public class PlayerConfigService {
 	/** Com o que a TV exibe agora já decidido (campanha ativa que a alcança ou, sem campanha, a playlist base). */
 	@Transactional(readOnly = true)
 	public PlayerConfigResponse buildFor(Device device, CampaignService.Effective effective) {
+		PlayerConfigResponse base = build(device, effective);
+		return effective.fromCampaign() ? base.withCampaign(effective.campaign().getId(), effective.campaign().getName()) : base;
+	}
+
+	private PlayerConfigResponse build(Device device, CampaignService.Effective effective) {
 		Layout layout = device.getLayoutId() == null ? null : layoutRepository.findById(device.getLayoutId()).orElse(null);
 		Long mainPlaylistId = effective.playlistId();
 		Playlist main = mainPlaylistId == null ? null : playlistRepository.findById(mainPlaylistId)

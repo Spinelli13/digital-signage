@@ -158,6 +158,27 @@ export function formatDateTimeLocal(value: string | number | Date | null | undef
   });
 }
 
+/** "05/11/2026 12:00:00.123": o horário de uma exibição, com milissegundos (comprovação). */
+export function formatDateTimeMsLocal(value: string | number | Date | null | undefined): string {
+  if (value === null || value === undefined || value === '') {
+    return '—';
+  }
+  return toDate(value).toLocaleString(currentLocale(), {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    fractionalSecondDigits: 3,
+  });
+}
+
+/** "10,012 s" (português) ou "10.012 s" (inglês): uma duração em milissegundos, sem arredondar. */
+export function formatMs(ms: number): string {
+  return `${(ms / 1000).toLocaleString(currentLocale(), { minimumFractionDigits: 3, maximumFractionDigits: 3 })} s`;
+}
+
 /** {{ valor | fdate }} (dia) ou {{ valor | fdate: 'datetime' }} (dia e hora), sempre no idioma atual. */
 @Pipe({ name: 'fdate', pure: false })
 export class FDatePipe implements PipeTransform {

@@ -8,6 +8,7 @@ import com.digitalsignage.player.data.MediaDownloader
 import com.digitalsignage.player.data.PlayerApi
 import com.digitalsignage.player.data.PlayerConfig
 import com.digitalsignage.player.data.PlayerStatus
+import com.digitalsignage.player.proof.PlayRecord
 import com.digitalsignage.player.sync.ConfigStore
 import com.digitalsignage.player.telemetry.HeartbeatReport
 import java.io.ByteArrayInputStream
@@ -92,6 +93,18 @@ class FakePlayerApi : PlayerApi {
     }
 
     override suspend fun status(token: String): PlayerStatus = statusResponse()
+
+    /** Os lotes de registros de exibição entregues (e a hora da TV em cada um); o que o "servidor" responde é programável. */
+    val playBatches = mutableListOf<List<PlayRecord>>()
+    val playDeviceTimes = mutableListOf<Long>()
+    var sendPlaysResponse: (List<PlayRecord>) -> Long = { it.last().seq }
+
+    override suspend fun sendPlays(token: String, deviceTimeMs: Long, records: List<PlayRecord>): Long {
+        val acknowledged = sendPlaysResponse(records)
+        playBatches += records
+        playDeviceTimes += deviceTimeMs
+        return acknowledged
+    }
 
     override suspend fun heartbeat(token: String, playerVersion: String, syncedConfigVersion: Long, report: HeartbeatReport): Desired {
         heartbeatsSeenVersions += syncedConfigVersion

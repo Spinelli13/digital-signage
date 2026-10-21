@@ -45,6 +45,10 @@ import {
   PlaylistRequest,
   PlaysGroupBy,
   PlaysReport,
+  ProofDaily,
+  ProofFilters,
+  ProofReport,
+  ProofVerification,
   ReleaseInfo,
   ReportRange,
   Summary,
@@ -333,8 +337,22 @@ export class ApiService {
     });
   }
 
+  proofReport(range: ReportRange, filters: ProofFilters, offset: number, limit: number): Observable<ProofReport> {
+    return this.http.get<ProofReport>(this.url('/reports/proof'), {
+      params: queryParams({ from: range.from, to: range.to, ...filters, offset, limit }),
+    });
+  }
+
+  proofVerify(range: ReportRange, deviceId?: number | null): Observable<ProofVerification> {
+    return this.http.get<ProofVerification>(this.url('/reports/proof/verify'), { params: queryParams({ from: range.from, to: range.to, deviceId }) });
+  }
+
+  proofDaily(range: ReportRange, deviceId?: number | null): Observable<ProofDaily[]> {
+    return this.http.get<ProofDaily[]>(this.url('/reports/proof/daily'), { params: queryParams({ from: range.from, to: range.to, deviceId }) });
+  }
+
   /** O mesmo relatório em CSV, baixado com o login do painel (o endereço sozinho não abriria sem o token). */
-  reportCsv(report: 'uptime' | 'plays' | 'inventory' | 'events', values: Record<string, string | number | null | undefined>): Observable<Blob> {
+  reportCsv(report: 'uptime' | 'plays' | 'inventory' | 'events' | 'proof', values: Record<string, string | number | null | undefined>): Observable<Blob> {
     return this.http.get(this.url(`/reports/${report}`), {
       params: queryParams({ ...values, format: 'csv' }),
       responseType: 'blob',

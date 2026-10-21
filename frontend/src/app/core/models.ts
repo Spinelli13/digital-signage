@@ -309,6 +309,8 @@ export interface MonitoringSettings {
   webhookHint: string | null;
   notifyOnResolve: boolean;
   eventsRetentionDays: number;
+  /** Quantos dias o detalhe de cada exibição (comprovação) fica guardado. */
+  playLogRetentionDays: number;
 }
 
 /** Campos ausentes não mudam. webhookUrl: vazio remove o webhook. */
@@ -319,6 +321,7 @@ export interface MonitoringSettingsRequest {
   webhookUrl?: string;
   notifyOnResolve?: boolean;
   eventsRetentionDays?: number;
+  playLogRetentionDays?: number;
 }
 
 export interface WebhookTestResult {
@@ -388,6 +391,86 @@ export interface PlayRow {
   plays: number;
   seconds: number;
   devices: number;
+}
+
+/** Uma exibição medida pela própria TV: início e duração em milissegundos, mais o elo da corrente de hashes. */
+export interface ProofRow {
+  id: number;
+  deviceId: number;
+  deviceName: string;
+  seq: number;
+  mediaId: number | null;
+  mediaName: string;
+  mediaType: string;
+  zoneName: string | null;
+  playlistId: number | null;
+  campaignId: number | null;
+  campaignName: string | null;
+  /** Instante de início, com milissegundos, já corrigido pelo relógio do servidor. */
+  startedAt: string;
+  durationMs: number;
+  plannedMs: number | null;
+  /** Foi até o fim (true) ou foi interrompida (false). */
+  completed: boolean;
+  hash: string;
+  hashValid: boolean;
+  continuous: boolean;
+  clockOffsetMs: number;
+}
+
+export interface ProofReport {
+  from: string;
+  to: string;
+  timezone: string;
+  total: number;
+  completed: number;
+  totalDurationMs: number;
+  devices: number;
+  offset: number;
+  limit: number;
+  rows: ProofRow[];
+}
+
+export interface ProofFilters {
+  deviceId?: number | null;
+  mediaId?: number | null;
+  campaignId?: number | null;
+}
+
+export interface ProofCheck {
+  deviceId: number;
+  deviceName: string;
+  records: number;
+  firstSeq: number;
+  lastSeq: number;
+  missing: number;
+  brokenLinks: number;
+  hashMismatches: number;
+  flaggedAtIngest: number;
+  digest: string;
+  status: 'OK' | 'ATENCAO';
+}
+
+export interface ProofVerification {
+  from: string;
+  to: string;
+  timezone: string;
+  ok: boolean;
+  /** O resumo (SHA-256) do período inteiro: guardá-lo permite provar, depois, que nada mudou. */
+  digest: string | null;
+  devices: ProofCheck[];
+}
+
+export interface ProofDaily {
+  deviceId: number;
+  deviceName: string;
+  day: string;
+  plays: number;
+  completed: number;
+  totalMs: number;
+  firstSeq: number;
+  lastSeq: number;
+  lastHash: string;
 }
 
 export interface PlaysReport {

@@ -12,6 +12,8 @@ import com.digitalsignage.player.data.PlayerConfig
 import com.digitalsignage.player.data.ZoneGeometry
 import com.digitalsignage.player.memory.MemoryProfile
 import com.digitalsignage.player.memory.TrimLevels
+import com.digitalsignage.player.proof.PlayContext
+import com.digitalsignage.player.proof.PlayRecorder
 import com.digitalsignage.player.telemetry.Telemetry
 
 /**
@@ -31,6 +33,8 @@ class Slideshow(
     private val telemetry: Telemetry = Telemetry.shared,
     /** Quanto o aparelho aguenta de memória (imagens menores, um vídeo por vez, etc.). */
     private val profile: MemoryProfile = MemoryProfile.NORMAL,
+    /** Cada exibição medida em milissegundos vai para o diário (comprovação de exibição). */
+    private val recorder: PlayRecorder = PlayRecorder.NONE,
 ) {
 
     /** A zona única, que usa as views da tela (mantida entre as trocas de playlist: o ExoPlayer é reaproveitado). */
@@ -41,11 +45,12 @@ class Slideshow(
 
     fun start(config: PlayerConfig) {
         stop()
+        val context = PlayContext(config.deviceId, config.playlistId, config.campaignId, config.campaignName)
         val layout = config.zonesOrDefault()
         if (layout.size == 1 && layout[0].isFullScreen) {
-            startSingle(layout[0])
+            startSingle(layout[0], context)
         } else {
-            startZones(layout)
+            startZones(layout, context)
         }
     }
 
@@ -75,15 +80,15 @@ class Slideshow(
         singleViews = null
     }
 
-    private fun startSingle(zone: ConfigZone) {
+    private fun startSingle(zone: ConfigZone, context: PlayContext) {
         val views = singleViews ?: ZoneViews(imageView, playerView, zonesRoot).also { singleViews = it }
         // O WebView da zona única fica dentro do zonesRoot (que é transparente e só aparece quando ele aparece).
         zonesRoot.visibility = View.VISIBLE
-        val player = single ?: ZonePlayer(scope, cache, views, telemetry, onError = onError, profile = profile).also { single = it }
-        player.start(zone.items)
+        val player = single ?: ZonePlayer(scope, cache, views, telemetry, onError = onError, profile = profile, recorder = recorder, zoneName = zone.name.ifBlank { "Principal" }).also { single = it }
+        player.start(zone.items, context)
     }
 
-    private fun startZones(layout: List<ConfigZone>) {
+    private fun startZones(layout: List<ConfigZone>, context: PlayContext) {
         zonesRoot.visibility = View.VISIBLE
         val containers = layout.map { zone ->
             val container = FrameLayout(zonesRoot.context).apply { setBackgroundColor(Color.BLACK) }
@@ -125,7 +130,9 @@ class Slideshow(
                     onError = onError,
                     profile = profile,
                     allowVideo = zone.main || profile.secondaryVideo,
-                ).also { it.start(zone.items) }
+                    recorder = recorder,
+                    zoneName = zone.name,
+                ).also { it.start(zone.items, context) }
             }
         }
         if (zonesRoot.width > 0 && zonesRoot.height > 0) {

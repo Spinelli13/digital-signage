@@ -392,7 +392,7 @@ Em **Aviso externo (webhook)** cole o endereço de um *webhook de entrada* do se
 
 ### 9.3 Relatórios
 
-Abra **Relatórios**. São quatro, cada um com período (**Hoje**, **7 dias**, **30 dias** ou datas à escolha, no fuso de Brasília) e **Baixar CSV**, que gera uma planilha com os mesmos filtros que estão na tela (abre direto no Excel em português):
+Abra **Relatórios**. São cinco, cada um com período (**Hoje**, **7 dias**, **30 dias** ou datas à escolha, no fuso de Brasília) e **Baixar CSV**, que gera uma planilha com os mesmos filtros que estão na tela (abre direto no Excel em português):
 
 - **Disponibilidade:** por TV e da frota inteira, quanto do tempo observado ela ficou online, quanto offline e quantas quedas teve. Dá para filtrar por local e grupo. A TV só é medida **a partir do primeiro contato** (uma TV nova não nasce com 0%) e o tempo em que esteve **desativada não conta**. Uma TV sem nenhum dado no período aparece como "sem dados", não como 0%.
 
@@ -402,6 +402,7 @@ Abra **Relatórios**. São quatro, cada um com período (**Hoje**, **7 dias**, *
 
 ![Relatório de exibições por mídia (captura real, TVs de teste)](manual/img/painel-relatorio-exibicoes.png)
 
+- **Comprovação:** o registro **exato** de cada vez que uma mídia foi ao ar numa TV: dia e hora **com milissegundos**, duração real (e a prevista), zona, campanha e se foi **até o fim ou interrompida**. A própria TV mede e guarda tudo (mesmo sem internet) e entrega ao servidor no contato seguinte. Detalhes na seção 9.4.
 - **Inventário:** uma foto de agora de todas as TVs: local, grupos, situação, versão do Player, playlist exibida (e a campanha, se houver) e a mídia na tela. Bom para conferir a frota ou entregar a um cliente.
 
 ![Inventário das TVs: local, situação, versão do Player e o que cada uma exibe (captura real, TVs de teste)](manual/img/painel-relatorio-inventario.png)
@@ -410,6 +411,19 @@ Abra **Relatórios**. São quatro, cada um com período (**Hoje**, **7 dias**, *
 ![Relatório de eventos de todas as TVs (captura real, TVs de teste)](manual/img/painel-relatorio-eventos.png)
 
 > **Cuidado ao abrir o CSV:** textos que começam com `=`, `+`, `-` ou `@` ganham um apóstrofo no começo (`'=…`) de propósito, para o Excel não executá-los como fórmula.
+
+### 9.4 Comprovação de exibição (proof of play)
+
+Para anunciantes e contratos: a aba **Comprovação** mostra cada exibição, uma por linha, com o início em **milissegundos** (`05/11/2026 12:00:00,123`), a duração medida pela TV (`10,012 s`, ao lado da prevista), a zona da tela, a campanha, o resultado (**Completa** ou **Interrompida**) e o **registro** (número de ordem + início do hash). Filtre por **TV**, **mídia** e **campanha**; o período é o do topo da tela (no máximo 93 dias por consulta) e **Carregar mais** traz as próximas 100 linhas. **Baixar CSV** gera a mesma lista (até 100.000 linhas).
+
+![Aba Comprovação: verificação da corrente e cada exibição com milissegundos (captura real, TV de teste)](manual/img/painel-relatorio-comprovacao.png)
+
+**Como saber que ninguém mexeu nos números:** cada registro leva o número de ordem da TV (1, 2, 3…) e o *hash* (SHA-256) do registro anterior. Apagar, trocar ou reordenar um registro quebra todos os seguintes. **Verificar integridade** recalcula a corrente do período e diz, por TV, quantos registros existem, se falta algum número, se há elo quebrado ou hash alterado, e mostra o **resumo do período** (SHA-256). **Guarde esse resumo junto com o relatório entregue ao cliente**: com ele se prova, depois, que nenhum registro do período mudou. Linhas com problema ficam marcadas em vermelho.
+
+- **Relógio da TV errado:** o horário vem do relógio da TV; se ele estiver desajustado em mais de 2 segundos, o servidor corrige o início usando a hora dele e a linha mostra "relógio corrigido". A duração não muda (é medida por um cronômetro, não pelo relógio).
+- **TV sem internet:** os registros ficam guardados na TV (até 20.000, em arquivo que sobrevive a queda de energia e a reinício) e seguem quando a internet voltar. Se passar do limite, os mais antigos são descartados e isso aparece no histórico da TV.
+- **Quanto tempo fica guardado:** o detalhe linha a linha fica **14 dias** (ajustável de 7 a 365 em **Alertas > Guardar cada exibição por (dias)**, porque o banco gratuito é pequeno). Abaixo da tabela, o **resumo por dia** (exibições, tempo na tela e o último hash de cada dia) fica **um ano**.
+- **Exige o Smartplay 0.9 ou mais novo na TV.** TVs com versão anterior continuam aparecendo em **Exibições** (contagem), mas não em **Comprovação**.
 
 ---
 

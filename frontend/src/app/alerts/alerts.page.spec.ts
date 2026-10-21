@@ -33,6 +33,7 @@ const settings = (overrides: Partial<MonitoringSettings> = {}): MonitoringSettin
   webhookHint: null,
   notifyOnResolve: true,
   eventsRetentionDays: 90,
+  playLogRetentionDays: 14,
   ...overrides,
 });
 
@@ -116,10 +117,24 @@ describe('AlertsPage', () => {
       neverConnectedAfterHours: 24,
       errorBurstCount: 5,
       eventsRetentionDays: 90,
+      playLogRetentionDays: 14,
       notifyOnResolve: true,
     });
     request.flush(settings({ offlineAfterMinutes: 20, webhookConfigured: true, webhookHint: 'hooks.slack.com/…1234' }));
     expect(page.notice.text()).toBe('Configurações salvas.');
+    backend.verify();
+  });
+
+  it('saves how long each play (proof of play) is kept', () => {
+    const { page, backend } = setup(settings({ playLogRetentionDays: 30 }));
+    expect(page.playLogRetentionDays()).toBe(30);
+    page.playLogRetentionDays.set(60);
+
+    page.save();
+
+    const request = backend.expectOne(`${API}/alerts/settings`);
+    expect((request.request.body as { playLogRetentionDays: number }).playLogRetentionDays).toBe(60);
+    request.flush(settings({ playLogRetentionDays: 60 }));
     backend.verify();
   });
 
