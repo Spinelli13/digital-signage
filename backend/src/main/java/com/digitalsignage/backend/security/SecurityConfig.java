@@ -76,7 +76,7 @@ public class SecurityConfig {
 						// Consultar: qualquer papel.
 						.requestMatchers(HttpMethod.GET, "/api/v1/**").hasRole("VIEWER")
 						// Gravar conteúdo (mídias, playlists, campanhas, layouts) e escolher o que cada TV exibe: o EDITOR.
-						.requestMatchers("/api/v1/media/**", "/api/v1/playlists/**", "/api/v1/campaigns/**", "/api/v1/layouts/**", "/api/v1/price-lists/**").hasRole("EDITOR")
+						.requestMatchers("/api/v1/media/**", "/api/v1/playlists/**", "/api/v1/campaigns/**", "/api/v1/layouts/**", "/api/v1/price-lists/**", "/api/v1/promotions/**").hasRole("EDITOR")
 						// Atendimento (emitir, chamar e concluir senhas): quem edita; cadastrar filas e guichês cai no ADMIN, mais abaixo.
 						.requestMatchers("/api/v1/attendance/**").hasRole("EDITOR")
 						.requestMatchers(HttpMethod.PUT, "/api/v1/devices/*").hasRole("EDITOR")

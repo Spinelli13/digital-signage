@@ -1,5 +1,5 @@
 import { currentLocale, tr, trServer } from './i18n';
-import { CouponKind, CouponState, FeatureCode, InvoiceStatus, PlanInfo, Role, TenantStatus, Usage } from './models';
+import { CouponKind, CouponState, FeatureCode, InvoiceStatus, PlanInfo, PromotionCouponStatus, PromotionState, Role, TenantStatus, Usage } from './models';
 
 /** Os textos abaixo são as chaves em português; use roleLabel() etc. para obter o texto no idioma atual. */
 export const ROLE_LABELS: Record<Role, string> = {
@@ -25,6 +25,7 @@ export const FEATURES: { code: FeatureCode; label: string; help: string }[] = [
   { code: 'PRICES', label: 'Tabelas de preços', help: 'Quadro de preços que se atualiza sozinho.' },
   { code: 'QUEUE', label: 'Fila de atendimento', help: 'Senhas, guichês e painel de chamadas.' },
   { code: 'PROOF_OF_PLAY', label: 'Comprovação de exibição', help: 'Relatório que prova o que foi exibido.' },
+  { code: 'COUPONS', label: 'Cupons para clientes', help: 'Cupom pelo QR Code da TV e baixa no caixa.' },
 ];
 
 export const featureLabel = (code: FeatureCode): string => tr(FEATURES.find((feature) => feature.code === code)?.label ?? code);
@@ -194,3 +195,26 @@ export function couponBenefit(coupon: { kind: CouponKind; value: number; duratio
       return tr('Plano {plan} liberado por {n} dia(s)', { plan: planText(coupon.planName ?? ''), n: coupon.value });
   }
 }
+
+export const PROMOTION_STATE_LABELS: Record<PromotionState, string> = {
+  ACTIVE: 'No ar',
+  SCHEDULED: 'Programada',
+  ENDED: 'Encerrada',
+  EXHAUSTED: 'Cupons esgotados',
+  OFF: 'Desligada',
+};
+
+export const PROMOTION_STATE_TONES: Record<PromotionState, 'ok' | 'warn' | 'neutral'> = {
+  ACTIVE: 'ok',
+  SCHEDULED: 'warn',
+  ENDED: 'neutral',
+  EXHAUSTED: 'neutral',
+  OFF: 'neutral',
+};
+
+/** O cupom de um cliente da loja: valendo, usado no caixa ou vencido. */
+export const PROMOTION_COUPON_LABELS: Record<PromotionCouponStatus, string> = { ISSUED: 'Valendo', REDEEMED: 'Usado', EXPIRED: 'Vencido' };
+
+export const promotionCouponLabel = (status: PromotionCouponStatus): string => tr(PROMOTION_COUPON_LABELS[status]);
+
+export const promotionStateLabel = (state: PromotionState): string => tr(PROMOTION_STATE_LABELS[state]);

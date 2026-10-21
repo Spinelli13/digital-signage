@@ -3,7 +3,7 @@ package com.digitalsignage.backend.queue;
 import java.security.SecureRandom;
 
 /** Segredos curtos e imprevisíveis (128 bits em 32 caracteres hexadecimais) para os endereços públicos da fila. */
-final class Tokens {
+public final class Tokens {
 
 	private static final SecureRandom RANDOM = new SecureRandom();
 	private static final char[] HEX = "0123456789abcdef".toCharArray();
@@ -11,7 +11,7 @@ final class Tokens {
 	private Tokens() {
 	}
 
-	static String random() {
+	public static String random() {
 		byte[] bytes = new byte[16];
 		RANDOM.nextBytes(bytes);
 		char[] out = new char[32];

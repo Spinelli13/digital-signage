@@ -644,6 +644,20 @@ A senha pelo celular aparece na **Fila de espera** como as outras (com o nome, q
 
 ---
 
+### 10.5 Cupons para os clientes da loja
+
+Em **Cupons** (menu Operação) você cria promoções para os clientes da sua loja: o cliente **escaneia um QR Code na TV** (ou impresso), recebe no celular um **cupom com código único** e o **caixa dá baixa** no painel. Não precisa instalar nada e o cliente não precisa de login. (Não confunda com os cupons de assinatura do capítulo 12, que dão desconto na mensalidade do próprio painel.) O recurso depende do plano.
+
+**Montar a promoção:** *Nova promoção* pede o nome, as regras que o cliente lê (opcional), quando começa e termina (opcionais), **quantos dias o cupom vale depois de pego** (7 por padrão; nunca passa do fim da promoção) e **quantos cupons no total** (vazio = ilimitado). Salve e abra a promoção de novo: aparecem o **QR Code** (para baixar e enviar à Biblioteca, como imagem, e mostrar na TV; ou imprimir) e o **endereço** que ele abre.
+
+**O que o cliente vê:** a promoção e as regras, o campo "Seu nome (opcional)" e o botão **Pegar meu cupom**. Em seguida aparece o código grande (ex.: `K7QP-2WXD`), até quando vale e, depois, se já foi usado ou venceu; a página se atualiza sozinha. Escanear de novo com o mesmo celular mostra **o mesmo cupom** (não gera outro). Quem apaga os dados do navegador pode pegar outro: o que segura isso é o **limite de cupons** da promoção e um teto por rede (a rede de visitantes de uma loja é um endereço só, então o teto é alto).
+
+**Dar baixa no caixa:** digite o código em **Dar baixa no caixa** (vale minúscula, sem hífen ou com espaço) e clique em **Conferir**: aparecem a promoção, o nome do cliente (se ele informou) e a validade. Se estiver valendo, **Dar baixa neste cupom** o marca como usado, **uma vez só** (se dois caixas lerem o mesmo código ao mesmo tempo, só um consegue). Cupom já usado ou vencido é recusado com o motivo. Quem tem papel de Editor ou mais dá baixa; o Visualizador só consulta.
+
+**Acompanhar:** a lista mostra, por promoção, os cupons pegos, os usados, a validade e a situação (*No ar*, *Programada*, *Encerrada*, *Cupons esgotados*, *Desligada*); **Ver os cupons** lista os códigos com a situação. Para encerrar uma promoção sem apagar o histórico, **desligue-a** (quem já pegou o cupom continua com ele). Uma promoção que já teve cupons pegos não se exclui.
+
+**Dados pessoais:** o nome é opcional e é apagado depois de 90 dias; o cupom em si fica só com o código e as datas.
+
 ## 11. Equipe e papéis
 
 Cada pessoa entra no painel com o **seu próprio e-mail e senha**, e o **papel** dela decide o que pode fazer. Assim o dono do cliente dá acesso à equipe sem entregar a senha de administrador.
@@ -703,7 +717,7 @@ Quando um limite é atingido, o painel **recusa o que passaria dele**, explicand
 
 O que já existe **nunca é apagado** por causa de um limite: as TVs continuam exibindo normalmente.
 
-Além dos limites, cada plano **inclui ou não alguns recursos**: Campanhas, Layouts com zonas, Widgets, Tabelas de preços, Fila de atendimento e Comprovação de exibição. O que o seu plano não inclui **some do menu** e, se alguém abrir o endereço, aparece a mensagem "Este recurso não está no seu plano" com o caminho para ver os planos. Há também um **tamanho máximo para cada arquivo** enviado (quando o plano define um). Em "Planos disponíveis" cada plano mostra o que inclui, para você comparar antes de pedir a troca. Rebaixar de plano **não apaga nada**: o que já foi montado continua aparecendo nas TVs; só o painel deixa de oferecer o recurso novo.
+Além dos limites, cada plano **inclui ou não alguns recursos**: Campanhas, Layouts com zonas, Widgets, Tabelas de preços, Fila de atendimento, Comprovação de exibição e Cupons para clientes. O que o seu plano não inclui **some do menu** e, se alguém abrir o endereço, aparece a mensagem "Este recurso não está no seu plano" com o caminho para ver os planos. Há também um **tamanho máximo para cada arquivo** enviado (quando o plano define um). Em "Planos disponíveis" cada plano mostra o que inclui, para você comparar antes de pedir a troca. Rebaixar de plano **não apaga nada**: o que já foi montado continua aparecendo nas TVs; só o painel deixa de oferecer o recurso novo.
 
 ### 12.2 Situação da assinatura
 
@@ -774,7 +788,7 @@ Cada cliente é uma empresa com os **seus próprios dados**: um cliente nunca v�
 
 ### 13.3 Planos
 
-Define o **preço**, os **limites** (TVs, espaço em MB, usuários e tamanho máximo de cada arquivo) e **o que o plano inclui** (marque ou desmarque Campanhas, Layouts, Widgets, Tabelas de preços, Fila de atendimento e Comprovação de exibição). Deixe um limite em branco para "ilimitado". Mudar um plano vale para todos os clientes que o usam **já na próxima ação deles**. O Gestor nunca é barrado, mesmo ao entrar num cliente cujo plano não inclui o recurso (para poder dar suporte). O **código** é um nome curto (ex.: `basico`); **ordem** define a posição na lista; planos **desativados** deixam de ser oferecidos a novos clientes (quem já está neles continua). Não dá para excluir um plano que ainda tem clientes.
+Define o **preço**, os **limites** (TVs, espaço em MB, usuários e tamanho máximo de cada arquivo) e **o que o plano inclui** (marque ou desmarque Campanhas, Layouts, Widgets, Tabelas de preços, Fila de atendimento, Comprovação de exibição e Cupons para clientes). Deixe um limite em branco para "ilimitado". Mudar um plano vale para todos os clientes que o usam **já na próxima ação deles**. O Gestor nunca é barrado, mesmo ao entrar num cliente cujo plano não inclui o recurso (para poder dar suporte). O **código** é um nome curto (ex.: `basico`); **ordem** define a posição na lista; planos **desativados** deixam de ser oferecidos a novos clientes (quem já está neles continua). Não dá para excluir um plano que ainda tem clientes.
 
 ![Lista de planos: preço, limites e quantos clientes usam cada um (captura real)](manual/img/painel-planos.png)
 
@@ -784,7 +798,7 @@ Em **Plataforma → Gestores** ficam as pessoas que operam o serviço. Cada gest
 
 ### 13.3.2 Cupons de assinatura
 
-Em **Plataforma → Cupons** o gestor cria os cupons que os clientes resgatam em "Plano e cobrança" (ver 12.3.1).
+Em **Plataforma → Cupons de assinatura** o gestor cria os cupons que os clientes resgatam em "Plano e cobrança" (ver 12.3.1).
 
 - **Novo cupom:** o código (use **Gerar** para um aleatório), o que dá (desconto em porcentagem, desconto em valor, dias grátis ou plano liberado por um tempo), por quantas faturas ou dias vale, a validade (de/até, opcionais) e **quantos clientes podem usar** (vazio = ilimitado). Uma descrição só para você ajuda a lembrar para quê o cupom serve.
 - **Gerar em lote:** de 1 a 500 códigos de uma vez, aleatórios e **de uso único** (cada código vale para um cliente só), com um começo opcional (ex.: `FEIRA-7K3Q-M9XD`) e o nome do lote. Os códigos aparecem numa caixa para **copiar todos** e entregar um a cada pessoa. Não usam letras que se confundem (0/O, 1/I/L), porque são digitados à mão.

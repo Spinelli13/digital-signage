@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.ResultActions;
 /** Permissões por plano: quais recursos o plano inclui e o tamanho máximo de cada arquivo. */
 class PlanFeaturesTest extends AbstractApiTest {
 
-	private static final List<String> ALL = List.of("CAMPAIGNS", "LAYOUTS", "WIDGETS", "PRICES", "QUEUE", "PROOF_OF_PLAY");
+	private static final List<String> ALL = List.of("CAMPAIGNS", "LAYOUTS", "WIDGETS", "PRICES", "QUEUE", "PROOF_OF_PLAY", "COUPONS");
 
 	private long createPlan(String code, List<String> features, Integer maxUploadMb) throws Exception {
 		Map<String, Object> body = new HashMap<>();

@@ -801,7 +801,7 @@ export type TenantStatus = 'SYSTEM' | 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'SUSPEND
 
 /** Limite nulo = sem limite. */
 /** Recursos que um plano pode incluir ou não (o servidor barra o que o plano não tem). */
-export type FeatureCode = 'CAMPAIGNS' | 'LAYOUTS' | 'WIDGETS' | 'PRICES' | 'QUEUE' | 'PROOF_OF_PLAY';
+export type FeatureCode = 'CAMPAIGNS' | 'LAYOUTS' | 'WIDGETS' | 'PRICES' | 'QUEUE' | 'PROOF_OF_PLAY' | 'COUPONS';
 
 export interface PlanInfo {
   id: number;
@@ -1085,4 +1085,81 @@ export interface PlatformOverview {
   openInvoicesCents: number;
   overdueInvoices: number;
   overdueInvoicesCents: number;
+}
+
+// ---------- cupons para os clientes da loja (diferentes dos cupons de assinatura) ----------
+
+export type PromotionState = 'ACTIVE' | 'SCHEDULED' | 'ENDED' | 'EXHAUSTED' | 'OFF';
+
+/** Uma promoção da loja. O segredo do QR Code só vem para quem edita (nulo para o Visualizador). */
+export interface Promotion {
+  id: number;
+  name: string;
+  description: string | null;
+  validFrom: string | null;
+  validUntil: string | null;
+  claimDays: number | null;
+  maxClaims: number | null;
+  claimedCount: number;
+  redeemedCount: number;
+  active: boolean;
+  state: PromotionState;
+  publicToken: string | null;
+  createdAt: string;
+}
+
+export interface PromotionRequest {
+  name: string;
+  description: string | null;
+  validFrom: string | null;
+  validUntil: string | null;
+  claimDays: number | null;
+  maxClaims: number | null;
+  active: boolean;
+}
+
+export type PromotionCouponStatus = 'ISSUED' | 'REDEEMED' | 'EXPIRED';
+
+/** Um cupom pego por um consumidor, como o painel o lista. */
+export interface PromotionCoupon {
+  id: number;
+  code: string;
+  status: PromotionCouponStatus;
+  claimantName: string | null;
+  claimedAt: string;
+  expiresAt: string | null;
+  redeemedAt: string | null;
+  redeemedBy: string | null;
+}
+
+/** O que o caixa vê ao conferir um código. */
+export interface PromotionLookup {
+  code: string;
+  status: PromotionCouponStatus;
+  promotionName: string;
+  promotionDescription: string | null;
+  claimantName: string | null;
+  claimedAt: string;
+  expiresAt: string | null;
+  redeemedAt: string | null;
+}
+
+/** O que o consumidor vê ao escanear o QR Code da promoção. */
+export interface PublicPromotion {
+  name: string;
+  description: string | null;
+  open: boolean;
+  validUntil: string | null;
+  claimDays: number | null;
+}
+
+/** O cupom do consumidor (o código para mostrar no caixa). */
+export interface PublicPromoCoupon {
+  code: string;
+  status: PromotionCouponStatus;
+  promotionName: string;
+  promotionDescription: string | null;
+  expiresAt: string | null;
+  redeemedAt: string | null;
+  token: string;
 }

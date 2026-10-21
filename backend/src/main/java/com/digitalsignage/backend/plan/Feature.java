@@ -22,7 +22,8 @@ public enum Feature {
 	WIDGETS("Widgets (conteúdo dinâmico)", false, "/api/v1/widgets"),
 	PRICES("Tabelas de preços", true, "/api/v1/price-lists"),
 	QUEUE("Fila de atendimento", false, "/api/v1/attendance", "/api/v1/queues", "/api/v1/counters"),
-	PROOF_OF_PLAY("Comprovação de exibição", false, "/api/v1/reports/proof");
+	PROOF_OF_PLAY("Comprovação de exibição", false, "/api/v1/reports/proof"),
+	COUPONS("Cupons para clientes", false, "/api/v1/promotions");
 
 	private final String label;
 	private final boolean readsStayOpen;

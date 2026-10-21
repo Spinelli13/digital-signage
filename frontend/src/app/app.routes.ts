@@ -8,6 +8,9 @@ export const routes: Routes = [
   // Senha pelo celular: páginas abertas a quem escaneia o QR Code da fila (sem login e fora do menu do painel).
   { path: 'fila/:token', loadComponent: () => import('./public-ticket/public-ticket.page').then((m) => m.QueueTakePage) },
   { path: 'senha/:token', loadComponent: () => import('./public-ticket/public-ticket.page').then((m) => m.TicketStatusPage) },
+  // Cupom pelo celular: páginas abertas a quem escaneia o QR Code da promoção (sem login e fora do menu do painel).
+  { path: 'cupom/:token', loadComponent: () => import('./public-promo/public-promo.page').then((m) => m.PromoClaimPage) },
+  { path: 'meu-cupom/:token', loadComponent: () => import('./public-promo/public-promo.page').then((m) => m.MyCouponPage) },
   {
     path: '',
     canActivate: [authGuard],
@@ -24,6 +27,7 @@ export const routes: Routes = [
       { path: 'relatorios', loadComponent: () => import('./reports/reports.page').then((m) => m.ReportsPage) },
       { path: 'campanhas', canActivate: [featureGuard('CAMPAIGNS')], loadComponent: () => import('./campaigns/campaigns.page').then((m) => m.CampaignsPage) },
       { path: 'layouts', canActivate: [featureGuard('LAYOUTS')], loadComponent: () => import('./layouts/layouts.page').then((m) => m.LayoutsPage) },
+      { path: 'cupons', canActivate: [featureGuard('COUPONS')], loadComponent: () => import('./promotions/promotions.page').then((m) => m.PromotionsPage) },
       { path: 'atendimento', canActivate: [featureGuard('QUEUE')], loadComponent: () => import('./attendance/attendance.page').then((m) => m.AttendancePage) },
       { path: 'precos', canActivate: [featureGuard('PRICES')], loadComponent: () => import('./prices/prices.page').then((m) => m.PricesPage) },
       { path: 'precos/:id', canActivate: [featureGuard('PRICES')], loadComponent: () => import('./prices/price-editor.page').then((m) => m.PriceEditorPage) },

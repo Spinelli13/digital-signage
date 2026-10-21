@@ -51,6 +51,12 @@ import {
   CouponRedemption,
   CouponRequest,
   Manager,
+  Promotion,
+  PromotionCoupon,
+  PromotionLookup,
+  PromotionRequest,
+  PublicPromoCoupon,
+  PublicPromotion,
   ManagerRequest,
   ManagerUpdate,
   PlatformPlan,
@@ -604,6 +610,54 @@ export class ApiService {
 
   leavePublicQueue(token: string): Observable<PublicTicket> {
     return this.http.post<PublicTicket>(this.url(`/public/tickets/${token}/cancel`), {}, { context: new HttpContext().set(SILENT_ERRORS, true) });
+  }
+
+  // ---------- cupons para os clientes da loja ----------
+
+  promotions(): Observable<Promotion[]> {
+    return this.http.get<Promotion[]>(this.url('/promotions'));
+  }
+
+  createPromotion(body: PromotionRequest): Observable<Promotion> {
+    return this.http.post<Promotion>(this.url('/promotions'), body);
+  }
+
+  updatePromotion(id: number, body: PromotionRequest): Observable<Promotion> {
+    return this.http.put<Promotion>(this.url(`/promotions/${id}`), body);
+  }
+
+  deletePromotion(id: number): Observable<void> {
+    return this.http.delete<void>(this.url(`/promotions/${id}`));
+  }
+
+  promotionCoupons(id: number): Observable<PromotionCoupon[]> {
+    return this.http.get<PromotionCoupon[]>(this.url(`/promotions/${id}/coupons`));
+  }
+
+  /** O caixa confere um código sem dar baixa. */
+  lookupPromotionCoupon(code: string): Observable<PromotionLookup> {
+    return this.http.get<PromotionLookup>(this.url('/promotions/coupons/lookup'), { params: { code } });
+  }
+
+  redeemPromotionCoupon(code: string): Observable<PromotionLookup> {
+    return this.http.post<PromotionLookup>(this.url('/promotions/coupons/redeem'), { code });
+  }
+
+  // ---------- cupom pelo celular (páginas públicas: sem login, erros tratados pela própria página) ----------
+
+  publicPromotion(token: string): Observable<PublicPromotion> {
+    return this.http.get<PublicPromotion>(this.url(`/public/promotions/${token}`), { context: new HttpContext().set(SILENT_ERRORS, true) });
+  }
+
+  claimPublicCoupon(token: string, customerName: string | null, deviceId: string): Observable<PublicPromoCoupon> {
+    return this.http.post<PublicPromoCoupon>(this.url(`/public/promotions/${token}/coupons`), { customerName }, {
+      context: new HttpContext().set(SILENT_ERRORS, true),
+      headers: { 'X-Client-Id': deviceId },
+    });
+  }
+
+  publicPromoCoupon(token: string): Observable<PublicPromoCoupon> {
+    return this.http.get<PublicPromoCoupon>(this.url(`/public/coupons/${token}`), { context: new HttpContext().set(SILENT_ERRORS, true) });
   }
 
   deleteMedia(id: number): Observable<void> {

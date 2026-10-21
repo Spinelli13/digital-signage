@@ -3,6 +3,7 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '../core/api.service';
+import { dateInputToIso, isoToDateInput } from '../core/date-input';
 import { FDatePipe, TPipe, tr } from '../core/i18n';
 import { Coupon, CouponBatch, CouponKind, CouponRedemption, CouponRequest, PlatformPlan } from '../core/models';
 import { Notice } from '../core/notice';
@@ -28,31 +29,14 @@ export function randomCouponCode(random: (max: number) => number = (max) => cryp
   return Array.from({ length: 4 }, pick).join('') + '-' + Array.from({ length: 4 }, pick).join('');
 }
 
-/** "2026-12-31" (campo de data) para o instante de início ou de fim desse dia, no fuso do navegador. */
-export function dateInputToIso(value: string, endOfDay: boolean): string | null {
-  if (!value) {
-    return null;
-  }
-  const date = new Date(`${value}T${endOfDay ? '23:59:59' : '00:00:00'}`);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
-}
-
-/** O instante guardado no servidor de volta para o campo de data. */
-export function isoToDateInput(iso: string | null): string {
-  if (!iso) {
-    return '';
-  }
-  const date = new Date(iso);
-  const two = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${two(date.getMonth() + 1)}-${two(date.getDate())}`;
-}
+export { dateInputToIso, isoToDateInput };
 
 /** Cupons de assinatura: o gestor cria (um a um ou em lote), vê quem usou e desliga. */
 @Component({
   selector: 'app-platform-coupons',
   imports: [FormsModule, NgTemplateOutlet, TPipe, FDatePipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, SkeletonComponent, MenuComponent],
   template: `
-    <app-page-header [title]="'Cupons' | t" [subtitle]="'Cupons de assinatura: desconto, dias grátis ou um plano maior por um tempo. O cliente resgata em &quot;Plano e cobrança&quot;.' | t" icon="ticket">
+    <app-page-header [title]="'Cupons de assinatura' | t" [subtitle]="'Cupons de assinatura: desconto, dias grátis ou um plano maior por um tempo. O cliente resgata em &quot;Plano e cobrança&quot;.' | t" icon="ticket">
       <button class="secondary" (click)="openBatch()"><app-icon name="copy" />{{ 'Gerar em lote' | t }}</button>
       <button class="primary" (click)="openNew()"><app-icon name="plus" />{{ 'Novo cupom' | t }}</button>
     </app-page-header>

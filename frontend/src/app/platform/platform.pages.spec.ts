@@ -29,7 +29,7 @@ const plan = (id: number, name: string, overrides: Partial<PlatformPlan> = {}): 
   maxStorageMb: 2048,
   maxUsers: 5,
   maxUploadMb: null,
-  features: ['CAMPAIGNS', 'LAYOUTS', 'WIDGETS', 'PRICES', 'QUEUE', 'PROOF_OF_PLAY'],
+  features: ['CAMPAIGNS', 'LAYOUTS', 'WIDGETS', 'PRICES', 'QUEUE', 'PROOF_OF_PLAY', 'COUPONS'],
   active: true,
   sortOrder: 10,
   tenantCount: 0,
@@ -277,7 +277,7 @@ describe('PlatformPlansPage', () => {
 
   it('picks which features the plan includes and the maximum size of a file', () => {
     page.openNew();
-    expect(page.features().length).toBe(6);
+    expect(page.features().length).toBe(7);
     page.toggleFeature('QUEUE', false);
     page.toggleFeature('PROOF_OF_PLAY', false);
     page.toggleFeature('QUEUE', true);
@@ -292,7 +292,7 @@ describe('PlatformPlansPage', () => {
 
     const request = backend.expectOne(`${API}/platform/plans`);
     expect(request.request.body.maxUploadMb).toBe(25);
-    expect([...request.request.body.features].sort()).toEqual(['CAMPAIGNS', 'LAYOUTS', 'PRICES', 'QUEUE', 'WIDGETS']);
+    expect([...request.request.body.features].sort()).toEqual(['CAMPAIGNS', 'COUPONS', 'LAYOUTS', 'PRICES', 'QUEUE', 'WIDGETS']);
     request.flush(plan(9, 'Vitrine'));
     backend.expectOne(`${API}/platform/plans`).flush([]);
   });
@@ -329,7 +329,7 @@ describe('PlatformPlansPage', () => {
       maxStorageMb: 10240,
       maxUsers: 50,
       maxUploadMb: null,
-      features: ['CAMPAIGNS', 'LAYOUTS', 'WIDGETS', 'PRICES', 'QUEUE', 'PROOF_OF_PLAY'],
+      features: ['CAMPAIGNS', 'LAYOUTS', 'WIDGETS', 'PRICES', 'QUEUE', 'PROOF_OF_PLAY', 'COUPONS'],
       active: true,
       sortOrder: 30,
     });

@@ -8,6 +8,7 @@ import { LAYOUTS } from './layouts';
 import { OPS } from './ops';
 import { ORIENTATION } from './orientation';
 import { PLANS } from './plans';
+import { PROMOTIONS } from './promotions';
 import { PRICES } from './prices';
 import { PROOF } from './proof';
 import { REDESIGN } from './redesign';
@@ -16,7 +17,7 @@ import { WIDGETS } from './widgets';
 import { SERVER_DATA } from './server-data';
 
 /** Todas as seções do inglês. A chave é sempre o texto em português; veja ../i18n.ts. */
-const SECTIONS: Record<string, string>[] = [CORE, HOME, OPS, CONTENT, ACCOUNT, REDESIGN, PROOF, WIDGETS, PRICES, LAYOUTS, ORIENTATION, ATTENDANCE, ATTENDANCE_REMOTE, PLANS, SERVER, SERVER_DATA];
+const SECTIONS: Record<string, string>[] = [CORE, HOME, OPS, CONTENT, ACCOUNT, REDESIGN, PROOF, WIDGETS, PRICES, LAYOUTS, ORIENTATION, ATTENDANCE, ATTENDANCE_REMOTE, PLANS, PROMOTIONS, SERVER, SERVER_DATA];
 
 /** Chaves repetidas em seções diferentes com traduções diferentes (um teste exige que esta lista fique vazia). */
 export const DICTIONARY_CONFLICTS: string[] = [];

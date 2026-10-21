@@ -5,7 +5,7 @@ export const PLANS: Record<string, string> = {
     'The {plan} plan does not include {feature}. Ask for a plan that includes this feature in "Plan & billing".',
   'Ver planos': 'See plans',
   Gestores: 'Managers',
-  Cupons: 'Coupons',
+  'Cupons de assinatura': 'Subscription coupons',
   Cupom: 'Coupon',
   'Cupons de assinatura: desconto, dias grátis ou um plano maior por um tempo. O cliente resgata em "Plano e cobrança".':
     'Subscription coupons: a discount, free days or a bigger plan for a while. The client redeems them in "Plan & billing".',
