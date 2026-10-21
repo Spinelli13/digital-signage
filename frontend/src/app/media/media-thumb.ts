@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 
 import { ApiService } from '../core/api.service';
-import { MediaType } from '../core/models';
+import { MediaType, WidgetKind } from '../core/models';
+import { widgetInfo } from '../core/widgets';
 import { IconComponent } from '../shared/icon';
 import { IconName } from '../shared/icons';
 
@@ -32,8 +33,21 @@ export class MediaThumb implements OnInit, OnDestroy {
   readonly mediaId = input.required<number>();
   readonly type = input.required<MediaType>();
   readonly name = input('');
+  /** Só nos widgets: o tipo, para a miniatura mostrar o ícone certo (relógio, clima...). */
+  readonly widgetKind = input<WidgetKind | null>(null);
   readonly src = signal<string | null>(null);
-  protected readonly icon = computed<IconName>(() => (this.type() === 'VIDEO' ? 'film' : this.type() === 'WEB' ? 'globe' : 'image'));
+  protected readonly icon = computed<IconName>(() => {
+    switch (this.type()) {
+      case 'VIDEO':
+        return 'film';
+      case 'WEB':
+        return 'globe';
+      case 'WIDGET':
+        return widgetInfo(this.widgetKind())?.icon ?? 'puzzle';
+      default:
+        return 'image';
+    }
+  });
 
   private objectUrl: string | null = null;
 

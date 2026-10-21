@@ -134,7 +134,7 @@ export function daysAgo(count: number, now: Date = new Date()): string {
   return isoDate(day);
 }
 
-export const MEDIA_TYPE_LABELS: Record<MediaType, string> = { IMAGE: 'Imagem', VIDEO: 'Vídeo', WEB: 'Página web' };
+export const MEDIA_TYPE_LABELS: Record<MediaType, string> = { IMAGE: 'Imagem', VIDEO: 'Vídeo', WEB: 'Página web', WIDGET: 'Widget' };
 
 export function mediaTypeLabel(type: MediaType): string {
   return tr(MEDIA_TYPE_LABELS[type] ?? 'Mídia');

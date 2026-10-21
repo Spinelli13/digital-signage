@@ -7,7 +7,9 @@ public enum MediaKind {
 	IMAGE,
 	VIDEO,
 	/** Página da web (não vem de arquivo: ver Media.web). */
-	WEB;
+	WEB,
+	/** Conteúdo dinâmico desenhado pelo Player (relógio, clima, notícias...): ver Media.widget. */
+	WIDGET;
 
 	private static final Set<String> IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
 
@@ -64,7 +66,7 @@ public enum MediaKind {
 				case "webp" -> "image/webp";
 				default -> "image/jpeg";
 			};
-			case WEB -> type;
+			case WEB, WIDGET -> type;
 		};
 	}
 

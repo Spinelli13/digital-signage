@@ -78,7 +78,7 @@ class ConfigSync(
         val items = fetched.config.allItems()
         requireRoomFor(items)
         for (item in items) {
-            if (!item.isWeb && !cache.isCached(item)) {
+            if (item.hasFile && !cache.isCached(item)) {
                 downloader.download(token, item.url) { input -> cache.store(item, input) }
             }
         }
@@ -98,7 +98,7 @@ class ConfigSync(
     private suspend fun prefetchPlan(token: String, config: PlayerConfig) {
         val plan = config.plan ?: return
         val inUse = config.allItems().map { it.mediaId }.toSet()
-        val missing = plan.allItems().filter { it.mediaId !in inUse && !it.isWeb && !cache.isCached(it) }
+        val missing = plan.allItems().filter { it.mediaId !in inUse && it.hasFile && !cache.isCached(it) }
         if (missing.isEmpty()) return
 
         var noSpace = 0
@@ -133,7 +133,7 @@ class ConfigSync(
      * couber, falha com uma mensagem clara em vez de encher o disco no meio do download.
      */
     private fun requireRoomFor(items: List<ConfigItem>) {
-        val needed = items.filter { !it.isWeb && !cache.isCached(it) }.sumOf { it.fileSize.coerceAtLeast(0) }
+        val needed = items.filter { it.hasFile && !cache.isCached(it) }.sumOf { it.fileSize.coerceAtLeast(0) }
         if (needed <= 0 || freeBytes() - reserveBytes >= needed) return
 
         cache.retainOnly(items + (store.load()?.allItems() ?: emptyList()))

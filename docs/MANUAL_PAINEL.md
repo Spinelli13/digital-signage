@@ -128,9 +128,41 @@ O que **você** digitou (nomes de TVs, playlists, locais, campanhas…) nunca é
 
 A duração do vídeo é preenchida sozinha a partir do próprio arquivo, mesmo quando o computador não consegue tocar HEVC.
 
-Além de arquivos, a Biblioteca também guarda **QR Codes** (botão **QR Code**) e **páginas da web** (botão **Página web**): veja o capítulo 10.
+Além de arquivos, a Biblioteca também guarda **widgets** (botão **Widget**, seção 3.1), **QR Codes** (botão **QR Code**) e **páginas da web** (botão **Página web**): veja o capítulo 10.
 
 **Excluir uma mídia:** clique nos três pontinhos (**⋮**) do cartão da mídia e em **Excluir**. Se ela estiver em alguma playlist, o painel avisa que não dá para remover; tire-a das playlists primeiro.
+
+### 3.1 Widgets: relógio, clima, notícias, cotações, recado e contagem regressiva
+
+Um **widget** é um conteúdo que **se atualiza sozinho**, sem você enviar arquivo nenhum. Na Biblioteca, clique em **Widget**, escolha o tipo e ajuste. Ao lado, **Como fica na TV** mostra o widget exatamente como a TV vai desenhá-lo (com os dados de agora), em tela horizontal ou **em pé**. Depois é só colocá-lo numa playlist como qualquer mídia: ele conta no tempo da playlist, entra em campanhas, em zonas de layout e na **Comprovação** (seção 9.4).
+
+![Os seis tipos de widget (captura real)](manual/img/painel-widgets-tipos.png)
+
+| Tipo | O que mostra | Escolhas |
+|---|---|---|
+| **Relógio e data** | A hora e a data. A hora vem do **servidor**: mesmo se o relógio da TV estiver errado, o widget está certo. | Fuso horário (Brasília, Manaus, Cuiabá…), texto acima da hora, data, segundos, 12 ou 24 horas. |
+| **Previsão do tempo** | Temperatura, céu, umidade, vento e os próximos dias. | **Cidade** (digite e escolha na lista; vale qualquer cidade do mundo), quantos dias. |
+| **Notícias** | Manchetes que trocam sozinhas, com a fonte e "há quanto tempo", e as próximas na fila. | Fonte (G1, Agência Brasil, BBC News Brasil, CNN Brasil, UOL ou **outro feed RSS** público em https), quantas manchetes (3 a 12) e segundos por manchete. |
+| **Cotações** | Dólar, euro e outras moedas em reais, com a variação desde o dia útil anterior. | Até 4 moedas entre USD, EUR, GBP, JPY, CAD, AUD, CHF, CNY e MXN. |
+| **Recado** | Um título e uma mensagem em destaque (horário especial, promoção, aviso). | Título, mensagem, cor de destaque e alinhamento. |
+| **Contagem regressiva** | Dias, horas, minutos e segundos que faltam para uma data, e uma frase quando ela chega. | Nome (ex.: Natal), data e hora, fuso e a frase final. |
+
+Em todos: **Cores** (escuro, claro ou verde Smartplay), **idioma** do texto do widget e **tempo na tela**.
+
+![Previsão do tempo de Campinas: escolhas à esquerda, como fica na TV à direita (captura real)](manual/img/painel-widget-clima.png)
+
+**Como os dados chegam à TV.** Clima, notícias e cotações vêm de serviços públicos gratuitos que **o servidor** consulta (Open-Meteo, os feeds RSS dos portais e o Banco Central Europeu via Frankfurter). A TV nunca fala com eles: pede ao servidor, a cada 10 minutos, e **guarda o último dado**. Resultado:
+
+- **Sem internet, o widget continua na tela** com o último clima, as últimas manchetes e as últimas cotações recebidos (se estiverem velhos, aparece "atualizado há…" discreto no rodapé). Relógio, recado e contagem regressiva nem precisam de dados.
+- Cidades com a mesma localização compartilham a mesma consulta; o servidor guarda o clima por 30 minutos, as notícias por 15 e as cotações por 1 hora. Se o serviço de fora falhar, vale o último resultado por até 24 horas.
+- As **cotações** são a referência diária do Banco Central Europeu (dias úteis), não o preço de agora de uma casa de câmbio: bom para informar, não para operar.
+- **Notícias:** só as manchetes são exibidas, sempre com o nome da fonte. Respeite os termos de uso do feed que escolher.
+
+**Editar:** pelos três pontinhos do cartão do widget, **Editar**. As TVs recebem a mudança no próximo contato (o tipo não muda: para outro tipo, crie outro widget).
+
+![Os seis widgets desenhados na TV (captura do emulador, dados reais)](manual/img/tv-widgets.png)
+
+**Requisito:** Smartplay 0.11 ou mais novo na TV. Uma TV com Player mais antigo não sabe desenhar widgets: mostra um aviso na tela por alguns segundos, registra no Histórico e passa para o próximo item.
 
 ---
 

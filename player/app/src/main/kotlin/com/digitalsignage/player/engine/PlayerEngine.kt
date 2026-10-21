@@ -13,6 +13,7 @@ import com.digitalsignage.player.sync.ConfigSync
 import com.digitalsignage.player.telemetry.Level
 import com.digitalsignage.player.telemetry.Telemetry
 import com.digitalsignage.player.time.TrustedClock
+import com.digitalsignage.player.widget.WidgetRefresher
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -50,6 +51,8 @@ data class Timing(
     val offlineCheckMs: Long = 15_000,
     /** Sem contato com o servidor por tanto tempo, a TV passa a seguir a agenda guardada. */
     val offlineAfterMs: Long = 75_000,
+    /** De quanto em quanto tempo a TV pede ao servidor os dados novos dos widgets (clima, notícias, cotações). */
+    val widgetRefreshMs: Long = 10 * 60_000,
 )
 
 /**
@@ -74,6 +77,8 @@ class PlayerEngine(
     private val wallClock: () -> Long = { System.currentTimeMillis() },
     /** A hora de verdade (do servidor), mesmo sem internet: a agenda offline depende dela. */
     private val clock: TrustedClock = TrustedClock(),
+    /** Mantém os dados dos widgets em dia (e guardados para quando a internet cair). */
+    private val widgets: WidgetRefresher? = null,
 ) {
 
     private val mutableState = MutableStateFlow<EngineState>(EngineState.Starting)
@@ -86,6 +91,10 @@ class PlayerEngine(
     /** A tela mostra o que a agenda guardada mandou (não o que o servidor confirmou): ao reconectar, o servidor tem a palavra final. */
     private var showsLocalPlan = false
     private var lastPlanKey: Pair<Long?, Long?>? = null
+
+    /** A configuração mudou desde a última atualização dos dados dos widgets: buscar já, sem esperar o intervalo. */
+    private var widgetsDirty = true
+    private var lastWidgetRefresh = 0L
 
     suspend fun run() {
         coroutineScope {
@@ -188,6 +197,7 @@ class PlayerEngine(
 
     private suspend fun activeSession() = coroutineScope {
         var syncJob: Job? = null
+        var widgetJob: Job? = null
 
         while (isActive) {
             val report = telemetry.snapshot()
@@ -212,6 +222,7 @@ class PlayerEngine(
                     try {
                         publish(sync.sync(token()))
                         showsLocalPlan = false
+                        widgetsDirty = true
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: UnauthorizedException) {
@@ -225,6 +236,29 @@ class PlayerEngine(
                 // O servidor voltou e confirma o que está guardado: a tela passa a seguir o servidor de novo.
                 store.load()?.let { publish(it) }
                 showsLocalPlan = false
+            }
+
+            // Os dados dos widgets (clima, notícias, cotações) ficam em dia à parte, sem atrasar o heartbeat.
+            val refresher = widgets
+            if (refresher != null && widgetJob?.isActive != true && !syncing &&
+                (widgetsDirty || clock.uptime() - lastWidgetRefresh >= timing.widgetRefreshMs)
+            ) {
+                val config = store.load()
+                if (config != null) {
+                    widgetsDirty = false
+                    lastWidgetRefresh = clock.uptime()
+                    widgetJob = launch {
+                        try {
+                            refresher.refresh(token(), config)
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: UnauthorizedException) {
+                            throw e
+                        } catch (e: Exception) {
+                            // os widgets seguem com o último dado guardado
+                        }
+                    }
+                }
             }
 
             delay(timing.heartbeatMs)

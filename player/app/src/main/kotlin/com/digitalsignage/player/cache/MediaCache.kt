@@ -26,7 +26,7 @@ class MediaCache(private val dir: File) {
 
     fun isCached(item: ConfigItem): Boolean {
         // página da web não tem arquivo: está sempre "pronta" (a conexão é problema na hora de abrir)
-        if (item.isWeb) return true
+        if (!item.hasFile) return true
         val file = fileFor(item)
         return file.isFile && (item.fileSize <= 0 || file.length() == item.fileSize)
     }

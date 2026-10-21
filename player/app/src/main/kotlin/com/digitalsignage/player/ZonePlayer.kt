@@ -23,7 +23,10 @@ import com.digitalsignage.player.proof.PlayContext
 import com.digitalsignage.player.proof.PlayInfo
 import com.digitalsignage.player.proof.PlayRecorder
 import com.digitalsignage.player.telemetry.Telemetry
+import com.digitalsignage.player.widget.WidgetHost
+import java.io.ByteArrayInputStream
 import java.io.File
+import java.io.IOException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -57,6 +60,8 @@ class ZonePlayer(
     private val recorder: PlayRecorder = PlayRecorder.NONE,
     /** O nome da zona nos registros de exibição (a zona única da tela é a "Principal"). */
     private val zoneName: String = "Principal",
+    /** Desenha os widgets (relógio, clima, notícias...); sem ele a zona pula esse tipo de item. */
+    private val widgets: WidgetHost? = null,
 ) {
 
     private var job: Job? = null
@@ -101,7 +106,7 @@ class ZonePlayer(
             player?.release()
             player = null
         }
-        if (current?.isWeb != true) views.releaseWeb()
+        if (current?.usesWebView != true) views.releaseWeb()
     }
 
     @Volatile
@@ -123,6 +128,7 @@ class ZonePlayer(
             lastFailure = null
             val shown = try {
                 when {
+                    item.isWidget -> showWidget(item)
                     item.isWeb -> showWeb(item)
                     item.isVideo -> playVideo(item, loop = playable.size == 1)
                     else -> showImage(item)
@@ -154,7 +160,7 @@ class ZonePlayer(
             player?.release()
             player = null
         }
-        if (!next.isWeb) views.releaseWeb()
+        if (!next.usesWebView) views.releaseWeb()
     }
 
     private suspend fun showImage(item: ConfigItem): Boolean {
@@ -290,6 +296,57 @@ class ZonePlayer(
 
     /** Abre a página e a exibe pelo tempo escolhido. Sem internet, ou se a página falhar, o item é pulado. */
     @Suppress("DEPRECATION")
+    /**
+     * Widget: a página é montada aqui mesmo (modelo + escolhas + últimos dados + hora de verdade) e não acessa a internet.
+     * Qualquer pedido de rede feito pela página é bloqueado: o que o widget precisa já veio dentro dela.
+     */
+    private suspend fun showWidget(item: ConfigItem): Boolean {
+        val host = widgets ?: throw IOException("este Player não sabe desenhar widgets")
+        val web = views.web(views.playerView.context)
+        val loaded = CompletableDeferred<Boolean>()
+        web.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView, url: String?) {
+                loaded.complete(true)
+            }
+
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                val scheme = request.url.scheme
+                return if (scheme == "http" || scheme == "https") WebResourceResponse("text/plain", "utf-8", ByteArrayInputStream(ByteArray(0))) else null
+            }
+
+            override fun onReceivedError(view: WebView, errorCode: Int, description: String?, failingUrl: String?) {
+                lastFailure = "não foi possível desenhar o widget${description?.let { " ($it)" } ?: ""}"
+                loaded.complete(false)
+            }
+        }
+
+        views.hideAll()
+        player?.stop()
+        shownImage = null
+        web.loadDataWithBaseURL(WIDGET_BASE_URL, host.html(item), "text/html", "UTF-8", null)
+        val opened = withTimeoutOrNull(WEB_LOAD_TIMEOUT_MS) { loaded.await() }
+        if (opened != true) {
+            if (opened == null) lastFailure = "o widget demorou demais para abrir"
+            web.stopLoading()
+            web.loadUrl("about:blank")
+            return false
+        }
+
+        views.showWeb()
+        if (reportsCurrentMedia) telemetry.mediaShown(item.mediaId)
+        val seconds = item.durationSeconds.coerceAtLeast(1)
+        val watch = Stopwatch()
+        var finished = false
+        try {
+            delay(seconds * 1000L)
+            finished = true
+        } finally {
+            report(item, watch, finished)
+        }
+        telemetry.played(item.mediaId, seconds.toLong())
+        return true
+    }
+
     private suspend fun showWeb(item: ConfigItem): Boolean {
         val web = views.web(views.playerView.context)
         val loaded = CompletableDeferred<Boolean>()
@@ -377,6 +434,9 @@ class ZonePlayer(
         const val ALL_FAILED_PAUSE_MS = 5_000L
         const val VIDEO_GRACE_SECONDS = 15
         const val WEB_LOAD_TIMEOUT_MS = 30_000L
+
+        /** A "origem" da página de um widget (nunca é acessada: a página vem pronta, e o que ela pedir à rede é bloqueado). */
+        const val WIDGET_BASE_URL = "https://widget.smartplay.invalid/"
         const val BUFFER_FOR_PLAYBACK_MS = 500
         const val BUFFER_AFTER_REBUFFER_MS = 1_000
 

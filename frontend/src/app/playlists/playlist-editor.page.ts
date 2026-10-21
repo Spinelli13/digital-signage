@@ -130,7 +130,7 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
 })
 export class PlaylistEditorPage implements OnInit {
   readonly typeLabel = mediaTypeLabel;
-  readonly kindIcon = (type: MediaType): IconName => (type === 'VIDEO' ? 'film' : type === 'WEB' ? 'globe' : 'image');
+  readonly kindIcon = (type: MediaType): IconName => (type === 'VIDEO' ? 'film' : type === 'WEB' ? 'globe' : type === 'WIDGET' ? 'puzzle' : 'image');
   private readonly api = inject(ApiService);
   protected readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);

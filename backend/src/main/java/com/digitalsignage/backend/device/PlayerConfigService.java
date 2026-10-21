@@ -136,9 +136,15 @@ public class PlayerConfigService {
 	private static PlayerConfigMediaItem itemOf(PlaylistItem item) {
 		Media media = item.getMedia();
 		// Conteúdo web não tem arquivo: o "url" é o próprio endereço da página, que o Player abre direto.
-		String url = media.isWeb() ? media.getWebUrl() : "/api/v1/media/" + media.getId() + "/file";
+		// Widget também não tem arquivo: o "url" é de onde o Player busca os dados (clima, notícias...), e as escolhas vão junto.
+		String url = media.isWeb() ? media.getWebUrl()
+				: media.isWidget() ? "/api/v1/player/widgets/" + media.getId() + "/data"
+				: "/api/v1/media/" + media.getId() + "/file";
+		java.util.Map<String, Object> widget = media.isWidget()
+				? java.util.Map.of("kind", media.getWidgetKind(), "settings", media.getWidgetConfig() == null ? java.util.Map.of() : media.getWidgetConfig())
+				: null;
 		return new PlayerConfigMediaItem(media.getId(), media.getName(), media.getType(), url, media.getChecksum(),
-				media.getFileSize(), item.getPosition(), item.getDurationSeconds());
+				media.getFileSize(), item.getPosition(), item.getDurationSeconds(), widget);
 	}
 
 }

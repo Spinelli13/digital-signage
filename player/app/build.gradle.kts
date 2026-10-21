@@ -65,6 +65,13 @@ android {
         buildConfig = true
     }
 
+    sourceSets {
+        // Os modelos dos widgets (frontend/public/widgets) são os MESMOS da pré-visualização do painel.
+        getByName("main") {
+            assets.srcDir("../../frontend/public/widgets")
+        }
+    }
+
     buildTypes {
         debug {
             // Permite http:// (teste na rede local, ex.: http://192.168.0.10:8080).

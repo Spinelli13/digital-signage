@@ -64,6 +64,52 @@ describe('MediaPage', () => {
     backend.verify();
   });
 
+  // ---------- widgets ----------
+
+  it('shows a widget with its kind, no size, and offers to edit it', async () => {
+    const { fixture, backend } = setup(
+      [media(3, 'Clima da loja', { type: 'WIDGET', url: '', fileSize: 0, durationSeconds: 15, widget: { kind: 'WEATHER', settings: { city: 'Campinas' } } })],
+      true,
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const card = (fixture.nativeElement as HTMLElement).querySelector('.item') as HTMLElement;
+    expect(card.textContent).toContain('Widget');
+    expect(card.textContent).toContain('Previsão do tempo');
+    expect(card.textContent).toContain('15s');
+    expect(card.textContent).not.toContain('0 B');
+    backend.verify();
+  });
+
+  it('opens the widget editor empty to create, and with the widget to edit', () => {
+    const { page, backend } = setup();
+    const existing = media(3, 'Clima', { type: 'WIDGET', widget: { kind: 'WEATHER', settings: {} } });
+
+    page.openWidget();
+    expect(page.modal()).toBe('widget');
+    expect(page.editingWidget()).toBeNull();
+
+    page.editWidget(existing);
+    expect(page.editingWidget()).toBe(existing);
+    page.closeModal();
+    expect(page.modal()).toBeNull();
+    expect(page.editingWidget()).toBeNull();
+    backend.verify();
+  });
+
+  it('after saving a widget, closes the window, tells the person and reloads the library', () => {
+    const { page, backend } = setup();
+    page.openWidget();
+
+    page.widgetSaved(media(9, 'Relógio', { type: 'WIDGET' }));
+
+    expect(page.modal()).toBeNull();
+    expect(page.notice.text()).toContain('Widget "Relógio" salvo na biblioteca');
+    backend.expectOne(`${API}/media`).flush([]);
+    backend.verify();
+  });
+
   // ---------- página web ----------
 
   it('opens the web window with the default time and no leftovers from last time', () => {

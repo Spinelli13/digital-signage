@@ -28,6 +28,10 @@ import com.digitalsignage.player.proof.PlayLog
 import com.digitalsignage.player.telemetry.Level
 import com.digitalsignage.player.telemetry.Telemetry
 import com.digitalsignage.player.time.TrustedClock
+import com.digitalsignage.player.widget.AndroidWidgetAssets
+import com.digitalsignage.player.widget.WidgetHost
+import com.digitalsignage.player.widget.WidgetRefresher
+import com.digitalsignage.player.widget.WidgetStore
 import com.digitalsignage.player.restart.RestartPolicy
 import com.digitalsignage.player.restart.Restarter
 import com.digitalsignage.player.sync.ConfigSync
@@ -94,6 +98,9 @@ class MainActivity : AppCompatActivity() {
             onDropped = { reporter.report("O diário de exibição ficou cheio sem internet: $it registro(s) mais antigo(s) foram descartados.", 0) },
         )
         val api = HttpPlayerApi(baseUrl = { settings.serverUrl })
+        // Widgets: o último dado de cada um fica no aparelho (clima, notícias e cotações continuam aparecendo sem internet).
+        val widgetStore = WidgetStore(java.io.File(filesDir, "widgets"))
+        val widgetHost = WidgetHost(AndroidWidgetAssets(applicationContext), widgetStore, clock)
         val updates = UpdateManager(applicationContext, settings)
         val updateTrigger = UpdateRequestTrigger(
             lastHandled = { settings.lastUpdateToken },
@@ -115,6 +122,7 @@ class MainActivity : AppCompatActivity() {
             onUpdateCheckRequested = updateTrigger::onHeartbeat,
             plays = playLog,
             clock = clock,
+            widgets = WidgetRefresher(api, widgetStore),
         )
         // O mesmo ConfigSync não é compartilhado com a Activity: o Slideshow só lê o cache.
         slideshow = Slideshow(
@@ -126,6 +134,7 @@ class MainActivity : AppCompatActivity() {
             onError = { reporter.report(it) },
             profile = MemoryProfile.detect(this),
             recorder = playLog,
+            widgets = widgetHost,
         )
         // Sinal de vida enquanto a tela está aberta: é o que o vigia confere (ver restart/Restarter).
         lifecycleScope.launch {

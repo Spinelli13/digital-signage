@@ -71,8 +71,6 @@ export const REDESIGN: Record<string, string> = {
 
   // conteúdo
   'Nenhuma mídia ainda': 'No media yet',
-  'Envie sua primeira imagem ou vídeo. Também dá para usar uma página da web ou gerar um QR Code.':
-    'Upload your first image or video. You can also use a web page or generate a QR Code.',
   'Nenhuma playlist ainda': 'No playlists yet',
   'Crie uma e adicione mídias da biblioteca: a ordem e a duração de cada item você define na hora.':
     'Create one and add media from the library: you set the order and duration of each item as you go.',

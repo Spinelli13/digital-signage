@@ -69,6 +69,8 @@ public class SecurityConfig {
 						.requestMatchers("/api/v1/auth/**").hasRole("VIEWER")
 						// Equipe e cobrança: só quem administra o cliente (nem para consultar).
 						.requestMatchers("/api/v1/users/**", "/api/v1/billing/**").hasRole("ADMIN")
+						// Montar widgets (busca de cidades, pré-visualização dos dados): quem edita conteúdo.
+						.requestMatchers("/api/v1/widgets/**").hasRole("EDITOR")
 						// Consultar: qualquer papel.
 						.requestMatchers(HttpMethod.GET, "/api/v1/**").hasRole("VIEWER")
 						// Gravar conteúdo (mídias, playlists, campanhas, layouts) e escolher o que cada TV exibe: o EDITOR.

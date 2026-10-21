@@ -2,7 +2,11 @@ package com.digitalsignage.backend.media;
 
 import java.time.Instant;
 
+import java.util.Map;
+
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.TenantId;
+import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -51,6 +55,14 @@ public class Media {
 	@Column(name = "web_url")
 	private String webUrl;
 
+	/** Só nos widgets: o tipo (CLOCK, WEATHER...) e as escolhas feitas no painel (já validadas). */
+	@Column(name = "widget_kind")
+	private String widgetKind;
+
+	@JdbcTypeCode(SqlTypes.JSON)
+	@Column(name = "widget_config", columnDefinition = "jsonb")
+	private Map<String, Object> widgetConfig;
+
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
 
@@ -78,8 +90,31 @@ public class Media {
 		return media;
 	}
 
+	/** Conteúdo dinâmico: sem arquivo; o Player o desenha com os dados que o servidor entrega. */
+	public static Media widget(String name, String kind, Map<String, Object> config, int durationSeconds) {
+		Media media = new Media(name, MediaKind.WIDGET.name(), "application/x-smartplay-widget", null, 0, durationSeconds, null);
+		media.widgetKind = kind;
+		media.widgetConfig = config;
+		return media;
+	}
+
+	public void changeWidget(String name, Map<String, Object> config, int durationSeconds) {
+		this.name = name;
+		this.widgetConfig = config;
+		this.durationSeconds = durationSeconds;
+	}
+
 	public boolean isWeb() {
 		return MediaKind.WEB.name().equals(type);
+	}
+
+	public boolean isWidget() {
+		return MediaKind.WIDGET.name().equals(type);
+	}
+
+	/** Mídia sem arquivo para baixar (página da web ou widget). */
+	public boolean hasNoFile() {
+		return isWeb() || isWidget();
 	}
 
 	@PrePersist
@@ -132,6 +167,14 @@ public class Media {
 
 	public String getWebUrl() {
 		return webUrl;
+	}
+
+	public String getWidgetKind() {
+		return widgetKind;
+	}
+
+	public Map<String, Object> getWidgetConfig() {
+		return widgetConfig;
 	}
 
 	public Instant getCreatedAt() {

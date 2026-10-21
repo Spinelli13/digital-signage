@@ -6,10 +6,11 @@ import { OPS } from './ops';
 import { PROOF } from './proof';
 import { REDESIGN } from './redesign';
 import { SERVER } from './server';
+import { WIDGETS } from './widgets';
 import { SERVER_DATA } from './server-data';
 
 /** Todas as seções do inglês. A chave é sempre o texto em português; veja ../i18n.ts. */
-const SECTIONS: Record<string, string>[] = [CORE, HOME, OPS, CONTENT, ACCOUNT, REDESIGN, PROOF, SERVER, SERVER_DATA];
+const SECTIONS: Record<string, string>[] = [CORE, HOME, OPS, CONTENT, ACCOUNT, REDESIGN, PROOF, WIDGETS, SERVER, SERVER_DATA];
 
 /** Chaves repetidas em seções diferentes com traduções diferentes (um teste exige que esta lista fique vazia). */
 export const DICTIONARY_CONFLICTS: string[] = [];

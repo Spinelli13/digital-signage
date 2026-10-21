@@ -398,3 +398,38 @@ Pedido: olhar de UX/UI sênior + tech lead de frontend, pesquisar e criar um lay
 ### Não feito
 - **Conteúdo dinâmico offline** (widgets de clima/notícias) não existe ainda; quando existir terá de guardar o último valor.
 - Agenda por **grupo/local** muda de alcance quando a TV muda de grupo: coberto pelo `planVersion`, mas só vale na próxima conexão.
+
+## 2026-10-21 (parte 15) — Pedidos da madrugada, bloco 4: widgets (conteúdo dinâmico)
+
+### Pedido e escolhas
+- Pedido: "conteúdo dinâmico, com widgets, previsão do tempo local, notícias e ferramentas pertinentes do dia a dia". Seis widgets: **relógio e data, previsão do tempo, notícias, cotações, recado e contagem regressiva** (as "ferramentas do dia a dia": hora certa em qualquer fuso, dólar/euro, aviso de loja, quanto falta para uma data).
+- **Um widget é uma mídia** (`media.type = 'WIDGET'`, V12: `widget_kind` + `widget_config JSONB`, sem arquivo). Por isso entra de graça em playlists, campanhas, zonas de layout, agenda offline, relatórios e comprovação de exibição (o registro cita `mediaType = WIDGET`). `MediaKind.WIDGET`, `Media.widget(...)`, `Media.hasNoFile()`.
+- As escolhas ficam **dentro da configuração da playlist** que a TV baixa (`items[].widget = {kind, settings}`), então um widget de relógio, recado ou contagem regressiva funciona até na primeira vez sem internet. Editar um widget faz `Playlist.touch()` em todas as playlists que o usam (a versão da configuração muda: as TVs, e a agenda offline, baixam de novo).
+
+### Quem busca os dados: o servidor, nunca a TV
+- `WidgetDataService`: **Open-Meteo** (clima e busca de cidades, sem chave), **feeds RSS/Atom** (G1, Agência Brasil, BBC News Brasil, CNN Brasil, UOL, ou um feed `https` público que a pessoa informe) e **Frankfurter** (cotações de referência do Banco Central Europeu; moedas que ele publica: USD, EUR, GBP, JPY, CAD, AUD, CHF, CNY, MXN). A TV pede ao servidor (`GET /player/widgets/{id}/data`), que guarda por tempo: clima 30 min por coordenada arredondada (duas casas, TVs da mesma cidade dividem uma consulta), notícias 15 min, cotações 1 h, cidades 24 h. **Falha do provedor:** vale o último resultado por até 24 h (`fetchedAtMs` vai junto e o widget mostra "atualizado há…" se velho); sem nada guardado, a resposta vem sem dados e com o motivo, e o widget mostra um estado vazio discreto em vez de quebrar.
+- **Segurança do feed personalizado (SSRF/XXE):** o endereço passa pela mesma política dos webhooks (`WebhookUrlPolicy`, agora com `validate(url, o_que)`): só `https` e só endereços públicos, sem usuário e senha; cada redirecionamento (no máximo 3) é conferido de novo, inclusive nos feeds conhecidos; resposta limitada a 3 MB e 8 s; gzip tratado à mão; o XML é lido com `disallow-doctype-decl` e processamento seguro (sem entidades externas), e a codificação do cabeçalho HTTP vale quando o XML não a declara (UOL é ISO-8859-1). Texto de manchete é sempre texto puro: o título é limpo de tags, e na TV e no painel entra por `textContent`.
+- **Licença/uso:** o plano gratuito do Open-Meteo é para uso não comercial; **antes de vender o Smartplay é preciso trocar para o plano comercial** (mesma API, outra URL e chave: um ponto só, `WidgetDataService`). Feeds RSS: só as manchetes, com o nome da fonte. Cotações são referência diária, não preço de câmbio (dito no manual).
+- Provedores atrás da interface `WidgetHttp` (os testes nunca usam a internet: `TestWidgetHttpConfig`).
+
+### Um só modelo visual para a TV e para o painel
+- `frontend/public/widgets/` (`widget.html`, `widget.css`, `widget.js`, ES5 de propósito: WebViews de TVs antigas não entendem `let`, `const` nem setas): o Gradle do Player usa essa pasta como `assets` e o painel a serve em `/widgets/` (o Angular não aceita asset fora do projeto, então a pasta mora no painel). **A pré-visualização do painel é exatamente a página que a TV desenha** (quadro isolado `sandbox="allow-scripts"`, horizontal ou em pé). Tudo em `vmin`: o mesmo widget serve a uma zona pequena do layout ou à tela inteira. Ícones: Lucide (ISC), embutidos.
+- Contrato: `Smartplay.start({kind, settings, data, nowMs})`. A **hora** do relógio e da contagem regressiva é `nowMs` (hora do servidor, `TrustedClock`) mais o relógio monotônico do navegador: relógio de TV errado não afeta o widget (o painel usa a hora do navegador). Fuso por `Intl` (sem biblioteca).
+- **Montagem da página:** CSS e JS entram inline (nada de arquivo relativo) e a configuração é um JSON no fim do script; `"</"` vira `"<\/"` e U+2028/2029 são escapados (manchete não fecha o script). Cuidado aprendido: o `replace` de texto do JavaScript trata `$'` e `$&` como padrão (o modelo tem `'R$'`): o painel usa função como substituto; o Kotlin não tem esse problema. Teste dos dois lados.
+- No Player, o widget roda no mesmo `WebView` das páginas da web, mas **sem rede**: `shouldInterceptRequest` bloqueia qualquer pedido http/https da página (o que ela precisa já veio dentro dela).
+
+### Player
+- `WidgetStore` guarda o último dado de cada widget em arquivo (um erro ao buscar nunca apaga o que já existe); `WidgetRefresher` busca no servidor os widgets da configuração **e os da agenda offline** (a campanha de amanhã já chega com dados); o motor atualiza logo depois de cada sincronização e a cada 10 min, à parte do heartbeat. `WidgetHost` monta a página. Sem internet a TV mostra o último dado.
+- `ConfigItem.hasFile` / `usesWebView`: widget e página da web não têm arquivo (não baixam, não contam espaço, `isCached` é sempre verdadeiro).
+- **Comprovação de exibição** inclui widgets (a duração é a que o item ficou na tela).
+
+### Painel
+- Biblioteca: botão **Widget** (escolher o tipo, preencher, ver a pré-visualização com dados reais; o servidor confere as escolhas com as mesmas regras de salvar e o motivo aparece ao lado, impedindo salvar), **Editar** no cartão, ícone por tipo. `POST /widgets/preview` confere sem gravar; `GET /widgets/places` busca cidades (silencioso); `GET /widgets/catalog`.
+
+### Testes
+- Backend `WidgetTest` (20): criar os seis tipos, recusas, feed personalizado e rede interna, edição (versão da playlist muda, tipo não troca), item na configuração da TV, clima/cotações/notícias com cache de 30 min, dado velho na falha, lixo do provedor, RSS/Atom/ISO-8859-1, XXE, painel (cidades, pré-visualização, catálogo) e permissões e isolamento entre clientes. Player (+22): modelo, não baixa, `WidgetStore`, `WidgetRefresher` (incluindo agenda e 401), `WidgetHost` com os **modelos de verdade**, atualização no motor. Painel (+23): editor, `WidgetTemplates`, catálogo, Biblioteca, traduções.
+- **Emulador:** os seis widgets na TV com dados reais (clima de Campinas, manchetes do G1, cotações do dia) e registrados na Comprovação. Não testado em TV real nem em WebView muito antigo (Android 5 sem atualização do WebView).
+
+### Não feito
+- Widgets em tela dividida com layout e **dados offline na primeira instalação** (sem nenhum dado guardado o widget mostra o estado vazio até a primeira conexão).
+- Mais fontes (câmbio em tempo real, esportes, trânsito) e widgets de **preços dinâmicos** (item 9 do pedido; reaproveita este mecanismo).

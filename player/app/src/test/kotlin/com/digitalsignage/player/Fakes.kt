@@ -39,7 +39,8 @@ fun configOf(playlistId: Long?, version: Long, vararg items: ConfigItem) =
 private fun itemsJson(items: List<ConfigItem>) = items.joinToString(",") {
     """{"mediaId":${it.mediaId},"name":"${it.name}","type":"${it.type}","url":"${it.url}",""" +
         """"checksum":${it.checksum?.let { c -> "\"$c\"" } ?: "null"},"fileSize":${it.fileSize},""" +
-        """"position":${it.position},"durationSeconds":${it.durationSeconds}}"""
+        """"position":${it.position},"durationSeconds":${it.durationSeconds}""" +
+        (it.widget?.let { w -> ""","widget":{"kind":"${w.kind}","settings":${w.settingsJson}}""" } ?: "") + "}"
 }
 
 fun rawJson(config: PlayerConfig): String {
@@ -94,6 +95,15 @@ class FakePlayerApi : PlayerApi {
     var configResponse: () -> PlayerConfig = { throw IOException("offline") }
 
     val heartbeatsSeenVersions = mutableListOf<Long>()
+
+    /** Os dados de widgets pedidos (o endereço de cada pedido) e o que o "servidor" responde. */
+    val widgetCalls = mutableListOf<String>()
+    var widgetResponse: (String) -> String = { throw IOException("offline") }
+
+    override suspend fun widgetData(token: String, url: String): String {
+        widgetCalls += url
+        return widgetResponse(url)
+    }
 
     /** Até quando a agenda offline guardada valia em cada heartbeat (0 = sem agenda). */
     val planUntilSeen = mutableListOf<Long>()

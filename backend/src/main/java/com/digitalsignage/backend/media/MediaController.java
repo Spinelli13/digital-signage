@@ -31,8 +31,11 @@ public class MediaController {
 	private final MediaRepository mediaRepository;
 	private final MediaStorage storageService;
 	private final com.digitalsignage.backend.tenant.PlanLimits planLimits;
+	private final com.digitalsignage.backend.widget.WidgetService widgetService;
 
-	public MediaController(MediaRepository mediaRepository, MediaStorage storageService, com.digitalsignage.backend.tenant.PlanLimits planLimits) {
+	public MediaController(MediaRepository mediaRepository, MediaStorage storageService, com.digitalsignage.backend.tenant.PlanLimits planLimits,
+			com.digitalsignage.backend.widget.WidgetService widgetService) {
+		this.widgetService = widgetService;
 		this.mediaRepository = mediaRepository;
 		this.storageService = storageService;
 		this.planLimits = planLimits;
@@ -82,6 +85,18 @@ public class MediaController {
 		return MediaResponse.from(mediaRepository.save(media));
 	}
 
+	/** Widget: conteúdo dinâmico (relógio, clima, notícias, cotações, aviso, contagem regressiva), sem arquivo. */
+	@PostMapping("/widget")
+	@ResponseStatus(HttpStatus.CREATED)
+	public MediaResponse createWidget(@Valid @RequestBody com.digitalsignage.backend.widget.WidgetService.Request request) {
+		return MediaResponse.from(widgetService.create(request));
+	}
+
+	@org.springframework.web.bind.annotation.PutMapping("/{id}/widget")
+	public MediaResponse updateWidget(@PathVariable Long id, @Valid @RequestBody com.digitalsignage.backend.widget.WidgetService.Request request) {
+		return MediaResponse.from(widgetService.update(id, request));
+	}
+
 	@GetMapping("/{id}")
 	public MediaResponse get(@PathVariable Long id) {
 		return MediaResponse.from(findOrThrow(id));
@@ -94,8 +109,10 @@ public class MediaController {
 	@GetMapping("/{id}/file")
 	public ResponseEntity<Resource> download(@PathVariable Long id) {
 		Media media = findOrThrow(id);
-		if (media.isWeb()) {
-			throw new IllegalArgumentException("Esta mídia é uma página da web: não há arquivo para baixar");
+		if (media.hasNoFile()) {
+			throw new IllegalArgumentException(media.isWidget()
+					? "Esta mídia é um widget: não há arquivo para baixar"
+					: "Esta mídia é uma página da web: não há arquivo para baixar");
 		}
 
 		Optional<URI> external = storageService.externalDownloadUrl(media.getStorageKey(), media.getMimeType());
@@ -116,6 +133,9 @@ public class MediaController {
 		if (media.isWeb()) {
 			return new MediaUrlResponse(media.getWebUrl(), false);
 		}
+		if (media.isWidget()) {
+			throw new IllegalArgumentException("Esta mídia é um widget: não há arquivo para visualizar");
+		}
 
 		return storageService.externalDownloadUrl(media.getStorageKey(), media.getMimeType())
 				.map(uri -> new MediaUrlResponse(uri.toString(), false))
@@ -127,7 +147,7 @@ public class MediaController {
 	public void delete(@PathVariable Long id) throws IOException {
 		Media media = findOrThrow(id);
 		mediaRepository.delete(media);
-		if (!media.isWeb()) {
+		if (!media.hasNoFile()) {
 			storageService.delete(media.getStorageKey());
 		}
 	}

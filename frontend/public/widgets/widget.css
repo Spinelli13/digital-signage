@@ -1,0 +1,132 @@
+/* Smartplay widgets: o mesmo visual na TV e na pré-visualização do painel. Tudo em vmin: o widget se adapta a qualquer zona. */
+:root {
+  --bg1: #071a15;
+  --bg2: #0d2e25;
+  --fg: #f2fbf7;
+  --muted: rgba(242, 251, 247, 0.68);
+  --card: rgba(255, 255, 255, 0.08);
+  --line: rgba(255, 255, 255, 0.16);
+  --accent: #3ddc97;
+  --up: #3ddc97;
+  --down: #ff8a8a;
+}
+body.theme-light {
+  --bg1: #f6fbf8;
+  --bg2: #e1f0e8;
+  --fg: #0b2a21;
+  --muted: rgba(11, 42, 33, 0.64);
+  --card: rgba(11, 42, 33, 0.06);
+  --line: rgba(11, 42, 33, 0.14);
+  --accent: #0f8a5f;
+  --up: #0f8a5f;
+  --down: #c62828;
+}
+body.theme-brand {
+  --bg1: #11825a;
+  --bg2: #0a573d;
+  --fg: #ffffff;
+  --muted: rgba(255, 255, 255, 0.8);
+  --card: rgba(255, 255, 255, 0.13);
+  --line: rgba(255, 255, 255, 0.24);
+  --accent: #c6f7de;
+  --up: #c6f7de;
+  --down: #ffd0d0;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+body {
+  background: linear-gradient(135deg, var(--bg1), var(--bg2));
+  color: var(--fg);
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  cursor: none;
+}
+#root { position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 4.5vmin; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; }
+.w { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; width: 100%; height: 100%; }
+.muted { color: var(--muted); }
+.ico { display: inline-block; width: 1em; height: 1em; vertical-align: middle; }
+.ico svg { width: 100%; height: 100%; display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.foot { position: absolute; left: 0; right: 0; bottom: 2.4vmin; text-align: center; font-size: 2.4vmin; color: var(--muted); }
+.fade { transition: opacity 0.5s ease; }
+.fade.out { opacity: 0; }
+
+/* relógio */
+.clock .label { font-size: 4.4vmin; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 2vmin; }
+.clock .time { font-size: 27vmin; font-weight: 300; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.clock .time .sec { font-size: 0.45em; color: var(--accent); margin-left: 0.12em; }
+.clock .time .ampm { font-size: 0.28em; color: var(--muted); margin-left: 0.2em; letter-spacing: 0; }
+.clock .date { font-size: 5.6vmin; margin-top: 3vmin; color: var(--muted); }
+.clock .date::first-letter { text-transform: uppercase; }
+
+/* previsão do tempo */
+.weather .place { font-size: 4.6vmin; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.weather .now { display: flex; align-items: center; justify-content: center; gap: 4vmin; margin: 2vmin 0 1vmin; }
+.weather .now .ico { font-size: 24vmin; color: var(--accent); }
+.weather .temp { font-size: 24vmin; font-weight: 300; line-height: 1; letter-spacing: -0.03em; }
+.weather .temp sup { font-size: 0.4em; vertical-align: top; position: relative; top: 0.1em; margin-left: 0.04em; }
+.weather .cond { font-size: 6vmin; }
+.weather .meta { display: flex; gap: 5vmin; justify-content: center; margin-top: 2vmin; font-size: 4.4vmin; color: var(--muted); }
+.weather .meta span { display: inline-flex; align-items: center; gap: 1vmin; }
+.weather .days { display: flex; gap: 2.5vmin; justify-content: center; margin-top: 4vmin; width: 100%; }
+.weather .day { flex: 1 1 0; max-width: 30vmin; background: var(--card); border: 1px solid var(--line); border-radius: 2.6vmin; padding: 2.4vmin 1vmin; }
+.weather .day b { display: block; font-size: 4vmin; text-transform: capitalize; font-weight: 600; }
+.weather .day .ico { font-size: 9vmin; margin: 1.2vmin 0; color: var(--accent); }
+.weather .day .mm { font-size: 4.4vmin; font-weight: 600; }
+.weather .day .mm i { font-style: normal; color: var(--muted); margin-left: 0.8vmin; }
+.weather .day .rain { font-size: 3vmin; color: var(--muted); margin-top: 0.8vmin; }
+
+/* notícias */
+.news .w { align-items: stretch; text-align: left; justify-content: center; }
+.news .head { display: flex; align-items: center; gap: 1.6vmin; font-size: 3.6vmin; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); }
+.news .head .ico { font-size: 5vmin; }
+.news .headline { font-size: 8.6vmin; font-weight: 600; line-height: 1.15; margin: 3vmin 0 2.4vmin; }
+.news .headline.long { font-size: 6.8vmin; }
+.news .headline.xlong { font-size: 5.4vmin; }
+.news .meta { font-size: 3.2vmin; color: var(--muted); }
+.news .next { margin-top: 4vmin; border-top: 1px solid var(--line); padding-top: 2.4vmin; }
+.news .next div { font-size: 3.6vmin; color: var(--muted); margin-top: 1.4vmin; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.news .next small { display: block; font-size: 2.6vmin; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.news .dots { display: flex; gap: 1.2vmin; margin-top: 3vmin; }
+.news .dots i { width: 1.4vmin; height: 1.4vmin; border-radius: 50%; background: var(--line); }
+.news .dots i.on { background: var(--accent); }
+
+/* cotações */
+.rates .title { font-size: 4.4vmin; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 3.4vmin; }
+.rates .grid { display: flex; flex-wrap: wrap; gap: 3vmin; justify-content: center; width: 100%; }
+.rates .card { flex: 1 1 30%; min-width: 30vmin; max-width: 56vmin; background: var(--card); border: 1px solid var(--line); border-radius: 3vmin; padding: 3.4vmin 2vmin; }
+.rates .code { font-size: 4vmin; letter-spacing: 0.16em; color: var(--muted); }
+.rates .name { font-size: 3vmin; color: var(--muted); margin-top: 0.4vmin; }
+.rates .value { font-size: 11vmin; font-weight: 600; margin: 1.6vmin 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rates .value small { font-size: 0.4em; font-weight: 400; color: var(--muted); margin-right: 0.3em; }
+.rates .chg { display: inline-flex; align-items: center; gap: 0.8vmin; font-size: 3.6vmin; font-weight: 600; }
+.rates .chg .ico { font-size: 4.4vmin; }
+.rates .chg.up { color: var(--up); }
+.rates .chg.down { color: var(--down); }
+.rates .chg.flat { color: var(--muted); }
+.rates .src { margin-top: 3.4vmin; font-size: 2.8vmin; color: var(--muted); }
+
+/* aviso */
+.notice .w { position: relative; }
+.notice .bar { position: absolute; top: 0; bottom: 0; left: 0; width: 1.6vmin; border-radius: 1vmin; background: var(--tone, var(--accent)); }
+.notice .box { padding: 0 3vmin 0 6vmin; width: 100%; box-sizing: border-box; }
+.notice .ico { font-size: 11vmin; color: var(--tone, var(--accent)); margin-bottom: 2vmin; }
+.notice .t { font-size: 10vmin; font-weight: 700; line-height: 1.1; }
+.notice .m { font-size: 6vmin; line-height: 1.35; margin-top: 3vmin; color: var(--fg); white-space: pre-line; }
+.notice.center .box { text-align: center; padding: 0 4vmin; }
+.notice.left .box { text-align: left; }
+.notice.center .bar { display: none; }
+
+/* contagem regressiva */
+.count .label { font-size: 7vmin; font-weight: 600; margin-bottom: 4vmin; }
+.count .tiles { display: flex; gap: 3vmin; justify-content: center; }
+.count .tile { min-width: 17vmin; background: var(--card); border: 1px solid var(--line); border-radius: 3vmin; padding: 3vmin 2vmin; }
+.count .tile b { display: block; font-size: 15vmin; font-weight: 300; line-height: 1; font-variant-numeric: tabular-nums; }
+.count .tile span { display: block; font-size: 3.2vmin; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-top: 1.4vmin; }
+.count .done { font-size: 11vmin; font-weight: 700; color: var(--accent); }
+.count .until { font-size: 3.4vmin; color: var(--muted); margin-top: 3.4vmin; }
+
+/* sem dados */
+.empty .ico { font-size: 14vmin; color: var(--muted); }
+.empty .t { font-size: 6vmin; margin-top: 2vmin; }
+.empty .s { font-size: 3.6vmin; color: var(--muted); margin-top: 1.4vmin; }

@@ -10,9 +10,11 @@ import { ALERT_LABELS, EVENT_LABELS, LEVEL_LABELS } from './core/monitoring-labe
 import { INVOICE_STATUS_LABELS, ROLE_HELP, ROLE_LABELS, TENANT_STATUS_LABELS } from './core/saas';
 import { DEFAULT_QR_CAPTION } from './media/media.page';
 import { QR_THEMES } from './media/qr';
+import { ACCENTS as WIDGET_ACCENTS, THEMES as WIDGET_THEMES } from './media/widget-editor';
 import { METHOD_LABELS } from './platform/platform-invoices.page';
 import { TABS } from './reports/reports.page';
 import { THEME_LABELS } from './shared/preferences';
+import { WIDGET_KINDS } from './core/widgets';
 
 /**
  * O painel tem dois idiomas (português é a chave, inglês fica em core/i18n-en). Este teste lê o código-fonte e garante:
@@ -215,6 +217,8 @@ const TABLES: Record<string, string[]> = {
   tema: Object.values(THEME_LABELS),
   'cores do QR Code': Object.values(QR_THEMES).map((theme) => theme.label),
   'ações dos avisos de erro': ACTIONS.map((action) => action[2]),
+  'tipos de widget': WIDGET_KINDS.flatMap((info) => [info.label, info.description]),
+  'cores dos widgets': [...WIDGET_THEMES, ...WIDGET_ACCENTS].map((color) => color.label),
 };
 
 const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();

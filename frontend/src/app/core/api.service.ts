@@ -58,6 +58,12 @@ import {
   TenantSummary,
   UptimeReport,
   WebContentRequest,
+  WidgetCatalog,
+  WidgetKind,
+  WidgetPlace,
+  WidgetPreview,
+  WidgetRequest,
+  WidgetSettings,
   WebhookTestResult,
 } from './models';
 
@@ -284,6 +290,33 @@ export class ApiService {
   /** Conteúdo web: uma página (https) que o Player exibe pelo tempo escolhido. */
   createWebContent(body: WebContentRequest): Observable<Media> {
     return this.http.post<Media>(this.url('/media/web'), body);
+  }
+
+  // ---------- widgets ----------
+
+  createWidget(body: WidgetRequest): Observable<Media> {
+    return this.http.post<Media>(this.url('/media/widget'), body);
+  }
+
+  updateWidget(id: number, body: WidgetRequest): Observable<Media> {
+    return this.http.put<Media>(this.url(`/media/${id}/widget`), body);
+  }
+
+  widgetCatalog(): Observable<WidgetCatalog> {
+    return this.http.get<WidgetCatalog>(this.url('/widgets/catalog'));
+  }
+
+  /** Busca de cidade (clima). Silencioso: uma busca que falha não deve abrir o aviso de erro da tela. */
+  widgetPlaces(query: string, lang: string): Observable<WidgetPlace[]> {
+    return this.http.get<WidgetPlace[]>(this.url('/widgets/places'), {
+      params: queryParams({ q: query, lang }),
+      context: new HttpContext().set(SILENT_ERRORS, true),
+    });
+  }
+
+  /** Confere as escolhas e traz os dados de agora, sem salvar. Silencioso: o motivo vira texto ao lado da pré-visualização. */
+  widgetPreview(kind: WidgetKind, settings: WidgetSettings): Observable<WidgetPreview> {
+    return this.http.post<WidgetPreview>(this.url('/widgets/preview'), { kind, settings }, { context: new HttpContext().set(SILENT_ERRORS, true) });
   }
 
   // monitoramento (fase 4)

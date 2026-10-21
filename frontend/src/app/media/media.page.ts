@@ -7,12 +7,14 @@ import { AuthService } from '../core/auth.service';
 import { ErrorService } from '../core/error.service';
 import { formatBytes, mediaTypeLabel } from '../core/format';
 import { Media, MediaType } from '../core/models';
+import { widgetInfo } from '../core/widgets';
 import { TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
 import { IconComponent } from '../shared/icon';
 import { IconName } from '../shared/icons';
 import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent } from '../shared/ui';
 import { MediaThumb } from './media-thumb';
+import { WidgetEditorComponent } from './widget-editor';
 import { VideoInfo, exceedsFullHd, looksLikeVideo, probeVideo } from './video-probe';
 import { QR_THEMES, QR_IMAGE_SIZE, QrTheme, drawQr, qrFileName } from './qr';
 
@@ -23,11 +25,12 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
 
 @Component({
   selector: 'app-media',
-  imports: [MediaThumb, FormsModule, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, MenuComponent],
+  imports: [MediaThumb, FormsModule, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, MenuComponent, WidgetEditorComponent],
   template: `
     <app-page-header [title]="'Biblioteca de Mídia' | t" [subtitle]="'Imagens (JPG, PNG, WEBP), vídeos (MP4 ou MOV do iPhone, até 1080p), páginas da web e QR Codes disponíveis para as playlists.' | t" icon="image">
       @if (auth.can('content')) {
         <div class="head-actions">
+          <button class="secondary" (click)="openWidget()"><app-icon name="puzzle" />{{ 'Widget' | t }}</button>
           <button class="secondary" (click)="openWeb()"><app-icon name="globe" />{{ 'Página web' | t }}</button>
           <button class="secondary" (click)="openQr()"><app-icon name="qr-code" />{{ 'QR Code' | t }}</button>
           <label class="primary upload">
@@ -68,7 +71,7 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
     @if (items().length === 0 && !uploading()) {
       <div class="card">
         <app-empty-state icon="image-plus" [title]="'Nenhuma mídia ainda' | t"
-          [text]="'Envie sua primeira imagem ou vídeo. Também dá para usar uma página da web ou gerar um QR Code.' | t">
+          [text]="'Envie sua primeira imagem ou vídeo. Também dá para usar um widget (relógio, clima, notícias…), uma página da web ou gerar um QR Code.' | t">
           @if (auth.can('content')) {
             <label class="primary upload"><app-icon name="upload" />{{ 'Enviar mídia' | t }}<input type="file" multiple [accept]="accepted" (change)="onFiles($event)" [disabled]="uploading()" hidden /></label>
           }
@@ -79,7 +82,7 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
         @for (media of items(); track media.id) {
           <div class="card hoverable item">
             <div class="thumb">
-              <app-media-thumb [mediaId]="media.id" [type]="media.type" [name]="media.name" />
+              <app-media-thumb [mediaId]="media.id" [type]="media.type" [name]="media.name" [widgetKind]="media.widget?.kind ?? null" />
               <app-pill class="kind" [icon]="kindIcon(media.type)">{{ typeLabel(media.type) }}</app-pill>
             </div>
             <div class="meta">
@@ -87,12 +90,16 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
                 <b class="name" [title]="media.name">{{ media.name }}</b>
                 @if (auth.can('content')) {
                   <app-menu [label]="'Mais ações' | t">
+                    @if (media.type === 'WIDGET') {
+                      <button type="button" class="menu-item" (click)="editWidget(media)"><app-icon name="pencil" />{{ 'Editar' | t }}</button>
+                    }
                     <button type="button" class="menu-item danger" (click)="remove(media)"><app-icon name="trash" />{{ 'Excluir' | t }}</button>
                   </app-menu>
                 }
               </div>
               <small>
-                @if (media.type !== 'WEB') { {{ size(media.fileSize) }} }
+                @if (media.type === 'IMAGE' || media.type === 'VIDEO') { {{ size(media.fileSize) }} }
+                @if (media.type === 'WIDGET') { {{ widgetLabel(media) | t }} }
                 @if (media.durationSeconds) { @if (media.type !== 'WEB') { · } {{ '{n}s' | t: { n: media.durationSeconds } }} }
               </small>
               @if (media.type === 'WEB') {
@@ -102,6 +109,10 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
           </div>
         }
       </div>
+    }
+
+    @if (modal() === 'widget') {
+      <app-widget-editor [media]="editingWidget()" (saved)="widgetSaved($event)" (closed)="closeModal()" />
     }
 
     @if (modal() === 'web') {
@@ -220,12 +231,15 @@ export class MediaPage implements OnInit {
   readonly currentFile = signal('');
   readonly size = formatBytes;
   readonly typeLabel = mediaTypeLabel;
-  readonly kindIcon = (type: MediaType): IconName => (type === 'VIDEO' ? 'film' : type === 'WEB' ? 'globe' : 'image');
+  readonly kindIcon = (type: MediaType): IconName => (type === 'VIDEO' ? 'film' : type === 'WEB' ? 'globe' : type === 'WIDGET' ? 'puzzle' : 'image');
+  readonly widgetLabel = (media: Media): string => widgetInfo(media.widget?.kind)?.label ?? 'Widget';
   readonly notice = new Notice();
   /** Avisos sobre os vídeos escolhidos (HEVC, HDR…): não impedem o envio, só explicam o que pode acontecer na TV. */
   readonly warnings = signal<string[]>([]);
 
-  readonly modal = signal<'web' | 'qr' | null>(null);
+  readonly modal = signal<'web' | 'qr' | 'widget' | null>(null);
+  /** O widget que está sendo editado (nulo ao criar um novo). */
+  readonly editingWidget = signal<Media | null>(null);
   readonly busy = signal(false);
 
   readonly webUrl = signal('');
@@ -253,6 +267,24 @@ export class MediaPage implements OnInit {
   }
 
   ngOnInit(): void {
+    this.load();
+  }
+
+  // ---------- widgets ----------
+
+  openWidget(): void {
+    this.editingWidget.set(null);
+    this.modal.set('widget');
+  }
+
+  editWidget(media: Media): void {
+    this.editingWidget.set(media);
+    this.modal.set('widget');
+  }
+
+  widgetSaved(media: Media): void {
+    this.closeModal();
+    this.notice.show(tr('Widget "{name}" salvo na biblioteca. Coloque-o numa playlist para exibi-lo.', { name: media.name }));
     this.load();
   }
 
@@ -346,6 +378,7 @@ export class MediaPage implements OnInit {
 
   closeModal(): void {
     this.modal.set(null);
+    this.editingWidget.set(null);
   }
 
   // ---------- arquivos ----------

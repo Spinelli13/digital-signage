@@ -27,11 +27,28 @@ data class ConfigItem(
     val fileSize: Long,
     val position: Int,
     val durationSeconds: Int,
+    /** Só nos widgets: o tipo (CLOCK, WEATHER...) e as escolhas do painel. */
+    val widget: WidgetSpec? = null,
 ) {
     val isVideo get() = type == "VIDEO"
 
     /** Página da web: não há arquivo; [url] é o endereço que o Player abre direto. */
     val isWeb get() = type == "WEB"
+
+    /** Widget (relógio, clima, notícias...): não há arquivo; o Player desenha com as escolhas e os dados guardados. */
+    val isWidget get() = type == "WIDGET"
+
+    /** Há um arquivo para baixar e guardar no cache? (página da web e widget não têm.) */
+    val hasFile get() = !isWeb && !isWidget
+
+    /** Desenhado dentro do WebView (página da web ou widget). */
+    val usesWebView get() = isWeb || isWidget
+}
+
+/** As escolhas de um widget, do jeito que o servidor mandou ([settingsJson] é um objeto JSON em texto). */
+data class WidgetSpec(val kind: String, val settingsJson: String) {
+    /** Busca dados de fora (o servidor entrega); os demais se desenham só com as escolhas. */
+    val needsData get() = kind == "WEATHER" || kind == "NEWS" || kind == "RATES"
 }
 
 /**
@@ -214,6 +231,9 @@ object Json {
                 fileSize = item.optLong("fileSize"),
                 position = item.optInt("position"),
                 durationSeconds = item.optInt("durationSeconds", 10),
+                widget = item.optJSONObject("widget")?.let { spec ->
+                    WidgetSpec(spec.getString("kind"), (spec.optJSONObject("settings") ?: JSONObject()).toString())
+                },
             )
         }.sortedBy { it.position }
 

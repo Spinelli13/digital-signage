@@ -69,6 +69,11 @@ public class Playlist {
 		updatedAt = Instant.now();
 	}
 
+	/** Algo que a playlist exibe mudou por dentro (ex.: o texto de um widget): as TVs precisam baixar a configuração de novo. */
+	public void touch() {
+		configVersion++;
+	}
+
 	public void replaceItems(List<PlaylistItem> newItems) {
 		items.clear();
 		for (PlaylistItem item : newItems) {

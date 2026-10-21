@@ -23,41 +23,46 @@ public class WebhookUrlPolicy {
 
 	/** Valida e devolve a URL limpa; lança IllegalArgumentException (HTTP 400) com a razão em português. */
 	public URI validate(String url) {
+		return validate(url, "webhook");
+	}
+
+	/** A mesma regra para qualquer endereço que o servidor vai buscar ({@code what} entra nas mensagens: "feed de notícias"). */
+	public URI validate(String url, String what) {
 		if (url == null || url.isBlank()) {
-			throw new IllegalArgumentException("Informe o endereço do webhook");
+			throw new IllegalArgumentException("Informe o endereço do " + what);
 		}
 		URI uri;
 		try {
 			uri = URI.create(url.trim());
 		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException("O endereço do webhook não é válido");
+			throw new IllegalArgumentException("O endereço do " + what + " não é válido");
 		}
 		String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase();
 		if (!scheme.equals("https") && !(allowInsecure && scheme.equals("http"))) {
-			throw new IllegalArgumentException("O endereço do webhook precisa começar com https://");
+			throw new IllegalArgumentException("O endereço do " + what + " precisa começar com https://");
 		}
 		if (uri.getHost() == null || uri.getHost().isBlank()) {
-			throw new IllegalArgumentException("O endereço do webhook não é válido");
+			throw new IllegalArgumentException("O endereço do " + what + " não é válido");
 		}
 		if (uri.getUserInfo() != null) {
-			throw new IllegalArgumentException("O endereço do webhook não pode conter usuário e senha");
+			throw new IllegalArgumentException("O endereço do " + what + " não pode conter usuário e senha");
 		}
 		if (!allowInsecure) {
-			requirePublicHost(uri.getHost());
+			requirePublicHost(uri.getHost(), what);
 		}
 		return uri;
 	}
 
-	private static void requirePublicHost(String host) {
+	private static void requirePublicHost(String host, String what) {
 		InetAddress[] addresses;
 		try {
 			addresses = InetAddress.getAllByName(host);
 		} catch (UnknownHostException e) {
-			throw new IllegalArgumentException("Não foi possível encontrar o endereço do webhook (" + host + ")");
+			throw new IllegalArgumentException("Não foi possível encontrar o endereço do " + what + " (" + host + ")");
 		}
 		for (InetAddress address : addresses) {
 			if (isInternal(address)) {
-				throw new IllegalArgumentException("O endereço do webhook não pode apontar para a rede interna");
+				throw new IllegalArgumentException("O endereço do " + what + " não pode apontar para a rede interna");
 			}
 		}
 	}

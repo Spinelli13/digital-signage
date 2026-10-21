@@ -1,5 +1,5 @@
 export type DeviceStatus = 'PENDING' | 'ACTIVE' | 'DISABLED';
-export type MediaType = 'IMAGE' | 'VIDEO' | 'WEB';
+export type MediaType = 'IMAGE' | 'VIDEO' | 'WEB' | 'WIDGET';
 /** Situação de comunicação calculada pelo servidor (mesma regra em todo o sistema). */
 export type Connection = 'ONLINE' | 'OFFLINE' | 'NEVER' | 'PENDING' | 'DISABLED';
 
@@ -44,6 +44,8 @@ export interface Media {
   fileSize: number;
   durationSeconds: number | null;
   checksum: string | null;
+  /** Só nos widgets: o tipo e as escolhas feitas no painel. */
+  widget?: WidgetInfo | null;
   createdAt: string;
 }
 
@@ -524,6 +526,48 @@ export interface LayoutTemplate {
   name: string;
   description: string;
   zones: { name: string; x: number; y: number; width: number; height: number; main: boolean; playlistId: number | null }[];
+}
+
+// ---------- widgets (conteúdo dinâmico) ----------
+
+export type WidgetKind = 'CLOCK' | 'WEATHER' | 'NEWS' | 'RATES' | 'NOTICE' | 'COUNTDOWN';
+
+/** As escolhas do painel para um widget (o servidor confere e limpa; chaves de cada tipo em docs/DECISIONS). */
+export type WidgetSettings = Record<string, string | number | boolean | string[] | null | undefined>;
+
+export interface WidgetInfo {
+  kind: WidgetKind;
+  settings: WidgetSettings;
+}
+
+export interface WidgetRequest {
+  name: string | null;
+  kind: WidgetKind;
+  settings: WidgetSettings;
+  durationSeconds: number | null;
+}
+
+export interface WidgetCatalog {
+  kinds: { kind: WidgetKind; label: string; defaultSeconds: number; needsData: boolean }[];
+  newsSources: { id: string; name: string }[];
+  currencies: string[];
+}
+
+export interface WidgetPlace {
+  name: string;
+  region: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+  timezone: string;
+}
+
+/** O que a TV mostraria agora: as escolhas já limpas pelo servidor e os dados (nulos se não deu para buscar; error diz por quê). */
+export interface WidgetPreview {
+  kind: WidgetKind;
+  settings: WidgetSettings;
+  data: Record<string, unknown> | null;
+  error: string | null;
 }
 
 export interface WebContentRequest {

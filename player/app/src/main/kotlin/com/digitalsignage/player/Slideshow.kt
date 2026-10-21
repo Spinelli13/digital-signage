@@ -14,6 +14,7 @@ import com.digitalsignage.player.memory.MemoryProfile
 import com.digitalsignage.player.memory.TrimLevels
 import com.digitalsignage.player.proof.PlayContext
 import com.digitalsignage.player.proof.PlayRecorder
+import com.digitalsignage.player.widget.WidgetHost
 import com.digitalsignage.player.telemetry.Telemetry
 
 /**
@@ -35,6 +36,8 @@ class Slideshow(
     private val profile: MemoryProfile = MemoryProfile.NORMAL,
     /** Cada exibição medida em milissegundos vai para o diário (comprovação de exibição). */
     private val recorder: PlayRecorder = PlayRecorder.NONE,
+    /** Desenha os widgets (relógio, clima, notícias, cotações, aviso, contagem regressiva). */
+    private val widgets: WidgetHost? = null,
 ) {
 
     /** A zona única, que usa as views da tela (mantida entre as trocas de playlist: o ExoPlayer é reaproveitado). */
@@ -84,7 +87,7 @@ class Slideshow(
         val views = singleViews ?: ZoneViews(imageView, playerView, zonesRoot).also { singleViews = it }
         // O WebView da zona única fica dentro do zonesRoot (que é transparente e só aparece quando ele aparece).
         zonesRoot.visibility = View.VISIBLE
-        val player = single ?: ZonePlayer(scope, cache, views, telemetry, onError = onError, profile = profile, recorder = recorder, zoneName = zone.name.ifBlank { "Principal" }).also { single = it }
+        val player = single ?: ZonePlayer(scope, cache, views, telemetry, onError = onError, profile = profile, recorder = recorder, zoneName = zone.name.ifBlank { "Principal" }, widgets = widgets).also { single = it }
         player.start(zone.items, context)
     }
 
@@ -132,6 +135,7 @@ class Slideshow(
                     allowVideo = zone.main || profile.secondaryVideo,
                     recorder = recorder,
                     zoneName = zone.name,
+                    widgets = widgets,
                 ).also { it.start(zone.items, context) }
             }
         }
