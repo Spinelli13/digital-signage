@@ -17,7 +17,9 @@ public record PlayerHeartbeatRequest(
 		long configVersion,
 		Long currentMediaId,
 		@Valid @Size(max = 30) List<PlayerEvent> events,
-		@Valid @Size(max = 100) List<PlayRecord> plays) {
+		@Valid @Size(max = 100) List<PlayRecord> plays,
+		/** Até quando (milissegundos desde 1970) vale a agenda offline guardada na TV; ausente = a TV não tem agenda. */
+		Long planUntilMs) {
 
 	/** Uma ocorrência relatada pelo Player. {@code level}: INFO, WARN ou ERROR. {@code at}: quando aconteceu. */
 	public record PlayerEvent(@Size(max = 10) String level, @Size(max = 500) String message, Instant at) {

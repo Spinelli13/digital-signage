@@ -60,6 +60,12 @@ public class CampaignService {
 		return result;
 	}
 
+	/** Todas as campanhas ativas (não pausadas) com os alvos, de uma vez: o heartbeat usa para decidir e para a agenda offline. */
+	@Transactional(readOnly = true)
+	public List<Campaign> enabled() {
+		return campaignRepository.findEnabledWithTargets();
+	}
+
 	public Instant now() {
 		return clock.instant();
 	}

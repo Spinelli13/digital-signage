@@ -14,18 +14,24 @@ public record PlayerConfigResponse(
 		List<PlayerConfigZone> zones,
 		/** A campanha que está no ar agora (nula = a playlist da própria TV): entra na comprovação de exibição. */
 		Long campaignId,
-		String campaignName) {
+		String campaignName,
+		/** A agenda dos próximos dias, para a TV continuar certa se a internet cair (nula = nenhuma campanha vale para a TV). */
+		OfflinePlan offlinePlan) {
 
 	public PlayerConfigResponse(Long deviceId, Long playlistId, long configVersion, List<PlayerConfigMediaItem> items) {
-		this(deviceId, playlistId, configVersion, items, List.of(), null, null);
+		this(deviceId, playlistId, configVersion, items, List.of(), null, null, null);
 	}
 
 	public PlayerConfigResponse(Long deviceId, Long playlistId, long configVersion, List<PlayerConfigMediaItem> items, List<PlayerConfigZone> zones) {
-		this(deviceId, playlistId, configVersion, items, zones, null, null);
+		this(deviceId, playlistId, configVersion, items, zones, null, null, null);
 	}
 
 	public PlayerConfigResponse withCampaign(Long id, String name) {
-		return new PlayerConfigResponse(deviceId, playlistId, configVersion, items, zones, id, name);
+		return new PlayerConfigResponse(deviceId, playlistId, configVersion, items, zones, id, name, offlinePlan);
+	}
+
+	public PlayerConfigResponse withPlan(OfflinePlan plan) {
+		return new PlayerConfigResponse(deviceId, playlistId, configVersion, items, zones, campaignId, campaignName, plan);
 	}
 
 }

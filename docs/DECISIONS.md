@@ -368,3 +368,33 @@ Pedido: olhar de UX/UI sênior + tech lead de frontend, pesquisar e criar um lay
 ### Não verificado / ressalvas
 - A medição dentro do `ZonePlayer` foi testada por unidade (diário e entrega) e no emulador na etapa de lançamento; **não** foi validada em TV real nem com vídeo longo em laço por horas.
 - A TV não assina os registros (sem chave por aparelho): quem controla a TV pode, em tese, gerar uma corrente falsa **desde o início**. Assinatura por aparelho fica como evolução (listada em `docs/INTEGRACOES.md` quando for escrita).
+
+## 2026-10-21 (parte 14) — Pedidos da madrugada, bloco 3: modo offline inteligente
+
+### O que já existia e o que faltava
+- Já existia o essencial do "offline-first": a TV guarda a última configuração e as mídias (validadas por SHA-256), reabre tocando o cache sem esperar a rede, e uma falha de rede nunca derruba a exibição. O que **faltava**: quem decide a campanha é o servidor (a cada heartbeat), então, sem internet, a TV ficava parada no que estava no ar quando a conexão caiu: a campanha das 18h não entrava e a das 23h não saía. As exibições também não eram guardadas (resolvido na parte 13, comprovação).
+
+### Decisão: o servidor entrega a agenda já resolvida, a TV só olha a hora
+- Alternativa descartada: levar as regras de campanha (prioridade, alvo mais específico, dias, janelas que passam da meia-noite, fuso) para o Player. Seriam duas implementações da mesma regra (Java e Kotlin, este último sem `java.time` no Android 5), com risco de divergência exatamente nos casos de borda.
+- **Escolhida:** `OfflinePlanService` percorre os próximos **7 dias** e chama a MESMA regra do heartbeat (`CampaignService.effectiveFor`) em cada instante em que algo pode mudar: meia-noite, início e fim da janela de cada campanha, no fuso dela (calculados, não amostrados). Resultado: uma lista de **intervalos** `[fromMs, toMs)` com a playlist, a campanha e o `configVersion` que o servidor mandaria naquele instante, mais o conteúdo de cada playlist usada (uma vez cada). Intervalos vizinhos iguais são fundidos; teto de 300 intervalos (acima disso a agenda é cortada e `untilMs` recua). A agenda vai dentro de `GET /player/config` (`offlinePlan`); ausente quando nenhuma campanha vale para a TV.
+- **`planVersion` no heartbeat:** hash (FNV, 53 bits) só das ENTRADAS (campanhas que alcançam a TV e não acabaram, prioridade, alvo, datas/horas/dias/fuso, playlists e versões, layout), **não do relógio**: não muda com a passagem do tempo, muda quando você cria, edita, pausa ou apaga uma campanha, troca a playlist ou o layout. A TV compara com a que guardou e baixa a configuração de novo se diferir (0 = sem agenda). O custo no heartbeat é uma consulta de playlists a mais (as campanhas ativas já eram carregadas; agora uma vez só por heartbeat).
+- **Renovação:** a janela de 7 dias é renovada pela TV quando restam menos de 5 (a cada ~2 dias), no máximo uma vez por hora (o servidor com relógio estranho nunca vira laço), e as mídias da agenda que falharam são tentadas de novo em 5 min.
+
+### A hora
+- Relógio de TV de verdade erra. `TrustedClock`: a cada heartbeat a TV anota a hora do servidor (`serverTime`, que já vinha na resposta) e conta o tempo pelo **relógio monotônico** (`SystemClock.elapsedRealtime`, que não pula quando alguém mexe na hora); a diferença servidor−relógio também é guardada, para o caso de o Player reabrir (ou a TV religar) sem internet. Teste: TV com o relógio 40 minutos atrasado troca de campanha no minuto certo.
+- Uma TV nunca conectada, com relógio errado e sem internet continua sem hora confiável: usa o relógio dela (limitação conhecida, igual a qualquer TV nova).
+
+### O que a TV faz
+- **Ao abrir** (inclusive sem internet): já escolhe o intervalo certo da agenda. **Com internet, quem manda é o servidor:** a agenda só entra depois de **75 s sem contato** (`Timing.offlineAfterMs`) e é conferida a cada 15 s. Ao reconectar, o motor compara com o servidor: se confirma o guardado, a tela volta ao conteúdo guardado; se manda outra coisa (campanha pausada), baixa e troca. A configuração montada localmente é **igual** à que o servidor mandaria (mesma playlist, versão, campanha, zonas; a agenda fica de fora da comparação da tela, `PlayerConfig.forScreen`), então a tela não reinicia à toa quando a conexão volta.
+- **Mídias da agenda:** depois de o que está no ar estar pronto, baixa as das campanhas dos próximos dias, a mais próxima primeiro; **nunca** falha nem atrasa a troca do conteúdo atual. Sem espaço: guarda o que couber e avisa no Histórico. `retainOnly` passou a manter também o que a agenda usa (antes apagaria a mídia de uma campanha futura já baixada).
+- **Layout:** só a zona principal troca de playlist (como no servidor); as zonas fixas permanecem.
+- **Agenda vencida** (mais de 7 dias sem contato): fica o último conteúdo, nunca tela em branco.
+- **Painel:** o heartbeat informa `planUntilMs`; o servidor guarda em `devices.offline_plan_until` (V11) e o **Histórico da TV** mostra o selo "agenda offline até …". Eventos no Histórico: sem contato, qual campanha entrou, contato restabelecido.
+
+### Testes
+- Backend `SmartOfflineTest` (13): sem campanha não há agenda; janela diária; janela que passa da meia-noite; prioridade na sobreposição; campanha que já acabou ou começa depois da semana; campanha que começa no meio da semana; alvo; pausada; versão estável com o tempo e mutável com edição/playlist/prioridade; primeiro intervalo = o que o heartbeat diz agora (com e sem layout, `configVersion` igual); `planUntilMs` no painel. Player `SmartOfflineTest` (+30): relógio confiável, planejador, leitura do JSON (incluindo hora ISO do servidor), pré-download (espaço, falhas, nova tentativa, renovação) e o motor sem internet (troca no minuto certo, abrir no intervalo certo, servidor manda quando volta, tela não reinicia, eventos). Painel: selo no Histórico.
+- **Emulador:** com o servidor desligado, a TV (relógio do aparelho adiantado) trocou para a campanha de teste cerca de 14 s depois do início da janela, exibiu 40 vezes, voltou à base 14 s depois do fim, e entregou 332 registros de comprovação ao voltar (nenhum faltando, corrente íntegra). Não testado em TV real nem com agenda grande (dezenas de vídeos).
+
+### Não feito
+- **Conteúdo dinâmico offline** (widgets de clima/notícias) não existe ainda; quando existir terá de guardar o último valor.
+- Agenda por **grupo/local** muda de alcance quando a TV muda de grupo: coberto pelo `planVersion`, mas só vale na próxima conexão.

@@ -6,11 +6,13 @@ import com.digitalsignage.player.errors.ErrorMessages
 import com.digitalsignage.player.data.PlayerConfig
 import com.digitalsignage.player.data.PlayerStatus
 import com.digitalsignage.player.data.UnauthorizedException
+import com.digitalsignage.player.plan.OfflinePlanner
 import com.digitalsignage.player.proof.PlayLog
 import com.digitalsignage.player.sync.ConfigStore
 import com.digitalsignage.player.sync.ConfigSync
 import com.digitalsignage.player.telemetry.Level
 import com.digitalsignage.player.telemetry.Telemetry
+import com.digitalsignage.player.time.TrustedClock
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -44,6 +46,10 @@ data class Timing(
     val heartbeatMs: Long = 30_000,
     val retryMs: Long = 10_000,
     val disabledPollMs: Long = 30_000,
+    /** De quanto em quanto tempo o modo offline confere a agenda. */
+    val offlineCheckMs: Long = 15_000,
+    /** Sem contato com o servidor por tanto tempo, a TV passa a seguir a agenda guardada. */
+    val offlineAfterMs: Long = 75_000,
 )
 
 /**
@@ -66,15 +72,40 @@ class PlayerEngine(
     /** O diário de exibição (comprovação): entregue ao servidor depois de cada heartbeat. */
     private val plays: PlayLog? = null,
     private val wallClock: () -> Long = { System.currentTimeMillis() },
+    /** A hora de verdade (do servidor), mesmo sem internet: a agenda offline depende dela. */
+    private val clock: TrustedClock = TrustedClock(),
 ) {
 
     private val mutableState = MutableStateFlow<EngineState>(EngineState.Starting)
     val state: StateFlow<EngineState> = mutableState
 
-    suspend fun run() {
-        // Offline-first: após reiniciar a TV, começa a tocar o cache sem esperar a rede.
-        store.load()?.let { publish(it) }
+    /** Quando (no relógio monotônico) o servidor respondeu pela última vez. */
+    private var lastContactAt = 0L
+    private var offline = false
 
+    /** A tela mostra o que a agenda guardada mandou (não o que o servidor confirmou): ao reconectar, o servidor tem a palavra final. */
+    private var showsLocalPlan = false
+    private var lastPlanKey: Pair<Long?, Long?>? = null
+
+    suspend fun run() {
+        coroutineScope {
+            lastContactAt = clock.uptime()
+            // Offline-first: após reiniciar a TV, começa a tocar o cache sem esperar a rede, já no intervalo certo da agenda.
+            store.load()?.let { stored ->
+                val planned = OfflinePlanner.configAt(stored, clock.now())
+                showsLocalPlan = planned != null
+                publish(planned ?: stored)
+            }
+            val watcher = launch { watchOffline() }
+            try {
+                loop()
+            } finally {
+                watcher.cancel()
+            }
+        }
+    }
+
+    private suspend fun loop() {
         while (true) {
             try {
                 session()
@@ -95,6 +126,36 @@ class PlayerEngine(
                 onError(ErrorMessages.describe("Servidor", e))
                 delay(timing.retryMs)
             }
+        }
+    }
+
+    /**
+     * Modo offline inteligente: enquanto o servidor não responde, a TV segue a agenda que ele mandou (campanhas que começam e
+     * terminam na hora certa), em vez de ficar parada no que estava no ar quando a internet caiu. Com internet, quem manda é o
+     * servidor: a agenda só entra em cena depois de [Timing.offlineAfterMs] sem contato.
+     */
+    private suspend fun watchOffline() {
+        while (true) {
+            delay(timing.offlineCheckMs)
+            if (clock.uptime() - lastContactAt < timing.offlineAfterMs) continue
+            val stored = store.load() ?: continue
+            if (!offline) {
+                offline = true
+                val until = stored.plan?.untilMs
+                telemetry.event(
+                    Level.INFO,
+                    if (until == null) "Sem contato com o servidor: a TV continua exibindo o conteúdo guardado."
+                    else "Sem contato com o servidor: a TV segue a agenda guardada.",
+                )
+            }
+            val planned = OfflinePlanner.configAt(stored, clock.now()) ?: continue
+            val key = planned.campaignId to planned.playlistId
+            if (key != lastPlanKey) {
+                lastPlanKey = key
+                telemetry.event(Level.INFO, "Agenda offline: no ar ${planned.campaignName?.let { "a campanha \"$it\"" } ?: "a playlist da TV"}.")
+            }
+            showsLocalPlan = true
+            publish(planned)
         }
     }
 
@@ -130,8 +191,9 @@ class PlayerEngine(
 
         while (isActive) {
             val report = telemetry.snapshot()
+            val stored = store.load()
             val desired = try {
-                api.heartbeat(token(), playerVersion, store.load()?.configVersion ?: 0, report)
+                api.heartbeat(token(), playerVersion, stored?.configVersion ?: 0, report, stored?.plan?.untilMs ?: 0)
             } catch (e: ApiException) {
                 // HTTP 400: o servidor recusou este relato. Sem descartá-lo, o mesmo relato seria reenviado para
                 // sempre e nenhum heartbeat mais passaria (a TV pareceria offline). Outros erros mantêm o relato.
@@ -139,14 +201,17 @@ class PlayerEngine(
                 throw e
             }
             telemetry.acknowledge(report)
+            noteContact(desired.serverTimeMs)
             if (desired.updateCheckToken > 0) onUpdateCheckRequested(desired.updateCheckToken)
             uploadPlays()
 
             // A sincronização roda à parte para o heartbeat continuar mesmo durante downloads longos.
-            if (syncJob?.isActive != true && sync.needsSync(desired)) {
+            val syncing = syncJob?.isActive == true
+            if (!syncing && sync.needsSync(desired)) {
                 syncJob = launch {
                     try {
                         publish(sync.sync(token()))
+                        showsLocalPlan = false
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: UnauthorizedException) {
@@ -156,6 +221,10 @@ class PlayerEngine(
                         onError(ErrorMessages.describe("Falha ao atualizar o conteúdo (continuo exibindo o anterior)", e))
                     }
                 }
+            } else if (!syncing && showsLocalPlan) {
+                // O servidor voltou e confirma o que está guardado: a tela passa a seguir o servidor de novo.
+                store.load()?.let { publish(it) }
+                showsLocalPlan = false
             }
 
             delay(timing.heartbeatMs)
@@ -187,8 +256,20 @@ class PlayerEngine(
         }
     }
 
+    /** O servidor respondeu: acerta o relógio confiável e, se a TV estava sem contato, registra a volta. */
+    private fun noteContact(serverTimeMs: Long) {
+        clock.sync(serverTimeMs)
+        if (offline) {
+            offline = false
+            lastPlanKey = null
+            telemetry.event(Level.INFO, "Contato com o servidor restabelecido.")
+        }
+        lastContactAt = clock.uptime()
+    }
+
     private fun publish(config: PlayerConfig) {
-        mutableState.value = if (config.hasContent()) EngineState.Playing(config) else EngineState.NoContent
+        // A agenda é só do motor: a tela recebe a configuração sem ela (renovar a agenda não reinicia a exibição).
+        mutableState.value = if (config.hasContent()) EngineState.Playing(config.forScreen()) else EngineState.NoContent
     }
 
     companion object {

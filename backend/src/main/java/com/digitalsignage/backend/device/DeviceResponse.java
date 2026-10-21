@@ -32,6 +32,8 @@ public record DeviceResponse(
 		/** A versão do conteúdo que a TV deveria ter sincronizado; diferente de {@code configVersion} = ainda sincronizando. */
 		long desiredConfigVersion,
 		List<Long> groupIds,
+		/** Até quando a agenda offline guardada na TV vale (vazio = a TV não tem agenda). */
+		Instant offlinePlanUntil,
 		Instant createdAt,
 		Instant updatedAt) {
 
@@ -58,6 +60,7 @@ public record DeviceResponse(
 				layoutName,
 				desiredConfigVersion,
 				device.getGroupIds().stream().sorted().toList(),
+				device.getOfflinePlanUntil(),
 				device.getCreatedAt(),
 				device.getUpdatedAt());
 	}

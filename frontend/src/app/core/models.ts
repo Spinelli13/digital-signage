@@ -29,6 +29,8 @@ export interface Device {
   layoutName?: string | null;
   /** A versão do conteúdo que a TV deveria ter sincronizado; diferente de configVersion = ainda sincronizando. */
   desiredConfigVersion?: number;
+  /** Até quando a agenda offline guardada na TV vale (ausente = a TV não tem agenda, ou usa um Player antigo). */
+  offlinePlanUntil?: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -236,6 +236,19 @@ A TV **não apaga a playlist antiga antes** de baixar a nova: ela baixa **todas*
 
 Como a troca é "tudo ou nada", por um instante a TV guarda as duas versões: se o armazenamento dela for pequeno e o conteúdo novo não couber, a TV **mantém o anterior** e registra o motivo no **Histórico** ("Não há espaço na TV para baixar o conteúdo novo…"). Nesse caso apague mídias grandes que não usa mais ou use arquivos menores.
 
+### 5.6.2 Sem internet: o que a TV faz (modo offline inteligente)
+
+A internet de uma loja cai, e a propaganda **não pode parar nem ficar errada**. Por isso a TV leva consigo, além do que está no ar, a **agenda dos próximos 7 dias**:
+
+- **Campanhas por horário continuam certas.** O servidor calcula, para cada TV, o que deve estar no ar em cada intervalo (campanha vencedora pela prioridade, alvo, dias e horários, inclusive janelas que passam da meia-noite) e entrega esse resultado à TV. Sem internet, a TV só olha o relógio e troca no minuto certo: a campanha das 18h entra às 18h e sai às 23h mesmo com o roteador desligado.
+- **As mídias já estão na TV.** Logo depois de baixar o que está no ar, a TV baixa também as mídias das campanhas que vão ao ar nos próximos dias (a mais próxima primeiro). Isso usa espaço: se não couber tudo, a TV guarda o que couber, **nunca atrapalha o conteúdo atual** e avisa no **Histórico** ("Sem espaço para guardar toda a agenda offline…").
+- **A hora é a do servidor.** A cada contato a TV anota a hora real do servidor e conta o tempo a partir daí, então um relógio de TV errado (acontece muito) não troca campanha na hora errada. Se a TV for desligada e ligada sem internet, ela abre já no intervalo certo.
+- **Quem manda é o servidor quando há internet.** A TV só segue a agenda guardada depois de **cerca de 75 segundos sem resposta** do servidor. Quando a conexão volta, ela confere com o servidor: se ele concorda, a tela nem pisca; se você mudou algo enquanto isso (pausou uma campanha, trocou a playlist), vale o que o servidor diz.
+- **A agenda se renova sozinha** enquanto há internet (uma vez a cada dois dias, e na hora em que você cria, edita ou pausa uma campanha). No **Histórico da TV** o selo **agenda offline até …** mostra até quando a TV está coberta. Sem selo: a TV não tem campanhas, ou usa um Player anterior ao 0.10.
+- **Tudo fica registrado.** O Histórico mostra "Sem contato com o servidor: a TV segue a agenda guardada", qual campanha entrou no ar e "Contato com o servidor restabelecido". As exibições feitas sem internet entram na **Comprovação** (seção 9.4) assim que a conexão volta, com a numeração e a corrente de hashes intactas.
+
+**O que não dá para fazer sem internet:** conteúdo novo (uma mídia que nunca chegou à TV) e mudanças feitas no painel só chegam quando a conexão volta. Passados os 7 dias da agenda, a TV continua exibindo o último conteúdo que tinha, sem ficar em branco.
+
 ### 5.7 Atualizar o aplicativo das TVs
 
 Quando existe uma versão nova do Player, as TVs descobrem sozinhas em até 30 minutos. Para adiantar, use **Atualizar app** (uma TV), **Atualizar todas as TVs**, ou a ação em massa. O painel avisa que o pedido foi enviado:

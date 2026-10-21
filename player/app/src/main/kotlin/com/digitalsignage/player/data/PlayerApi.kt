@@ -30,6 +30,8 @@ interface PlayerApi {
         playerVersion: String,
         syncedConfigVersion: Long,
         report: HeartbeatReport = HeartbeatReport.EMPTY,
+        /** Até quando vale a agenda offline guardada (0 = sem agenda): o painel mostra isso. */
+        planUntilMs: Long = 0,
     ): Desired
 
     /** Entrega registros de exibição; devolve até que número de ordem o servidor já tem. */
@@ -64,8 +66,9 @@ class HttpPlayerApi(
         playerVersion: String,
         syncedConfigVersion: Long,
         report: HeartbeatReport,
+        planUntilMs: Long,
     ): Desired {
-        val body = Json.heartbeatBody(playerVersion, syncedConfigVersion, report)
+        val body = Json.heartbeatBody(playerVersion, syncedConfigVersion, report, planUntilMs)
         return Json.parseDesired(send(post("/api/v1/player/heartbeat", body, token)))
     }
 

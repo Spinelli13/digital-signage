@@ -42,4 +42,8 @@ export const PROOF: Record<string, string> = {
   'Resumo por dia (fica guardado por um ano)': 'Daily summary (kept for one year)',
   'Último hash': 'Last hash',
   'Guardar cada exibição (comprovação) por (dias)': 'Keep each play (proof of play) for (days)',
+  // modo offline
+  'agenda offline até {date}': 'offline schedule until {date}',
+  'Se a internet cair, a TV segue as campanhas por horário até esta data. Enquanto tem internet, a agenda é renovada sozinha.':
+    'If the internet drops, the TV follows the scheduled campaigns until this date. While it is online, the schedule renews itself.',
 };

@@ -15,5 +15,7 @@ public record PlayerHeartbeatResponse(
 		Instant serverTime,
 		long updateCheckToken,
 		/** A campanha no ar (nula = playlist da TV): o Player refaz a configuração se ela mudar, para a comprovação citar a campanha certa. */
-		Long campaignId) {
+		Long campaignId,
+		/** Muda quando a agenda offline da TV muda (0 = a TV não tem agenda). A TV baixa a configuração de novo se for diferente da que guardou. */
+		long planVersion) {
 }

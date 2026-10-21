@@ -64,7 +64,18 @@ data class PlayerConfig(
     /** A campanha que está no ar (nula = a playlist da própria TV): entra na comprovação de exibição. */
     val campaignId: Long? = null,
     val campaignName: String? = null,
+    /** A agenda dos próximos dias (modo offline); nula quando nenhuma campanha vale para a TV. */
+    val plan: OfflinePlan? = null,
 ) {
+
+    /**
+     * O que a tela precisa. A agenda fica de fora: ela só serve ao motor, e mudar só a agenda (renovação diária) não pode
+     * reiniciar a exibição que está no ar.
+     */
+    fun forScreen(): PlayerConfig = if (plan == null) this else copy(plan = null)
+
+    /** Toda mídia que precisa ficar no aparelho: a da configuração e a da agenda. */
+    fun retainable(): List<ConfigItem> = (allItems() + (plan?.allItems() ?: emptyList())).distinctBy { it.mediaId }
 
     /** As zonas a exibir: as do layout ou, sem layout, uma zona principal em tela cheia com [items]. */
     fun zonesOrDefault(): List<ConfigZone> =
@@ -77,12 +88,52 @@ data class PlayerConfig(
     fun hasContent(): Boolean = items.isNotEmpty() || zones.any { it.items.isNotEmpty() }
 }
 
+/** De [fromMs] (inclusive) até [toMs] (exclusive), a TV exibe [playlistId] (da campanha [campaignId], se houver). */
+data class PlanSegment(
+    val fromMs: Long,
+    val toMs: Long,
+    val campaignId: Long?,
+    val campaignName: String?,
+    val playlistId: Long?,
+    val configVersion: Long,
+)
+
+data class PlanPlaylist(val playlistId: Long, val items: List<ConfigItem>)
+
+/**
+ * A agenda que o servidor monta para os próximos dias, já com o vencedor de cada intervalo. O Player só olha a hora; nenhuma
+ * regra de campanha (prioridade, alvo, fuso, janela que passa da meia-noite) é repetida aqui.
+ */
+data class OfflinePlan(
+    val version: Long,
+    val generatedAtMs: Long,
+    val untilMs: Long,
+    val segments: List<PlanSegment>,
+    val playlists: List<PlanPlaylist>,
+) {
+    fun segmentAt(nowMs: Long): PlanSegment? = segments.firstOrNull { nowMs >= it.fromMs && nowMs < it.toMs }
+
+    fun itemsOf(playlistId: Long?): List<ConfigItem> = playlists.firstOrNull { it.playlistId == playlistId }?.items ?: emptyList()
+
+    /** Toda mídia da agenda, na ordem em que vai ao ar (a mais próxima primeiro), sem repetir. */
+    fun allItems(): List<ConfigItem> = playlists.flatMap { it.items }.distinctBy { it.mediaId }
+}
+
 /** O que o servidor quer que o Player exiba agora (resposta do heartbeat). */
 /**
  * [updateCheckToken] muda quando o administrador pede, no painel, que a TV verifique atualização do Player
  * (0 = nunca pediu). A TV só reage a valores que ainda não tratou.
  */
-data class Desired(val playlistId: Long?, val configVersion: Long, val updateCheckToken: Long = 0, val campaignId: Long? = null)
+data class Desired(
+    val playlistId: Long?,
+    val configVersion: Long,
+    val updateCheckToken: Long = 0,
+    val campaignId: Long? = null,
+    /** A versão da agenda offline (0 = sem agenda, ou servidor antigo): se for diferente da guardada, baixa a configuração de novo. */
+    val planVersion: Long = 0,
+    /** A hora do servidor neste contato (0 = servidor antigo): acerta o relógio confiável da TV. */
+    val serverTimeMs: Long = 0,
+)
 
 /** Config junto com o JSON original, que é o que fica persistido no aparelho. */
 data class FetchedConfig(val config: PlayerConfig, val raw: String)
@@ -111,6 +162,32 @@ object Json {
             zones = zones,
             campaignId = if (json.isNull("campaignId")) null else json.optLong("campaignId"),
             campaignName = if (json.isNull("campaignName")) null else json.optString("campaignName"),
+            plan = json.optJSONObject("offlinePlan")?.let(::parsePlan),
+        )
+    }
+
+    private fun parsePlan(json: JSONObject): OfflinePlan {
+        val segments = json.getJSONArray("segments")
+        val playlists = json.getJSONArray("playlists")
+        return OfflinePlan(
+            version = json.optLong("version"),
+            generatedAtMs = json.optLong("generatedAtMs"),
+            untilMs = json.optLong("untilMs"),
+            segments = (0 until segments.length()).map { index ->
+                val segment = segments.getJSONObject(index)
+                PlanSegment(
+                    fromMs = segment.getLong("fromMs"),
+                    toMs = segment.getLong("toMs"),
+                    campaignId = if (segment.isNull("campaignId")) null else segment.getLong("campaignId"),
+                    campaignName = segment.optStringOrNull("campaignName"),
+                    playlistId = if (segment.isNull("playlistId")) null else segment.getLong("playlistId"),
+                    configVersion = segment.optLong("configVersion"),
+                )
+            },
+            playlists = (0 until playlists.length()).map { index ->
+                val playlist = playlists.getJSONObject(index)
+                PlanPlaylist(playlist.getLong("playlistId"), parseItems(playlist.getJSONArray("items")))
+            },
         )
     }
 
@@ -144,8 +221,9 @@ object Json {
      * Corpo do heartbeat. Os campos de monitoramento só entram quando há o que dizer: um servidor mais antigo
      * ignora o que não conhece, e o heartbeat de uma TV sem novidades continua do tamanho de sempre.
      */
-    fun heartbeatBody(playerVersion: String, syncedConfigVersion: Long, report: HeartbeatReport): JSONObject {
+    fun heartbeatBody(playerVersion: String, syncedConfigVersion: Long, report: HeartbeatReport, planUntilMs: Long = 0): JSONObject {
         val body = JSONObject().put("playerVersion", playerVersion).put("configVersion", syncedConfigVersion)
+        if (planUntilMs > 0) body.put("planUntilMs", planUntilMs)
         report.currentMediaId?.let { body.put("currentMediaId", it) }
         if (report.events.isNotEmpty()) {
             val events = JSONArray()
@@ -180,7 +258,29 @@ object Json {
             configVersion = json.optLong("configVersion"),
             updateCheckToken = json.optLong("updateCheckToken", 0),
             campaignId = if (json.isNull("campaignId")) null else json.optLong("campaignId"),
+            planVersion = json.optLong("planVersion", 0),
+            serverTimeMs = parseServerTime(json.opt("serverTime")),
         )
+    }
+
+    /** A hora do servidor: texto ISO em UTC ("2026-11-05T12:00:00.123456Z") ou número (segundos com fração). 0 se não entender. */
+    fun parseServerTime(value: Any?): Long = when (value) {
+        is Number -> (value.toDouble() * 1000).toLong()
+        is String -> parseIsoUtc(value)
+        else -> 0L
+    }
+
+    /** Só aceita UTC ("Z"): o servidor sempre manda assim, e converter outro fuso à mão arriscaria uma hora errada. */
+    fun parseIsoUtc(text: String): Long {
+        if (text.length < 20 || !text.endsWith("Z")) return 0L
+        return try {
+            val seconds = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }
+                .parse(text.substring(0, 19))?.time ?: return 0L
+            val fraction = if (text[19] == '.') text.substring(20, text.length - 1).take(3).padEnd(3, '0').toLong() else 0L
+            seconds + fraction
+        } catch (e: Exception) {
+            0L
+        }
     }
 
     // JSONObject.optString devolve "null" (texto) para nulo JSON; aqui nulo vira null de verdade.

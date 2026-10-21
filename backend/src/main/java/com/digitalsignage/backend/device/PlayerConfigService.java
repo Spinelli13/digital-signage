@@ -129,7 +129,7 @@ public class PlayerConfigService {
 		return playlistId == null ? null : playlistRepository.findById(playlistId).orElse(null);
 	}
 
-	private static List<PlayerConfigMediaItem> itemsOf(Playlist playlist) {
+	static List<PlayerConfigMediaItem> itemsOf(Playlist playlist) {
 		return playlist.getItems().stream().map(PlayerConfigService::itemOf).toList();
 	}
 

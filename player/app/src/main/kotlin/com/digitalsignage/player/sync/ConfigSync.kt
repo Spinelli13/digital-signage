@@ -6,7 +6,10 @@ import com.digitalsignage.player.data.Desired
 import com.digitalsignage.player.data.MediaDownloader
 import com.digitalsignage.player.data.PlayerApi
 import com.digitalsignage.player.data.PlayerConfig
+import com.digitalsignage.player.data.UnauthorizedException
+import com.digitalsignage.player.time.TrustedClock
 import java.io.IOException
+import kotlinx.coroutines.CancellationException
 
 /** Onde a configuração sincronizada fica guardada entre execuções (permite funcionar offline após reiniciar). */
 interface ConfigStore {
@@ -30,7 +33,14 @@ class ConfigSync(
     private val freeBytes: () -> Long = { Long.MAX_VALUE },
     /** Folga que sempre sobra livre para o Android e para o cache do sistema. */
     private val reserveBytes: Long = 50 * MB,
+    /** A hora (do servidor, quando se sabe): decide quando renovar a agenda offline. */
+    private val clock: TrustedClock = TrustedClock(),
+    /** Avisos para o histórico da TV no painel (ex.: sem espaço para guardar toda a agenda). */
+    private val onNotice: (String) -> Unit = {},
 ) {
+
+    private var lastSyncAt = 0L
+    private var prefetchRetryAt = 0L
 
     /**
      * A playlist e a versão identificam o conteúdo. Comparar só a versão não basta: duas playlists
@@ -39,8 +49,20 @@ class ConfigSync(
     fun needsSync(desired: Desired): Boolean {
         val current = store.load() ?: return true
         // A campanha também conta: a mesma playlist pode vir de uma campanha ou da própria TV, e a comprovação cita qual.
-        return current.playlistId != desired.playlistId || current.configVersion != desired.configVersion ||
+        if (current.playlistId != desired.playlistId || current.configVersion != desired.configVersion ||
             current.campaignId != desired.campaignId
+        ) {
+            return true
+        }
+        // A agenda offline mudou (campanha criada, editada, pausada, playlist trocada...), mesmo que o que está no ar seja igual.
+        val plan = current.plan
+        if ((plan?.version ?: 0L) != desired.planVersion) return true
+
+        val now = clock.now()
+        // Mídias da agenda que falharam no download: tenta de novo depois de alguns minutos.
+        if (prefetchRetryAt != 0L && now >= prefetchRetryAt) return true
+        // A agenda cobre 7 dias; renova quando restam menos de 5 (no máximo uma vez por hora, para nunca virar laço).
+        return plan != null && plan.untilMs - now < PLAN_REFRESH_BELOW_MS && now - lastSyncAt > PLAN_REFRESH_EVERY_MS
     }
 
     /**
@@ -50,6 +72,7 @@ class ConfigSync(
      */
     suspend fun sync(token: String): PlayerConfig {
         val fetched = api.config(token)
+        prefetchRetryAt = 0L
 
         // Todas as zonas (a mesma mídia em duas zonas baixa uma vez só); páginas da web não têm arquivo.
         val items = fetched.config.allItems()
@@ -61,8 +84,47 @@ class ConfigSync(
         }
 
         store.save(fetched.raw)
-        cache.retainOnly(items)
+        // Guarda também o que a agenda offline já tinha no disco; o que não pertence a nada disso sai.
+        cache.retainOnly(fetched.config.retainable())
+        prefetchPlan(token, fetched.config)
+        lastSyncAt = clock.now()
         return fetched.config
+    }
+
+    /**
+     * Baixa as mídias das campanhas que vão ao ar nos próximos dias, a mais próxima primeiro, DEPOIS de o que está no ar estar
+     * pronto: a agenda nunca atrasa nem derruba a troca de conteúdo. Sem espaço, deixa de fora o que não couber e avisa.
+     */
+    private suspend fun prefetchPlan(token: String, config: PlayerConfig) {
+        val plan = config.plan ?: return
+        val inUse = config.allItems().map { it.mediaId }.toSet()
+        val missing = plan.allItems().filter { it.mediaId !in inUse && !it.isWeb && !cache.isCached(it) }
+        if (missing.isEmpty()) return
+
+        var noSpace = 0
+        var failed = 0
+        for (item in missing) {
+            if (freeBytes() - reserveBytes < item.fileSize.coerceAtLeast(0)) {
+                noSpace++
+                continue
+            }
+            try {
+                downloader.download(token, item.url) { input -> cache.store(item, input) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: UnauthorizedException) {
+                throw e
+            } catch (e: Exception) {
+                failed++
+            }
+        }
+        if (noSpace > 0) {
+            onNotice("Sem espaço para guardar toda a agenda offline: $noSpace mídia(s) de campanhas futuras ficaram de fora. Libere espaço na TV ou use arquivos menores.")
+        }
+        if (failed > 0) {
+            onNotice("Não foi possível guardar $failed mídia(s) da agenda offline; tentarei de novo em alguns minutos.")
+            prefetchRetryAt = clock.now() + PREFETCH_RETRY_MS
+        }
     }
 
     /**
@@ -83,6 +145,14 @@ class ConfigSync(
     fun reset() {
         store.clear()
         cache.retainOnly(emptyList())
+        prefetchRetryAt = 0L
+    }
+
+    private companion object {
+        const val DAY_MS = 24L * 60 * 60 * 1000
+        const val PLAN_REFRESH_BELOW_MS = 5 * DAY_MS
+        const val PLAN_REFRESH_EVERY_MS = 60L * 60 * 1000
+        const val PREFETCH_RETRY_MS = 5L * 60 * 1000
     }
 
 }

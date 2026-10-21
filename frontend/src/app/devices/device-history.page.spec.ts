@@ -65,7 +65,7 @@ function eventsRequest(backend: HttpTestingController, query: Record<string, str
   });
 }
 
-function start(events: DeviceEvent[] = [event(2), event(1)], render = false) {
+function start(events: DeviceEvent[] = [event(2), event(1)], render = false, device: Device = tv()) {
   const ctx = setup();
   // Sem desenhar a tela chamamos o ngOnInit à mão; desenhando, é o primeiro detectChanges que o chama.
   if (render) {
@@ -73,7 +73,7 @@ function start(events: DeviceEvent[] = [event(2), event(1)], render = false) {
   } else {
     ctx.page.ngOnInit();
   }
-  ctx.backend.expectOne(`${API}/devices/5`).flush(tv());
+  ctx.backend.expectOne(`${API}/devices/5`).flush(device);
   eventsRequest(ctx.backend).flush(events);
   return ctx;
 }
@@ -86,6 +86,22 @@ describe('DeviceHistoryPage', () => {
     expect(page.events().map((e) => e.id)).toEqual([2, 1]);
     expect(page.loaded()).toBe(true);
     expect(page.hasMore()).toBe(false);
+    backend.verify();
+  });
+
+  it('shows until when the schedule stored on the TV is valid, only when it has one', async () => {
+    const withPlan = start([event(1)], true, tv({ offlinePlanUntil: '2026-11-12T15:00:00Z' }));
+    withPlan.fixture.detectChanges();
+    await withPlan.fixture.whenStable();
+    expect((withPlan.fixture.nativeElement as HTMLElement).textContent).toContain('agenda offline até');
+    withPlan.backend.verify();
+  });
+
+  it('shows no schedule pill when the TV has none', async () => {
+    const { fixture, backend } = start([event(1)], true, tv({ offlinePlanUntil: null }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('agenda offline');
     backend.verify();
   });
 

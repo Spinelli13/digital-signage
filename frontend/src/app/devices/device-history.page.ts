@@ -34,6 +34,9 @@ const REFRESH_MS = 15_000;
         @if (tv.currentMediaName) {
           <app-pill tone="brand" icon="play">{{ 'na tela:' | t }} {{ tv.currentMediaName }}</app-pill>
         }
+        @if (tv.offlinePlanUntil) {
+          <app-pill tone="ok" icon="calendar-clock" [title]="'Se a internet cair, a TV segue as campanhas por horário até esta data. Enquanto tem internet, a agenda é renovada sozinha.' | t">{{ 'agenda offline até {date}' | t: { date: when(tv.offlinePlanUntil) } }}</app-pill>
+        }
       </div>
     }
 

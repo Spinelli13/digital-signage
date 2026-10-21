@@ -6,7 +6,7 @@ import com.digitalsignage.player.sync.ConfigStore
 import java.security.SecureRandom
 
 /** Preferências do aparelho: servidor, token do dispositivo e a última configuração sincronizada. */
-class Settings(context: Context) : ConfigStore, com.digitalsignage.player.proof.PlayLogState {
+class Settings(context: Context) : ConfigStore, com.digitalsignage.player.proof.PlayLogState, com.digitalsignage.player.time.ClockOffsetStore {
 
     private val prefs = context.getSharedPreferences("player", Context.MODE_PRIVATE)
 
@@ -55,6 +55,13 @@ class Settings(context: Context) : ConfigStore, com.digitalsignage.player.proof.
         get() = prefs.getString(KEY_LAST_CRASH, null)
         set(value) {
             prefs.edit().putString(KEY_LAST_CRASH, value).commit()
+        }
+
+    /** A última diferença conhecida entre a hora do servidor e a do relógio da TV (para a agenda offline após reiniciar). */
+    override var clockOffsetMs: Long
+        get() = prefs.getLong(KEY_CLOCK_OFFSET, 0)
+        set(value) {
+            prefs.edit().putLong(KEY_CLOCK_OFFSET, value).apply()
         }
 
     /** O próximo número de ordem do diário de exibição (nunca volta, mesmo depois de o servidor confirmar e o arquivo esvaziar). */
@@ -160,6 +167,7 @@ class Settings(context: Context) : ConfigStore, com.digitalsignage.player.proof.
         const val KEY_UPDATE_STATUS = "update_status"
         const val KEY_UPDATE_TOKEN = "update_token"
         const val KEY_LAST_CRASH = "last_crash"
+        const val KEY_CLOCK_OFFSET = "clock_offset_ms"
         const val KEY_PLAY_SEQ = "play_seq"
         const val KEY_PLAY_HASH = "play_hash"
         const val KEY_AUTO_RESTART = "auto_restart"

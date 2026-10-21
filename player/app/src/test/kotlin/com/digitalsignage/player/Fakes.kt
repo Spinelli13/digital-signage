@@ -5,6 +5,7 @@ import com.digitalsignage.player.data.Desired
 import com.digitalsignage.player.data.FetchedConfig
 import com.digitalsignage.player.data.Json
 import com.digitalsignage.player.data.MediaDownloader
+import com.digitalsignage.player.data.OfflinePlan
 import com.digitalsignage.player.data.PlayerApi
 import com.digitalsignage.player.data.PlayerConfig
 import com.digitalsignage.player.data.PlayerStatus
@@ -46,7 +47,18 @@ fun rawJson(config: PlayerConfig): String {
     val zones = if (config.zones.isEmpty()) "" else config.zones.joinToString(",", prefix = ""","zones":[""", postfix = "]") {
         """{"id":${it.id},"name":"${it.name}","x":${it.x},"y":${it.y},"width":${it.width},"height":${it.height},"main":${it.main},"items":[${itemsJson(it.items)}]}"""
     }
-    return """{"deviceId":${config.deviceId},"playlistId":$playlist,"configVersion":${config.configVersion},"items":[${itemsJson(config.items)}]$zones}"""
+    val campaign = ""","campaignId":${config.campaignId ?: "null"},"campaignName":${config.campaignName?.let { "\"$it\"" } ?: "null"}"""
+    val plan = config.plan?.let { ""","offlinePlan":${planJson(it)}""" } ?: ""
+    return """{"deviceId":${config.deviceId},"playlistId":$playlist,"configVersion":${config.configVersion},"items":[${itemsJson(config.items)}]$zones$campaign$plan}"""
+}
+
+private fun planJson(plan: OfflinePlan): String {
+    val segments = plan.segments.joinToString(",") {
+        """{"fromMs":${it.fromMs},"toMs":${it.toMs},"campaignId":${it.campaignId ?: "null"},""" +
+            """"campaignName":${it.campaignName?.let { n -> "\"$n\"" } ?: "null"},"playlistId":${it.playlistId ?: "null"},"configVersion":${it.configVersion}}"""
+    }
+    val playlists = plan.playlists.joinToString(",") { """{"playlistId":${it.playlistId},"items":[${itemsJson(it.items)}]}""" }
+    return """{"version":${plan.version},"generatedAtMs":${plan.generatedAtMs},"untilMs":${plan.untilMs},"segments":[$segments],"playlists":[$playlists]}"""
 }
 
 class InMemoryStore(initial: PlayerConfig? = null) : ConfigStore {
@@ -83,6 +95,9 @@ class FakePlayerApi : PlayerApi {
 
     val heartbeatsSeenVersions = mutableListOf<Long>()
 
+    /** Até quando a agenda offline guardada valia em cada heartbeat (0 = sem agenda). */
+    val planUntilSeen = mutableListOf<Long>()
+
     /** O relato que cada heartbeat levou (mesmo os que o "servidor" recusou). */
     val reportsSeen = mutableListOf<HeartbeatReport>()
     var registerCalls = 0
@@ -106,8 +121,9 @@ class FakePlayerApi : PlayerApi {
         return acknowledged
     }
 
-    override suspend fun heartbeat(token: String, playerVersion: String, syncedConfigVersion: Long, report: HeartbeatReport): Desired {
+    override suspend fun heartbeat(token: String, playerVersion: String, syncedConfigVersion: Long, report: HeartbeatReport, planUntilMs: Long): Desired {
         heartbeatsSeenVersions += syncedConfigVersion
+        planUntilSeen += planUntilMs
         reportsSeen += report
         return heartbeatResponse()
     }

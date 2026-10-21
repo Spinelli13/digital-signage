@@ -91,6 +91,10 @@ public class Device {
 	@Column(name = "current_media_id")
 	private Long currentMediaId;
 
+	/** Até quando vale a agenda offline guardada na TV (informada no heartbeat); nulo = sem agenda. */
+	@Column(name = "offline_plan_until")
+	private Instant offlinePlanUntil;
+
 	@Column(name = "last_playlist_id")
 	private Long lastPlaylistId;
 
@@ -242,6 +246,14 @@ public class Device {
 
 	public Long getCurrentMediaId() {
 		return currentMediaId;
+	}
+
+	public Instant getOfflinePlanUntil() {
+		return offlinePlanUntil;
+	}
+
+	public void setOfflinePlanUntil(Instant offlinePlanUntil) {
+		this.offlinePlanUntil = offlinePlanUntil;
 	}
 
 	public void setCurrentMediaId(Long currentMediaId) {

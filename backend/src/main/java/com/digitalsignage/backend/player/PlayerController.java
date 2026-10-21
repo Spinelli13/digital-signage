@@ -4,6 +4,7 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.http.HttpStatus;
@@ -16,11 +17,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.digitalsignage.backend.campaign.Campaign;
 import com.digitalsignage.backend.campaign.CampaignService;
 import com.digitalsignage.backend.device.Device;
 import com.digitalsignage.backend.device.DeviceConnection;
 import com.digitalsignage.backend.device.DeviceRepository;
 import com.digitalsignage.backend.device.DeviceStatus;
+import com.digitalsignage.backend.device.OfflinePlanService;
 import com.digitalsignage.backend.device.PlayerConfigResponse;
 import com.digitalsignage.backend.device.PlayerConfigService;
 import com.digitalsignage.backend.monitoring.MonitoringService;
@@ -44,6 +47,7 @@ public class PlayerController {
 	private final DeviceRepository deviceRepository;
 	private final PlayerConfigService playerConfigService;
 	private final CampaignService campaignService;
+	private final OfflinePlanService offlinePlanService;
 	private final MonitoringService monitoringService;
 	private final DeviceLookup deviceLookup;
 	private final Clock clock;
@@ -53,12 +57,14 @@ public class PlayerController {
 			DeviceRepository deviceRepository,
 			PlayerConfigService playerConfigService,
 			CampaignService campaignService,
+			OfflinePlanService offlinePlanService,
 			MonitoringService monitoringService,
 			DeviceLookup deviceLookup,
 			Clock clock) {
 		this.deviceRepository = deviceRepository;
 		this.playerConfigService = playerConfigService;
 		this.campaignService = campaignService;
+		this.offlinePlanService = offlinePlanService;
 		this.monitoringService = monitoringService;
 		this.deviceLookup = deviceLookup;
 		this.clock = clock;
@@ -87,7 +93,11 @@ public class PlayerController {
 
 	@GetMapping("/config")
 	public PlayerConfigResponse config(@AuthenticationPrincipal Long deviceId) {
-		return playerConfigService.buildFor(findOrThrow(deviceId));
+		Device device = findOrThrow(deviceId);
+		List<Campaign> enabled = campaignService.enabled();
+		CampaignService.Effective effective = CampaignService.effectiveFor(device, clock.instant(), enabled);
+		// A agenda dos próximos dias vai junto: se a internet cair, a TV continua trocando de campanha na hora certa.
+		return playerConfigService.buildFor(device, effective).withPlan(offlinePlanService.build(device, enabled));
 	}
 
 	@PostMapping("/heartbeat")
@@ -102,14 +112,17 @@ public class PlayerController {
 		String previousVersion = device.getPlayerVersion();
 
 		device.recordHeartbeat(request.playerVersion(), request.configVersion(), now);
+		device.setOfflinePlanUntil(request.planUntilMs() == null || request.planUntilMs() <= 0 ? null : Instant.ofEpochMilli(request.planUntilMs()));
 		deviceRepository.save(device);
 
-		CampaignService.Effective effective = campaignService.effectiveFor(device);
+		List<Campaign> enabled = campaignService.enabled();
+		CampaignService.Effective effective = CampaignService.effectiveFor(device, now, enabled);
 		monitoringService.onHeartbeat(device, before, previousLastSeen, previousVersion, effective, request, now);
 
 		PlayerConfigResponse desired = playerConfigService.buildFor(device, effective);
 		long updateCheckToken = device.getUpdateRequestedAt() == null ? 0 : device.getUpdateRequestedAt().toEpochMilli();
-		return new PlayerHeartbeatResponse(desired.playlistId(), desired.configVersion(), now, updateCheckToken, desired.campaignId());
+		return new PlayerHeartbeatResponse(desired.playlistId(), desired.configVersion(), now, updateCheckToken, desired.campaignId(),
+				offlinePlanService.versionFor(device, enabled));
 	}
 
 	private PlayerStatusResponse registerNew(String tokenHash, String playerVersion) {

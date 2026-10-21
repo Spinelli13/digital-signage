@@ -25,6 +25,9 @@ import com.digitalsignage.player.errors.ErrorReporter
 import com.digitalsignage.player.engine.PlayerEngine
 import com.digitalsignage.player.memory.MemoryProfile
 import com.digitalsignage.player.proof.PlayLog
+import com.digitalsignage.player.telemetry.Level
+import com.digitalsignage.player.telemetry.Telemetry
+import com.digitalsignage.player.time.TrustedClock
 import com.digitalsignage.player.restart.RestartPolicy
 import com.digitalsignage.player.restart.Restarter
 import com.digitalsignage.player.sync.ConfigSync
@@ -82,6 +85,8 @@ class MainActivity : AppCompatActivity() {
         })
 
         val cache = MediaCache(java.io.File(filesDir, "media"))
+        // A hora do servidor, mesmo sem internet: a agenda offline (campanhas por horário) depende dela.
+        val clock = TrustedClock(uptime = { android.os.SystemClock.elapsedRealtime() }, store = settings)
         // O diário de exibição (comprovação): sobrevive a reinício e a falta de internet; o motor o entrega ao servidor.
         val playLog = PlayLog(
             file = java.io.File(filesDir, "playlog.jsonl"),
@@ -97,13 +102,19 @@ class MainActivity : AppCompatActivity() {
         )
         engine = PlayerEngine(
             api = api,
-            sync = ConfigSync(api, api, cache, settings, freeBytes = { filesDir.usableSpace }),
+            sync = ConfigSync(
+                api, api, cache, settings,
+                freeBytes = { filesDir.usableSpace },
+                clock = clock,
+                onNotice = { Telemetry.shared.event(Level.WARN, it) },
+            ),
             store = settings,
             token = { settings.deviceToken },
             playerVersion = BuildConfig.VERSION_NAME,
             onError = { reporter.report(it) },
             onUpdateCheckRequested = updateTrigger::onHeartbeat,
             plays = playLog,
+            clock = clock,
         )
         // O mesmo ConfigSync não é compartilhado com a Activity: o Slideshow só lê o cache.
         slideshow = Slideshow(
