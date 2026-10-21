@@ -26,7 +26,7 @@ Como usar o **painel de administração** do Digital Signage no dia a dia: envia
 
 > **Na primeira vez do dia, o painel pode demorar até 1 minuto** para responder. O servidor gratuito "dorme" quando fica sem uso e leva um tempo para acordar. É normal, e **não afeta as TVs**: elas continuam exibindo o que já baixaram.
 
-Para sair, use o botão **Sair** no canto inferior esquerdo. Logo acima dele, **Minha conta** troca a sua senha, o **tema** e o **idioma**. O tema (claro/escuro) e o idioma (português/inglês) também podem ser trocados nos botões do alto da tela de entrada (veja 2.2 e 2.3).
+Para sair, clique no seu **nome** (a bolinha com as iniciais, no pé do menu à esquerda; no celular, no canto do alto) e escolha **Sair**. No mesmo menu ficam **Minha conta** (troca de senha), o **tema** e o **idioma**. O tema (claro/escuro) e o idioma (português/inglês) também podem ser trocados nos botões do alto da tela de entrada (veja 2.2 e 2.3).
 
 ---
 
@@ -53,15 +53,19 @@ O **menu à esquerda** leva a cada área:
 | **Downloads e manuais** | O aplicativo da TV (sempre a versão mais recente) e estes manuais em PDF. |
 | **Plataforma** | *(Operador da plataforma)* Clientes, planos, faturas e configurações do serviço. |
 
-No alto do menu aparece o **cliente** em que você está, o **plano** e a **situação** da assinatura. O painel mostra **só o que o seu papel pode usar** (capítulo 11).
+No alto do menu aparece o **cliente** em que você está, o **plano** e a **situação** da assinatura. O menu é dividido por assunto: **Operação** (TVs, locais, grupos), **Conteúdo** (biblioteca, playlists, campanhas, layouts), **Monitoramento** (alertas e relatórios) e **Administração**. O painel mostra **só o que o seu papel pode usar** (capítulo 11).
+
+Na primeira tela, o **círculo** mostra a **saúde da rede** (quantas TVs ativas estão online) e os selos abaixo dele levam direto à lista de TVs de cada situação. Ao lado de **Alertas**, um **número vermelho** avisa quantos alertas estão abertos, sem você precisar abrir a tela. Quando ainda não há nenhuma TV, o painel mostra um **passo a passo** de quatro etapas para colocar a primeira tela no ar.
+
+**Os ícones.** Cada informação tem um desenho e uma palavra: o estado de uma TV, por exemplo, é sempre um **selo** com ícone e texto (**Online**, **Offline**, **Nunca conectou**…), nunca só uma cor. As ações que ocupam pouco ficam à vista (**Editar**, **Histórico**) e as demais (**Desativar**, **Atualizar app**, **Excluir**…) ficam no botão de três pontinhos (**⋮ Mais ações**) de cada linha, com **Excluir** sempre separado e em vermelho.
 
 ### 2.1 Usar no celular
 
 O painel foi pensado para o **celular**: abra o mesmo endereço no navegador do aparelho (Chrome, Safari…). A tela se reorganiza sozinha:
 
-- No alto fica a **barra** com o botão ☰ (abre o menu completo), o nome do sistema, o botão do **tema** e o seletor de **idioma**.
-- Na base ficam **atalhos** para as áreas mais usadas (**Dashboard**, **Dispositivos**, **Alertas**, **Biblioteca**) e o botão **Menu**, que abre a lista completa por cima da tela.
-- As **tabelas viram cartões**: cada TV, campanha ou fatura ocupa um cartão, com o rótulo de cada informação ao lado do valor. Os botões de cada item ficam no pé do cartão.
+- No alto fica a **barra** com o botão ☰ (abre o menu completo), o nome do sistema e a **bolinha com as suas iniciais**, que abre o menu da pessoa (**tema**, **idioma**, **Minha conta** e **Sair**).
+- Na base ficam **atalhos** para as áreas mais usadas (**Dashboard**, **Dispositivos**, **Alertas**, com um ponto vermelho quando há alerta aberto, e **Biblioteca**) e o botão **Menu**, que abre a lista completa por cima da tela.
+- As **tabelas viram cartões**: cada TV, campanha ou fatura ocupa um cartão, com o rótulo de cada informação ao lado do valor. Os botões de cada item ficam no pé do cartão (**Editar** e o menu **⋮**).
 - As **janelas** (adicionar TV, editar campanha…) sobem de baixo, como uma folha, e os campos e botões têm tamanho confortável para o dedo.
 
 ![Dashboard no celular: números em cartões e atalhos na base (captura real)](manual/img/painel-celular-inicio.png)
@@ -70,19 +74,21 @@ O painel foi pensado para o **celular**: abra o mesmo endereço no navegador do 
 
 ![Menu completo aberto pelo botão ☰ (captura real)](manual/img/painel-celular-menu.png)
 
-![Janela "Minha conta" no celular, com tema, idioma e troca de senha (captura real)](manual/img/painel-celular-conta.png)
+![Janela "Minha conta" no celular, com a troca de senha (captura real)](manual/img/painel-celular-conta.png)
 
 > **Dica:** para abrir o painel com um toque, crie um atalho na tela inicial pelo menu do navegador (**Adicionar à tela inicial**).
 
 ### 2.2 Tema claro e escuro
 
-O painel tem um **tema claro** e um **tema escuro**, ambos em verde escuro, prata e preto. O botão do tema (☀ / 🌙 / 🖥) fica na barra do topo (no computador, no menu à esquerda, e também na tela de entrada) e gira entre:
+O painel tem um **tema claro** e um **tema escuro**, ambos em verde escuro, prata e preto. A escolha fica no **menu da pessoa** (clique no seu nome no pé do menu à esquerda; no celular, na bolinha do alto) e também no botão do canto da tela de entrada. As opções:
 
 | Opção | O que faz |
 |---|---|
-| 🖥 **Automático** | Segue o aparelho: escuro à noite ou quando o celular/computador está no modo escuro. É a opção inicial. |
-| ☀ **Claro** | Sempre o tema claro. |
-| 🌙 **Escuro** | Sempre o tema escuro (descansa a vista em ambientes escuros e economiza bateria em telas OLED). |
+| **Automático** (ícone de monitor) | Segue o aparelho: escuro à noite ou quando o celular/computador está no modo escuro. É a opção inicial. |
+| **Claro** (ícone de sol) | Sempre o tema claro. |
+| **Escuro** (ícone de lua) | Sempre o tema escuro (descansa a vista em ambientes escuros e economiza bateria em telas OLED). |
+
+![O menu da pessoa: tema, idioma, Minha conta e Sair (captura real)](manual/img/painel-menu-conta.png)
 
 A escolha fica **guardada no aparelho** em que você a fez.
 
@@ -90,7 +96,7 @@ A escolha fica **guardada no aparelho** em que você a fez.
 
 ### 2.3 Idioma: português ou inglês
 
-O seletor **PT / EN** (no alto da tela, ao lado do tema, e em **Minha conta**) troca o idioma **na hora**, sem recarregar a página. O **português** é o idioma original e o padrão; o **inglês** traduz os menus, botões, avisos, mensagens de erro, o histórico das TVs e os alertas. A escolha também fica guardada no aparelho.
+O seletor de **idioma** (no menu da pessoa e no canto da tela de entrada) troca o idioma **na hora**, sem recarregar a página. O **português** é o idioma original e o padrão; o **inglês** traduz os menus, botões, avisos, mensagens de erro, o histórico das TVs e os alertas. A escolha também fica guardada no aparelho.
 
 ![Lista de Dispositivos em inglês (captura real)](manual/img/painel-ingles.png)
 
@@ -102,7 +108,7 @@ O que **você** digitou (nomes de TVs, playlists, locais, campanhas…) nunca é
 ## 3. Biblioteca: enviar imagens e vídeos
 
 1. Abra **Biblioteca**.
-2. Clique em **+ Enviar mídia** e escolha um ou vários arquivos.
+2. Clique em **Enviar mídia** e escolha um ou vários arquivos.
 3. Acompanhe a barra de progresso. Ao terminar, a mídia aparece na lista com uma miniatura.
 
 ![Biblioteca de mídia com as imagens enviadas (captura real)](manual/img/painel-biblioteca.png)
@@ -114,9 +120,9 @@ O que **você** digitou (nomes de TVs, playlists, locais, campanhas…) nunca é
 | Imagem | JPG, PNG, WEBP | Proporção **16:9**, de preferência **1920×1080**. Imagens fora dessa proporção aparecem inteiras, com faixas pretas. |
 | Vídeo | MP4 (vídeo H.264) | Até **1080p** e **no máximo 50 MB** por arquivo. Outros formatos (MOV, AVI, MKV, HEVC) podem não tocar. |
 
-Além de arquivos, a Biblioteca também guarda **QR Codes** (botão **▦ QR Code**) e **páginas da web** (botão **🌐 Página web**): veja o capítulo 10.
+Além de arquivos, a Biblioteca também guarda **QR Codes** (botão **QR Code**) e **páginas da web** (botão **Página web**): veja o capítulo 10.
 
-**Excluir uma mídia:** clique em **Excluir** no cartão da mídia. Se ela estiver em alguma playlist, o painel avisa que não dá para remover; tire-a das playlists primeiro.
+**Excluir uma mídia:** clique nos três pontinhos (**⋮**) do cartão da mídia e em **Excluir**. Se ela estiver em alguma playlist, o painel avisa que não dá para remover; tire-a das playlists primeiro.
 
 ---
 
@@ -124,13 +130,13 @@ Além de arquivos, a Biblioteca também guarda **QR Codes** (botão **▦ QR Cod
 
 ### 4.1 Criar uma playlist
 
-1. Abra **Playlists** e clique em **+ Nova playlist**.
+1. Abra **Playlists** e clique em **Nova playlist**.
 2. Dê um **nome** (ex.: "Campanha de verão") e, se quiser, uma descrição.
 3. Na coluna **Biblioteca** (à direita), **clique nas mídias** para adicioná-las à sequência.
 4. Ajuste cada item:
    - **Duração (s):** quantos segundos a imagem fica na tela. Para vídeos vale a duração do próprio vídeo.
-   - **Setas ↑ ↓:** mudam a posição na sequência.
-   - **✕:** tira o item da playlist (a mídia continua na Biblioteca).
+   - **Setas para cima e para baixo:** mudam a posição na sequência.
+   - **Lixeira:** tira o item da playlist (a mídia continua na Biblioteca).
 5. Confira o **ciclo total** ("ciclo de 32s") e clique em **Publicar alterações**.
 
 ![Editor de playlist: sequência de reprodução à esquerda e biblioteca à direita (captura real)](manual/img/painel-playlist-editor.png)
@@ -139,7 +145,7 @@ Além de arquivos, a Biblioteca também guarda **QR Codes** (botão **▦ QR Cod
 
 ### 4.2 Lista de playlists
 
-Em **Playlists** você vê todas, com o número de itens, a duração do ciclo e a **versão** (sobe a cada publicação). Use **Editar** para alterar e **Excluir** para apagar. Se você excluir uma playlist que está em uso, as TVs que a usavam ficam **sem playlist**.
+Em **Playlists** você vê todas, com o número de itens, a duração do ciclo e a **versão** (sobe a cada publicação). Use **Editar** para alterar e, no menu **⋮**, **Excluir** para apagar. Se você excluir uma playlist que está em uso, as TVs que a usavam ficam **sem playlist**.
 
 ![Lista de playlists (captura real)](manual/img/painel-playlists.png)
 
@@ -150,9 +156,9 @@ Em **Playlists** você vê todas, com o número de itens, a duração do ciclo e
 ### 5.1 Ativar uma TV nova
 
 1. Instale o Player na TV (veja o **Manual de instalação**). Ao abrir, ela mostra um **código de 6 letras e números**.
-2. No painel, abra **Dispositivos** e clique em **+ Adicionar dispositivo**.
+2. No painel, abra **Dispositivos** e clique em **Adicionar dispositivo**.
 3. Digite o **código** e dê um **nome** (ex.: "TV Recepção").
-4. Escolha o **Local** na lista. Se ainda não existe, escolha **+ Novo local…** e digite o nome (ele é criado na hora). Se a TV não tem local, deixe **Sem local**.
+4. Escolha o **Local** na lista. Se ainda não existe, escolha **+ Novo local…** na lista e digite o nome (ele é criado na hora). Se a TV não tem local, deixe **Sem local**.
 5. Marque os **Grupos** de que a TV faz parte (opcional) e clique em **Ativar dispositivo**.
 
 ![Janela "Adicionar dispositivo": código, nome, local (aqui um local novo) e grupos (captura real)](manual/img/painel-adicionar-dispositivo.png)
@@ -189,7 +195,7 @@ O contador à direita mostra quantas TVs aparecem. **Limpar filtros** volta à l
 ### 5.5 Agir em várias TVs de uma vez
 
 1. Marque as TVs na primeira coluna (ou a caixa do cabeçalho para marcar **todas as da lista**, respeitando os filtros).
-2. Aparece a barra azul **"N selecionadas"** com as ações:
+2. Aparece a barra verde **"N selecionadas"** com as ações:
 
 | Ação | O que faz |
 |---|---|
@@ -205,14 +211,16 @@ O painel confirma quantas TVs foram alcançadas. Se uma ação não se aplica a 
 
 ### 5.6 Outras ações de cada TV
 
+Cada linha tem o ícone de **relógio com seta** (Histórico), o **lápis** (Editar) e o menu **⋮ Mais ações**. Em telas mais estreitas o botão Editar mostra só o lápis.
+
 | Botão | O que faz |
 |---|---|
 | **Histórico** | Abre a linha do tempo da TV: quando conectou, caiu, mudou de conteúdo, atualizou e o que o Player relatou (veja 9.1). |
 | **Editar** | Muda o nome, o local e os grupos da TV. |
-| **Atualizar app** | Pede que **esta TV** verifique agora se há versão nova do aplicativo (ela percebe em até 30 segundos). |
+| **Atualizar app** (menu **⋮**) | Pede que **esta TV** verifique agora se há versão nova do aplicativo (ela percebe em até 30 segundos). |
 | **Atualizar todas as TVs** (no alto da página) | O mesmo pedido para todas as TVs ativas. |
-| **Desativar / Reativar** | Pausa a TV (ela para de exibir) ou volta a ativá-la. |
-| **Excluir** | Remove a TV. Ela esquece o conteúdo e volta a pedir um **novo código de ativação**. |
+| **Desativar / Reativar** (menu **⋮**) | Pausa a TV (ela para de exibir) ou volta a ativá-la. |
+| **Excluir** (menu **⋮**) | Remove a TV. Ela esquece o conteúdo e volta a pedir um **novo código de ativação**. |
 
 ### 5.7 Atualizar o aplicativo das TVs
 
@@ -222,7 +230,7 @@ Quando existe uma versão nova do Player, as TVs descobrem sozinhas em até 30 m
 
 > **O Android sempre pede uma confirmação na TV** antes de instalar a atualização (regra de segurança do sistema). Alguém precisa apertar **OK** no controle. Se ninguém confirmar em 10 minutos, a TV cancela e volta a exibir normalmente. Detalhes no **Manual de instalação**, seção "Atualização automática".
 
-TVs com versão mais antiga que a última publicada aparecem marcadas com **⬆ desatualizado** na coluna "Último contato".
+TVs com versão mais antiga que a última publicada aparecem com o selo **vX.Y.Z disponível** (ícone de download) na coluna "Último contato".
 
 ---
 
@@ -231,7 +239,7 @@ TVs com versão mais antiga que a última publicada aparecem marcadas com **⬆ 
 Um **local** é um ponto físico onde há TVs (ex.: "Loja Centro", "Matriz"). Cada TV pertence a **um** local (ou a nenhum). Usar locais permite ver, por local, quantas TVs estão online e filtrar a lista.
 
 1. Abra **Pontos & Locais**.
-2. Clique em **+ Novo local**, digite o **nome** (e, se quiser, uma descrição como o endereço) e salve.
+2. Clique em **Novo local**, digite o **nome** (e, se quiser, uma descrição como o endereço) e salve.
 3. Na lista você vê quantas TVs há em cada local e quantas estão online. Clique no número de TVs para abrir **Dispositivos** já filtrado por esse local.
 
 ![Lista de locais com o número de TVs e quantas estão online (captura real)](manual/img/painel-locais.png)
@@ -239,7 +247,7 @@ Um **local** é um ponto físico onde há TVs (ex.: "Loja Centro", "Matriz"). Ca
 ![Janela para criar um local (captura real)](manual/img/painel-local-novo.png)
 
 - **Editar** muda o nome e a descrição. Dois locais não podem ter o mesmo nome (maiúsculas e minúsculas contam como iguais).
-- **Excluir** apaga só o local. **As TVs continuam funcionando** e ficam "Sem local".
+- **Excluir** (no menu **⋮**) apaga só o local. **As TVs continuam funcionando** e ficam "Sem local".
 - Para colocar TVs num local: escolha o local ao ativar a TV, edite a TV, ou use a ação **Mover para local…** em várias TVs.
 
 ---
@@ -248,18 +256,18 @@ Um **local** é um ponto físico onde há TVs (ex.: "Loja Centro", "Matriz"). Ca
 
 Um **grupo** é um conjunto livre de TVs (ex.: "Recepções", "Vitrines", "Refeitórios"). Uma TV pode estar em vários grupos. Grupos servem para **agir em várias TVs de uma vez**, mesmo de locais diferentes.
 
-1. Abra **Grupos** e clique em **+ Novo grupo**.
+1. Abra **Grupos** e clique em **Novo grupo**.
 2. Dê um nome (e, se quiser, uma descrição) e **marque as TVs** do grupo. Salve.
 3. Na lista de grupos você pode, para todas as TVs do grupo:
    - **Escolher uma playlist** (ou **Nenhuma playlist**) na coluna "Playlist para todas as TVs do grupo". O painel pede confirmação antes de aplicar.
-   - **Atualizar app**: pede que verifiquem se há versão nova do aplicativo.
+   - **Atualizar app** (no menu **⋮**): pede que verifiquem se há versão nova do aplicativo.
 
 ![Lista de grupos, com a escolha de playlist para todas as TVs de cada grupo (captura real)](manual/img/painel-grupos.png)
 
 ![Editando um grupo: nome, descrição e as TVs que fazem parte (captura real)](manual/img/painel-grupo-editar.png)
 
 - **Editar** muda o nome, a descrição e quem faz parte.
-- **Excluir** apaga só o grupo. **As TVs não são apagadas**: apenas deixam de fazer parte dele.
+- **Excluir** (no menu **⋮**) apaga só o grupo. **As TVs não são apagadas**: apenas deixam de fazer parte dele.
 - O número de TVs do grupo abre **Dispositivos** filtrado por esse grupo.
 
 ---
@@ -274,7 +282,7 @@ Sem campanhas, cada TV exibe a playlist dela, como sempre. Quando uma campanha v
 
 ### 8.1 Criar uma campanha
 
-1. Abra **Campanhas** e clique em **+ Nova campanha**.
+1. Abra **Campanhas** e clique em **Nova campanha**.
 2. Dê um **nome**, escolha a **playlist** que será exibida e a **prioridade** (veja 8.3).
 3. Em **Quando**, defina:
    - **De / Até (data):** o período (as duas datas valem). Deixe vazio para não limitar.
@@ -298,7 +306,7 @@ Sem campanhas, cada TV exibe a playlist dela, como sempre. Quando uma campanha v
 | **Encerrada** | O período já terminou. |
 | **Pausada** | Você a pausou; não é exibida até **Reativar**. |
 
-Use **Pausar/Reativar** para desligar uma campanha sem apagá-la, **Editar** para mudar qualquer coisa e **Excluir** para remover (as TVs voltam à playlist delas ou a outra campanha que valha). Uma **playlist em uso por uma campanha** não pode ser excluída: o painel diz qual campanha a usa.
+Use **Pausar/Reativar** (no menu **⋮**) para desligar uma campanha sem apagá-la, **Editar** para mudar qualquer coisa e **Excluir** (também no **⋮**) para remover (as TVs voltam à playlist delas ou a outra campanha que valha). Uma **playlist em uso por uma campanha** não pode ser excluída: o painel diz qual campanha a usa.
 
 ### 8.3 Prioridade: quando duas campanhas valem ao mesmo tempo
 
@@ -342,7 +350,7 @@ Use os filtros de **tipo** e **nível** (só erros, só avisos…) e **Carregar 
 
 > Os horários dos registros do Player vêm do **relógio da TV**. Se a TV estiver com a hora muito errada, o painel usa a hora do servidor para não bagunçar a história.
 
-Em **Dispositivos**, a linha da TV também mostra **"▶ Na tela: …"**: a mídia que o Player disse estar exibindo no último contato.
+Em **Dispositivos**, a linha da TV também mostra **"Na tela: …"** (com o ícone de play): a mídia que o Player disse estar exibindo no último contato.
 
 ### 9.2 Alertas
 
@@ -370,7 +378,7 @@ Em **Aviso externo (webhook)** cole o endereço de um *webhook de entrada* do se
 
 ### 9.3 Relatórios
 
-Abra **Relatórios**. São quatro, cada um com período (**Hoje**, **7 dias**, **30 dias** ou datas à escolha, no fuso de Brasília) e **⬇ Baixar CSV**, que gera uma planilha com os mesmos filtros que estão na tela (abre direto no Excel em português):
+Abra **Relatórios**. São quatro, cada um com período (**Hoje**, **7 dias**, **30 dias** ou datas à escolha, no fuso de Brasília) e **Baixar CSV**, que gera uma planilha com os mesmos filtros que estão na tela (abre direto no Excel em português):
 
 - **Disponibilidade:** por TV e da frota inteira, quanto do tempo observado ela ficou online, quanto offline e quantas quedas teve. Dá para filtrar por local e grupo. A TV só é medida **a partir do primeiro contato** (uma TV nova não nasce com 0%) e o tempo em que esteve **desativada não conta**. Uma TV sem nenhum dado no período aparece como "sem dados", não como 0%.
 
@@ -405,7 +413,7 @@ Abra **Layouts** no menu. Cada cartão mostra um desenho da divisão da tela, qu
 
 **Criar um layout**
 
-1. Clique em **+ Novo layout** e escolha um **modelo pronto**: *Tela cheia*, *Principal + faixa lateral*, *Principal + rodapé*, *Principal + lateral + rodapé*, *Duas metades* ou *Quatro quadros*. Dê um nome e clique em **Criar e ajustar**. (Ou **Começar do zero**.)
+1. Clique em **Novo layout** e escolha um **modelo pronto**: *Tela cheia*, *Principal + faixa lateral*, *Principal + rodapé*, *Principal + lateral + rodapé*, *Duas metades* ou *Quatro quadros*. Dê um nome e clique em **Criar e ajustar**. (Ou **Começar do zero**.)
 
 ![Escolha de um modelo de layout (captura real)](manual/img/painel-layout-novo.png)
 
@@ -417,7 +425,7 @@ Abra **Layouts** no menu. Cada cartão mostra um desenho da divisão da tela, qu
 
 **Regras do layout:** de 1 a 6 zonas; exatamente uma zona principal; as zonas não podem se sobrepor nem sair da tela; cada uma tem no mínimo 5% de largura e de altura.
 
-**Usar o layout numa TV:** em **Dispositivos**, clique em **Editar** na TV e escolha o **Layout da tela** (ou **Tela cheia** para voltar ao normal). Para várias TVs de uma vez, marque-as e use **Aplicar layout…** na barra azul. A TV mostra uma etiqueta 🧩 com o nome do layout, e o **Histórico** dela registra a mudança.
+**Usar o layout numa TV:** em **Dispositivos**, clique em **Editar** na TV e escolha o **Layout da tela** (ou **Tela cheia** para voltar ao normal). Para várias TVs de uma vez, marque-as e use **Aplicar layout…** na barra verde. A TV mostra um selo com o ícone de layout e o nome dele, e o **Histórico** dela registra a mudança.
 
 ![Editar a TV: a lista "Layout da tela" (captura real)](manual/img/painel-dispositivo-layout.png)
 
@@ -434,7 +442,7 @@ Abra **Layouts** no menu. Cada cartão mostra um desenho da divisão da tela, qu
 
 ### 10.2 QR Code
 
-Em **Biblioteca**, clique em **▦ QR Code**. Digite o **endereço ou texto** (um cardápio, o Wi‑Fi do local, um WhatsApp…), um **título** e uma **legenda** (opcionais) e escolha as **cores**. A pré-visualização aparece na hora. **Salvar na biblioteca** guarda o QR Code como uma **imagem** comum: coloque-a em qualquer playlist (a de uma zona lateral é uma ótima ideia).
+Em **Biblioteca**, clique em **QR Code**. Digite o **endereço ou texto** (um cardápio, o Wi‑Fi do local, um WhatsApp…), um **título** e uma **legenda** (opcionais) e escolha as **cores**. A pré-visualização aparece na hora. **Salvar na biblioteca** guarda o QR Code como uma **imagem** comum: coloque-a em qualquer playlist (a de uma zona lateral é uma ótima ideia).
 
 ![Criando um QR Code: texto, título, legenda, cores e a pré-visualização (captura real)](manual/img/painel-qr-code.png)
 
@@ -442,7 +450,7 @@ O QR Code sempre fica **escuro sobre fundo claro** (celulares precisam desse con
 
 ### 10.3 Página da web
 
-Em **Biblioteca**, clique em **🌐 Página web**. Informe o **endereço** (precisa começar com **https://**), um **nome** e por quantos **segundos** a página fica na tela (de 5 a 3600; o padrão é 30). Ela entra na biblioteca como qualquer mídia e pode ser colocada em qualquer playlist: um painel de vendas, a previsão do tempo, um cardápio online…
+Em **Biblioteca**, clique em **Página web**. Informe o **endereço** (precisa começar com **https://**), um **nome** e por quantos **segundos** a página fica na tela (de 5 a 3600; o padrão é 30). Ela entra na biblioteca como qualquer mídia e pode ser colocada em qualquer playlist: um painel de vendas, a previsão do tempo, um cardápio online…
 
 ![Adicionando uma página da web à biblioteca (captura real)](manual/img/painel-pagina-web.png)
 
@@ -477,7 +485,7 @@ Em **Equipe** estão todas as pessoas do cliente, com o papel e a situação de 
 
 ![Tela Equipe: lista de usuários, papéis e a explicação do que cada papel pode (captura real)](manual/img/painel-equipe.png)
 
-- **+ Novo usuário:** informe o nome, o **e-mail** (é o login), o **papel** e uma **senha inicial** (mínimo de 8 caracteres). Combine com a pessoa e peça que a troque em **Minha conta**.
+- **Novo usuário:** informe o nome, o **e-mail** (é o login), o **papel** e uma **senha inicial** (mínimo de 8 caracteres). Combine com a pessoa e peça que a troque em **Minha conta**.
 - **Editar:** muda o nome e o papel, **desativa** o acesso (a pessoa deixa de entrar, mas o cadastro fica) ou define uma nova senha (útil quando alguém esquece a dela). Deixe a senha em branco para mantê-la.
 - **Excluir:** remove a pessoa. O acesso acaba na hora.
 - Você **não pode excluir nem desativar a si mesmo**, e o cliente **sempre mantém pelo menos um administrador ativo** (para tirar o papel do último, promova outra pessoa antes).
@@ -488,7 +496,7 @@ Em **Equipe** estão todas as pessoas do cliente, com o papel e a situação de 
 
 ### 11.3 Minha conta: trocar a própria senha
 
-Em qualquer papel, clique em **Minha conta** (canto inferior esquerdo; no celular, dentro do menu ☰), digite a **senha atual** e a **nova senha duas vezes** (mínimo de 8 caracteres). Na mesma janela você escolhe o **tema** e o **idioma** (seção 2.2 e 2.3).
+Em qualquer papel, clique no seu **nome** (pé do menu à esquerda; no celular, a bolinha do alto) e em **Minha conta**, digite a **senha atual** e a **nova senha duas vezes** (mínimo de 8 caracteres). O **tema** e o **idioma** ficam no mesmo menu (seção 2.2 e 2.3).
 
 ![Janela "Minha conta" com a troca de senha (captura real)](manual/img/painel-minha-conta.png)
 
@@ -560,14 +568,14 @@ Cada cliente é uma empresa com os **seus próprios dados**: um cliente nunca v�
 
 ![Lista de clientes: plano, situação, uso e próximo vencimento (captura real)](manual/img/painel-clientes.png)
 
-- **+ Novo cliente:** informe o nome da empresa, o **plano** e o **primeiro administrador** (nome, e-mail e senha inicial). O cliente começa **em teste**. Envie o endereço do painel e esses dados ao administrador.
+- **Novo cliente:** informe o nome da empresa, o **plano** e o **primeiro administrador** (nome, e-mail e senha inicial). O cliente começa **em teste**. Envie o endereço do painel e esses dados ao administrador.
 - **Editar:** muda o nome, o plano, a **situação** (por exemplo, reativar à mão ou suspender), o e-mail de cobrança, o CPF/CNPJ e as datas do teste e do período pago.
-- **Nova fatura:** cobrança avulsa (um serviço, uma instalação) com descrição, valor e vencimento. As mensalidades são geradas sozinhas.
-- **Entrar:** abre o painel **como se fosse aquele cliente**, para dar suporte (ver ou ajustar TVs, playlists etc.). Enquanto estiver lá, um aviso azul diz **"Você está atuando no cliente …"** e tudo o que você fizer vale para ele. Clique em **Voltar ao meu cliente** para sair. Isso vale só para a aba do navegador em que você entrou.
+- **Nova fatura** (no menu **⋮** do cliente): cobrança avulsa (um serviço, uma instalação) com descrição, valor e vencimento. As mensalidades são geradas sozinhas.
+- **Entrar:** abre o painel **como se fosse aquele cliente**, para dar suporte (ver ou ajustar TVs, playlists etc.). Enquanto estiver lá, um aviso verde diz **"Você está atuando no cliente …"** e tudo o que você fizer vale para ele. Clique em **Voltar ao meu cliente** para sair. Isso vale só para a aba do navegador em que você entrou.
 
 ![Janela para cadastrar um cliente novo (captura real)](manual/img/painel-cliente-novo.png)
 
-![Operador dentro do painel de um cliente: o aviso azul lembra em qual cliente ele está atuando (captura real)](manual/img/painel-atuando-como.png)
+![Operador dentro do painel de um cliente: o aviso verde lembra em qual cliente ele está atuando (captura real)](manual/img/painel-atuando-como.png)
 
 ### 13.3 Planos
 
@@ -654,13 +662,13 @@ Todo aviso começa pela **ação** que falhou (por exemplo, "Excluir mídia: …
 
 | Problema | O que fazer |
 |---|---|
-| A TV não mostrou o layout novo | Ela precisa do Player **0.6 ou mais novo** (**Atualizar app**) e de até 1 minuto para sincronizar. Confira em **Dispositivos** se a TV mostra a etiqueta 🧩 do layout. |
+| A TV não mostrou o layout novo | Ela precisa do Player **0.6 ou mais novo** (**Atualizar app**) e de até 1 minuto para sincronizar. Confira em **Dispositivos** se a TV mostra o selo com o nome do layout. |
 | Uma zona do layout ficou em branco | Zona sem playlist fica em branco de propósito (**Sem conteúdo**). Escolha a playlist da zona no editor do layout; a zona **principal** usa a playlist da TV. |
 | A página da web não aparece | A TV precisa de internet e o endereço de **https://**. Veja o **Histórico** da TV: a mensagem diz se a página não abriu ou respondeu erro. A TV pula a página e segue o loop. |
 | Não consigo excluir um layout | Ele está em uso por TVs: troque o layout delas (ou **Tela cheia**) antes. O painel diz quantas TVs usam. |
 | O painel está em inglês (ou em português) e eu quero trocar | Use o seletor **PT / EN** no alto da tela ou em **Minha conta**: a troca é imediata e fica guardada no aparelho. |
-| A tela está escura (ou clara) demais | O tema está em **Automático** e acompanha o aparelho. Toque no botão ☀ / 🌙 / 🖥 para fixar **Claro** ou **Escuro**. |
-| No celular não acho um botão que existe no computador | Abra o menu **☰** (ou **Menu**, na base): ele traz a lista completa. Em tabelas, os botões ficam no pé do cartão de cada item. Se mesmo assim faltar, o seu papel pode não permitir (capítulo 11). |
+| A tela está escura (ou clara) demais | O tema está em **Automático** e acompanha o aparelho. Abra o menu da pessoa (o seu nome) e escolha **Claro** ou **Escuro** em **Tema**. |
+| No celular não acho um botão que existe no computador | Abra o menu **☰** (ou **Menu**, na base): ele traz a lista completa. Em tabelas, os botões ficam no pé do cartão de cada item (**Editar** e o menu **⋮**). Se mesmo assim faltar, o seu papel pode não permitir (capítulo 11). |
 | O menu não mostra **Equipe** ou **Plano e cobrança** | Essas áreas são só do **Administrador**. Peça o papel a quem administra o cliente. |
 | O painel só abre **Plano e cobrança** | A assinatura está **suspensa** (fatura vencida além da tolerância). Pague a fatura (capítulo 12): a operação registra o pagamento e o painel volta ao normal. As TVs continuam exibindo. |
 | Não consigo ativar uma TV, enviar uma mídia ou adicionar um usuário | O **limite do plano** foi atingido (veja o uso em **Plano e cobrança**). Libere espaço ou peça um plano maior. |

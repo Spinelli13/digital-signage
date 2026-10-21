@@ -289,6 +289,7 @@ button:disabled, .disabled { opacity: 0.5; cursor: not-allowed; }
   max-width: 460px; max-height: 90vh; overflow: auto; box-shadow: var(--sh-3); animation: rise 0.22s var(--ease);
 }
 .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.modal-box p.label, .card p.label { margin: 6px 0 14px; }
 
 /* ---------- 4. celular ---------- */
 @media (max-width: 720px) {
