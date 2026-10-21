@@ -1,10 +1,10 @@
-# Smartplay (antes "Digital Signage") — Contexto de Desenvolvimento para Claude
+# Vyzzu (antes "Smartplay" e, antes, "Digital Signage") — Contexto de Desenvolvimento para Claude
 
 ## 1. Objetivo
 
 Criar uma plataforma de Digital Signage para controlar remotamente conteúdos exibidos em TVs.
 
-> **Nome do produto (2026-10-21):** o nome "Digital Signage" já existe no mercado; o produto e o app passaram a se chamar **Smartplay**. O identificador interno do aplicativo Android (`com.digitalsignage.player`) e o nome do repositório continuam como antes, de propósito: trocar o identificador faria cada TV tratar a nova versão como OUTRO app (sem atualização automática). O nome visível está num lugar só em cada parte: `frontend/src/app/core/brand.ts`, `strings.xml` do Player e `scripts/build-manuals.mjs`.
+> **Nome do produto (2026-10-21):** o nome "Digital Signage" já existe no mercado; o produto passou a se chamar **Smartplay** e, no mesmo dia, **Vyzzu** (rebranding completo: nome, símbolo e cores; veja `docs/MARCA_VYZZU.md`). O identificador interno do aplicativo Android (`com.digitalsignage.player`) e o nome do repositório continuam como antes, de propósito: trocar o identificador faria cada TV tratar a nova versão como OUTRO app (sem atualização automática). O nome visível está num lugar só em cada parte: `frontend/src/app/core/brand.ts`, `strings.xml` do Player e `scripts/build-manuals.mjs`.
 
 O produto final terá dois componentes:
 

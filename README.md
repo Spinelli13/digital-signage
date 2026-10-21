@@ -1,6 +1,6 @@
-# Smartplay
+# Vyzzu
 
-Smartplay é uma plataforma de sinalização digital (digital signage) para controlar remotamente conteúdo exibido em TVs.
+Vyzzu é uma plataforma de comunicação audiovisual e sinalização digital (digital signage) para controlar remotamente conteúdo exibido em TVs, painéis de LED e totens. A identidade visual está em [docs/MARCA_VYZZU.md](./docs/MARCA_VYZZU.md).
 Contexto e decisões completas em [PROJETO_DIGITAL_SIGNAGE_CONTEXTO_CLAUDE.md](./PROJETO_DIGITAL_SIGNAGE_CONTEXTO_CLAUDE.md).
 
 ## Estrutura

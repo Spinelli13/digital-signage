@@ -103,7 +103,7 @@ describe('ThemeService', () => {
     mockSystem(false);
     const theme = TestBed.inject(ThemeService);
     const color = () => document.querySelector('meta[name="theme-color"]')?.getAttribute('content');
-    expect(color()).toBe('#1a6a49');
+    expect(color()).toBe('#6d28d9');
 
     theme.set('dark');
 

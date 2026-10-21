@@ -1,6 +1,6 @@
 # Manual do painel
 
-Como usar o **painel de administração** do Smartplay no dia a dia: enviar imagens e vídeos, montar playlists, vincular TVs e acompanhar se está tudo funcionando.
+Como usar o **painel de administração** do Vyzzu no dia a dia: enviar imagens e vídeos, montar playlists, vincular TVs e acompanhar se está tudo funcionando.
 
 > **Endereço do painel:** `https://signage-painel.pages.dev`. Funciona em computador, tablet e celular. O aplicativo da TV e os manuais ficam sempre atualizados em **Downloads e manuais** (menu à esquerda).
 
@@ -149,7 +149,7 @@ Um **widget** é um conteúdo que **se atualiza sozinho**, sem você enviar arqu
 | **Recado** | Um título e uma mensagem em destaque (horário especial, promoção, aviso). | Título, mensagem, cor de destaque e alinhamento. |
 | **Contagem regressiva** | Dias, horas, minutos e segundos que faltam para uma data, e uma frase quando ela chega. | Nome (ex.: Natal), data e hora, fuso e a frase final. |
 
-Em todos: **Cores** (escuro, claro ou verde Smartplay), **idioma** do texto do widget e **tempo na tela**.
+Em todos: **Cores** (escuro, claro ou verde), **idioma** do texto do widget e **tempo na tela**.
 
 ![Previsão do tempo de Campinas: escolhas à esquerda, como fica na TV à direita (captura real)](manual/img/painel-widget-clima.png)
 
@@ -166,7 +166,7 @@ Em todos: **Cores** (escuro, claro ou verde Smartplay), **idioma** do texto do w
 
 Há ainda o widget **Tabela de preços**, que exibe uma tabela da página **Preços** (seção 3.2).
 
-**Requisito:** Smartplay 0.11 ou mais novo na TV (o painel de preços pede o 0.12). Uma TV com Player mais antigo não sabe desenhar widgets: mostra um aviso na tela por alguns segundos, registra no Histórico e passa para o próximo item.
+**Requisito:** Vyzzu 0.11 ou mais novo na TV (o painel de preços pede o 0.12). Uma TV com Player mais antigo não sabe desenhar widgets: mostra um aviso na tela por alguns segundos, registra no Histórico e passa para o próximo item.
 
 ### 3.2 Preços dinâmicos: tabelas de preços e preços por horário
 
@@ -296,7 +296,7 @@ Cada linha tem o ícone de **relógio com seta** (Histórico), o **lápis** (Edi
 
 ### 5.6.3 TV instalada na vertical (orientação da tela)
 
-Uma TV presa na parede **em pé** continua recebendo da caixa de TV um vídeo **deitado** (a maioria das caixas não gira sozinha). Por isso você diz ao Smartplay como a TV está instalada, e o **Player gira o conteúdo** para ele ficar de pé para quem olha.
+Uma TV presa na parede **em pé** continua recebendo da caixa de TV um vídeo **deitado** (a maioria das caixas não gira sozinha). Por isso você diz ao Vyzzu como a TV está instalada, e o **Player gira o conteúdo** para ele ficar de pé para quem olha.
 
 1. Em **Dispositivos**, clique em **Editar** na TV (é preciso ser **Administrador**).
 2. Em **Como a TV foi instalada**, escolha:
@@ -311,7 +311,7 @@ Para várias TVs de uma vez, marque-as e use **Orientação…** na barra verde 
 - Em TV **vertical**, o **layout** usa a **versão em pé** (veja 10.1.1); sem versão em pé, o layout horizontal é girado junto, como está.
 - As TVs verticais mostram um selo **Vertical** (ou **De cabeça para baixo**) na lista, e o **Histórico** registra a mudança.
 - **Vídeo:** numa TV girada o vídeo passa a ser desenhado de outro jeito (mais exigente para o aparelho). Em caixas muito simples, teste um vídeo pesado antes de instalar.
-- Use só a opção do Smartplay: **não** gire a tela nas configurações do Android da caixa. O Player é travado na horizontal e não foi testado com a tela do Android girada.
+- Use só a opção do Vyzzu: **não** gire a tela nas configurações do Android da caixa. O Player é travado na horizontal e não foi testado com a tela do Android girada.
 
 ### 5.6.1 O que acontece na TV quando você troca a playlist
 
@@ -519,7 +519,7 @@ Para anunciantes e contratos: a aba **Comprovação** mostra cada exibição, um
 - **Relógio da TV errado:** o horário vem do relógio da TV; se ele estiver desajustado em mais de 2 segundos, o servidor corrige o início usando a hora dele e a linha mostra "relógio corrigido". A duração não muda (é medida por um cronômetro, não pelo relógio).
 - **TV sem internet:** os registros ficam guardados na TV (até 20.000, em arquivo que sobrevive a queda de energia e a reinício) e seguem quando a internet voltar. Se passar do limite, os mais antigos são descartados e isso aparece no histórico da TV.
 - **Quanto tempo fica guardado:** o detalhe linha a linha fica **14 dias** (ajustável de 7 a 365 em **Alertas > Guardar cada exibição por (dias)**, porque o banco gratuito é pequeno). Abaixo da tabela, o **resumo por dia** (exibições, tempo na tela e o último hash de cada dia) fica **um ano**.
-- **Exige o Smartplay 0.9 ou mais novo na TV.** TVs com versão anterior continuam aparecendo em **Exibições** (contagem), mas não em **Comprovação**.
+- **Exige o Vyzzu 0.9 ou mais novo na TV.** TVs com versão anterior continuam aparecendo em **Exibições** (contagem), mas não em **Comprovação**.
 
 ---
 
@@ -603,7 +603,7 @@ Em **Biblioteca**, clique em **Página web**. Informe o **endereço** (precisa c
 
 ### 10.4 Atendimento: fila de senhas e painel de chamadas
 
-Para lojas, clínicas, cartórios e qualquer lugar com fila: o Smartplay emite **senhas**, o atendente **chama a próxima** e a TV mostra, em poucos segundos e com um aviso sonoro, **qual senha foi chamada e em qual guichê**. Tudo fica em **Atendimento**, no menu **Operação**.
+Para lojas, clínicas, cartórios e qualquer lugar com fila: o Vyzzu emite **senhas**, o atendente **chama a próxima** e a TV mostra, em poucos segundos e com um aviso sonoro, **qual senha foi chamada e em qual guichê**. Tudo fica em **Atendimento**, no menu **Operação**.
 
 **1. Montar as filas e os guichês (Administrador).** Em **Atendimento**, clique em **Filas e guichês**.
 

@@ -1,8 +1,8 @@
 /** Inglês: comprovação de exibição (proof of play). */
 export const PROOF: Record<string, string> = {
   Comprovação: 'Proof of play',
-  'Cada exibição é medida pela própria TV: hora de início e duração em milissegundos. Os registros formam uma corrente de hashes (cada um leva o hash do anterior): apagar ou alterar um deles é detectável. Exige o Smartplay 0.9 ou mais novo na TV.':
-    'Each play is measured by the TV itself: start time and duration in milliseconds. Records form a hash chain (each one carries the hash of the previous one), so deleting or changing one is detectable. Requires Smartplay 0.9 or newer on the TV.',
+  'Cada exibição é medida pela própria TV: hora de início e duração em milissegundos. Os registros formam uma corrente de hashes (cada um leva o hash do anterior): apagar ou alterar um deles é detectável. Exige o Vyzzu 0.9 ou mais novo na TV.':
+    'Each play is measured by the TV itself: start time and duration in milliseconds. Records form a hash chain (each one carries the hash of the previous one), so deleting or changing one is detectable. Requires Vyzzu 0.9 or newer on the TV.',
   'Todas as mídias': 'All media',
   'Todas as campanhas': 'All campaigns',
   Campanha: 'Campaign',

@@ -1,39 +1,64 @@
 /*
- * Sistema de design do painel — verde escuro + prata + preto.
+ * Sistema de design do painel Vyzzu — preto + violeta + magenta + prata.
  *
  * 1. Tokens (cor, tipografia, forma, sombra, movimento) para o tema claro (:root) e o escuro (:root[data-theme='dark']).
  * 2. Elementos base (texto, links, formulários, botões, tabelas).
  * 3. Primitivas reutilizáveis (.card, .pill, .icon-btn, .skeleton, .kpi…).
  * 4. Celular (≤ 720 px): tabelas viram cartões, janelas viram folha, alvos de toque de 44 px.
- * Nada nos componentes usa cor fixa: tudo vem destes tokens, para os dois temas ficarem sempre coerentes.
+ * Nada nos componentes usa cor fixa de marca: tudo vem destes tokens, para os dois temas ficarem sempre coerentes.
+ *
+ * A MARCA
+ *   violeta  --violet   #8b5cf6  cor de interação e de identidade (foco, seleção, símbolo, detalhes)
+ *   magenta  --magenta  #d946ef  complemento, só em pequenos detalhes (barra do menu ativo, pixel do símbolo)
+ *   lavanda  --lavender #c4b5fd  destaque suave, principalmente sobre fundos escuros
+ *   prata    --silver   #a1a1aa  neutros (texto auxiliar, bordas, ícones discretos)
+ *   O preenchimento dos botões usa #7c3aed (--primary): é o violeta da marca um pouco mais fundo, para o texto branco
+ *   passar de 4,5:1 (AA). O #8b5cf6 puro fica nos ícones, no foco e nos detalhes.
+ *
+ * O PRETO NÃO MUDA
+ *   Os pretos e as superfícies escuras do sistema (menu lateral, fundos, painéis, linhas, tela, cortina e o texto preto
+ *   do tema claro) mantêm EXATAMENTE os valores de antes do rebranding. Estão marcados com "PRETO PRESERVADO" e o teste
+ *   src/app/brand-tokens.spec.ts confere um a um. Só a cor da marca, os cinzas claros e os estados mudaram.
+ *
+ * ESTADOS
+ *   Sucesso (verde), alerta (âmbar) e erro (vermelho) continuam com as cores do significado, sempre com ícone e texto.
+ *   Verde é só "tudo certo / online": não é mais cor de marca. A informação virou prata neutra (sem azul).
  */
 :root {
   color-scheme: light;
 
-  /* superfícies e texto */
-  --bg: #eff3f1;
+  /* superfícies e texto (cinzas neutros; o preto do texto é o de sempre) */
+  --bg: #f4f4f5;
   --panel: #ffffff;
-  --panel-2: #f6f9f7;
-  --panel-3: #ecf1ee;
-  --line: #dde4e0;
-  --line-strong: #c8d1cc;
-  --text: #0d1612;
-  --text-2: #3b4944;
-  --muted: #63716b;
-  --silver: #c4ccc8;
+  --panel-2: #fafafa;
+  --panel-3: #f0f0f2;
+  --line: #e4e4e7;
+  --line-strong: #d4d4d8;
+  --text: #0d1612; /* PRETO PRESERVADO */
+  --text-2: #3f3f46;
+  --muted: #6a6a73;
+  --silver: #d4d4d8;
 
-  /* marca */
-  --primary: #14774f;
-  --primary-hover: #0f6443;
-  --primary-soft: #e3f0e9;
-  --primary-line: #b4d4c3;
+  /* a paleta da marca Vyzzu */
+  --violet: #8b5cf6;
+  --magenta: #d946ef;
+  --lavender: #c4b5fd;
+
+  /* marca (interação) */
+  --primary: #7c3aed;
+  --primary-hover: #6d28d9;
+  --primary-soft: #f5f3ff;
+  --primary-line: #ddd6fe;
   --on-primary: #ffffff;
-  --link: #11693f;
-  --accent: #2fcf92;
-  --grad-primary: linear-gradient(135deg, #168659 0%, #0f5f42 100%);
-  --grad-hero: linear-gradient(135deg, #0a2a1e 0%, #11694a 58%, #1d9a6c 118%);
+  --link: #6d28d9;
+  --accent: #c4b5fd;
+  --grad-primary: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  --grad-hero: linear-gradient(135deg, #0a0f0d 0%, #2a1457 62%, #5b21b6 120%);
+  --grad-bar: linear-gradient(180deg, #8b5cf6 0%, #d946ef 100%);
+  --glow: rgba(139, 92, 246, 0.3);
+  --nav-active: rgba(139, 92, 246, 0.22);
 
-  /* estados */
+  /* estados (o significado não muda: verde = tudo certo, âmbar = atenção, vermelho = erro) */
   --green: #1d9c62;
   --red: #d1465a;
   --orange: #d98a1f;
@@ -46,15 +71,15 @@
   --warn-bg: #fff4de;
   --warn-fg: #86520a;
   --warn-line: #f1d9a6;
-  --info-bg: #e8f0f6;
-  --info-fg: #1f4e6b;
-  --info-line: #bfd3e1;
+  --info-bg: #f2f2f2;
+  --info-fg: #404040;
+  --info-line: #d4d4d4;
 
   /* menu lateral (sempre escuro) */
-  --sidebar: #0a0f0d;
-  --sidebar-2: #101815;
-  --sidebar-text: #c9d1cd;
-  --sidebar-muted: #86938d;
+  --sidebar: #0a0f0d; /* PRETO PRESERVADO */
+  --sidebar-2: #101815; /* PRETO PRESERVADO */
+  --sidebar-text: #d4d4d8;
+  --sidebar-muted: #a1a1aa;
   --sidebar-hover: rgba(255, 255, 255, 0.06);
   --sidebar-line: rgba(255, 255, 255, 0.12);
 
@@ -63,13 +88,13 @@
   --r: 12px;
   --r-lg: 16px;
   --r-xl: 22px;
-  --sh-1: 0 1px 2px rgba(10, 24, 17, 0.06), 0 1px 1px rgba(10, 24, 17, 0.04);
-  --sh-2: 0 6px 18px rgba(10, 24, 17, 0.09);
-  --sh-3: 0 16px 40px rgba(10, 24, 17, 0.2);
+  --sh-1: 0 1px 2px rgba(9, 9, 11, 0.06), 0 1px 1px rgba(9, 9, 11, 0.04);
+  --sh-2: 0 6px 18px rgba(9, 9, 11, 0.09);
+  --sh-3: 0 16px 40px rgba(9, 9, 11, 0.2);
   --shadow: var(--sh-3);
-  --ring: 0 0 0 3px rgba(20, 119, 79, 0.28);
-  --overlay: rgba(6, 12, 9, 0.6);
-  --screen: #0b0f0d;
+  --ring: 0 0 0 3px rgba(139, 92, 246, 0.35);
+  --overlay: rgba(6, 12, 9, 0.6); /* PRETO PRESERVADO */
+  --screen: #0b0f0d; /* PRETO PRESERVADO */
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --appbar-h: 56px;
   --bottombar-h: 62px;
@@ -80,26 +105,29 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: #090e0c;
-  --panel: #111917;
-  --panel-2: #16201c;
-  --panel-3: #1c2924;
-  --line: #243029;
-  --line-strong: #32413a;
-  --text: #e6ece9;
-  --text-2: #bcc8c2;
-  --muted: #92a19a;
-  --silver: #aab4b0;
+  /* as superfícies escuras são as de sempre (PRETO PRESERVADO); só os textos viraram prata/cinza claro */
+  --bg: #090e0c; /* PRETO PRESERVADO */
+  --panel: #111917; /* PRETO PRESERVADO */
+  --panel-2: #16201c; /* PRETO PRESERVADO */
+  --panel-3: #1c2924; /* PRETO PRESERVADO */
+  --line: #243029; /* PRETO PRESERVADO */
+  --line-strong: #32413a; /* PRETO PRESERVADO */
+  --text: #f4f4f5;
+  --text-2: #d4d4d8;
+  --muted: #a1a1aa;
+  --silver: #a1a1aa;
 
-  --primary: #2a8f63;
-  --primary-hover: #34a674;
-  --primary-soft: #14271f;
-  --primary-line: #21503b;
+  --primary: #7c3aed;
+  --primary-hover: #6d28d9;
+  --primary-soft: #1f1638;
+  --primary-line: #3b2a6b;
   --on-primary: #ffffff;
-  --link: #62d19b;
-  --accent: #3fe0a2;
-  --grad-primary: linear-gradient(135deg, #1f8458 0%, #166a49 100%);
-  --grad-hero: linear-gradient(135deg, #0d241b 0%, #135c42 60%, #1d8660 120%);
+  --link: #a78bfa;
+  --accent: #c4b5fd;
+  --grad-primary: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  --grad-hero: linear-gradient(135deg, #060a08 0%, #22114a 60%, #4c1d95 120%);
+  --glow: rgba(139, 92, 246, 0.3);
+  --nav-active: rgba(139, 92, 246, 0.22);
 
   --green: #3cc185;
   --red: #ec6a7d;
@@ -113,21 +141,21 @@
   --warn-bg: #2b2210;
   --warn-fg: #f0c27a;
   --warn-line: #5a4719;
-  --info-bg: #11222c;
-  --info-fg: #8cc3e3;
-  --info-line: #25465a;
+  --info-bg: #1f1f1f;
+  --info-fg: #d4d4d4;
+  --info-line: #404040;
 
-  --sidebar: #060a08;
-  --sidebar-2: #0b110f;
-  --sidebar-text: #c9d1cd;
-  --sidebar-muted: #86938d;
+  --sidebar: #060a08; /* PRETO PRESERVADO */
+  --sidebar-2: #0b110f; /* PRETO PRESERVADO */
+  --sidebar-text: #d4d4d8;
+  --sidebar-muted: #a1a1aa;
 
   --sh-1: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
   --sh-2: 0 8px 22px rgba(0, 0, 0, 0.4);
   --sh-3: 0 18px 44px rgba(0, 0, 0, 0.6);
-  --ring: 0 0 0 3px rgba(63, 224, 162, 0.28);
-  --overlay: rgba(0, 0, 0, 0.72);
-  --screen: #050807;
+  --ring: 0 0 0 3px rgba(167, 139, 250, 0.4);
+  --overlay: rgba(0, 0, 0, 0.72); /* PRETO PRESERVADO */
+  --screen: #050807; /* PRETO PRESERVADO */
 }
 
 * { box-sizing: border-box; }
@@ -188,7 +216,7 @@ input, select, textarea {
 input:hover, select:hover, textarea:hover { border-color: var(--silver); }
 input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.75; }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: var(--ring); }
-select { appearance: none; padding-right: 36px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2363716b' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+select { appearance: none; padding-right: 36px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236a6a73' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
 /* caixas de marcar não ocupam a linha toda; o rótulo fica ao lado (também dentro de .field) */
 input[type="checkbox"], input[type="radio"] { width: auto; padding: 0; accent-color: var(--primary); box-shadow: none; }
 input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible { box-shadow: var(--ring); }
@@ -205,7 +233,7 @@ button:disabled, .disabled { opacity: 0.5; cursor: not-allowed; }
   transition: background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), transform 0.1s var(--ease);
 }
 .primary:active:not(:disabled), .secondary:active:not(:disabled) { transform: translateY(1px); }
-.primary { background: var(--grad-primary); color: var(--on-primary); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18) inset, 0 4px 12px rgba(15, 95, 66, 0.28); }
+.primary { background: var(--grad-primary); color: var(--on-primary); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18) inset, 0 2px 8px rgba(9, 9, 11, 0.22); }
 .primary:hover:not(:disabled) { filter: brightness(0.92); text-decoration: none; }
 .secondary { background: var(--panel); color: var(--text); border-color: var(--line-strong); box-shadow: var(--sh-1); }
 .secondary:hover:not(:disabled) { background: var(--panel-2); border-color: var(--silver); text-decoration: none; }

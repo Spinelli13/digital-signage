@@ -3,11 +3,11 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { ApiService } from '../core/api.service';
-import { BRAND } from '../core/brand';
 import { TPipe, tr, trServer } from '../core/i18n';
 import { PublicQueue, PublicTicket } from '../core/models';
 import { IconComponent } from '../shared/icon';
 import { PreferencesBar } from '../shared/preferences';
+import { WordmarkComponent } from '../shared/wordmark';
 
 const STORAGE_PREFIX = 'smartplay.myticket.';
 const POLL_MS = 5000;
@@ -75,7 +75,7 @@ const LAYOUT_CSS = `
   :host { display: block; min-height: 100vh; background: var(--bg); color: var(--text); }
   .prefs-corner { position: absolute; top: calc(12px + env(safe-area-inset-top)); right: 12px; }
   .wrap { max-width: 460px; margin: 0 auto; padding: calc(28px + env(safe-area-inset-top)) 16px 40px; display: flex; flex-direction: column; gap: 16px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--muted); }
+  .brand { display: flex; align-items: center; gap: 10px; font-size: 20px; color: var(--text-2); }
   .brand img { border-radius: 10px; }
   h1 { margin: 0; font-size: 22px; }
   .card { text-align: center; padding: 22px 18px; }
@@ -94,11 +94,11 @@ const LAYOUT_CSS = `
 /** A página aberta pelo QR Code da fila: o nome da fila, quantos esperam e o botão para pegar a senha. */
 @Component({
   selector: 'app-queue-take',
-  imports: [FormsModule, TPipe, IconComponent, PreferencesBar],
+  imports: [FormsModule, TPipe, IconComponent, PreferencesBar, WordmarkComponent],
   template: `
     <div class="prefs-corner"><app-preferences /></div>
     <main class="wrap">
-      <div class="brand"><img src="favicon.svg" alt="" width="32" height="32" /><span>{{ brand }}</span></div>
+      <div class="brand"><img src="favicon.svg" alt="" width="32" height="32" /><app-wordmark /></div>
       @if (queue(); as info) {
         <section class="card">
           <h1>{{ info.name }}</h1>
@@ -132,7 +132,6 @@ export class QueueTakePage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  readonly brand = BRAND;
   readonly queue = signal<PublicQueue | null>(null);
   readonly problem = signal<string | null>(null);
   readonly busy = signal(false);
@@ -183,11 +182,11 @@ export class QueueTakePage implements OnInit {
 /** A página da senha: a posição na fila, o aviso de "é a sua vez" e a opção de sair da fila. Se atualiza sozinha. */
 @Component({
   selector: 'app-ticket-status',
-  imports: [TPipe, IconComponent, PreferencesBar],
+  imports: [TPipe, IconComponent, PreferencesBar, WordmarkComponent],
   template: `
     <div class="prefs-corner"><app-preferences /></div>
     <main class="wrap">
-      <div class="brand"><img src="favicon.svg" alt="" width="32" height="32" /><span>{{ brand }}</span></div>
+      <div class="brand"><img src="favicon.svg" alt="" width="32" height="32" /><app-wordmark /></div>
       @if (ticket(); as t) {
         <section class="card" [class.call]="t.status === 'CALLING'" aria-live="polite">
           <span class="muted">{{ t.queueName }}</span>
@@ -234,7 +233,6 @@ export class TicketStatusPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly brand = BRAND;
   readonly ticket = signal<PublicTicket | null>(null);
   readonly problem = signal<string | null>(null);
   readonly busy = signal(false);

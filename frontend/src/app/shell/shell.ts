@@ -6,7 +6,6 @@ import { filter, map } from 'rxjs';
 
 import { ApiService } from '../core/api.service';
 import { AttentionService } from '../core/attention.service';
-import { BRAND } from '../core/brand';
 import { AuthService } from '../core/auth.service';
 import { TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
@@ -14,18 +13,19 @@ import { daysUntil, planText, roleLabel, tenantStatusLabel, TENANT_STATUS_TONES 
 import { IconComponent } from '../shared/icon';
 import { PreferencesBar } from '../shared/preferences';
 import { PillComponent } from '../shared/ui';
-import { UserMenuComponent } from '../shared/user-menu';
+import { UserMenuComponent } from '../shared/user-menu';import { WordmarkComponent } from '../shared/wordmark';
+
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, TPipe, PreferencesBar, IconComponent, PillComponent, UserMenuComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, TPipe, PreferencesBar, IconComponent, PillComponent, UserMenuComponent, WordmarkComponent],
   template: `
     <!-- celular: barra do topo e menu lateral que abre por cima -->
     <header class="appbar">
       <button type="button" class="icon-btn menu-btn" data-testid="menu-button" (click)="toggleMenu()"
         [attr.aria-label]="'Menu' | t" [attr.aria-expanded]="menuOpen()"><app-icon name="menu" [size]="22" /></button>
       <img class="logo" src="favicon.svg" alt="" width="30" height="30" />
-      <span class="title">{{ brand }}</span>
+      <app-wordmark class="title" />
       <span class="grow"></span>
       <app-user-menu variant="bar" (account)="openAccount()" (logout)="logout()" />
     </header>
@@ -34,7 +34,7 @@ import { UserMenuComponent } from '../shared/user-menu';
     }
 
     <aside class="side" [class.open]="menuOpen()">
-      <div class="brand"><img class="logo" src="favicon.svg" alt="" width="34" height="34" /><span>{{ brand }}</span></div>
+      <div class="brand"><img class="logo" src="favicon.svg" alt="" width="34" height="34" /><app-wordmark /></div>
       @if (auth.me(); as me) {
         <div class="tenant" data-testid="tenant">
           <span class="tenant-icon"><app-icon name="building" [size]="18" /></span>
@@ -203,11 +203,11 @@ import { UserMenuComponent } from '../shared/user-menu';
       background: linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-2) 100%); color: #fff; padding: 20px 14px 16px; display: flex; flex-direction: column; gap: 16px;
       position: sticky; top: 0; height: 100vh; overflow-y: auto; border-right: 1px solid var(--sidebar-line); scrollbar-width: thin;
     }
-    .brand { display: flex; align-items: center; gap: 11px; padding: 0 8px; font-weight: 700; font-size: 17px; letter-spacing: -0.01em; }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 8px; font-size: 20px; --wm-accent: var(--lavender); }
     .logo { display: block; border-radius: 9px; }
 
     .tenant { display: flex; align-items: center; gap: 11px; padding: 11px 12px; border-radius: var(--r); background: var(--sidebar-hover); border: 1px solid var(--sidebar-line); }
-    .tenant-icon { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; color: var(--accent); background: rgba(47, 207, 146, 0.12); }
+    .tenant-icon { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; color: var(--accent); background: color-mix(in srgb, var(--violet) 18%, transparent); }
     .tenant-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
     .tenant-text b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .tenant-pills { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -222,9 +222,9 @@ import { UserMenuComponent } from '../shared/user-menu';
     nav a.hidden { display: none; }
     nav a:hover { background: var(--sidebar-hover); color: #fff; text-decoration: none; }
     nav a:hover app-icon { color: #fff; }
-    nav a.active { background: linear-gradient(90deg, rgba(47, 207, 146, 0.2), rgba(47, 207, 146, 0.06)); color: #fff; font-weight: 600; }
+    nav a.active { background: linear-gradient(90deg, var(--nav-active), color-mix(in srgb, var(--violet) 5%, transparent)); color: #fff; font-weight: 600; }
     nav a.active app-icon { color: var(--accent); }
-    nav a.active::before { content: ''; position: absolute; left: -14px; top: 9px; bottom: 9px; width: 4px; border-radius: 0 4px 4px 0; background: var(--accent); }
+    nav a.active::before { content: ''; position: absolute; left: -14px; top: 9px; bottom: 9px; width: 4px; border-radius: 0 4px 4px 0; background: var(--grad-bar); }
     .badge { margin-left: auto; min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--red); color: #fff; font-size: 12px; font-weight: 700; text-align: center; line-height: 1.5; }
     .section { margin: 14px 12px 4px; color: var(--sidebar-muted); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
     .foot { margin-top: auto; padding-top: 8px; }
@@ -259,7 +259,7 @@ import { UserMenuComponent } from '../shared/user-menu';
         height: calc(var(--appbar-h) + env(safe-area-inset-top)); padding: env(safe-area-inset-top) 12px 0;
         background: var(--sidebar); color: #fff; border-bottom: 1px solid var(--sidebar-line);
       }
-      .appbar .title { font-weight: 700; font-size: 16px; }
+      .appbar .title { font-size: 19px; --wm-accent: var(--lavender); }
       .appbar .grow { flex: 1; }
       .menu-btn { color: #fff; border: 1px solid var(--sidebar-line); }
       .menu-btn:hover:not(:disabled) { background: var(--sidebar-hover); color: #fff; }
@@ -294,7 +294,7 @@ import { UserMenuComponent } from '../shared/user-menu';
       .bottombar a.active { color: #fff; font-weight: 600; }
       .bottombar a.active::before { display: none; }
       .bottombar .ico { position: relative; display: grid; place-items: center; width: 52px; height: 30px; border-radius: 999px; transition: background 0.18s var(--ease); }
-      .bottombar a.active .ico { background: rgba(47, 207, 146, 0.22); color: var(--accent); }
+      .bottombar a.active .ico { background: var(--nav-active); color: var(--accent); }
       .bottombar a > span:last-child, .bottombar button > span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .dotbadge { position: absolute; top: 3px; right: 14px; width: 9px; height: 9px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 2px var(--sidebar); }
     }
@@ -306,7 +306,6 @@ export class Shell {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
 
-  protected readonly brand = BRAND;
   protected readonly planName = planText;
 
   readonly notice = new Notice();

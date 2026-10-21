@@ -67,7 +67,6 @@ export const WIDGETS: Record<string, string> = {
   // cores
   Escuro: 'Dark',
   Claro: 'Light',
-  'Verde Smartplay': 'Smartplay green',
   Verde: 'Green',
   Azul: 'Blue',
   Amarelo: 'Yellow',

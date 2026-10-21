@@ -54,8 +54,8 @@ const EMPTY: Summary = {
           <svg viewBox="0 0 120 120">
             <defs>
               <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#7cf0c4" />
-                <stop offset="1" stop-color="#2fcf92" />
+                <stop offset="0" stop-color="#c4b5fd" />
+                <stop offset="1" stop-color="#8b5cf6" />
               </linearGradient>
             </defs>
             <circle class="track" cx="60" cy="60" r="50" />
@@ -161,7 +161,7 @@ const EMPTY: Summary = {
       position: relative; overflow: hidden; display: flex; align-items: center; gap: 32px; padding: 28px 32px; margin-bottom: 18px;
       border-radius: var(--r-xl); color: #fff; background: var(--grad-hero); box-shadow: var(--sh-2);
     }
-    .hero::after { content: ''; position: absolute; right: -80px; top: -120px; width: 380px; height: 380px; border-radius: 50%; background: radial-gradient(circle, rgba(63, 224, 162, 0.3), transparent 65%); pointer-events: none; }
+    .hero::after { content: ''; position: absolute; right: -80px; top: -120px; width: 380px; height: 380px; border-radius: 50%; background: radial-gradient(circle, var(--glow), transparent 65%); pointer-events: none; }
     .ring { position: relative; flex: none; width: 140px; height: 140px; }
     .ring svg { width: 100%; height: 100%; }
     .ring .track { fill: none; stroke: rgba(255, 255, 255, 0.16); stroke-width: 12; }
@@ -217,7 +217,7 @@ const EMPTY: Summary = {
     .ob-head { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
     .ob-head h2 { margin: 0; }
     .ob-head p { color: var(--muted); }
-    .ob-icon { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 17px; color: #fff; background: var(--grad-primary); box-shadow: 0 6px 16px rgba(15, 95, 66, 0.3); }
+    .ob-icon { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 17px; color: #fff; background: var(--grad-primary); box-shadow: var(--sh-2); }
     .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
     .steps li { display: flex; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel-2); }
     .steps .n { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; font-weight: 700; color: var(--primary); background: var(--primary-soft); border: 1px solid var(--primary-line); }

@@ -20,7 +20,7 @@ public class JdkWidgetHttp implements WidgetHttp {
 
 	private static final int MAX_BYTES = 3 * 1024 * 1024;
 	private static final int MAX_REDIRECTS = 3;
-	private static final String USER_AGENT = "Smartplay/1.0 (digital signage; +https://signage-painel.pages.dev)";
+	private static final String USER_AGENT = "Vyzzu/1.0 (digital signage; +https://signage-painel.pages.dev)";
 
 	private final HttpClient client = HttpClient.newBuilder()
 			.connectTimeout(Duration.ofSeconds(5))

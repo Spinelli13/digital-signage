@@ -2,10 +2,10 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <title>Smartplay</title>
+  <title>Vyzzu</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#1a6a49">
+  <meta name="theme-color" content="#6d28d9">
   <meta name="color-scheme" content="light dark">
   <!-- Aplica o tema e o idioma escolhidos ANTES do Angular carregar: sem piscar branco no modo escuro. -->
   <script>
@@ -17,7 +17,7 @@
         var lang = localStorage.getItem('signage.lang');
         document.documentElement.lang = lang === 'en' ? 'en' : 'pt-BR';
         var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute('content', dark ? '#050807' : '#1a6a49');
+        if (meta) meta.setAttribute('content', dark ? '#050807' : '#6d28d9');
       } catch (e) {}
     })();
   </script>

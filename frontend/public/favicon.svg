@@ -1,19 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Smartplay">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1f7a54"/>
-      <stop offset="1" stop-color="#0b2e20"/>
-    </linearGradient>
-    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#f4f6f5"/>
-      <stop offset="1" stop-color="#c4ccc8"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
-  <!-- tela prata (sólida: mantém contraste mesmo em 16 px) -->
-  <rect x="8" y="11" width="48" height="33" rx="7" fill="url(#screen)"/>
-  <!-- play -->
-  <path d="M26.5 19.5 L26.5 35.5 L41.5 27.5 Z" fill="#14583b" stroke="#14583b" stroke-width="2.4" stroke-linejoin="round"/>
-  <!-- suporte -->
-  <path d="M32 44 V51 M20 51.5 H44" fill="none" stroke="#c4ccc8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Vyzzu">
+  <!-- GERADO por scripts/gerar-icones-marca.cjs: o V do Vyzzu, varrido por linhas de tela (faixas de LED, da lavanda ao magenta), sobre o preto da marca -->
+  <rect width="64" height="64" rx="15" fill="#0a0f0d"/>
+  <polygon points="8.48,11 21.5,11 24.76,17.52 12.13,17.52" fill="#c4b5fd"/>
+  <polygon points="42.5,11 55.52,11 51.87,17.52 39.24,17.52" fill="#c4b5fd"/>
+  <polygon points="13.45,19.87 25.94,19.87 29.19,26.39 17.1,26.39" fill="#a78bfa"/>
+  <polygon points="38.06,19.87 50.55,19.87 46.9,26.39 34.81,26.39" fill="#a78bfa"/>
+  <polygon points="18.41,28.74 30.37,28.74 32,32 33.63,28.74 45.59,28.74 41.93,35.26 22.07,35.26" fill="#8b5cf6"/>
+  <polygon points="23.38,37.61 40.62,37.61 36.97,44.13 27.03,44.13" fill="#a855f7"/>
+  <polygon points="28.35,46.48 35.65,46.48 32,53 32,53" fill="#d946ef"/>
 </svg>

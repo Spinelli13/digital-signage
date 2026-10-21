@@ -181,7 +181,7 @@ function uniqueName(zones: ZoneDraft[], base: string): string {
 }
 
 /** Cores das zonas na pré-visualização (a principal é sempre a primeira cor). */
-export const ZONE_COLORS = ['#238c60', '#8f9b96', '#e89a32', '#9b59d0', '#e05263', '#17a2b8'];
+export const ZONE_COLORS = ['#8b5cf6', '#a1a1aa', '#e89a32', '#d946ef', '#e05263', '#c4b5fd'];
 
 /** Nome e descrição dos modelos vêm do servidor (em português): as conhecidas aparecem traduzidas. */
 export const templateText = (text: string): string => trServer(text);

@@ -90,7 +90,7 @@ Confirme: `http://localhost:8080/api/v1/health` deve responder `{"status":"ok"}`
 Em um PowerShell **como administrador** (a rede precisa estar como "Particular"):
 
 ```powershell
-New-NetFirewallRule -DisplayName "Smartplay 8080" -Direction Inbound -Protocol TCP -LocalPort 8080 -Action Allow -Profile Private
+New-NetFirewallRule -DisplayName "Vyzzu 8080" -Direction Inbound -Protocol TCP -LocalPort 8080 -Action Allow -Profile Private
 ```
 
 Descubra o IP do PC com `ipconfig` (campo "Endereço IPv4"; hoje é `192.168.0.117`, mas pode mudar — se mudar, refaça o passo 4).

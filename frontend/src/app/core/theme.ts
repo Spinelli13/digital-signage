@@ -6,7 +6,7 @@ export type ThemeMode = 'light' | 'dark' | 'system';
 export type AppliedTheme = 'light' | 'dark';
 
 export const THEME_KEY = 'signage.theme';
-const THEME_COLORS: Record<AppliedTheme, string> = { light: '#1a6a49', dark: '#050807' };
+const THEME_COLORS: Record<AppliedTheme, string> = { light: '#6d28d9', dark: '#050807' };
 
 /**
  * Tema claro/escuro. A escolha fica no aparelho (localStorage); "sistema" acompanha o modo do celular ou do

@@ -100,7 +100,7 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
     .kind { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); }
     .danger-ghost { color: var(--err-fg); }
     .danger-ghost:hover { background: var(--err-bg); }
-    .add { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; background: rgba(8, 40, 28, 0.55); opacity: 0; transition: opacity 0.15s; }
+    .add { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; background: rgba(9, 14, 12, 0.6); opacity: 0; transition: opacity 0.15s; }
     .pick:hover .add, .pick:focus-visible .add { opacity: 1; }
     .layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 18px; align-items: start; }
     .row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }

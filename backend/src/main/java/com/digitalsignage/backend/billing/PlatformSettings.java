@@ -20,7 +20,7 @@ public class PlatformSettings {
 	private Short id = ID;
 
 	@Column(name = "company_name", nullable = false)
-	private String companyName = "Smartplay";
+	private String companyName = "Vyzzu";
 
 	@Column(name = "payment_instructions")
 	private String paymentInstructions;

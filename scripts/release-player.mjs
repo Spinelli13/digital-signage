@@ -282,29 +282,30 @@ function page(title, body) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(title)} — Smartplay</title>
-<meta name="theme-color" content="#1a6a49">
+<title>${escapeHtml(title)} — Vyzzu</title>
+<meta name="theme-color" content="#6d28d9">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
-  :root { --blue:#14774f; --text:#0d1612; --muted:#63716b; --line:#dde4e0; --bg:#eff3f1; }
+  :root { --brand:#6d28d9; --text:#0d1612; --muted:#6a6a73; --line:#e4e4e7; --bg:#f4f4f5; }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; }
   main { max-width:760px; margin:0 auto; padding:28px 16px 60px; }
   h1,h2,h3 { line-height:1.25; } h2 { margin-top:2em; border-bottom:1px solid var(--line); padding-bottom:.3em; }
-  a { color:var(--blue); }
+  a { color:var(--brand); }
   .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:22px; margin:18px 0; }
-  .btn { display:inline-block; background:var(--blue); color:#fff; text-decoration:none; font-weight:600; padding:13px 22px; border-radius:11px; }
-  .muted { color:var(--muted); font-size:14px; } code { background:#e3f0e9; padding:1px 6px; border-radius:6px; font-size:.92em; }
+  .btn { display:inline-block; background:var(--brand); color:#fff; text-decoration:none; font-weight:600; padding:13px 22px; border-radius:11px; }
+  .muted { color:var(--muted); font-size:14px; } code { background:#f5f3ff; padding:1px 6px; border-radius:6px; font-size:.92em; }
   table { width:100%; border-collapse:collapse; background:#fff; } th,td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; font-size:15px; }
   th { color:var(--muted); font-size:13px; }
   .brand { display:flex; align-items:center; gap:10px; font-weight:700; margin-bottom:6px; } .brand img { width:34px; height:34px; border-radius:9px; }
   .sha { font-family:ui-monospace,Consolas,monospace; font-size:12px; word-break:break-all; color:var(--muted); }
   .manuals a { font-weight:600; }
+  .ic { width:20px; height:20px; vertical-align:-4px; margin-right:4px; fill:none; stroke:var(--brand); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
   @media (max-width:600px) { th:nth-child(4), td:nth-child(4) { display:none; } }
 </style>
 </head>
 <body><main>
-<div class="brand"><img src="favicon.svg" alt=""> Smartplay</div>
+<div class="brand"><img src="favicon.svg" alt=""> Vyzzu</div>
 ${body}
 </main></body></html>
 `;
@@ -333,8 +334,8 @@ function indexPage(list) {
 </div>
 <div class="card manuals">
   <h3 style="margin-top:0">Manuais (PDF)</h3>
-  <p>📘 <a href="manual-instalacao-tv.pdf"><b>Manual de instalação na TV</b></a> <span class="muted">· TCL Android TV e Fire TV Stick, passo a passo ilustrado (<a href="manual-instalacao-tv.html">versão para tela</a>)</span></p>
-  <p>📗 <a href="manual-painel.pdf"><b>Manual do painel</b></a> <span class="muted">· mídias, playlists e dispositivos (<a href="manual-painel.html">versão para tela</a>)</span></p>
+  <p><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v16"/><path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"/></svg> <a href="manual-instalacao-tv.pdf"><b>Manual de instalação na TV</b></a> <span class="muted">· TCL Android TV e Fire TV Stick, passo a passo ilustrado (<a href="manual-instalacao-tv.html">versão para tela</a>)</span></p>
+  <p><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v16"/><path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"/></svg> <a href="manual-painel.pdf"><b>Manual do painel</b></a> <span class="muted">· mídias, playlists e dispositivos (<a href="manual-painel.html">versão para tela</a>)</span></p>
 </div>
 <h2>Todas as versões</h2>
 <table><tr><th>Versão</th><th>Data</th><th>Tamanho</th><th>Novidades</th><th></th></tr>

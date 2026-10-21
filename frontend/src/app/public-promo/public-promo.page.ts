@@ -3,11 +3,11 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { ApiService } from '../core/api.service';
-import { BRAND } from '../core/brand';
 import { FDatePipe, TPipe } from '../core/i18n';
 import { PublicPromoCoupon, PublicPromotion } from '../core/models';
 import { IconComponent } from '../shared/icon';
 import { PreferencesBar } from '../shared/preferences';
+import { WordmarkComponent } from '../shared/wordmark';
 import { deviceId, reasonOf } from '../public-ticket/public-ticket.page';
 
 const STORAGE_PREFIX = 'smartplay.mycoupon.';
@@ -38,7 +38,7 @@ const PROMO_CSS = `
   :host { display: block; min-height: 100vh; background: var(--bg); color: var(--text); }
   .prefs-corner { position: absolute; top: calc(12px + env(safe-area-inset-top)); right: 12px; }
   .wrap { max-width: 460px; margin: 0 auto; padding: calc(28px + env(safe-area-inset-top)) 16px 40px; display: flex; flex-direction: column; gap: 16px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--muted); }
+  .brand { display: flex; align-items: center; gap: 10px; font-size: 20px; color: var(--text-2); }
   .brand img { border-radius: 10px; }
   h1 { margin: 0; font-size: 22px; }
   .card { text-align: center; padding: 24px 18px; }
@@ -52,11 +52,11 @@ const PROMO_CSS = `
 /** A página aberta pelo QR Code da TV: a promoção e o botão para pegar o cupom. */
 @Component({
   selector: 'app-promo-claim',
-  imports: [FormsModule, TPipe, FDatePipe, IconComponent, PreferencesBar],
+  imports: [FormsModule, TPipe, FDatePipe, IconComponent, PreferencesBar, WordmarkComponent],
   template: `
     <div class="prefs-corner"><app-preferences /></div>
     <main class="wrap">
-      <div class="brand"><img src="favicon.svg" alt="" width="32" height="32" /><span>{{ brand }}</span></div>
+      <div class="brand"><img src="favicon.svg" alt="" width="32" height="32" /><app-wordmark /></div>
       @if (promotion(); as info) {
         <section class="card">
           <app-icon name="ticket" [size]="34" />
@@ -98,7 +98,6 @@ export class PromoClaimPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  readonly brand = BRAND;
   readonly promotion = signal<PublicPromotion | null>(null);
   readonly problem = signal<string | null>(null);
   readonly busy = signal(false);
@@ -147,11 +146,11 @@ export class PromoClaimPage implements OnInit {
 /** A página do cupom: o código para mostrar no caixa e se ele ainda vale. Se atualiza sozinha enquanto vale. */
 @Component({
   selector: 'app-my-coupon',
-  imports: [TPipe, FDatePipe, IconComponent, PreferencesBar],
+  imports: [TPipe, FDatePipe, IconComponent, PreferencesBar, WordmarkComponent],
   template: `
     <div class="prefs-corner"><app-preferences /></div>
     <main class="wrap">
-      <div class="brand"><img src="favicon.svg" alt="" width="32" height="32" /><span>{{ brand }}</span></div>
+      <div class="brand"><img src="favicon.svg" alt="" width="32" height="32" /><app-wordmark /></div>
       @if (coupon(); as c) {
         <section class="card" [class.done]="c.status !== 'ISSUED'" aria-live="polite">
           <span class="muted">{{ c.promotionName }}</span>
@@ -194,7 +193,6 @@ export class MyCouponPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly brand = BRAND;
   readonly coupon = signal<PublicPromoCoupon | null>(null);
   readonly problem = signal<string | null>(null);
 

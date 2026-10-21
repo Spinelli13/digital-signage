@@ -24,7 +24,7 @@ const KIND_ICON: Record<string, IconName> = { IMAGE: 'image', VIDEO: 'film', WEB
     <div class="intro">
       <app-icon name="shield-check" [size]="20" />
       <p>
-        {{ 'Cada exibição é medida pela própria TV: hora de início e duração em milissegundos. Os registros formam uma corrente de hashes (cada um leva o hash do anterior): apagar ou alterar um deles é detectável. Exige o Smartplay 0.9 ou mais novo na TV.' | t }}
+        {{ 'Cada exibição é medida pela própria TV: hora de início e duração em milissegundos. Os registros formam uma corrente de hashes (cada um leva o hash do anterior): apagar ou alterar um deles é detectável. Exige o Vyzzu 0.9 ou mais novo na TV.' | t }}
       </p>
     </div>
 

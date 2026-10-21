@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Smartplay</string>
-    <string name="brand_title">SMARTPLAY</string>
+    <string name="app_name">Vyzzu</string>
+    <string name="brand_title">VYZZU</string>
 
     <string name="starting_title">Iniciando…</string>
     <string name="starting_body">Conectando ao servidor.</string>

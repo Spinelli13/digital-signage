@@ -155,7 +155,7 @@ public class AlertController {
 			throw new IllegalArgumentException("Configure o endereço do webhook antes de testar");
 		}
 		WebhookNotifier.Result result = webhook.send(url,
-				"✅ Teste do Smartplay: os alertas chegarão aqui.",
+				"✅ Teste do Vyzzu: os alertas chegarão aqui.",
 				Map.of("event", "test", "at", clock.instant().toString()));
 		return new TestResult(result.ok(), result.status(), result.error());
 	}

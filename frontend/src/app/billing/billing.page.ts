@@ -200,7 +200,7 @@ import {
     .sec app-icon { color: var(--primary); }
     :host-context(:root[data-theme='dark']) .sec app-icon { color: var(--link); }
     .plan { position: relative; overflow: hidden; background: var(--grad-hero); color: #fff; border: 0; padding: 24px; }
-    .plan::after { content: ''; position: absolute; width: 360px; height: 360px; right: -120px; top: -160px; border-radius: 50%; background: radial-gradient(circle, rgba(63, 224, 162, 0.28), transparent 65%); pointer-events: none; }
+    .plan::after { content: ''; position: absolute; width: 360px; height: 360px; right: -120px; top: -160px; border-radius: 50%; background: radial-gradient(circle, var(--glow), transparent 65%); pointer-events: none; }
     .plan > * { position: relative; z-index: 1; }
     .plan-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
     .eyebrow { display: inline-flex; align-items: center; gap: 6px; color: rgba(255, 255, 255, 0.78); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; font-size: 11.5px; }

@@ -14,7 +14,7 @@ import { WidgetPreviewComponent } from './widget-preview';
 export const THEMES: { value: string; label: string }[] = [
   { value: 'dark', label: 'Escuro' },
   { value: 'light', label: 'Claro' },
-  { value: 'brand', label: 'Verde Smartplay' },
+  { value: 'brand', label: 'Verde' },
 ];
 export const ACCENTS: { value: string; label: string }[] = [
   { value: 'brand', label: 'Verde' },

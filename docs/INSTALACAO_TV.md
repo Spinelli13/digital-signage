@@ -1,6 +1,6 @@
 # Manual de instalação do Player
 
-Como instalar o aplicativo **Smartplay** em uma **TV TCL com Android TV** e em um **Fire TV Stick**, ativar a TV no painel e deixá-la exibindo as propagandas.
+Como instalar o aplicativo **Vyzzu** em uma **TV TCL com Android TV** e em um **Fire TV Stick**, ativar a TV no painel e deixá-la exibindo as propagandas.
 
 > **Importante:** o Player não vem da Google Play nem da Amazon Appstore. Ele é um arquivo **APK** que você baixa do nosso site e instala direto na TV. Depois de instalado, ele se atualiza sozinho pelo mesmo site (veja a [seção 6](#6-atualizacao-automatica)).
 
@@ -102,12 +102,12 @@ Depois de instalado, o Player precisa de **duas permissões** que o Android não
 **Como liberar pelos menus da TV:**
 
 1. **Configurações → Apps → Acesso especial** (ou "Acesso especial de apps").
-2. Entre em **Instalar apps desconhecidos**, escolha **Smartplay** e ligue.
-3. Volte e entre em **Exibir sobre outros apps**, escolha **Smartplay** e ligue.
+2. Entre em **Instalar apps desconhecidos**, escolha **Vyzzu** e ligue.
+3. Volte e entre em **Exibir sobre outros apps**, escolha **Vyzzu** e ligue.
 
 ![Caminho dos menus na TCL para liberar a instalação de apps pelo Player](manual/img/tcl-fontes-desconhecidas.svg)
 
-![Tela real "Instalar apps desconhecidos" do Android TV, com o Smartplay permitido](manual/img/tv-instalar-apps-desconhecidos.png)
+![Tela real "Instalar apps desconhecidos" do Android TV, com o Vyzzu permitido](manual/img/tv-instalar-apps-desconhecidos.png)
 
 ![Caminho dos menus na TCL para liberar "Exibir sobre outros apps"](manual/img/tcl-sobre-outros-apps.svg)
 
@@ -181,7 +181,7 @@ O passo a passo de mídias e playlists, com mais detalhes, está no **Manual do 
 
 > **Na primeira vez do dia, o painel pode demorar até 1 minuto** para responder (o servidor "acorda"). É normal no plano gratuito. **Isso nunca interrompe a TV:** ela continua exibindo o que já baixou.
 
-### 2.5.1 O Smartplay reabre sozinho
+### 2.5.1 O Vyzzu reabre sozinho
 
 O Player foi feito para ficar o dia inteiro na tela e **volta sozinho** nestas situações:
 
@@ -256,7 +256,7 @@ Faça nesta ordem e marque:
 
 O Fire TV **não coloca** apps de fora da loja na tela inicial. Para abrir:
 
-*Configurações → Aplicativos → Gerenciar aplicativos instalados → Smartplay → Iniciar aplicativo.*
+*Configurações → Aplicativos → Gerenciar aplicativos instalados → Vyzzu → Iniciar aplicativo.*
 
 ![Caminho dos menus no Fire TV Stick para abrir o Player depois de instalar](manual/img/firetv-abrir-app.svg)
 
@@ -264,7 +264,7 @@ Dica: nessa mesma tela, depois de abrir o app uma vez, ele passa a aparecer no f
 
 ### 3.4 Permissão para atualizar sozinho
 
-Volte em *Configurações → Meu Fire TV → Opções do desenvolvedor → Instalar apps desconhecidos* e ligue também **Smartplay**. Sem isso o Player não consegue se atualizar.
+Volte em *Configurações → Meu Fire TV → Opções do desenvolvedor → Instalar apps desconhecidos* e ligue também **Vyzzu**. Sem isso o Player não consegue se atualizar.
 
 <a id="35-abrir-sozinho-ao-ligar"></a>
 
@@ -375,7 +375,7 @@ Ela baixa o arquivo, **confere o SHA‑256** e entrega ao instalador do Android.
 
 | Problema | O que fazer |
 |---|---|
-| **"App não instalado"** / **"Conflito com o pacote existente"** | Já existe uma versão assinada com outra chave (por exemplo, uma versão de teste). **Desinstale o Player** (*Configurações → Apps → Smartplay → Desinstalar*) e instale de novo. |
+| **"App não instalado"** / **"Conflito com o pacote existente"** | Já existe uma versão assinada com outra chave (por exemplo, uma versão de teste). **Desinstale o Player** (*Configurações → Apps → Vyzzu → Desinstalar*) e instale de novo. |
 | A TV não deixa instalar | Falta liberar **"Fontes desconhecidas / Instalar apps desconhecidos"** para o Downloader (seção 2.2 passo 2 ou 3.2 passo 2). |
 | **"Sem conexão com o servidor"** | Confira a internet da TV. Se o servidor estava "dormindo", espere ~1 minuto: o Player tenta de novo sozinho. Aperte **OK** no controle para conferir/alterar o endereço do servidor. |
 | O **código de ativação** não aparece | A tela diz "Iniciando…" ou "Sem conexão": é problema de internet. Aguarde e confira o Wi‑Fi. |
@@ -394,7 +394,7 @@ Ela baixa o arquivo, **confere o SHA‑256** e entrega ao instalador do Android.
 ## 8. Desinstalar ou redefinir
 
 - **Redefinir** (a TV volta a pedir um código de ativação): `adb shell am start -n com.digitalsignage.player/.MainActivity --ez reset true`. No painel, apague o dispositivo antigo em *Dispositivos → Excluir*.
-- **Desinstalar:** *Configurações → Apps → Smartplay → Desinstalar* (TCL), ou *Gerenciar aplicativos instalados → Smartplay → Desinstalar* (Fire TV).
+- **Desinstalar:** *Configurações → Apps → Vyzzu → Desinstalar* (TCL), ou *Gerenciar aplicativos instalados → Vyzzu → Desinstalar* (Fire TV).
 - Se você **excluir o dispositivo no painel**, a TV esquece o conteúdo e volta sozinha a pedir um novo código.
 
 ---

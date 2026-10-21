@@ -1,6 +1,6 @@
-# Integrações do Smartplay: o que vale construir, em que ordem e por quê
+# Integrações do Vyzzu: o que vale construir, em que ordem e por quê
 
-Documento de análise (item 8 do pedido da madrugada de 21/10/2026). Não promete nada de terceiros: **preços, limites e termos de serviço de outras empresas mudam e precisam ser conferidos na hora de construir** (marcados como "a confirmar"). O que está dito sobre o Smartplay foi conferido no código.
+Documento de análise (item 8 do pedido da madrugada de 21/10/2026). Não promete nada de terceiros: **preços, limites e termos de serviço de outras empresas mudam e precisam ser conferidos na hora de construir** (marcados como "a confirmar"). O que está dito sobre o Vyzzu foi conferido no código.
 
 ## 1. Onde estamos hoje (o que já é integração)
 
@@ -53,7 +53,7 @@ O aviso de alerta já existe. Evoluir para:
 
 - **Formatos prontos** para Slack, Microsoft Teams, Discord, Telegram e e-mail (hoje a carga serve a Slack/Discord).
 - **Mais eventos** (TV voltou, conteúdo trocado, comprovação do dia fechada, vídeo sem som...).
-- **Assinatura** de cada envio (cabeçalho `X-Smartplay-Signature`, HMAC-SHA256 com um segredo por cliente), para quem recebe ter certeza de que veio de nós, e **reenvio** com espera crescente. Os testes já cobrem a política de URL; a assinatura é um complemento.
+- **Assinatura** de cada envio (cabeçalho `X-Vyzzu-Signature`, HMAC-SHA256 com um segredo por cliente), para quem recebe ter certeza de que veio de nós, e **reenvio** com espera crescente. Os testes já cobrem a política de URL; a assinatura é um complemento.
 
 ### 3.5 Comprovação com assinatura por TV, esforço M, valor alto para quem vende espaço de anúncio
 

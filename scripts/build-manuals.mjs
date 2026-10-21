@@ -109,19 +109,19 @@ function figures(html, imageBase) {
 }
 
 const CSS = `
-  :root { --blue:#1a6a49; --navy:#0c1410; --text:#0c1410; --muted:#5a6862; --line:#d6dcd9; --bg:#eef1ef; }
+  :root { --brand:#6d28d9; --navy:#0c1410; --text:#0c1410; --muted:#6a6a73; --line:#e4e4e7; --bg:#f4f4f5; }
   * { box-sizing: border-box; }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { margin:0; color:var(--text); font:10.5pt/1.55 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
-  @page { size: A4; margin: 18mm 16mm 20mm; @bottom-center { content: "Smartplay  ·  " attr(data-title) "  ·  página " counter(page); font: 8pt 'Segoe UI', Arial, sans-serif; color: #8a9690; } }
+  @page { size: A4; margin: 18mm 16mm 20mm; @bottom-center { content: "Vyzzu  ·  " attr(data-title) "  ·  página " counter(page); font: 8pt 'Segoe UI', Arial, sans-serif; color: #8b8b94; } }
   @page :first { margin: 0; @bottom-center { content: none; } }
-  .cover { height: 297mm; page-break-after: always; background: linear-gradient(160deg, #0c1410 0%, #123326 55%, #1a6a49 130%); color:#fff; padding: 34mm 24mm 24mm; display:flex; flex-direction:column; }
+  .cover { height: 297mm; page-break-after: always; background: linear-gradient(160deg, #0c1410 0%, #2a1457 58%, #5b21b6 130%); color:#fff; padding: 34mm 24mm 24mm; display:flex; flex-direction:column; }
   .cover img.logo { width: 30mm; height: 30mm; border-radius: 7mm; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
-  .cover .brand { margin-top: 10mm; letter-spacing: .28em; text-transform: uppercase; font-size: 10pt; color:#9fd8bc; font-weight:700; }
+  .cover .brand { margin-top: 10mm; letter-spacing: .28em; text-transform: uppercase; font-size: 10pt; color:#c4b5fd; font-weight:700; }
   .cover h1 { font-size: 34pt; line-height: 1.1; margin: 8mm 0 4mm; border:0; color:#fff; }
-  .cover .sub { font-size: 16pt; color:#d6e8de; margin:0; }
-  .cover .aud { margin-top: 12mm; font-size: 11.5pt; color:#b7cfc3; max-width: 120mm; }
-  .cover .meta { margin-top:auto; font-size: 10pt; color:#9fb4aa; }
+  .cover .sub { font-size: 16pt; color:#e4e4e7; margin:0; }
+  .cover .aud { margin-top: 12mm; font-size: 11.5pt; color:#d4d4d8; max-width: 120mm; }
+  .cover .meta { margin-top:auto; font-size: 10pt; color:#a1a1aa; }
   .cover .meta b { color:#fff; }
   .toc-page { page-break-after: always; }
   .toc-page h2 { margin-top:0; }
@@ -130,17 +130,17 @@ const CSS = `
   ol.toc li.l2 { font-weight:700; margin-top: 8px; border-bottom-color: var(--line); }
   ol.toc li.l3 { padding-left: 8mm; font-size: 10pt; }
   ol.toc a { color: var(--text); text-decoration:none; }
-  h1 { font-size: 22pt; color: var(--navy); margin: 0 0 6mm; border-bottom: 3px solid var(--blue); padding-bottom: 3mm; }
-  h2 { font-size: 17pt; color: var(--navy); border-bottom: 2px solid var(--blue); padding-bottom: 2mm; margin: 12mm 0 5mm; break-after: avoid; }
+  h1 { font-size: 22pt; color: var(--navy); margin: 0 0 6mm; border-bottom: 3px solid var(--brand); padding-bottom: 3mm; }
+  h2 { font-size: 17pt; color: var(--navy); border-bottom: 2px solid var(--brand); padding-bottom: 2mm; margin: 12mm 0 5mm; break-after: avoid; }
   h2.chapter { break-before: page; margin-top: 0; }
   h2:first-of-type, .toc-page h2 { margin-top: 0; }
-  h3 { font-size: 12.5pt; color: var(--blue); margin: 7mm 0 2mm; break-after: avoid; }
+  h3 { font-size: 12.5pt; color: var(--brand); margin: 7mm 0 2mm; break-after: avoid; }
   p, li { orphans: 3; widows: 3; }
-  a { color: var(--blue); text-decoration: none; }
-  code { font-family: Consolas, 'Courier New', monospace; font-size: .92em; background:#eef1ef; padding: 1px 5px; border-radius: 4px; }
-  pre { background: var(--navy); color:#e6efe9; padding: 3.5mm 4.5mm; border-radius: 6px; overflow:hidden; white-space: pre-wrap; break-inside: avoid; }
+  a { color: var(--brand); text-decoration: none; }
+  code { font-family: Consolas, 'Courier New', monospace; font-size: .92em; background:#f4f4f5; padding: 1px 5px; border-radius: 4px; }
+  pre { background: var(--navy); color:#f4f4f5; padding: 3.5mm 4.5mm; border-radius: 6px; overflow:hidden; white-space: pre-wrap; break-inside: avoid; }
   pre code { background:none; padding:0; color:inherit; }
-  blockquote { margin: 4mm 0; padding: 2.5mm 4.5mm; border-left: 4px solid var(--blue); background:#e1eee7; border-radius: 0 6px 6px 0; break-inside: avoid; }
+  blockquote { margin: 4mm 0; padding: 2.5mm 4.5mm; border-left: 4px solid var(--brand); background:#f5f3ff; border-radius: 0 6px 6px 0; break-inside: avoid; }
   blockquote p { margin: 1mm 0; }
   table { width:100%; border-collapse: collapse; margin: 3mm 0 5mm; font-size: 9.6pt; }
   th, td { text-align:left; vertical-align: top; padding: 2mm 2.5mm; border: 1px solid var(--line); }
@@ -150,7 +150,7 @@ const CSS = `
   ul.contains-task-list, ul:has(input[type=checkbox]) { list-style:none; padding-left: 2mm; }
   input[type=checkbox] { width: 3.4mm; height: 3.4mm; margin-right: 2mm; vertical-align: -0.5mm; }
   figure { margin: 4mm 0 6mm; text-align:center; break-inside: avoid; }
-  figure img { max-width: 100%; max-height: 118mm; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 2px 10px rgba(16,32,74,.12); }
+  figure img { max-width: 100%; max-height: 118mm; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 2px 10px rgba(9,9,11,.12); }
   figure img[src$=".svg"] { border: 0; box-shadow: none; }
   figcaption { margin-top: 2mm; font-size: 9pt; color: var(--muted); font-style: italic; }
   .screen-note { font-size: 9pt; color: var(--muted); }
@@ -167,13 +167,13 @@ function renderHtml(manual, bodyHtml, toc, { imageBase, forPdf }) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(manual.title)} — Smartplay</title>
+<title>${escapeHtml(manual.title)} — Vyzzu</title>
 <style>${CSS}</style>
 </head>
 <body data-title="${escapeHtml(manual.title)}">
 <section class="cover">
   <img class="logo" src="${logoUri}" alt="">
-  <div class="brand">Smartplay</div>
+  <div class="brand">Vyzzu</div>
   <h1>${escapeHtml(manual.title)}</h1>
   <p class="sub">${escapeHtml(manual.subtitle)}</p>
   <p class="aud">${escapeHtml(manual.audience)}</p>
