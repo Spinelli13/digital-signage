@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="brand_background">#07111F</color>
-    <color name="brand_accent">#4F8CFF</color>
-    <color name="brand_text">#EDF4FF</color>
-    <color name="brand_muted">#8FA3C2</color>
+    <color name="brand_background">#070A09</color>
+    <color name="brand_accent">#3CC185</color>
+    <color name="brand_text">#E6EBE9</color>
+    <color name="brand_muted">#93A19B</color>
 </resources>

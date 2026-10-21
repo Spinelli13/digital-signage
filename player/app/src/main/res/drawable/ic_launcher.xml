@@ -9,25 +9,25 @@
 
     <!-- fundo -->
     <path
-        android:fillColor="#3560E0"
+        android:fillColor="#14573B"
         android:pathData="M14,0 H50 A14,14 0 0 1 64,14 V50 A14,14 0 0 1 50,64 H14 A14,14 0 0 1 0,50 V14 A14,14 0 0 1 14,0 Z" />
 
     <!-- tela -->
     <path
-        android:fillColor="#FFFFFF"
+        android:fillColor="#E4E9E7"
         android:pathData="M15,11 H49 A7,7 0 0 1 56,18 V37 A7,7 0 0 1 49,44 H15 A7,7 0 0 1 8,37 V18 A7,7 0 0 1 15,11 Z" />
 
     <!-- play -->
     <path
-        android:fillColor="#2D55D9"
-        android:strokeColor="#2D55D9"
+        android:fillColor="#14573B"
+        android:strokeColor="#14573B"
         android:strokeWidth="2.4"
         android:strokeLineJoin="round"
         android:pathData="M26.5,19.5 L26.5,35.5 L41.5,27.5 Z" />
 
     <!-- suporte -->
     <path
-        android:strokeColor="#FFFFFF"
+        android:strokeColor="#C4CCC8"
         android:strokeWidth="5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"

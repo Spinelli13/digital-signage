@@ -14,7 +14,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = join(root, 'docs', 'manual', 'img');
 mkdirSync(outDir, { recursive: true });
 
-const C = { blue: '#3563e9', navy: '#111a2c', text: '#172033', muted: '#6d7788', line: '#d9dfea', bg: '#f5f7fb', green: '#19a66a', orange: '#e89a32', red: '#d6455d', white: '#ffffff', panel: '#1b2438' };
+const C = { blue: '#1a6a49', navy: '#0c1410', text: '#0c1410', muted: '#5a6862', line: '#d6dcd9', bg: '#eef1ef', green: '#19a66a', orange: '#e89a32', red: '#d6455d', white: '#ffffff', panel: '#16201c' };
 const FONT = "'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -23,7 +23,7 @@ function svg(width, height, body) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" font-family="${FONT}">
 <defs>
   <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${C.blue}"/></marker>
-  <filter id="shadow" x="-10%" y="-10%" width="130%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#10204a" flood-opacity=".18"/></filter>
+  <filter id="shadow" x="-10%" y="-10%" width="130%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#06120d" flood-opacity=".18"/></filter>
 </defs>
 <rect width="${width}" height="${height}" rx="18" fill="${C.bg}"/>
 ${body}
@@ -44,10 +44,10 @@ const badge = (x, y, n) => `<circle cx="${x}" cy="${y}" r="15" fill="${C.blue}"/
 /** Tela de TV em esquema: título, algumas barras cinzas ("outras opções") e a linha destacada com o nome real. */
 function tvScreen(x, y, { w = 236, h = 170, title, target, note, before = 2, after = 1, toggle }) {
   let body = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12" fill="${C.panel}" filter="url(#shadow)"/>`;
-  body += text(x + 16, y + 28, title, { size: 14, weight: 700, fill: '#cfd8ee' });
+  body += text(x + 16, y + 28, title, { size: 14, weight: 700, fill: '#c9d1ce' });
   let ry = y + 46;
   for (let i = 0; i < before; i++) {
-    body += `<rect x="${x + 16}" y="${ry}" width="${w - 32 - (i % 2) * 40}" height="14" rx="7" fill="#33405e"/>`;
+    body += `<rect x="${x + 16}" y="${ry}" width="${w - 32 - (i % 2) * 40}" height="14" rx="7" fill="#33423c"/>`;
     ry += 24;
   }
   body += `<rect x="${x + 8}" y="${ry - 6}" width="${w - 16}" height="32" rx="8" fill="${C.blue}"/>`;
@@ -58,10 +58,10 @@ function tvScreen(x, y, { w = 236, h = 170, title, target, note, before = 2, aft
   ry += 38;
   for (let i = 0; i < after; i++) {
     if (ry + 14 > y + h - (note ? 30 : 12)) break; // não deixa barra sair da tela
-    body += `<rect x="${x + 16}" y="${ry}" width="${w - 32 - (i % 2) * 60}" height="14" rx="7" fill="#33405e"/>`;
+    body += `<rect x="${x + 16}" y="${ry}" width="${w - 32 - (i % 2) * 60}" height="14" rx="7" fill="#33423c"/>`;
     ry += 24;
   }
-  if (note) body += text(x + 16, y + h - 12, note, { size: 12, fill: '#9fb0d6' });
+  if (note) body += text(x + 16, y + h - 12, note, { size: 12, fill: '#aab4b0' });
   return body;
 }
 
@@ -86,11 +86,11 @@ function menuPath(file, heading, steps, footer) {
 const iconTv = (x, y, s = 1, fill = C.navy) =>
   `<g transform="translate(${x} ${y}) scale(${s})"><rect width="120" height="76" rx="8" fill="${fill}"/><rect x="8" y="8" width="104" height="60" rx="4" fill="${C.blue}" opacity=".9"/><rect x="48" y="80" width="24" height="8" fill="${fill}"/><rect x="34" y="88" width="52" height="6" rx="3" fill="${fill}"/></g>`;
 const iconBrowser = (x, y, s = 1) =>
-  `<g transform="translate(${x} ${y}) scale(${s})"><rect width="130" height="92" rx="9" fill="${C.white}" stroke="${C.line}" stroke-width="2"/><path d="M0 18h130" stroke="${C.line}" stroke-width="2"/><circle cx="12" cy="9" r="3.5" fill="${C.red}"/><circle cx="24" cy="9" r="3.5" fill="${C.orange}"/><circle cx="36" cy="9" r="3.5" fill="${C.green}"/><rect x="14" y="32" width="102" height="12" rx="6" fill="#e6ebf5"/><rect x="14" y="52" width="70" height="12" rx="6" fill="#e6ebf5"/><rect x="14" y="72" width="44" height="12" rx="6" fill="${C.blue}"/></g>`;
+  `<g transform="translate(${x} ${y}) scale(${s})"><rect width="130" height="92" rx="9" fill="${C.white}" stroke="${C.line}" stroke-width="2"/><path d="M0 18h130" stroke="${C.line}" stroke-width="2"/><circle cx="12" cy="9" r="3.5" fill="${C.red}"/><circle cx="24" cy="9" r="3.5" fill="${C.orange}"/><circle cx="36" cy="9" r="3.5" fill="${C.green}"/><rect x="14" y="32" width="102" height="12" rx="6" fill="#dfe5e2"/><rect x="14" y="52" width="70" height="12" rx="6" fill="#dfe5e2"/><rect x="14" y="72" width="44" height="12" rx="6" fill="${C.blue}"/></g>`;
 const iconCloud = (x, y, s = 1, fill = C.blue) =>
   `<g transform="translate(${x} ${y}) scale(${s})"><path d="M30 70h72a24 24 0 0 0 2-48 34 34 0 0 0-66-6A28 28 0 0 0 30 70z" fill="${fill}"/></g>`;
 const iconPc = (x, y, s = 1) =>
-  `<g transform="translate(${x} ${y}) scale(${s})"><rect width="120" height="78" rx="7" fill="${C.navy}"/><rect x="7" y="7" width="106" height="64" rx="3" fill="#0b1220"/><text x="14" y="30" font-size="12" fill="#7ee0a6" font-family="Consolas, monospace">PS&gt; adb connect</text><text x="14" y="48" font-size="12" fill="#7ee0a6" font-family="Consolas, monospace">connected to 192…</text><rect x="-8" y="82" width="136" height="8" rx="4" fill="#98a3b8"/></g>`;
+  `<g transform="translate(${x} ${y}) scale(${s})"><rect width="120" height="78" rx="7" fill="${C.navy}"/><rect x="7" y="7" width="106" height="64" rx="3" fill="#070a09"/><text x="14" y="30" font-size="12" fill="#7ee0a6" font-family="Consolas, monospace">PS&gt; adb connect</text><text x="14" y="48" font-size="12" fill="#7ee0a6" font-family="Consolas, monospace">connected to 192…</text><rect x="-8" y="82" width="136" height="8" rx="4" fill="#93a19b"/></g>`;
 
 // =====================================================================================================
 // 1. Fluxo geral (os 4 passos)
@@ -155,15 +155,15 @@ const iconPc = (x, y, s = 1) =>
     let b = `<rect x="${x}" y="70" width="150" height="400" rx="40" fill="${C.navy}" filter="url(#shadow)"/>`;
     b += text(x + 75, 50, title, { size: 17, weight: 700, anchor: 'middle' });
     // anel direcional
-    b += `<circle cx="${x + 75}" cy="170" r="58" fill="#2a3652"/><circle cx="${x + 75}" cy="170" r="24" fill="${C.blue}"/>` + text(x + 75, 176, 'OK', { size: 15, weight: 800, fill: C.white, anchor: 'middle' });
-    b += `<path d="M${x + 75} 120l-10 14h20z M${x + 75} 220l-10 -14h20z M${x + 25} 170l14 -10v20z M${x + 125} 170l-14 -10v20z" fill="#cfd8ee"/>`;
+    b += `<circle cx="${x + 75}" cy="170" r="58" fill="#26322d"/><circle cx="${x + 75}" cy="170" r="24" fill="${C.blue}"/>` + text(x + 75, 176, 'OK', { size: 15, weight: 800, fill: C.white, anchor: 'middle' });
+    b += `<path d="M${x + 75} 120l-10 14h20z M${x + 75} 220l-10 -14h20z M${x + 25} 170l14 -10v20z M${x + 125} 170l-14 -10v20z" fill="#c9d1ce"/>`;
     // botões
-    b += `<circle cx="${x + 40}" cy="270" r="19" fill="#2a3652"/>` + text(x + 40, 276, '←', { size: 20, weight: 700, fill: C.white, anchor: 'middle' });
-    b += `<circle cx="${x + 110}" cy="270" r="19" fill="#2a3652"/>` + `<path d="M${x + 100} 273v-8l10-8 10 8v8z" fill="none" stroke="#fff" stroke-width="2.4"/>`;
-    b += `<circle cx="${x + 40}" cy="320" r="19" fill="#2a3652"/>` + text(x + 40, 326, '≡', { size: 22, weight: 700, fill: C.white, anchor: 'middle' });
-    b += `<circle cx="${x + 110}" cy="320" r="19" fill="#2a3652"/>` + text(x + 110, 325, variant === 'fire' ? '▶❙❙' : '🎤', { size: 12, fill: C.white, anchor: 'middle' });
-    b += `<rect x="${x + 26}" y="368" width="98" height="26" rx="13" fill="#2a3652"/>` + text(x + 75, 386, variant === 'fire' ? 'volume' : 'volume', { size: 12, fill: '#9fb0d6', anchor: 'middle' });
-    b += `<rect x="${x + 26}" y="406" width="98" height="26" rx="13" fill="#2a3652"/>` + text(x + 75, 424, 'canais / apps', { size: 12, fill: '#9fb0d6', anchor: 'middle' });
+    b += `<circle cx="${x + 40}" cy="270" r="19" fill="#26322d"/>` + text(x + 40, 276, '←', { size: 20, weight: 700, fill: C.white, anchor: 'middle' });
+    b += `<circle cx="${x + 110}" cy="270" r="19" fill="#26322d"/>` + `<path d="M${x + 100} 273v-8l10-8 10 8v8z" fill="none" stroke="#fff" stroke-width="2.4"/>`;
+    b += `<circle cx="${x + 40}" cy="320" r="19" fill="#26322d"/>` + text(x + 40, 326, '≡', { size: 22, weight: 700, fill: C.white, anchor: 'middle' });
+    b += `<circle cx="${x + 110}" cy="320" r="19" fill="#26322d"/>` + text(x + 110, 325, variant === 'fire' ? '▶❙❙' : '🎤', { size: 12, fill: C.white, anchor: 'middle' });
+    b += `<rect x="${x + 26}" y="368" width="98" height="26" rx="13" fill="#26322d"/>` + text(x + 75, 386, variant === 'fire' ? 'volume' : 'volume', { size: 12, fill: '#aab4b0', anchor: 'middle' });
+    b += `<rect x="${x + 26}" y="406" width="98" height="26" rx="13" fill="#26322d"/>` + text(x + 75, 424, 'canais / apps', { size: 12, fill: '#aab4b0', anchor: 'middle' });
     return b;
   }
   let body = remote(60, 'Android TV (TCL)', 'android') + remote(660, 'Fire TV Stick', 'fire');
@@ -247,14 +247,14 @@ menuPath('firetv-abrir-app.svg', 'Fire TV Stick · Abrir o Player depois de inst
   const w = 880, h = 360;
   let body = text(40, 44, 'App Downloader · baixando o Player', { size: 22, weight: 700 });
   body += `<rect x="40" y="70" width="520" height="250" rx="14" fill="${C.panel}" filter="url(#shadow)"/>`;
-  body += text(64, 104, 'Downloader', { size: 15, weight: 700, fill: '#cfd8ee' });
-  body += text(64, 136, 'Digite o endereço (URL):', { size: 14, fill: '#9fb0d6' });
-  body += `<rect x="64" y="148" width="472" height="46" rx="10" fill="#0b1220" stroke="${C.blue}" stroke-width="3"/>`;
+  body += text(64, 104, 'Downloader', { size: 15, weight: 700, fill: '#c9d1ce' });
+  body += text(64, 136, 'Digite o endereço (URL):', { size: 14, fill: '#aab4b0' });
+  body += `<rect x="64" y="148" width="472" height="46" rx="10" fill="#070a09" stroke="${C.blue}" stroke-width="3"/>`;
   body += text(80, 178, 'signage-downloads.pages.dev/d', { size: 19, weight: 700, fill: C.white });
   body += `<rect x="64" y="216" width="96" height="42" rx="21" fill="${C.blue}"/>` + text(112, 243, 'Ir', { size: 17, weight: 800, fill: C.white, anchor: 'middle' });
-  body += text(180, 243, '← aperte OK aqui', { size: 13, fill: '#9fb0d6' });
-  body += `<rect x="64" y="274" width="472" height="10" rx="5" fill="#33405e"/><rect x="64" y="274" width="330" height="10" rx="5" fill="${C.green}"/>`;
-  body += text(64, 304, 'Baixando player-….apk  ·  cerca de 6 MB', { size: 13, fill: '#9fb0d6' });
+  body += text(180, 243, '← aperte OK aqui', { size: 13, fill: '#aab4b0' });
+  body += `<rect x="64" y="274" width="472" height="10" rx="5" fill="#33423c"/><rect x="64" y="274" width="330" height="10" rx="5" fill="${C.green}"/>`;
+  body += text(64, 304, 'Baixando player-….apk  ·  cerca de 6 MB', { size: 13, fill: '#aab4b0' });
   // legenda
   const notes = [['1', 'Abra o Downloader', 'na lista de apps da TV'], ['2', 'Digite o endereço curto', 'e escolha Ir'], ['3', 'Quando terminar,', 'escolha Instalar'], ['4', 'No final: Concluído', 'e Excluir o arquivo']];
   notes.forEach(([n, a, b2], i) => {
@@ -393,7 +393,7 @@ menuPath('firetv-abrir-app.svg', 'Fire TV Stick · Abrir o Player depois de inst
   lanes.forEach(([label, from, to, color], i) => {
     const y = 86 + i * 52;
     body += text(40, y + 22, label, { size: 14 });
-    body += `<rect x="${x0}" y="${y}" width="${x1 - x0}" height="30" rx="6" fill="#e9edf5"/>`;
+    body += `<rect x="${x0}" y="${y}" width="${x1 - x0}" height="30" rx="6" fill="#e3e8e6"/>`;
     body += `<rect x="${at(from)}" y="${y}" width="${at(to) - at(from)}" height="30" rx="6" fill="${color}" opacity=".85"/>`;
   });
   // resultado

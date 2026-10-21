@@ -109,19 +109,19 @@ function figures(html, imageBase) {
 }
 
 const CSS = `
-  :root { --blue:#3563e9; --navy:#111a2c; --text:#172033; --muted:#6d7788; --line:#dfe5ef; --bg:#f5f7fb; }
+  :root { --blue:#1a6a49; --navy:#0c1410; --text:#0c1410; --muted:#5a6862; --line:#d6dcd9; --bg:#eef1ef; }
   * { box-sizing: border-box; }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { margin:0; color:var(--text); font:10.5pt/1.55 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
-  @page { size: A4; margin: 18mm 16mm 20mm; @bottom-center { content: "Digital Signage  ·  " attr(data-title) "  ·  página " counter(page); font: 8pt 'Segoe UI', Arial, sans-serif; color: #8a94a6; } }
+  @page { size: A4; margin: 18mm 16mm 20mm; @bottom-center { content: "Digital Signage  ·  " attr(data-title) "  ·  página " counter(page); font: 8pt 'Segoe UI', Arial, sans-serif; color: #8a9690; } }
   @page :first { margin: 0; @bottom-center { content: none; } }
-  .cover { height: 297mm; page-break-after: always; background: linear-gradient(160deg, #111a2c 0%, #1c2c52 55%, #3563e9 130%); color:#fff; padding: 34mm 24mm 24mm; display:flex; flex-direction:column; }
+  .cover { height: 297mm; page-break-after: always; background: linear-gradient(160deg, #0c1410 0%, #123326 55%, #1a6a49 130%); color:#fff; padding: 34mm 24mm 24mm; display:flex; flex-direction:column; }
   .cover img.logo { width: 30mm; height: 30mm; border-radius: 7mm; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
-  .cover .brand { margin-top: 10mm; letter-spacing: .28em; text-transform: uppercase; font-size: 10pt; color:#9fb6ff; font-weight:700; }
+  .cover .brand { margin-top: 10mm; letter-spacing: .28em; text-transform: uppercase; font-size: 10pt; color:#9fd8bc; font-weight:700; }
   .cover h1 { font-size: 34pt; line-height: 1.1; margin: 8mm 0 4mm; border:0; color:#fff; }
-  .cover .sub { font-size: 16pt; color:#cfdcff; margin:0; }
-  .cover .aud { margin-top: 12mm; font-size: 11.5pt; color:#b9c7ea; max-width: 120mm; }
-  .cover .meta { margin-top:auto; font-size: 10pt; color:#9fb0d6; }
+  .cover .sub { font-size: 16pt; color:#d6e8de; margin:0; }
+  .cover .aud { margin-top: 12mm; font-size: 11.5pt; color:#b7cfc3; max-width: 120mm; }
+  .cover .meta { margin-top:auto; font-size: 10pt; color:#9fb4aa; }
   .cover .meta b { color:#fff; }
   .toc-page { page-break-after: always; }
   .toc-page h2 { margin-top:0; }
@@ -137,10 +137,10 @@ const CSS = `
   h3 { font-size: 12.5pt; color: var(--blue); margin: 7mm 0 2mm; break-after: avoid; }
   p, li { orphans: 3; widows: 3; }
   a { color: var(--blue); text-decoration: none; }
-  code { font-family: Consolas, 'Courier New', monospace; font-size: .92em; background:#eef1f7; padding: 1px 5px; border-radius: 4px; }
-  pre { background: var(--navy); color:#e8eefc; padding: 3.5mm 4.5mm; border-radius: 6px; overflow:hidden; white-space: pre-wrap; break-inside: avoid; }
+  code { font-family: Consolas, 'Courier New', monospace; font-size: .92em; background:#eef1ef; padding: 1px 5px; border-radius: 4px; }
+  pre { background: var(--navy); color:#e6efe9; padding: 3.5mm 4.5mm; border-radius: 6px; overflow:hidden; white-space: pre-wrap; break-inside: avoid; }
   pre code { background:none; padding:0; color:inherit; }
-  blockquote { margin: 4mm 0; padding: 2.5mm 4.5mm; border-left: 4px solid var(--blue); background:#eef3ff; border-radius: 0 6px 6px 0; break-inside: avoid; }
+  blockquote { margin: 4mm 0; padding: 2.5mm 4.5mm; border-left: 4px solid var(--blue); background:#e1eee7; border-radius: 0 6px 6px 0; break-inside: avoid; }
   blockquote p { margin: 1mm 0; }
   table { width:100%; border-collapse: collapse; margin: 3mm 0 5mm; font-size: 9.6pt; }
   th, td { text-align:left; vertical-align: top; padding: 2mm 2.5mm; border: 1px solid var(--line); }

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Inglês: o Android escolhe este arquivo quando a TV está em inglês; em qualquer outro idioma vale values/strings.xml (português). -->
+<resources>
+    <string name="app_name">Digital Signage Player</string>
+    <string name="brand_title">DIGITAL SIGNAGE</string>
+
+    <string name="starting_title">Starting…</string>
+    <string name="starting_body">Connecting to the server.</string>
+
+    <string name="error_title">No connection to the server</string>
+    <string name="error_body">Check the TV\'s internet. I will try again automatically.\nPress OK on the remote to change the server address.</string>
+
+    <string name="activation_title">Activation code</string>
+    <string name="activation_body">In the panel, open Devices → Add device and type this code.</string>
+
+    <string name="disabled_title">Device disabled</string>
+    <string name="disabled_body">This device was disabled in the panel.</string>
+
+    <string name="no_content_title">Waiting for content</string>
+    <string name="no_content_body">This device is active but does not have a playlist yet. Choose one in the panel.</string>
+
+    <string name="server_dialog_title">Server address</string>
+    <string name="server_dialog_ok">Save</string>
+    <string name="server_dialog_cancel">Cancel</string>
+    <string name="server_info">Server: %1$s · v%2$s</string>
+</resources>

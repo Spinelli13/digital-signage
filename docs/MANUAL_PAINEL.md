@@ -26,7 +26,7 @@ Como usar o **painel de administração** do Digital Signage no dia a dia: envia
 
 > **Na primeira vez do dia, o painel pode demorar até 1 minuto** para responder. O servidor gratuito "dorme" quando fica sem uso e leva um tempo para acordar. É normal, e **não afeta as TVs**: elas continuam exibindo o que já baixaram.
 
-Para sair, use o botão **Sair** no canto inferior esquerdo. Logo acima dele, **Minha conta** troca a sua senha.
+Para sair, use o botão **Sair** no canto inferior esquerdo. Logo acima dele, **Minha conta** troca a sua senha, o **tema** e o **idioma**. O tema (claro/escuro) e o idioma (português/inglês) também podem ser trocados nos botões do alto da tela de entrada (veja 2.2 e 2.3).
 
 ---
 
@@ -54,6 +54,48 @@ O **menu à esquerda** leva a cada área:
 | **Plataforma** | *(Operador da plataforma)* Clientes, planos, faturas e configurações do serviço. |
 
 No alto do menu aparece o **cliente** em que você está, o **plano** e a **situação** da assinatura. O painel mostra **só o que o seu papel pode usar** (capítulo 11).
+
+### 2.1 Usar no celular
+
+O painel foi pensado para o **celular**: abra o mesmo endereço no navegador do aparelho (Chrome, Safari…). A tela se reorganiza sozinha:
+
+- No alto fica a **barra** com o botão ☰ (abre o menu completo), o nome do sistema, o botão do **tema** e o seletor de **idioma**.
+- Na base ficam **atalhos** para as áreas mais usadas (**Dashboard**, **Dispositivos**, **Alertas**, **Biblioteca**) e o botão **Menu**, que abre a lista completa por cima da tela.
+- As **tabelas viram cartões**: cada TV, campanha ou fatura ocupa um cartão, com o rótulo de cada informação ao lado do valor. Os botões de cada item ficam no pé do cartão.
+- As **janelas** (adicionar TV, editar campanha…) sobem de baixo, como uma folha, e os campos e botões têm tamanho confortável para o dedo.
+
+![Dashboard no celular: números em cartões e atalhos na base (captura real)](manual/img/painel-celular-inicio.png)
+
+![Dispositivos no celular: cada TV é um cartão, com o tema escuro (captura real)](manual/img/painel-celular-escuro.png)
+
+![Menu completo aberto pelo botão ☰ (captura real)](manual/img/painel-celular-menu.png)
+
+![Janela "Minha conta" no celular, com tema, idioma e troca de senha (captura real)](manual/img/painel-celular-conta.png)
+
+> **Dica:** para abrir o painel com um toque, crie um atalho na tela inicial pelo menu do navegador (**Adicionar à tela inicial**).
+
+### 2.2 Tema claro e escuro
+
+O painel tem um **tema claro** e um **tema escuro**, ambos em verde escuro, prata e preto. O botão do tema (☀ / 🌙 / 🖥) fica na barra do topo (no computador, no menu à esquerda, e também na tela de entrada) e gira entre:
+
+| Opção | O que faz |
+|---|---|
+| 🖥 **Automático** | Segue o aparelho: escuro à noite ou quando o celular/computador está no modo escuro. É a opção inicial. |
+| ☀ **Claro** | Sempre o tema claro. |
+| 🌙 **Escuro** | Sempre o tema escuro (descansa a vista em ambientes escuros e economiza bateria em telas OLED). |
+
+A escolha fica **guardada no aparelho** em que você a fez.
+
+![Dashboard no tema escuro (captura real)](manual/img/painel-tema-escuro.png)
+
+### 2.3 Idioma: português ou inglês
+
+O seletor **PT / EN** (no alto da tela, ao lado do tema, e em **Minha conta**) troca o idioma **na hora**, sem recarregar a página. O **português** é o idioma original e o padrão; o **inglês** traduz os menus, botões, avisos, mensagens de erro, o histórico das TVs e os alertas. A escolha também fica guardada no aparelho.
+
+![Lista de Dispositivos em inglês (captura real)](manual/img/painel-ingles.png)
+
+O que **você** digitou (nomes de TVs, playlists, locais, campanhas…) nunca é traduzido, e datas e valores seguem o idioma (por exemplo, `20/10/2026` e `R$ 49,00` em português; `10/20/2026` e `R$49.00` em inglês). Os **manuais em PDF** e os **CSV** dos relatórios continuam em português por enquanto.
+
 
 ---
 
@@ -446,7 +488,7 @@ Em **Equipe** estão todas as pessoas do cliente, com o papel e a situação de 
 
 ### 11.3 Minha conta: trocar a própria senha
 
-Em qualquer papel, clique em **Minha conta** (canto inferior esquerdo), digite a **senha atual** e a **nova senha duas vezes** (mínimo de 8 caracteres).
+Em qualquer papel, clique em **Minha conta** (canto inferior esquerdo; no celular, dentro do menu ☰), digite a **senha atual** e a **nova senha duas vezes** (mínimo de 8 caracteres). Na mesma janela você escolhe o **tema** e o **idioma** (seção 2.2 e 2.3).
 
 ![Janela "Minha conta" com a troca de senha (captura real)](manual/img/painel-minha-conta.png)
 
@@ -616,6 +658,9 @@ Todo aviso começa pela **ação** que falhou (por exemplo, "Excluir mídia: …
 | Uma zona do layout ficou em branco | Zona sem playlist fica em branco de propósito (**Sem conteúdo**). Escolha a playlist da zona no editor do layout; a zona **principal** usa a playlist da TV. |
 | A página da web não aparece | A TV precisa de internet e o endereço de **https://**. Veja o **Histórico** da TV: a mensagem diz se a página não abriu ou respondeu erro. A TV pula a página e segue o loop. |
 | Não consigo excluir um layout | Ele está em uso por TVs: troque o layout delas (ou **Tela cheia**) antes. O painel diz quantas TVs usam. |
+| O painel está em inglês (ou em português) e eu quero trocar | Use o seletor **PT / EN** no alto da tela ou em **Minha conta**: a troca é imediata e fica guardada no aparelho. |
+| A tela está escura (ou clara) demais | O tema está em **Automático** e acompanha o aparelho. Toque no botão ☀ / 🌙 / 🖥 para fixar **Claro** ou **Escuro**. |
+| No celular não acho um botão que existe no computador | Abra o menu **☰** (ou **Menu**, na base): ele traz a lista completa. Em tabelas, os botões ficam no pé do cartão de cada item. Se mesmo assim faltar, o seu papel pode não permitir (capítulo 11). |
 | O menu não mostra **Equipe** ou **Plano e cobrança** | Essas áreas são só do **Administrador**. Peça o papel a quem administra o cliente. |
 | O painel só abre **Plano e cobrança** | A assinatura está **suspensa** (fatura vencida além da tolerância). Pague a fatura (capítulo 12): a operação registra o pagamento e o painel volta ao normal. As TVs continuam exibindo. |
 | Não consigo ativar uma TV, enviar uma mídia ou adicionar um usuário | O **limite do plano** foi atingido (veja o uso em **Plano e cobrança**). Libere espaço ou peça um plano maior. |

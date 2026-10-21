@@ -818,6 +818,17 @@ Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 8).
 
 Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 9) e no manual do painel (capítulos 11 a 13).
 
+### Experiência do painel ✅ (pedido pelo dono em 2026-10-20, depois da Fase 6)
+
+```text
+[x] Marca nova: verde escuro + prata + preto (painel, logo, Player, manuais)
+[x] Modo escuro (automático, claro ou escuro; guardado no aparelho)
+[x] Uso no celular (menu em gaveta, atalhos na base, tabelas em cartões, janelas em folha)
+[x] Idioma: português (nativo) e inglês, com troca na hora; teste que reprova texto sem tradução
+```
+
+Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 10) e no manual do painel (seções 2.1 a 2.3).
+
 ---
 
 ## 20. O que NÃO fazer agora
