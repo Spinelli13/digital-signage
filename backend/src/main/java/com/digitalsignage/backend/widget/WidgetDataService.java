@@ -20,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.digitalsignage.backend.price.PriceBoardService;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -55,12 +57,14 @@ public class WidgetDataService {
 	private final WidgetHttp http;
 	private final ObjectMapper json;
 	private final Clock clock;
+	private final PriceBoardService prices;
 	private final Map<String, Cached> cache = new ConcurrentHashMap<>();
 
-	public WidgetDataService(WidgetHttp http, ObjectMapper json, Clock clock) {
+	public WidgetDataService(WidgetHttp http, ObjectMapper json, Clock clock, PriceBoardService prices) {
 		this.http = http;
 		this.json = json;
 		this.clock = clock;
+		this.prices = prices;
 	}
 
 	/** Os dados do widget já com o instante em que foram buscados (o Player mostra "atualizado há…"). */
@@ -73,10 +77,21 @@ public class WidgetDataService {
 				case WEATHER -> new Result(weather(settings), null);
 				case NEWS -> new Result(news(settings), null);
 				case RATES -> new Result(rates(settings), null);
+				case PRICES -> new Result(prices(settings), null);
 				default -> new Result(Map.of(), null);
 			};
 		} catch (UnavailableException e) {
 			return new Result(null, e.getMessage());
+		}
+	}
+
+	// ---------- preços (do próprio servidor: vêm do banco, sem cache) ----------
+
+	private Map<String, Object> prices(Map<String, Object> settings) {
+		try {
+			return prices.dataFor(settings);
+		} catch (java.util.NoSuchElementException e) {
+			throw new UnavailableException("A tabela de preços deste widget não existe mais");
 		}
 	}
 

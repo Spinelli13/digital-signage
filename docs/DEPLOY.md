@@ -230,7 +230,7 @@ Render e Cloudflare Pages implantam a partir do GitHub. O repositório já exist
 2. **Banco:** clique em **Connect** e escolha a aba **Session pooler**. Anote *host*, *porta (5432)* e *usuário* (no formato `postgres.<ref>`).
    - Use o **Session pooler**, não a conexão direta: a direta é IPv6 e o Render não alcança; o pooler tem IPv4 gratuito.
    - Não use a porta 6543 (transaction pooler): quebra *prepared statements*.
-3. **Mídias:** em **Storage → New bucket**, crie `media` (privado). Em **Storage → S3 Configuration**:
+3. **Mídias:** em **Storage → New bucket**, crie `media` (privado). **Tipos permitidos (MIME):** se restringir os tipos do bucket, inclua `image/jpeg`, `image/png`, `image/webp`, `video/mp4` **e `video/quicktime`** (o `.MOV` do iPhone; sem ele o envio falha com "Internal Server Error": o log mostra `mime type video/quicktime is not supported`). Também `video/x-m4v` e `video/m4v` (`.m4v`). Limite de tamanho do plano gratuito: 50 MB por arquivo. Em **Storage → S3 Configuration**:
    - copie o **Endpoint** (algo como `https://<ref>.storage.supabase.co/storage/v1/s3`) e a **Region**;
    - **New access key** → copie *Access key ID* e *Secret* (o secret só aparece uma vez).
 

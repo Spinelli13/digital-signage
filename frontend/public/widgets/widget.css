@@ -106,6 +106,33 @@ body {
 .rates .chg.flat { color: var(--muted); }
 .rates .src { margin-top: 3.4vmin; font-size: 2.8vmin; color: var(--muted); }
 
+/* tabela de preços */
+.prices { width: 100%; height: 100%; }
+.prices .w { align-items: stretch; justify-content: flex-start; text-align: left; padding-top: 0.5vmin; }
+.prices .head { display: flex; align-items: center; justify-content: space-between; gap: 3vmin; margin-bottom: 2.6vmin; padding-bottom: 2vmin; border-bottom: 2px solid var(--accent); }
+.prices .ttl { font-size: 7.4vmin; font-weight: 700; letter-spacing: -0.01em; line-height: 1.1; }
+.prices .tag { display: inline-flex; align-items: center; gap: 1.2vmin; padding: 1.2vmin 2.6vmin; border-radius: 99vmin; background: var(--accent); color: var(--bg1); font-size: 3.6vmin; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+.prices .tag .ico { font-size: 4.4vmin; }
+.prices .grid { display: flex; gap: 5vmin; flex: 1; min-height: 0; }
+.prices .col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+.prices .cat { font-size: calc(var(--row) * 0.42); letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); height: var(--row); display: flex; align-items: flex-end; padding-bottom: 0.6vmin; border-bottom: 1px solid var(--line); }
+.prices .row { display: flex; align-items: center; justify-content: space-between; gap: 2vmin; height: var(--row); font-size: calc(var(--row) * 0.5); border-bottom: 1px dotted var(--line); }
+.prices .nm { min-width: 0; display: flex; flex-direction: column; }
+.prices .nm b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prices .nm small { font-size: 0.56em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: -0.1em; }
+.prices .pr { display: flex; align-items: baseline; gap: 1.2vmin; white-space: nowrap; flex: none; font-variant-numeric: tabular-nums; }
+.prices .pr .now { font-weight: 700; }
+.prices .pr .now.promo { color: var(--accent); }
+.prices .pr .now small { font-size: 0.55em; font-weight: 400; color: var(--muted); }
+.prices .pr s { font-size: 0.66em; color: var(--muted); }
+.prices .pr .sold { font-size: 0.62em; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.prices .row.off .nm { opacity: 0.5; text-decoration: line-through; text-decoration-thickness: 1px; }
+.prices .row.hot .nm b::before { content: ''; display: inline-block; width: 0.5em; height: 0.5em; margin-right: 0.45em; border-radius: 50%; background: var(--accent); vertical-align: 0.05em; }
+.prices .dots { display: flex; gap: 1.2vmin; justify-content: center; margin-top: 1.4vmin; }
+.prices .dots i { width: 1.4vmin; height: 1.4vmin; border-radius: 50%; background: var(--line); }
+.prices .dots i.on { background: var(--accent); }
+.prices .none { font-size: 5vmin; color: var(--muted); margin: auto; }
+
 /* aviso */
 .notice .w { position: relative; }
 .notice .bar { position: absolute; top: 0; bottom: 0; left: 0; width: 1.6vmin; border-radius: 1vmin; background: var(--tone, var(--accent)); }

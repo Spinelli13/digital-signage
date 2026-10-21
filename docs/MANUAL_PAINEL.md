@@ -162,7 +162,37 @@ Em todos: **Cores** (escuro, claro ou verde Smartplay), **idioma** do texto do w
 
 ![Os seis widgets desenhados na TV (captura do emulador, dados reais)](manual/img/tv-widgets.png)
 
-**Requisito:** Smartplay 0.11 ou mais novo na TV. Uma TV com Player mais antigo não sabe desenhar widgets: mostra um aviso na tela por alguns segundos, registra no Histórico e passa para o próximo item.
+Há ainda o widget **Tabela de preços**, que exibe uma tabela da página **Preços** (seção 3.2).
+
+**Requisito:** Smartplay 0.11 ou mais novo na TV (o painel de preços pede o 0.12). Uma TV com Player mais antigo não sabe desenhar widgets: mostra um aviso na tela por alguns segundos, registra no Histórico e passa para o próximo item.
+
+### 3.2 Preços dinâmicos: tabelas de preços e preços por horário
+
+Para cardápios, listas de serviços e preços do dia, use a página **Preços** (menu **Conteúdo**). Uma **tabela de preços** é a lista dos seus produtos ou serviços com o preço de cada um; o widget **Tabela de preços** (Biblioteca > **Widget**) a desenha na TV. **Mudou um preço? Salve na página Preços e as TVs que mostram a tabela atualizam sozinhas, em cerca de um minuto**, sem refazer nenhuma imagem.
+
+![Lista de tabelas de preços (captura real)](manual/img/painel-precos-lista.png)
+
+**Montar a tabela.** Em **Preços > Nova tabela**: dê um nome, escolha a moeda (real, dólar ou euro) e o fuso dos horários. Em **Itens**, preencha a categoria (cabeçalho que agrupa os itens), o nome, uma descrição curta (opcional), o **preço** e a unidade (un, kg, porção). Marque **Disponível** (desmarcado, o item aparece riscado e com "Esgotado", sem preço) e **Destaque** (um ponto de destaque ao lado do nome). As setas reordenam; a lixeira remove. Até 300 itens por tabela.
+
+**Planilha (CSV).** Já tem os preços no Excel? Salve a planilha como **CSV** e use **Importar planilha** (troca todos os itens) ou **Acrescentar da planilha** (junta aos que já existem). A primeira linha precisa dos títulos **Nome** e **Preço**; podem vir também **Categoria**, **Descrição**, **Unidade**, **Disponível** (sim/não) e **Destaque**. Aceita ponto e vírgula ou vírgula, preço como `12,50`, `12.50` ou `R$ 1.234,56`, e arquivos do Excel em português. Linhas sem nome ou com preço ilegível são ignoradas, e o painel lista quais foram. **Baixar planilha** gera o CSV da tabela para editar fora e importar de volta. (A importação exige a tabela já salva.)
+
+**Preços por horário.** Em **Preços por horário** crie variações como:
+
+- **Happy hour:** todos os dias, 17:00 às 20:00, **-20%** só na cerveja e na caipirinha;
+- **Almoço executivo:** segunda a sexta, 11:00 às 15:00, **preço fixo** no prato do dia;
+- **Madrugada:** sexta, 22:00 às 02:00, +15% (um fim antes do início passa da meia-noite; o dia da semana vale pelo dia em que a janela **começa**).
+
+Cada variação tem dias da semana (vazio = todos), horário (vazio = o dia todo) e **o que muda**: um **percentual** (negativo é desconto, positivo é acréscimo; em todos os itens ou só em alguns) ou **preços fixos por item**. Quando duas variações valem ao mesmo tempo para o mesmo item, **vale a primeira da lista** (use as setas). Na TV, o preço de base aparece riscado ao lado do novo preço, que ganha cor, e uma etiqueta mostra a variação em vigor ("HAPPY HOUR").
+
+![Editor da tabela: itens e variações à esquerda, o painel como fica na TV à direita, simulando o happy hour (captura real)](manual/img/painel-precos-editor.png)
+
+**Ver antes de publicar.** À direita, **Como fica na TV** mostra o painel, na tela horizontal ou **em pé**, e **Simular o horário** deixa escolher qualquer intervalo das próximas 24 horas ("como fica no happy hour?"). O painel é calculado pelo servidor com as mesmas regras que as TVs usam.
+
+**Na TV.** O widget troca o preço **no minuto certo, até sem internet**: a TV guarda os preços das próximas 24 horas, em intervalos, e só olha o relógio (que é o do servidor, mesmo se o da TV estiver errado). Se a lista for maior do que cabe na tela, o painel **pagina sozinho** (use um tempo na tela longo o bastante para todas as páginas: o ponto de cada página aparece embaixo). Em **tela em pé** o painel usa uma coluna e mostra mais linhas.
+
+![O painel de preços na TV: preços normais e durante o happy hour (captura do emulador)](manual/img/tv-precos.png)
+
+**Excluir.** Uma tabela usada por um widget da Biblioteca não pode ser excluída: o painel avisa quantos widgets a usam. Exclua ou troque esses widgets primeiro.
 
 ---
 

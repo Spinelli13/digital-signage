@@ -18,6 +18,7 @@ export const WIDGET_KINDS: WidgetKindInfo[] = [
   { kind: 'RATES', icon: 'badge-dollar-sign', label: 'Cotações', description: 'Dólar, euro e outras moedas em reais, com a variação desde o dia anterior.' },
   { kind: 'NOTICE', icon: 'megaphone', label: 'Recado', description: 'Um título e uma mensagem em destaque: horário especial, promoção, recado.' },
   { kind: 'COUNTDOWN', icon: 'timer', label: 'Contagem regressiva', description: 'Quanto falta para uma data: inauguração, promoção, Natal.' },
+  { kind: 'PRICES', icon: 'badge-dollar-sign', label: 'Tabela de preços', description: 'Um painel de preços (cardápio, lista de serviços) com os preços por horário que você cadastrou em Preços.' },
 ];
 
 export function widgetInfo(kind: WidgetKind | null | undefined): WidgetKindInfo | undefined {
@@ -40,6 +41,8 @@ export function defaultWidgetSettings(kind: WidgetKind, lang: string): WidgetSet
       return { ...common, title: '', message: '', accent: 'brand', align: 'center' };
     case 'COUNTDOWN':
       return { ...common, label: '', target: '', timezone: 'America/Sao_Paulo', finishedText: 'Chegou o dia!' };
+    case 'PRICES':
+      return { ...common, priceListId: null, title: '', columns: 1, rowsPerColumn: 8, secondsPerPage: 8, showCategories: true };
   }
 }
 

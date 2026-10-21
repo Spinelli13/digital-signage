@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { ConfigService } from '../core/config.service';
 import { Media, WidgetCatalog, WidgetPlace, WidgetPreview } from '../core/models';
@@ -17,6 +18,7 @@ const CATALOG: WidgetCatalog = {
     { kind: 'RATES', label: 'Cotações', defaultSeconds: 12, needsData: true },
     { kind: 'NOTICE', label: 'Recado', defaultSeconds: 10, needsData: false },
     { kind: 'COUNTDOWN', label: 'Contagem regressiva', defaultSeconds: 10, needsData: false },
+    { kind: 'PRICES', label: 'Tabela de preços', defaultSeconds: 20, needsData: true },
   ],
   newsSources: [
     { id: 'g1', name: 'G1' },
@@ -52,7 +54,7 @@ const widget = (overrides: Partial<Media> = {}): Media => ({
 
 function setup(media: Media | null = null) {
   TestBed.configureTestingModule({
-    providers: [provideHttpClient(), provideHttpClientTesting(), { provide: WidgetTemplates, useClass: FakeTemplates }],
+    providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), { provide: WidgetTemplates, useClass: FakeTemplates }],
   });
   TestBed.inject(ConfigService).apiBaseUrl = 'http://api.test';
   const backend = TestBed.inject(HttpTestingController);
@@ -86,11 +88,11 @@ describe('WidgetEditorComponent', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('starts by offering the six kinds, each with an explanation', () => {
+  it('starts by offering the seven kinds, each with an explanation', () => {
     const { text, fixture } = setup();
 
     const cards = (fixture.nativeElement as HTMLElement).querySelectorAll('.kind');
-    expect(cards).toHaveLength(6);
+    expect(cards).toHaveLength(7);
     expect(text()).toContain('Previsão do tempo');
     expect(text()).toContain('Quanto falta para uma data');
   });
@@ -187,6 +189,34 @@ describe('WidgetEditorComponent', () => {
     editor.toggleCurrency('USD');
 
     expect(editor.settings()['currencies']).toEqual(['EUR', 'GBP']);
+  });
+
+  it('the price board loads the tables to choose from and sends the chosen one', () => {
+    const { editor, fixture, backend, text } = setup();
+
+    editor.choose('PRICES');
+    backend.expectOne(`${API}/price-lists`).flush([
+      { id: 4, name: 'Cardápio', currency: 'BRL', timezone: 'UTC', items: [], rules: [], widgetCount: 0, updatedAt: '' },
+    ]);
+    fixture.detectChanges();
+
+    expect(editor.priceLists()).toHaveLength(1);
+    expect(text()).toContain('Os itens e os preços');
+    editor.set('priceListId', 4);
+    const body = answerPreview(backend, { kind: 'PRICES' });
+    expect(body.settings['priceListId']).toBe(4);
+    expect(body.settings['columns']).toBe(1);
+  });
+
+  it('without any price table it points to the page that creates one', () => {
+    const { editor, fixture, backend, text } = setup();
+
+    editor.choose('PRICES');
+    backend.expectOne(`${API}/price-lists`).flush([]);
+    fixture.detectChanges();
+
+    expect(text()).toContain('Você ainda não tem nenhuma tabela de preços');
+    expect(text()).toContain('Criar a primeira');
   });
 
   it('saves a new widget with the name, kind, choices and time', () => {

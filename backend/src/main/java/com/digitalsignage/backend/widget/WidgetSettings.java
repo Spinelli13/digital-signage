@@ -78,6 +78,14 @@ public final class WidgetSettings {
 				out.put("accent", oneOf(in, "accent", ACCENTS, "brand"));
 				out.put("align", oneOf(in, "align", ALIGNS, "center"));
 			}
+			case PRICES -> {
+				out.put("priceListId", (long) Math.round(number(in, "priceListId", 1, 9_000_000_000_000.0, null, "Escolha a tabela de preços")));
+				out.put("title", text(in, "title", 60, ""));
+				out.put("columns", (int) Math.round(number(in, "columns", 1, 3, 1.0, null)));
+				out.put("rowsPerColumn", (int) Math.round(number(in, "rowsPerColumn", 4, 14, 8.0, null)));
+				out.put("secondsPerPage", (int) Math.round(number(in, "secondsPerPage", 4, 30, 8.0, null)));
+				out.put("showCategories", bool(in, "showCategories", true));
+			}
 			case COUNTDOWN -> {
 				String label = text(in, "label", 80, "");
 				if (label.isBlank()) {

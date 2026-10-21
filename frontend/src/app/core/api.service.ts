@@ -45,6 +45,10 @@ import {
   PlaylistRequest,
   PlaysGroupBy,
   PlaysReport,
+  PriceBoardData,
+  PriceImportResult,
+  PriceList,
+  PriceListRequest,
   ProofDaily,
   ProofFilters,
   ProofReport,
@@ -290,6 +294,43 @@ export class ApiService {
   /** Conteúdo web: uma página (https) que o Player exibe pelo tempo escolhido. */
   createWebContent(body: WebContentRequest): Observable<Media> {
     return this.http.post<Media>(this.url('/media/web'), body);
+  }
+
+  // ---------- tabelas de preços ----------
+
+  priceLists(): Observable<PriceList[]> {
+    return this.http.get<PriceList[]>(this.url('/price-lists'));
+  }
+
+  priceList(id: number): Observable<PriceList> {
+    return this.http.get<PriceList>(this.url(`/price-lists/${id}`));
+  }
+
+  createPriceList(body: PriceListRequest): Observable<PriceList> {
+    return this.http.post<PriceList>(this.url('/price-lists'), body);
+  }
+
+  updatePriceList(id: number, body: PriceListRequest): Observable<PriceList> {
+    return this.http.put<PriceList>(this.url(`/price-lists/${id}`), body);
+  }
+
+  deletePriceList(id: number): Observable<void> {
+    return this.http.delete<void>(this.url(`/price-lists/${id}`));
+  }
+
+  /** Os preços das próximas 24 horas de uma tabela ainda não salva. Silencioso: o motivo vira texto ao lado da pré-visualização. */
+  previewPriceList(body: PriceListRequest): Observable<PriceBoardData> {
+    return this.http.post<PriceBoardData>(this.url('/price-lists/preview'), body, { context: new HttpContext().set(SILENT_ERRORS, true) });
+  }
+
+  importPriceList(id: number, file: File, mode: 'replace' | 'append'): Observable<PriceImportResult> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.post<PriceImportResult>(this.url(`/price-lists/${id}/import`), form, { params: queryParams({ mode }) });
+  }
+
+  exportPriceList(id: number): Observable<Blob> {
+    return this.http.get(this.url(`/price-lists/${id}/export`), { responseType: 'blob' });
   }
 
   // ---------- widgets ----------

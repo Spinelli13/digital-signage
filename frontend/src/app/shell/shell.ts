@@ -62,6 +62,7 @@ import { UserMenuComponent } from '../shared/user-menu';
           <a routerLink="/playlists" routerLinkActive="active"><app-icon name="list-video" /><span>{{ 'Playlists' | t }}</span></a>
           <a routerLink="/campanhas" routerLinkActive="active"><app-icon name="megaphone" /><span>{{ 'Campanhas' | t }}</span></a>
           <a routerLink="/layouts" routerLinkActive="active"><app-icon name="layout-template" /><span>{{ 'Layouts' | t }}</span></a>
+          <a routerLink="/precos" routerLinkActive="active"><app-icon name="badge-dollar-sign" /><span>{{ 'Preços' | t }}</span></a>
 
           <div class="section">{{ 'Monitoramento' | t }}</div>
           <a routerLink="/alertas" routerLinkActive="active">

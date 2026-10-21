@@ -27,11 +27,13 @@ export class WidgetPreviewComponent {
   /** Os dados que o servidor entregaria (clima, notícias, cotações); nulos nos demais ou se não deu para buscar. */
   readonly data = input<Record<string, unknown> | null>(null);
   readonly portrait = input(false);
+  /** Um instante para simular (ex.: o horário do happy hour); vazio = agora. */
+  readonly nowMs = input<number | null>(null);
   readonly title = input('Pré-visualização do widget');
 
   constructor() {
     effect(() => {
-      const init = { kind: this.kind(), settings: this.settings(), data: this.data(), nowMs: Date.now() };
+      const init = { kind: this.kind(), settings: this.settings(), data: this.data(), nowMs: this.nowMs() ?? Date.now() };
       const frame = this.frame().nativeElement;
       const mine = ++this.version;
       this.templates.page(init).then(

@@ -48,7 +48,7 @@ data class ConfigItem(
 /** As escolhas de um widget, do jeito que o servidor mandou ([settingsJson] é um objeto JSON em texto). */
 data class WidgetSpec(val kind: String, val settingsJson: String) {
     /** Busca dados de fora (o servidor entrega); os demais se desenham só com as escolhas. */
-    val needsData get() = kind == "WEATHER" || kind == "NEWS" || kind == "RATES"
+    val needsData get() = kind == "WEATHER" || kind == "NEWS" || kind == "RATES" || kind == "PRICES"
 }
 
 /**

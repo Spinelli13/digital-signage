@@ -1,11 +1,12 @@
 import { Component, DestroyRef, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import { TIMEZONES } from '../campaigns/campaign-form';
 import { ApiService } from '../core/api.service';
 import { currentLang } from '../core/i18n';
 import { TPipe } from '../core/i18n';
-import { Media, WidgetCatalog, WidgetKind, WidgetPlace, WidgetRequest, WidgetSettings } from '../core/models';
+import { Media, PriceList, WidgetCatalog, WidgetKind, WidgetPlace, WidgetRequest, WidgetSettings } from '../core/models';
 import { WIDGET_KINDS, defaultWidgetSettings, widgetInfo } from '../core/widgets';
 import { IconComponent } from '../shared/icon';
 import { WidgetPreviewComponent } from './widget-preview';
@@ -31,7 +32,7 @@ const PREVIEW_DELAY_MS = 450;
  */
 @Component({
   selector: 'app-widget-editor',
-  imports: [FormsModule, TPipe, IconComponent, WidgetPreviewComponent],
+  imports: [FormsModule, RouterLink, TPipe, IconComponent, WidgetPreviewComponent],
   template: `
     <div class="modal" (click)="closed.emit()">
       <form class="modal-box wide" (click)="$event.stopPropagation()" (ngSubmit)="save()">
@@ -175,6 +176,50 @@ const PREVIEW_DELAY_MS = 450;
                     </div>
                   </div>
                 }
+                @case ('PRICES') {
+                  <div class="field">
+                    <label for="w-list">{{ 'Tabela de preços' | t }}</label>
+                    @if (priceLists().length === 0) {
+                      <p class="label">{{ 'Você ainda não tem nenhuma tabela de preços.' | t }} <a routerLink="/precos/nova" (click)="closed.emit()">{{ 'Criar a primeira' | t }}</a></p>
+                    } @else {
+                      <select id="w-list" name="list" [ngModel]="settings()['priceListId']" (ngModelChange)="set('priceListId', $event === null ? null : +$event)">
+                        <option [ngValue]="null">{{ 'Escolha uma tabela…' | t }}</option>
+                        @for (list of priceLists(); track list.id) {
+                          <option [ngValue]="list.id">{{ list.name }}</option>
+                        }
+                      </select>
+                      <p class="label">{{ 'Os itens e os preços (inclusive os por horário) são editados em Preços; o painel acompanha sozinho.' | t }}</p>
+                    }
+                  </div>
+                  <div class="field">
+                    <label for="w-ptitle">{{ 'Título do painel (opcional)' | t }}</label>
+                    <input id="w-ptitle" name="ptitle" [placeholder]="'Se vazio, usa o nome da tabela' | t" [ngModel]="text('title')" (ngModelChange)="set('title', $event)" maxlength="60" />
+                  </div>
+                  <div class="two">
+                    <div class="field">
+                      <label for="w-cols">{{ 'Colunas (tela horizontal)' | t }}</label>
+                      <select id="w-cols" name="cols" [ngModel]="num('columns')" (ngModelChange)="set('columns', +$event)">
+                        <option [ngValue]="1">1</option>
+                        <option [ngValue]="2">2</option>
+                        <option [ngValue]="3">3</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label for="w-rows">{{ 'Linhas por coluna (4 a 14)' | t }}</label>
+                      <input id="w-rows" name="rows" type="number" min="4" max="14" [ngModel]="num('rowsPerColumn')" (ngModelChange)="set('rowsPerColumn', +$event)" />
+                    </div>
+                  </div>
+                  <div class="two">
+                    <div class="field">
+                      <label for="w-page">{{ 'Segundos por página' | t }}</label>
+                      <input id="w-page" name="page" type="number" min="4" max="30" [ngModel]="num('secondsPerPage')" (ngModelChange)="set('secondsPerPage', +$event)" />
+                    </div>
+                    <div class="field">
+                      <label class="check pad"><input type="checkbox" name="cats" [ngModel]="flag('showCategories')" (ngModelChange)="set('showCategories', $event)" /> {{ 'Mostrar as categorias' | t }}</label>
+                    </div>
+                  </div>
+                  <p class="label">{{ 'Quando há mais itens do que cabem, o painel troca de página sozinho: use um tempo na tela longo o bastante para todas as páginas.' | t }}</p>
+                }
                 @case ('COUNTDOWN') {
                   <div class="field">
                     <label for="w-clabel">{{ 'O que está sendo esperado' | t }}</label>
@@ -283,6 +328,7 @@ const PREVIEW_DELAY_MS = 450;
     .chip { position: relative; display: inline-flex; align-items: center; padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px; font-weight: 600; cursor: pointer; background: var(--panel); margin: 0; }
     .chip input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
     .chip.on { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+    .check.pad { margin-top: 26px; }
     :host-context(:root[data-theme='dark']) .chip.on { color: var(--link); }
     textarea { width: 100%; resize: vertical; }
     .error, .warn { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; padding: 10px 12px; border-radius: var(--r); font-size: 14px; }
@@ -318,6 +364,8 @@ export class WidgetEditorComponent {
   readonly portrait = signal(false);
   readonly busy = signal(false);
   readonly catalog = signal<WidgetCatalog | null>(null);
+  /** As tabelas de preços para escolher (só carregadas quando o widget é um painel de preços). */
+  readonly priceLists = signal<PriceList[]>([]);
 
   /** O que o servidor devolveu na última conferência: escolhas limpas, dados e o motivo de uma escolha inválida. */
   readonly shown = signal<WidgetSettings>({});
@@ -342,6 +390,7 @@ export class WidgetEditorComponent {
         untracked(() => {
           this.editing.set(true);
           this.kind.set(media.widget!.kind);
+          this.loadPriceLists(media.widget!.kind);
           this.settings.set({ ...media.widget!.settings });
           this.shown.set({ ...media.widget!.settings });
           this.name.set(media.name === widgetInfo(media.widget!.kind)?.label ? '' : media.name);
@@ -368,8 +417,15 @@ export class WidgetEditorComponent {
     return widgetInfo(this.kind());
   }
 
+  private loadPriceLists(kind: WidgetKind): void {
+    if (kind === 'PRICES') {
+      this.api.priceLists().subscribe({ next: (lists) => this.priceLists.set(lists), error: () => undefined });
+    }
+  }
+
   choose(kind: WidgetKind): void {
     this.kind.set(kind);
+    this.loadPriceLists(kind);
     this.settings.set(defaultWidgetSettings(kind, currentLang() === 'en' ? 'en' : 'pt-BR'));
     this.shown.set({ ...this.settings() });
     this.seconds.set(this.catalog()?.kinds.find((entry) => entry.kind === kind)?.defaultSeconds ?? 10);

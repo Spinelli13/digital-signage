@@ -530,7 +530,7 @@ export interface LayoutTemplate {
 
 // ---------- widgets (conteúdo dinâmico) ----------
 
-export type WidgetKind = 'CLOCK' | 'WEATHER' | 'NEWS' | 'RATES' | 'NOTICE' | 'COUNTDOWN';
+export type WidgetKind = 'CLOCK' | 'WEATHER' | 'NEWS' | 'RATES' | 'NOTICE' | 'COUNTDOWN' | 'PRICES';
 
 /** As escolhas do painel para um widget (o servidor confere e limpa; chaves de cada tipo em docs/DECISIONS). */
 export type WidgetSettings = Record<string, string | number | boolean | string[] | null | undefined>;
@@ -568,6 +568,77 @@ export interface WidgetPreview {
   settings: WidgetSettings;
   data: Record<string, unknown> | null;
   error: string | null;
+}
+
+// ---------- tabelas de preços ----------
+
+export interface PriceItem {
+  id: string;
+  category: string | null;
+  name: string;
+  description: string | null;
+  price: number;
+  unit: string | null;
+  available: boolean;
+  highlight: boolean;
+}
+
+/** Uma variação de preço por horário (dias 1 = segunda ... 7 = domingo; vazio = todos). */
+export interface PriceRule {
+  name: string;
+  days: number[];
+  start: string | null;
+  end: string | null;
+  percent: number;
+  itemIds: string[];
+  itemPrices: Record<string, number>;
+}
+
+export interface PriceList {
+  id: number;
+  name: string;
+  currency: string;
+  timezone: string;
+  items: PriceItem[];
+  rules: PriceRule[];
+  /** Quantos widgets da biblioteca mostram esta tabela. */
+  widgetCount: number;
+  updatedAt: string;
+}
+
+export interface PriceListRequest {
+  name: string;
+  currency: string;
+  timezone: string;
+  items: PriceItem[];
+  rules: PriceRule[];
+}
+
+/** Um item já com o preço de um instante; basePrice só vem quando uma variação mudou o preço. */
+export interface PriceLine extends PriceItem {
+  basePrice: number | null;
+  rule: string | null;
+}
+
+export interface PriceSegment {
+  fromMs: number;
+  toMs: number;
+  rule: string | null;
+  items: PriceLine[];
+}
+
+/** Os preços das próximas 24 horas (o que a TV recebe e o painel usa na pré-visualização). */
+export interface PriceBoardData {
+  list: { id: number | null; name: string; currency: string };
+  timezone: string;
+  segments: PriceSegment[];
+  fetchedAtMs: number;
+}
+
+export interface PriceImportResult {
+  list: PriceList;
+  imported: number;
+  skipped: string[];
 }
 
 export interface WebContentRequest {

@@ -7,6 +7,7 @@ import com.digitalsignage.player.data.Json
 import com.digitalsignage.player.data.PlayerConfig
 import com.digitalsignage.player.data.UnauthorizedException
 import com.digitalsignage.player.data.WidgetSpec
+import com.digitalsignage.player.engine.EngineState
 import com.digitalsignage.player.engine.PlayerEngine
 import com.digitalsignage.player.engine.Timing
 import com.digitalsignage.player.sync.ConfigSync
@@ -80,6 +81,7 @@ class WidgetModelTest {
         assertFalse(WidgetSpec("COUNTDOWN", "{}").needsData)
         assertTrue(WidgetSpec("NEWS", "{}").needsData)
         assertTrue(WidgetSpec("RATES", "{}").needsData)
+        assertTrue(WidgetSpec("PRICES", "{}").needsData)
     }
 
     @Test
@@ -332,6 +334,17 @@ class WidgetHostTest {
     }
 
     @Test
+    fun `a price board carries the intervals of the next hours so prices change on time without internet`() {
+        store.saveResponse(8, response("""{"list":{"name":"Bar","currency":"BRL"},"segments":[{"fromMs":0,"toMs":100,"rule":null,"items":[{"name":"Cerveja","price":10}]},{"fromMs":100,"toMs":200,"rule":"Happy hour","items":[{"name":"Cerveja","price":8}]}]}"""))
+
+        val html = host().html(widgetItem(8, "PRICES", """{"priceListId":3,"columns":2}"""))
+
+        assertTrue(html.contains("\"Happy hour\""))
+        assertTrue(html.contains("\"kind\":\"PRICES\""))
+        assertTrue(html.contains("PRICES: function"))
+    }
+
+    @Test
     fun `the R-dollar of the rates template survives the assembly`() {
         val html = host().html(widgetItem(7, "RATES"))
 
@@ -365,6 +378,37 @@ class WidgetEngineTest {
     }
 
     private val config = PlayerConfig(1, 5, 1, listOf(widgetItem(2, "WEATHER"), widgetItem(3, "CLOCK")))
+
+    @Test
+    fun `a new configuration only goes on air after its widget data arrived`() = runTest {
+        val store = InMemoryStore()
+        val newConfig = PlayerConfig(1, 5, 1, listOf(widgetItem(2, "WEATHER")))
+        val stateWhenAsked = mutableListOf<EngineState>()
+        api.registerResponse = { active() }
+        api.heartbeatResponse = { Desired(5, 1) }
+        api.configResponse = { newConfig }
+        api.widgetResponse = { url ->
+            stateWhenAsked += engineState()
+            response("""{"ok":true}""")
+        }
+        val clock = TrustedClock(uptime = { testScheduler.currentTime })
+        val engine = PlayerEngine(
+            api, ConfigSync(api, downloader, MediaCache(File(folder.root, "media")), store), store,
+            token = { "tok" }, playerVersion = "0.11.0", timing = timing, telemetry = telemetry, clock = clock,
+            widgets = WidgetRefresher(api, WidgetStore(File(folder.root, "widgets"))),
+        )
+        engineHolder = engine
+
+        backgroundScope.launch { engine.run() }
+        runCurrent()
+
+        assertEquals(1, api.widgetCalls.size)
+        assertTrue(stateWhenAsked.single() !is EngineState.Playing) // ainda não estava no ar quando os dados foram pedidos
+        assertTrue(engine.state.value is EngineState.Playing)
+    }
+
+    private var engineHolder: PlayerEngine? = null
+    private fun engineState(): EngineState = engineHolder!!.state.value
 
     @Test
     fun `fetches the widget data right away and then every ten minutes`() = runTest {

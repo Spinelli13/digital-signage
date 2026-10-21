@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 sealed interface EngineState {
     /** Ainda não sabemos de nada (primeira abertura, sem cache). */
@@ -220,9 +221,12 @@ class PlayerEngine(
             if (!syncing && sync.needsSync(desired)) {
                 syncJob = launch {
                     try {
-                        publish(sync.sync(token()))
+                        val config = sync.sync(token())
+                        // Os dados dos widgets chegam ANTES de a configuração nova ir ao ar (no máximo alguns segundos de espera):
+                        // senão o primeiro widget apareceria vazio até o próximo ciclo.
+                        prefetchWidgets(config)
+                        publish(config)
                         showsLocalPlan = false
-                        widgetsDirty = true
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: UnauthorizedException) {
@@ -290,6 +294,21 @@ class PlayerEngine(
         }
     }
 
+    private suspend fun prefetchWidgets(config: PlayerConfig) {
+        val refresher = widgets ?: return
+        widgetsDirty = false
+        lastWidgetRefresh = clock.uptime()
+        try {
+            withTimeoutOrNull(WIDGET_PREFETCH_MS) { refresher.refresh(token(), config) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: UnauthorizedException) {
+            throw e
+        } catch (e: Exception) {
+            // sem os dados novos, o widget mostra os últimos guardados ou o estado vazio
+        }
+    }
+
     /** O servidor respondeu: acerta o relógio confiável e, se a TV estava sem contato, registra a volta. */
     private fun noteContact(serverTimeMs: Long) {
         clock.sync(serverTimeMs)
@@ -309,6 +328,7 @@ class PlayerEngine(
     companion object {
         private const val UNAUTHORIZED_RETRY_MS = 2_000L
         private const val MAX_PLAY_BATCHES_PER_CYCLE = 10
+        private const val WIDGET_PREFETCH_MS = 10_000L
     }
 
 }

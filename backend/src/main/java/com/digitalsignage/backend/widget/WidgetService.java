@@ -10,6 +10,7 @@ import com.digitalsignage.backend.media.Media;
 import com.digitalsignage.backend.media.MediaRepository;
 import com.digitalsignage.backend.monitoring.WebhookUrlPolicy;
 import com.digitalsignage.backend.playlist.PlaylistRepository;
+import com.digitalsignage.backend.price.PriceListRepository;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -30,17 +31,20 @@ public class WidgetService {
 	private final MediaRepository mediaRepository;
 	private final PlaylistRepository playlistRepository;
 	private final WebhookUrlPolicy urls;
+	private final PriceListRepository priceLists;
 
-	public WidgetService(MediaRepository mediaRepository, PlaylistRepository playlistRepository, WebhookUrlPolicy urls) {
+	public WidgetService(MediaRepository mediaRepository, PlaylistRepository playlistRepository, WebhookUrlPolicy urls, PriceListRepository priceLists) {
 		this.mediaRepository = mediaRepository;
 		this.playlistRepository = playlistRepository;
 		this.urls = urls;
+		this.priceLists = priceLists;
 	}
 
 	@Transactional
 	public Media create(Request request) {
 		WidgetKind kind = WidgetKind.of(request.kind());
 		Map<String, Object> settings = WidgetSettings.sanitize(kind, request.settings(), urls);
+		requirePriceList(kind, settings);
 		int seconds = request.durationSeconds() == null ? kind.defaultSeconds() : request.durationSeconds();
 		return mediaRepository.save(Media.widget(nameFor(request.name(), kind, settings), kind.name(), settings, seconds));
 	}
@@ -57,12 +61,20 @@ public class WidgetService {
 			throw new IllegalArgumentException("O tipo do widget não pode ser trocado: crie outro widget");
 		}
 		Map<String, Object> settings = WidgetSettings.sanitize(kind, request.settings(), urls);
+		requirePriceList(kind, settings);
 		int seconds = request.durationSeconds() == null ? media.getDurationSeconds() : request.durationSeconds();
 		media.changeWidget(nameFor(request.name(), kind, settings), settings, seconds);
 		Media saved = mediaRepository.save(media);
 		// As TVs guardam as escolhas do widget dentro da configuração da playlist: sem isto, só veriam a mudança numa troca de playlist.
 		playlistRepository.findUsing(id).forEach(playlist -> playlist.touch());
 		return saved;
+	}
+
+	/** Um painel de preços só faz sentido com uma tabela que existe (do cliente atual). */
+	private void requirePriceList(WidgetKind kind, Map<String, Object> settings) {
+		if (kind == WidgetKind.PRICES && !priceLists.existsById(((Number) settings.get("priceListId")).longValue())) {
+			throw new IllegalArgumentException("A tabela de preços escolhida não existe");
+		}
 	}
 
 	static String nameFor(String name, WidgetKind kind, Map<String, Object> settings) {

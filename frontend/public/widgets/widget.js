@@ -33,6 +33,7 @@
     'info': '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
     'triangle-alert': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
     'gift': '<path d="M12 7v14"/><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"/><rect x="3" y="7" width="18" height="4" rx="1"/>',
+    'tag': '<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>',
     'newspaper': '<path d="M15 18h-5"/><path d="M18 14h-8"/><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2"/><rect width="8" height="4" x="10" y="6" rx="1"/>',
     'wifi-off': '<path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/>'
   };
@@ -41,7 +42,7 @@
     'pt-BR': {
       humidity: 'Umidade', wind: 'Vento', rain: 'chuva', updated: 'atualizado há', updatedAt: 'Atualizado às',
       noData: 'Sem dados no momento', noDataHint: 'Assim que a conexão voltar, o conteúdo aparece aqui.',
-      noNews: 'Sem notícias no momento', next: 'A seguir', source: 'Fonte', ratesSource: 'Fonte: Banco Central Europeu',
+      noNews: 'Sem notícias no momento', next: 'A seguir', source: 'Fonte', ratesSource: 'Fonte: Banco Central Europeu', soldOut: 'Esgotado', noItems: 'Nenhum item na tabela', was: 'de',
       days: 'dias', hours: 'horas', minutes: 'min', seconds: 'seg', until: 'até', today: 'Hoje',
       m: 'min', h: 'h', d: 'd', ago: 'há', now: 'agora', news: 'Notícias', rates: 'Cotações',
       names: { USD: 'Dólar americano', EUR: 'Euro', GBP: 'Libra esterlina', JPY: 'Iene japonês', CAD: 'Dólar canadense', AUD: 'Dólar australiano', CHF: 'Franco suíço', CNY: 'Yuan chinês', MXN: 'Peso mexicano' },
@@ -50,7 +51,7 @@
     'en': {
       humidity: 'Humidity', wind: 'Wind', rain: 'rain', updated: 'updated', updatedAt: 'Updated at',
       noData: 'No data right now', noDataHint: 'As soon as the connection is back, the content shows up here.',
-      noNews: 'No news right now', next: 'Up next', source: 'Source', ratesSource: 'Source: European Central Bank',
+      noNews: 'No news right now', next: 'Up next', source: 'Source', ratesSource: 'Source: European Central Bank', soldOut: 'Sold out', noItems: 'No items in the table', was: 'was',
       days: 'days', hours: 'hours', minutes: 'min', seconds: 'sec', until: 'until', today: 'Today',
       m: 'min', h: 'h', d: 'd', ago: 'ago', now: 'now', news: 'News', rates: 'Exchange rates',
       names: { USD: 'US dollar', EUR: 'Euro', GBP: 'Pound sterling', JPY: 'Japanese yen', CAD: 'Canadian dollar', AUD: 'Australian dollar', CHF: 'Swiss franc', CNY: 'Chinese yuan', MXN: 'Mexican peso' },
@@ -374,6 +375,166 @@
     staleFooter(root, data);
   }
 
+  // ---------- tabela de preços ----------
+
+  function moneyFormatter(currency) {
+    try {
+      return new Intl.NumberFormat(state.lang, { style: 'currency', currency: currency });
+    } catch (e) {
+      return { format: function (value) { return currency + ' ' + value.toFixed(2); } };
+    }
+  }
+
+  /**
+   * Linhas da tabela (cabeçalhos de categoria + itens) repartidas em colunas e em páginas. Um cabeçalho de categoria nunca fica
+   * sozinho no pé de uma coluna: se for o último lugar, a coluna fecha mais curta e o cabeçalho abre a seguinte.
+   */
+  function pricePages(items, showCategories, perColumn, columns) {
+    var entries = [];
+    var last = null;
+    for (var i = 0; i < items.length; i++) {
+      var category = showCategories ? (items[i].category || '') : '';
+      if (category !== last) {
+        if (category) entries.push({ header: category });
+        last = category;
+      }
+      entries.push({ item: items[i] });
+    }
+    var cols = [];
+    var col = [];
+    for (var j = 0; j < entries.length; j++) {
+      if (col.length === perColumn - 1 && entries[j].header) {
+        cols.push(col);
+        col = [];
+      }
+      col.push(entries[j]);
+      if (col.length === perColumn) {
+        cols.push(col);
+        col = [];
+      }
+    }
+    if (col.length) cols.push(col);
+    var pages = [];
+    for (var k = 0; k < cols.length; k += columns) pages.push(cols.slice(k, k + columns));
+    return pages;
+  }
+
+  function renderPrices(root, settings, data) {
+    var s = state.s;
+    if (!data || !data.segments || !data.segments.length) return emptyState(root, s.noData, s.noDataHint);
+    var currency = (data.list && data.list.currency) || 'BRL';
+    var money = moneyFormatter(currency);
+    var columns = Math.min(3, Math.max(1, settings.columns || 1));
+    var seconds = Math.max(4, settings.secondsPerPage || 8);
+
+    // A altura de cada linha é a de uma tela 16:9 com "rowsPerColumn" linhas; numa tela em pé (ou numa zona alta) cabem mais
+    // linhas com a MESMA altura, e a tabela em pé usa uma coluna só (o nome do produto precisa de largura).
+    var width = window.innerWidth || 1280;
+    var height = window.innerHeight || 720;
+    var rowVmin = 66 / Math.min(14, Math.max(4, settings.rowsPerColumn || 8));
+    var heightVmin = height / (Math.min(width, height) / 100);
+    var perColumn = Math.max(3, Math.floor((heightVmin - 34) / rowVmin));
+    if (height > width * 1.1) columns = 1;
+
+    var holder = el('div', 'prices');
+    holder.style.setProperty('--row', rowVmin + 'vmin');
+    var box = el('div', 'w fade');
+    holder.appendChild(box);
+    root.appendChild(holder);
+
+    var segment = null;
+    var pages = [];
+    var pageIndex = 0;
+
+    function currentSegment() {
+      var t = now();
+      for (var i = 0; i < data.segments.length; i++) {
+        if (t >= data.segments[i].fromMs && t < data.segments[i].toMs) return data.segments[i];
+      }
+      return data.segments[data.segments.length - 1];
+    }
+
+    function draw() {
+      clear(box);
+      var head = el('div', 'head');
+      head.appendChild(el('div', 'ttl', settings.title || (data.list && data.list.name) || ''));
+      if (segment.rule) {
+        var tag = el('div', 'tag');
+        tag.appendChild(icon('tag'));
+        tag.appendChild(el('span', null, segment.rule));
+        head.appendChild(tag);
+      }
+      box.appendChild(head);
+      if (!segment.items.length) {
+        box.appendChild(el('div', 'none', s.noItems));
+        return;
+      }
+      var grid = el('div', 'grid cols' + columns);
+      var page = pages[pageIndex] || [];
+      for (var c = 0; c < columns; c++) {
+        var col = el('div', 'col');
+        var slice = page[c] || [];
+        for (var r = 0; r < slice.length; r++) {
+          var entry = slice[r];
+          if (entry.header) {
+            col.appendChild(el('div', 'cat', entry.header));
+            continue;
+          }
+          var item = entry.item;
+          var row = el('div', 'row' + (item.highlight ? ' hot' : '') + (item.available ? '' : ' off'));
+          var name = el('div', 'nm');
+          name.appendChild(el('b', null, item.name));
+          if (item.description) name.appendChild(el('small', null, item.description));
+          row.appendChild(name);
+          var price = el('div', 'pr');
+          if (!item.available) {
+            price.appendChild(el('span', 'sold', s.soldOut));
+          } else {
+            if (item.basePrice !== null && item.basePrice !== undefined && item.basePrice !== item.price) {
+              price.appendChild(el('s', null, money.format(item.basePrice)));
+            }
+            var now_ = el('span', item.rule ? 'now promo' : 'now', money.format(item.price));
+            if (item.unit) now_.appendChild(el('small', null, ' / ' + item.unit));
+            price.appendChild(now_);
+          }
+          row.appendChild(price);
+          col.appendChild(row);
+        }
+        grid.appendChild(col);
+      }
+      box.appendChild(grid);
+      if (pages.length > 1) {
+        var dots = el('div', 'dots');
+        for (var p = 0; p < pages.length; p++) dots.appendChild(el('i', p === pageIndex ? 'on' : ''));
+        box.appendChild(dots);
+      }
+    }
+
+    function load(next) {
+      segment = next;
+      pages = pricePages(segment.items, settings.showCategories !== false, perColumn, columns);
+      pageIndex = 0;
+      draw();
+    }
+
+    load(currentSegment());
+    // Na hora em que o preço muda (início ou fim de uma variação), a tela troca sozinha, mesmo sem internet.
+    every(1000, function () {
+      var next = currentSegment();
+      if (next !== segment) load(next);
+    });
+    every(seconds * 1000, function () {
+      if (pages.length < 2) return;
+      box.className = 'w fade out';
+      window.setTimeout(function () {
+        pageIndex = (pageIndex + 1) % pages.length;
+        draw();
+        box.className = 'w fade';
+      }, 400);
+    });
+    staleFooter(root, data);
+  }
+
   // ---------- aviso ----------
 
   var TONES = { brand: '#2fd08f', blue: '#4b9bff', amber: '#ffb020', red: '#ff5d5d', green: '#4ade80' };
@@ -443,6 +604,7 @@
     NEWS: function (root, init) { renderNews(root, init.settings, init.data); },
     RATES: function (root, init) { renderRates(root, init.settings, init.data); },
     NOTICE: function (root, init) { renderNotice(root, init.settings); },
+    PRICES: function (root, init) { renderPrices(root, init.settings, init.data); },
     COUNTDOWN: function (root, init) { renderCountdown(root, init.settings); }
   };
 

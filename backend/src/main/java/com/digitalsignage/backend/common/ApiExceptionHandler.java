@@ -46,6 +46,28 @@ public class ApiExceptionHandler {
 		return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(Map.of("error", ex.getMessage()));
 	}
 
+	/**
+	 * O armazenamento de arquivos (S3/Supabase) recusou o envio: o motivo mais comum é o arquivo passar do limite do bucket ou ter
+	 * um tipo que ele não aceita. Sem isto a pessoa só via "Internal Server Error".
+	 */
+	@ExceptionHandler(software.amazon.awssdk.services.s3.model.S3Exception.class)
+	public ResponseEntity<Map<String, String>> handleStorage(software.amazon.awssdk.services.s3.model.S3Exception ex) {
+		int status = ex.statusCode();
+		String detail = ex.awsErrorDetails() != null && ex.awsErrorDetails().errorMessage() != null ? ex.awsErrorDetails().errorMessage() : ex.getMessage();
+		if (status == 413) {
+			return ResponseEntity.badRequest().body(Map.of("error",
+					"O arquivo passa do limite do armazenamento (50 MB no plano gratuito). Corte o vídeo ou grave em resolução menor."));
+		}
+		if (status == 415) {
+			return ResponseEntity.badRequest().body(Map.of("error",
+					"O armazenamento de arquivos não aceita este tipo de arquivo (" + detail + "). Use imagens JPG, PNG ou WEBP e vídeos MP4 ou MOV."));
+		}
+		if (status >= 400 && status < 500 && status != 401 && status != 403) {
+			return ResponseEntity.badRequest().body(Map.of("error", "O armazenamento de arquivos recusou o envio: " + detail));
+		}
+		throw ex;
+	}
+
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	public ResponseEntity<Map<String, String>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
 		return ResponseEntity.status(HttpStatus.CONFLICT)

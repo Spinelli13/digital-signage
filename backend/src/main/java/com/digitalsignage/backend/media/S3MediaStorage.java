@@ -99,13 +99,26 @@ public class S3MediaStorage implements MediaStorage {
 						PutObjectRequest.builder()
 								.bucket(bucket)
 								.key(storageKey)
-								.contentType(file.getContentType())
+								.contentType(contentTypeOf(file))
 								.build(),
 						RequestBody.fromInputStream(in, file.getSize()));
 			}
 			return new StoredFile(storageKey, HexFormat.of().formatHex(digest.digest()), file.getSize());
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException(e);
+		}
+	}
+
+	/**
+	 * O tipo que vai para o armazenamento é o canônico (o mesmo que fica no banco), nunca o que o navegador mandou: o iPhone
+	 * pelo Safari às vezes manda "application/octet-stream" ou nada, e o bucket só aceita os tipos de mídia da lista dele.
+	 */
+	static String contentTypeOf(MultipartFile file) {
+		String declared = file.getContentType();
+		try {
+			return MediaKind.canonicalMimeType(MediaKind.of(declared, file.getOriginalFilename()), declared, file.getOriginalFilename());
+		} catch (IllegalArgumentException e) {
+			return declared;
 		}
 	}
 

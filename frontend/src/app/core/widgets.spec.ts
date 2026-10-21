@@ -53,8 +53,8 @@ describe('WidgetTemplates', () => {
 });
 
 describe('widget catalog', () => {
-  it('has the six kinds, each with icon, name and explanation', () => {
-    expect(WIDGET_KINDS.map((info) => info.kind)).toEqual(['CLOCK', 'WEATHER', 'NEWS', 'RATES', 'NOTICE', 'COUNTDOWN']);
+  it('has the seven kinds, each with icon, name and explanation', () => {
+    expect(WIDGET_KINDS.map((info) => info.kind)).toEqual(['CLOCK', 'WEATHER', 'NEWS', 'RATES', 'NOTICE', 'COUNTDOWN', 'PRICES']);
     expect(WIDGET_KINDS.every((info) => info.icon && info.label && info.description.length > 20)).toBe(true);
     expect(widgetInfo('WEATHER')?.label).toBe('Previsão do tempo');
     expect(widgetInfo(null)).toBeUndefined();
