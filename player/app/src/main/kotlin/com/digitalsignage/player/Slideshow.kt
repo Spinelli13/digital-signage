@@ -10,6 +10,8 @@ import com.digitalsignage.player.cache.MediaCache
 import com.digitalsignage.player.data.ConfigZone
 import com.digitalsignage.player.data.PlayerConfig
 import com.digitalsignage.player.data.ZoneGeometry
+import com.digitalsignage.player.memory.MemoryProfile
+import com.digitalsignage.player.memory.TrimLevels
 import com.digitalsignage.player.telemetry.Telemetry
 
 /**
@@ -27,6 +29,8 @@ class Slideshow(
     private val onError: (String) -> Unit = {},
     /** Conta ao servidor o que está na tela e quantas vezes cada mídia foi exibida. */
     private val telemetry: Telemetry = Telemetry.shared,
+    /** Quanto o aparelho aguenta de memória (imagens menores, um vídeo por vez, etc.). */
+    private val profile: MemoryProfile = MemoryProfile.NORMAL,
 ) {
 
     /** A zona única, que usa as views da tela (mantida entre as trocas de playlist: o ExoPlayer é reaproveitado). */
@@ -57,6 +61,13 @@ class Slideshow(
         playerView.visibility = View.INVISIBLE
     }
 
+    /** O Android avisou que falta memória: cada zona solta o que não está à vista. */
+    fun trimMemory(level: Int) {
+        if (!TrimLevels.shouldRelease(level)) return
+        single?.trim()
+        zones.forEach { it.trim() }
+    }
+
     fun release() {
         stop()
         single?.release()
@@ -68,7 +79,7 @@ class Slideshow(
         val views = singleViews ?: ZoneViews(imageView, playerView, zonesRoot).also { singleViews = it }
         // O WebView da zona única fica dentro do zonesRoot (que é transparente e só aparece quando ele aparece).
         zonesRoot.visibility = View.VISIBLE
-        val player = single ?: ZonePlayer(scope, cache, views, telemetry, onError = onError).also { single = it }
+        val player = single ?: ZonePlayer(scope, cache, views, telemetry, onError = onError, profile = profile).also { single = it }
         player.start(zone.items)
     }
 
@@ -112,6 +123,8 @@ class Slideshow(
                     muted = !zone.main,
                     label = if (multi) zone.name else null,
                     onError = onError,
+                    profile = profile,
+                    allowVideo = zone.main || profile.secondaryVideo,
                 ).also { it.start(zone.items) }
             }
         }

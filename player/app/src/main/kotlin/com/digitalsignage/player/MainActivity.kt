@@ -23,6 +23,9 @@ import com.digitalsignage.player.engine.EngineState
 import com.digitalsignage.player.errors.ErrorMessages
 import com.digitalsignage.player.errors.ErrorReporter
 import com.digitalsignage.player.engine.PlayerEngine
+import com.digitalsignage.player.memory.MemoryProfile
+import com.digitalsignage.player.restart.RestartPolicy
+import com.digitalsignage.player.restart.Restarter
 import com.digitalsignage.player.sync.ConfigSync
 import com.digitalsignage.player.update.UpdateManager
 import com.digitalsignage.player.update.UpdateRequestTrigger
@@ -65,6 +68,17 @@ class MainActivity : AppCompatActivity() {
 
         settings = Settings(this)
         applyLaunchExtras(intent)
+        // Aberto de novo (por alguém, pelo boot ou pelo vigia): apaga a "saída de propósito" e marca que está vivo.
+        Restarter.opened(settings)
+        Restarter.scheduleWatchdog(this)
+        // Voltar fecha o Player de propósito: o vigia espera um tempo antes de trazê-lo de volta.
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                Restarter.userLeft(settings)
+                isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
+            }
+        })
 
         val cache = MediaCache(java.io.File(filesDir, "media"))
         val api = HttpPlayerApi(baseUrl = { settings.serverUrl })
@@ -76,7 +90,7 @@ class MainActivity : AppCompatActivity() {
         )
         engine = PlayerEngine(
             api = api,
-            sync = ConfigSync(api, api, cache, settings),
+            sync = ConfigSync(api, api, cache, settings, freeBytes = { filesDir.usableSpace }),
             store = settings,
             token = { settings.deviceToken },
             playerVersion = BuildConfig.VERSION_NAME,
@@ -91,7 +105,17 @@ class MainActivity : AppCompatActivity() {
             findViewById<PlayerView>(R.id.playerView),
             findViewById<FrameLayout>(R.id.zonesRoot),
             onError = { reporter.report(it) },
+            profile = MemoryProfile.detect(this),
         )
+        // Sinal de vida enquanto a tela está aberta: é o que o vigia confere (ver restart/Restarter).
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (true) {
+                    Restarter.stampAlive(settings)
+                    delay(RestartPolicy.ALIVE_EVERY_MS)
+                }
+            }
+        }
 
         // Toda mensagem de erro aparece por 10 segundos; mensagens em fila aparecem uma depois da outra.
         lifecycleScope.launch {
@@ -142,6 +166,18 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         slideshow.stop()
+    }
+
+    /** Início (ou outro app) apertado por alguém: não é queda nem falta de memória, o vigia não deve reabrir já. */
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        Restarter.userLeft(settings)
+    }
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        slideshow.trimMemory(level)
     }
 
     override fun onDestroy() {

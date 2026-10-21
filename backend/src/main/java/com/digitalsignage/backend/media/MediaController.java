@@ -54,7 +54,8 @@ public class MediaController {
 			throw new IllegalArgumentException("Arquivo vazio");
 		}
 
-		MediaKind kind = MediaKind.fromMimeType(file.getContentType());
+		MediaKind kind = MediaKind.of(file.getContentType(), file.getOriginalFilename());
+		String mimeType = MediaKind.canonicalMimeType(kind, file.getContentType(), file.getOriginalFilename());
 		planLimits.requireRoomForUpload(com.digitalsignage.backend.tenant.TenantContext.current(), file.getSize());
 		StoredFile stored = storageService.store(file);
 
@@ -63,7 +64,7 @@ public class MediaController {
 		Media media = new Media(
 				mediaName,
 				kind.name(),
-				file.getContentType(),
+				mimeType,
 				stored.storageKey(),
 				stored.size(),
 				durationSeconds,

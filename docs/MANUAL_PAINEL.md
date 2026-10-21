@@ -118,7 +118,15 @@ O que **você** digitou (nomes de TVs, playlists, locais, campanhas…) nunca é
 | Tipo | Formatos | Recomendação |
 |---|---|---|
 | Imagem | JPG, PNG, WEBP | Proporção **16:9**, de preferência **1920×1080**. Imagens fora dessa proporção aparecem inteiras, com faixas pretas. |
-| Vídeo | MP4 (vídeo H.264) | Até **1080p** e **no máximo 50 MB** por arquivo. Outros formatos (MOV, AVI, MKV, HEVC) podem não tocar. |
+| Vídeo | **MP4** e **MOV** (o que o **iPhone** grava), em H.264 ou HEVC | Até **1080p** (1920×1080, deitado ou em pé) e **no máximo 50 MB** por arquivo (limite do armazenamento gratuito; um vídeo de iPhone em 1080p tem cerca de 50 MB por minuto, então corte ou grave clipes curtos). Outros formatos (AVI, MKV, WEBM) não são aceitos. |
+
+**Vídeos do iPhone.** Pode enviar o arquivo direto da galeria, em **.MOV**. Antes de enviar, o painel lê o arquivo (sem tocá-lo) e avisa:
+
+- **Acima de 1080p** (por exemplo 4K): o painel **não envia** e explica como regravar (no iPhone: **Ajustes > Câmera > Gravar vídeo > 1080p HD**). Vídeos menores deixam a TV mais leve e o envio mais rápido.
+- **HEVC (H.265)**, o padrão do iPhone: **envia**, mas avisa que TVs e aparelhos mais antigos podem não tocar. Se a TV mostrar a mensagem de que não consegue tocar o vídeo, regrave em **Ajustes > Câmera > Formatos > Mais compatível** (H.264).
+- **HDR** (Dolby Vision, HLG): envia, mas as cores podem ficar apagadas em TVs sem HDR. O ideal é gravar sem HDR.
+
+A duração do vídeo é preenchida sozinha a partir do próprio arquivo, mesmo quando o computador não consegue tocar HEVC.
 
 Além de arquivos, a Biblioteca também guarda **QR Codes** (botão **QR Code**) e **páginas da web** (botão **Página web**): veja o capítulo 10.
 
@@ -221,6 +229,12 @@ Cada linha tem o ícone de **relógio com seta** (Histórico), o **lápis** (Edi
 | **Atualizar todas as TVs** (no alto da página) | O mesmo pedido para todas as TVs ativas. |
 | **Desativar / Reativar** (menu **⋮**) | Pausa a TV (ela para de exibir) ou volta a ativá-la. |
 | **Excluir** (menu **⋮**) | Remove a TV. Ela esquece o conteúdo e volta a pedir um **novo código de ativação**. |
+
+### 5.6.1 O que acontece na TV quando você troca a playlist
+
+A TV **não apaga a playlist antiga antes** de baixar a nova: ela baixa **todas** as mídias que faltam, confere cada arquivo e **só então** troca. Enquanto isso continua exibindo o conteúdo anterior, e uma falha de internet no meio do download não derruba a tela. Depois da troca, as mídias que nenhuma playlist da TV usa mais são **apagadas** do aparelho, para não encher a memória. Mídias que as duas playlists têm em comum não são baixadas de novo.
+
+Como a troca é "tudo ou nada", por um instante a TV guarda as duas versões: se o armazenamento dela for pequeno e o conteúdo novo não couber, a TV **mantém o anterior** e registra o motivo no **Histórico** ("Não há espaço na TV para baixar o conteúdo novo…"). Nesse caso apague mídias grandes que não usa mais ou use arquivos menores.
 
 ### 5.7 Atualizar o aplicativo das TVs
 
@@ -688,7 +702,7 @@ Todo aviso começa pela **ação** que falhou (por exemplo, "Excluir mídia: …
 | Uma ação em massa disse "N já estavam no estado pedido" | Normal: a ação só alcança as TVs a que se aplica (por exemplo, "Reativar" só alcança as desativadas). |
 | A TV não aparece na lista depois de digitar o código | Confira se o código está certo (6 caracteres) e dentro de 24 horas. |
 | O painel não abre / "servidor demorou" | Aguarde cerca de 1 minuto e recarregue a página. |
-| Vídeo não toca | Converta para **MP4 com vídeo H.264**. |
+| Vídeo não toca (a TV avisa "não consegue tocar este vídeo") | Quase sempre é o formato: **HEVC (H.265)** em TV antiga, **4K** ou **HDR**. Regrave ou converta para **H.264 de até 1080p** (MP4 ou MOV). No iPhone: **Ajustes > Câmera > Formatos > Mais compatível**. |
 | A TV não se atualiza | Veja o **Manual de instalação**, seção "Atualização automática" (precisa liberar "instalar apps desconhecidos" e alguém confirmar na TV). |
 
 <!-- fim-do-manual -->

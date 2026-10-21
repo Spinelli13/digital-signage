@@ -42,6 +42,52 @@ class MediaLibraryTest extends AbstractApiTest {
 				.andExpect(jsonPath("$.durationSeconds").value(42));
 	}
 
+	/** O iPhone grava .MOV (QuickTime, H.264 ou HEVC): precisa ser aceito e devolvido com o tipo certo. */
+	@Test
+	void iphoneQuickTimeVideoIsAccepted() throws Exception {
+		MockMultipartFile file = new MockMultipartFile("file", "IMG_0042.MOV", "video/quicktime", new byte[] { 1, 2, 3, 4 });
+
+		var response = mvc.perform(asAdmin(multipart("/api/v1/media").file(file).param("durationSeconds", "12")))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.type").value("VIDEO"))
+				.andExpect(jsonPath("$.mimeType").value("video/quicktime"))
+				.andExpect(jsonPath("$.durationSeconds").value(12))
+				.andReturn().getResponse().getContentAsString();
+		long id = new com.fasterxml.jackson.databind.ObjectMapper().readTree(response).get("id").asLong();
+
+		mvc.perform(asAdmin(get("/api/v1/media/" + id + "/file")))
+				.andExpect(status().isOk())
+				.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Content-Type", "video/quicktime"));
+	}
+
+	@Test
+	void genericContentTypeFallsBackToTheFileExtension() throws Exception {
+		MockMultipartFile mov = new MockMultipartFile("file", "ferias.mov", "application/octet-stream", new byte[] { 1 });
+		MockMultipartFile m4v = new MockMultipartFile("file", "clipe.m4v", "video/x-m4v", new byte[] { 1 });
+		MockMultipartFile photo = new MockMultipartFile("file", "foto.JPG", "application/octet-stream", new byte[] { 1 });
+
+		mvc.perform(asAdmin(multipart("/api/v1/media").file(mov)))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.type").value("VIDEO"))
+				.andExpect(jsonPath("$.mimeType").value("video/quicktime"));
+		mvc.perform(asAdmin(multipart("/api/v1/media").file(m4v)))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.mimeType").value("video/mp4"));
+		mvc.perform(asAdmin(multipart("/api/v1/media").file(photo)))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.type").value("IMAGE"))
+				.andExpect(jsonPath("$.mimeType").value("image/jpeg"));
+	}
+
+	@Test
+	void genericContentTypeWithAnUnknownExtensionIsStillRejected() throws Exception {
+		MockMultipartFile file = new MockMultipartFile("file", "planilha.xlsx", "application/octet-stream", new byte[] { 1 });
+
+		mvc.perform(asAdmin(multipart("/api/v1/media").file(file)))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.error").value(org.hamcrest.Matchers.containsString("MOV")));
+	}
+
 	@Test
 	void unsupportedFileTypeIsRejected() throws Exception {
 		MockMultipartFile file = new MockMultipartFile("file", "doc.pdf", "application/pdf", new byte[] { 1 });

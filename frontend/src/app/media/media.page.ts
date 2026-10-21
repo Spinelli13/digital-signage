@@ -13,9 +13,11 @@ import { IconComponent } from '../shared/icon';
 import { IconName } from '../shared/icons';
 import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent } from '../shared/ui';
 import { MediaThumb } from './media-thumb';
+import { VideoInfo, exceedsFullHd, looksLikeVideo, probeVideo } from './video-probe';
 import { QR_THEMES, QR_IMAGE_SIZE, QrTheme, drawQr, qrFileName } from './qr';
 
-const ACCEPTED = 'image/jpeg,image/png,image/webp,video/mp4';
+// MP4 e MOV (o que o iPhone grava, em H.264 ou HEVC); a extensão vale quando o celular não informa o tipo.
+const ACCEPTED = 'image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/x-m4v,.mov,.m4v';
 export const DEFAULT_WEB_SECONDS = 30;
 export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
 
@@ -23,7 +25,7 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
   selector: 'app-media',
   imports: [MediaThumb, FormsModule, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, MenuComponent],
   template: `
-    <app-page-header [title]="'Biblioteca de Mídia' | t" [subtitle]="'Imagens (JPG, PNG, WEBP), vídeos (MP4), páginas da web e QR Codes disponíveis para as playlists.' | t" icon="image">
+    <app-page-header [title]="'Biblioteca de Mídia' | t" [subtitle]="'Imagens (JPG, PNG, WEBP), vídeos (MP4 ou MOV do iPhone, até 1080p), páginas da web e QR Codes disponíveis para as playlists.' | t" icon="image">
       @if (auth.can('content')) {
         <div class="head-actions">
           <button class="secondary" (click)="openWeb()"><app-icon name="globe" />{{ 'Página web' | t }}</button>
@@ -38,6 +40,18 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
 
     @if (notice.text(); as text) {
       <div class="notice" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ text }}</span></div>
+    }
+
+    @if (warnings().length > 0) {
+      <div class="warnbox" role="status">
+        <app-icon name="triangle-alert" [size]="18" />
+        <div class="warn-list">
+          @for (text of warnings(); track text) {
+            <p>{{ text }}</p>
+          }
+        </div>
+        <button type="button" class="secondary small" (click)="warnings.set([])">{{ 'Entendi' | t }}</button>
+      </div>
     }
 
     @if (uploading()) {
@@ -159,6 +173,11 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
     }
   `,
   styles: `
+    .warnbox { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 18px; padding: 12px 14px; border-radius: var(--r); background: var(--warn-bg); color: var(--warn-fg); border: 1px solid var(--warn-line); }
+    .warnbox > app-icon { flex: none; margin-top: 2px; }
+    .warn-list { flex: 1; min-width: 0; }
+    .warn-list p { margin: 0 0 6px; }
+    .warn-list p:last-child { margin-bottom: 0; }
     .upload { cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
     .mh { display: flex; align-items: center; gap: 10px; }
     .mh app-icon { color: var(--primary); }
@@ -203,6 +222,8 @@ export class MediaPage implements OnInit {
   readonly typeLabel = mediaTypeLabel;
   readonly kindIcon = (type: MediaType): IconName => (type === 'VIDEO' ? 'film' : type === 'WEB' ? 'globe' : 'image');
   readonly notice = new Notice();
+  /** Avisos sobre os vídeos escolhidos (HEVC, HDR…): não impedem o envio, só explicam o que pode acontecer na TV. */
+  readonly warnings = signal<string[]>([]);
 
   readonly modal = signal<'web' | 'qr' | null>(null);
   readonly busy = signal(false);
@@ -337,11 +358,30 @@ export class MediaPage implements OnInit {
       return;
     }
     this.uploading.set(true);
+    this.warnings.set([]);
     for (const file of files) {
       this.currentFile.set(file.name);
       this.progress.set(0);
       try {
-        const duration = file.type.startsWith('video/') ? await readVideoDuration(file) : null;
+        let duration: number | null = null;
+        if (looksLikeVideo(file)) {
+          // O arquivo diz o que é (codec, tamanho, duração) sem precisar tocá-lo: o navegador nem sempre toca HEVC.
+          const info = await probeVideo(file);
+          if (info && exceedsFullHd(info)) {
+            this.errors.show(
+              tr('O vídeo "{name}" tem {width}×{height}, mais que 1080p. Regrave ou reduza para 1080p antes de enviar (no iPhone: Ajustes > Câmera > Gravar vídeo > 1080p HD).', {
+                name: file.name,
+                width: info.width,
+                height: info.height,
+              }),
+            );
+            continue;
+          }
+          if (info) {
+            this.warnAbout(file.name, info);
+          }
+          duration = info?.durationSeconds ? Math.max(1, Math.round(info.durationSeconds)) : await readVideoDuration(file);
+        }
         await this.upload(file, duration);
       } catch {
         // O motivo já foi mostrado pelo interceptor; aqui dizemos qual arquivo falhou e o que aconteceu com a fila.
@@ -351,6 +391,23 @@ export class MediaPage implements OnInit {
     }
     this.uploading.set(false);
     this.load();
+  }
+
+  private warnAbout(name: string, info: VideoInfo): void {
+    const warnings: string[] = [];
+    if (info.codec.startsWith('hvc') || info.codec.startsWith('hev') || info.codec.startsWith('dv')) {
+      warnings.push(
+        tr('"{name}" está em HEVC (H.265), o formato padrão do iPhone. Funciona na maioria das TVs, mas aparelhos mais antigos não tocam: se a TV mostrar erro, grave em "Mais compatível" (H.264) em Ajustes > Câmera > Formatos.', { name }),
+      );
+    }
+    if (info.hdr) {
+      warnings.push(
+        tr('"{name}" tem HDR (Dolby Vision, HLG ou HDR10): em TVs sem HDR as cores podem ficar apagadas. Prefira gravar sem HDR.', { name }),
+      );
+    }
+    if (warnings.length > 0) {
+      this.warnings.update((current) => [...current, ...warnings]);
+    }
   }
 
   remove(media: Media): void {

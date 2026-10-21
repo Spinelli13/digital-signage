@@ -6,6 +6,7 @@ import { ConfigService } from '../core/config.service';
 import { errorInterceptor } from '../core/error.interceptor';
 import { ErrorService } from '../core/error.service';
 import { Media } from '../core/models';
+import { buildVideo } from '../testing/mp4';
 import { DEFAULT_QR_CAPTION, DEFAULT_WEB_SECONDS, MediaPage } from './media.page';
 
 const API = 'http://api.test/api/v1';
@@ -204,5 +205,70 @@ describe('MediaPage', () => {
 
     backend.expectNone(`${API}/media`);
     backend.verify();
+  });
+
+  describe('vídeos do iPhone', () => {
+    const fileOf = (blob: Blob, name: string, type = '') => new File([blob], name, { type });
+
+    /** Escolhe os arquivos como o seletor do navegador faria e deixa o envio andar até o fim. */
+    async function choose(page: MediaPage, backend: HttpTestingController, files: File[]) {
+      const input = document.createElement('input');
+      Object.defineProperty(input, 'files', { value: files });
+      const done = page.onFiles({ target: input } as unknown as Event);
+      for (const file of files) {
+        const request = await vi.waitFor(() => backend.expectOne((r) => r.url === `${API}/media` && r.method === 'POST'));
+        expect((request.request.body as FormData).get('file')).toBe(file);
+        request.flush(media(100, file.name));
+      }
+      await done;
+    }
+
+    it('aceita um .MOV em HEVC (sem tipo informado), lê a duração do próprio arquivo e avisa sobre o HEVC', async () => {
+      const { page, backend } = setup();
+      const mov = fileOf(buildVideo({ codec: 'hvc1', width: 1920, height: 1080, rotation: 90, timescale: 600, duration: 7200 }), 'IMG_0042.MOV');
+
+      const input = document.createElement('input');
+      Object.defineProperty(input, 'files', { value: [mov] });
+      const done = page.onFiles({ target: input } as unknown as Event);
+      const request = await vi.waitFor(() => backend.expectOne((r) => r.url === `${API}/media` && r.method === 'POST'));
+      expect((request.request.body as FormData).get('durationSeconds')).toBe('12');
+      request.flush(media(7, 'IMG_0042.MOV', { type: 'VIDEO', mimeType: 'video/quicktime' }));
+      await done;
+
+      backend.match(`${API}/media`).forEach((r) => r.flush([])); // recarrega a biblioteca (a detecção automática de mudanças chama ngOnInit de novo)
+      expect(page.warnings().join(' ')).toContain('HEVC');
+      expect(page.warnings().join(' ')).toContain('IMG_0042.MOV');
+    });
+
+    it('recusa vídeo acima de 1080p, explica como regravar e segue com os outros arquivos', async () => {
+      const { page, backend } = setup();
+      const errors = TestBed.inject(ErrorService);
+      const big = fileOf(buildVideo({ codec: 'hvc1', width: 3840, height: 2160 }), 'cinema-4k.mov', 'video/quicktime');
+      const ok = fileOf(buildVideo({ codec: 'avc1', width: 1920, height: 1080, duration: 3000 }), 'normal.mp4', 'video/mp4');
+
+      const input = document.createElement('input');
+      Object.defineProperty(input, 'files', { value: [big, ok] });
+      const done = page.onFiles({ target: input } as unknown as Event);
+      const request = await vi.waitFor(() => backend.expectOne((r) => r.url === `${API}/media` && r.method === 'POST'));
+      expect((request.request.body as FormData).get('file')).toBe(ok);
+      request.flush(media(8, 'normal.mp4', { type: 'VIDEO' }));
+      await done;
+      backend.match(`${API}/media`).forEach((r) => r.flush([]));
+
+      expect(errors.errors()[0].message).toContain('cinema-4k.mov');
+      expect(errors.errors()[0].message).toContain('3840×2160');
+      expect(errors.errors()[0].message).toContain('1080p');
+      expect(page.warnings()).toEqual([]);
+    });
+
+    it('um vídeo em pé de 1080×1920 (celular) é aceito: o limite vale para o lado maior e o menor', async () => {
+      const { page, backend } = setup();
+      const portrait = fileOf(buildVideo({ codec: 'avc1', width: 1080, height: 1920 }), 'story.mp4', 'video/mp4');
+
+      await choose(page, backend, [portrait]);
+
+      backend.match(`${API}/media`).forEach((r) => r.flush([]));
+      expect(TestBed.inject(ErrorService).errors()).toHaveLength(0);
+    });
   });
 });

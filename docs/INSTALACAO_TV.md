@@ -181,6 +181,20 @@ O passo a passo de mídias e playlists, com mais detalhes, está no **Manual do 
 
 > **Na primeira vez do dia, o painel pode demorar até 1 minuto** para responder (o servidor "acorda"). É normal no plano gratuito. **Isso nunca interrompe a TV:** ela continua exibindo o que já baixou.
 
+### 2.5.1 O Smartplay reabre sozinho
+
+O Player foi feito para ficar o dia inteiro na tela e **volta sozinho** nestas situações:
+
+- **Ao ligar a TV** e **depois de uma atualização** do aplicativo (já era assim);
+- **Depois de uma queda**: se o app fechar por um erro inesperado, ele reabre em 3 segundos. Se cair várias vezes seguidas, a espera cresce (10 s, 30 s, 1 min, até 5 min) para não ficar num laço; a queda aparece no **Histórico** da TV, no painel;
+- **Quando o Android fecha o app** (por falta de memória, por exemplo): um **vigia** confere a cada 2 minutos e reabre se o Player não estiver na tela.
+
+Se **você** sair de propósito (botão **Voltar** ou **Início** do controle), o vigia espera **10 minutos** antes de trazer o Player de volta, o suficiente para entrar nas configurações da TV. Em Android 10 ou mais novo isto depende da permissão "exibir sobre outros apps" (seção 2.3).
+
+### 2.5.2 TVs com pouca memória
+
+Em TVs e pen drives de entrada (cerca de 1 GB de RAM), o Player se adapta sozinho: decodifica as imagens em tamanho menor (até 1280×720), toca **um vídeo por vez** (vídeos em zonas que não são a principal são pulados, com um aviso), solta o decodificador e a página web assim que terminam de ser usados e devolve memória quando o Android pede. Quando um vídeo não pode ser decodificado pelo aparelho (HEVC em modelo antigo, 4K), a TV avisa na tela e no Histórico, e o Player segue para o próximo item.
+
 ### 2.6 Deixar a TV pronta para exibir o dia todo
 
 Estas são configurações da própria TV, não do Player:

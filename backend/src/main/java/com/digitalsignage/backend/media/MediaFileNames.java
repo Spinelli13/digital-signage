@@ -18,6 +18,8 @@ final class MediaFileNames {
 			case "image/png" -> "png";
 			case "image/webp" -> "webp";
 			case "video/mp4" -> "mp4";
+			case "video/quicktime" -> "mov";
+			case "video/x-m4v", "video/m4v" -> "m4v";
 			default -> "bin";
 		};
 	}

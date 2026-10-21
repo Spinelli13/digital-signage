@@ -88,3 +88,10 @@ Passo a passo completo (TCL, Fire Stick, nuvem): [docs/DEPLOY.md](../docs/DEPLOY
 - [x] 39 testes JVM (cliente HTTP com MockWebServer, cache, sincronização, máquina de estados).
 - [x] Verificado no **emulador de Android TV 14** (ativação, imagens, vídeo, loop, troca de playlist, offline + app reaberto, início automático após reboot).
 - [ ] **Validado em TV física** (TCL / Fire Stick): ainda não. O emulador não reproduz firmware/decodificadores de cada fabricante.
+
+## Robustez (0.8+)
+
+- **Reabrir sozinho** (`restart/`): depois de uma queda o `PlayerApp` grava o motivo e agenda um alarme (3 s, com espera crescente em quedas seguidas, teto de 5 min); um vigia confere a cada 2 min se a tela deu sinal de vida nos últimos 150 s e, se não, reabre pelo mesmo caminho do boot (`LaunchHelper`, com o overlay invisível exigido pelo Android 10+). Voltar/Início (`onUserLeaveHint`) dão 10 min de folga ao vigia. O motivo vira um aviso no histórico da TV na abertura seguinte. Teste no emulador: `adb shell am crash com.digitalsignage.player`.
+- **Pouca memória** (`memory/MemoryProfile`): `ActivityManager.isLowRamDevice`, heap pequeno por app ou ≤ 1,2 GB de RAM escolhem o perfil LOW (imagens em até 1280×720 em RGB_565, um vídeo por vez, ExoPlayer e WebView soltos após o uso, buffers pequenos); `onTrimMemory` solta o que não está à vista em qualquer perfil.
+- **Espaço em disco** (`ConfigSync`): antes de baixar confere se o conteúdo novo cabe (mantendo 50 MB livres); se não couber, limpa restos de downloads e, persistindo, recusa com `InsufficientSpaceException` (a playlist atual continua).
+- **Vídeos**: o ExoPlayer tenta decodificadores alternativos (`setEnableDecoderFallback`) e, se nenhum servir, a mensagem diz para reenviar em H.264 de até 1080p (`ErrorMessages.playbackFailure`). `.mov` (QuickTime) toca como MP4.

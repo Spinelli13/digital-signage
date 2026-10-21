@@ -48,6 +48,11 @@
             </intent-filter>
         </receiver>
 
+        <!-- Alarmes que reabrem o Player depois de uma queda e o vigia que confere se ele está aberto (só o AlarmManager chama). -->
+        <receiver
+            android:name=".restart.RestartReceiver"
+            android:exported="false" />
+
         <!-- Resultado da instalação de uma atualização (só o instalador do sistema chama). -->
         <receiver
             android:name=".update.InstallResultReceiver"

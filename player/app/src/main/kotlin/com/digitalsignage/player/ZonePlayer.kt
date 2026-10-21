@@ -12,10 +12,13 @@ import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import com.digitalsignage.player.cache.MediaCache
 import com.digitalsignage.player.data.ConfigItem
 import com.digitalsignage.player.errors.ErrorMessages
+import com.digitalsignage.player.memory.MemoryProfile
 import com.digitalsignage.player.telemetry.Telemetry
 import java.io.File
 import kotlinx.coroutines.CompletableDeferred
@@ -43,9 +46,14 @@ class ZonePlayer(
     private val label: String? = null,
     /** Avisa o usuário (por 10 s na tela) quando uma mídia não pode ser exibida. */
     private val onError: (String) -> Unit = {},
+    /** Quanto o aparelho aguenta (ver MemoryProfile): imagens menores, menos coisas abertas ao mesmo tempo. */
+    private val profile: MemoryProfile = MemoryProfile.NORMAL,
+    /** Falso nas zonas secundárias de aparelhos com pouca memória: vídeos dessa zona são pulados. */
+    private val allowVideo: Boolean = true,
 ) {
 
     private var job: Job? = null
+    private var warnedSkippedVideo = false
     private var player: ExoPlayer? = null
     private var shownImage: File? = null
     private var lastFailure: String? = null
@@ -75,14 +83,34 @@ class ZonePlayer(
 
     private fun prefixed(message: String) = if (label == null) message else "Zona \"$label\": $message"
 
+    /**
+     * O Android avisou que falta memória: solta o que não está à vista (o decodificador de vídeo parado, a página da web
+     * fechada). O que está na tela continua; a próxima mídia que precisar recria o que faltar.
+     */
+    fun trim(current: ConfigItem? = shownItem) {
+        if (current?.isVideo != true) {
+            player?.release()
+            player = null
+        }
+        if (current?.isWeb != true) views.releaseWeb()
+    }
+
+    @Volatile
+    private var shownItem: ConfigItem? = null
+
     private suspend fun loop(items: List<ConfigItem>) {
-        val playable = items.filter { cache.isCached(it) }
+        val playable = items.filter { cache.isCached(it) && (allowVideo || !it.isVideo) }
+        if (!allowVideo && !warnedSkippedVideo && items.any { it.isVideo }) {
+            warnedSkippedVideo = true
+            onError(prefixed("Vídeos ignorados nesta zona: o aparelho tem pouca memória e só toca um vídeo por vez (na zona principal)."))
+        }
         if (playable.isEmpty()) return
 
         var index = 0
         var consecutiveFailures = 0
         while (true) {
             val item = playable[index % playable.size]
+            shownItem = item
             lastFailure = null
             val shown = try {
                 when {
@@ -107,22 +135,37 @@ class ZonePlayer(
                 if (consecutiveFailures >= playable.size) delay(ALL_FAILED_PAUSE_MS)
             }
             index++
+            if (profile.releaseAfterUse) releaseUnusedBefore(playable[index % playable.size])
         }
+    }
+
+    /** Em aparelhos com pouca memória, solta o decodificador/WebView que o próximo item não vai usar. */
+    private fun releaseUnusedBefore(next: ConfigItem) {
+        if (!next.isVideo) {
+            player?.release()
+            player = null
+        }
+        if (!next.isWeb) views.releaseWeb()
     }
 
     private suspend fun showImage(item: ConfigItem): Boolean {
         val file = cache.fileFor(item)
         if (shownImage != file) {
             val metrics = views.imageView.resources.displayMetrics
-            val maxWidth = views.width.takeIf { it > 0 } ?: metrics.widthPixels
-            val maxHeight = views.height.takeIf { it > 0 } ?: metrics.heightPixels
+            var maxWidth = views.width.takeIf { it > 0 } ?: metrics.widthPixels
+            var maxHeight = views.height.takeIf { it > 0 } ?: metrics.heightPixels
+            if (profile.maxImageWidth > 0) maxWidth = minOf(maxWidth, profile.maxImageWidth)
+            if (profile.maxImageHeight > 0) maxHeight = minOf(maxHeight, profile.maxImageHeight)
             val bitmap = withContext(Dispatchers.IO) { decodeScaled(file, maxWidth, maxHeight) }
             if (bitmap == null) {
                 lastFailure = "imagem inválida, corrompida ou grande demais"
                 return false
             }
 
+            val previous = (views.imageView.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
             views.imageView.setImageBitmap(bitmap)
+            // A imagem anterior já saiu da tela: devolve a memória dela na hora (em vez de esperar o coletor de lixo).
+            if (previous != null && previous !== bitmap && !previous.isRecycled) previous.recycle()
             shownImage = file
         }
         player?.stop()
@@ -137,7 +180,7 @@ class ZonePlayer(
     }
 
     private suspend fun playVideo(item: ConfigItem, loop: Boolean): Boolean {
-        val exo = player ?: ExoPlayer.Builder(views.playerView.context).build().also {
+        val exo = player ?: buildPlayer().also {
             player = it
             views.playerView.player = it
         }
@@ -156,7 +199,7 @@ class ZonePlayer(
             }
 
             override fun onPlayerError(error: PlaybackException) {
-                lastFailure = "falha ao reproduzir o vídeo: ${error.errorCodeName}"
+                lastFailure = ErrorMessages.playbackFailure(error.errorCode, error.errorCodeName)
                 done.complete(false)
             }
         }
@@ -247,7 +290,24 @@ class ZonePlayer(
         while (bounds.outWidth / (sample * 2) >= maxWidth && bounds.outHeight / (sample * 2) >= maxHeight) {
             sample *= 2
         }
-        return BitmapFactory.decodeFile(file.path, BitmapFactory.Options().apply { inSampleSize = sample })
+        return BitmapFactory.decodeFile(file.path, BitmapFactory.Options().apply {
+            inSampleSize = sample
+            inPreferredConfig = if (profile.rgb565) Bitmap.Config.RGB_565 else Bitmap.Config.ARGB_8888
+        })
+    }
+
+    /**
+     * ExoPlayer pronto para tocar arquivos do cache: buffer pequeno (o arquivo já está no disco) e, se o decodificador
+     * de hardware preferido falhar, tenta os outros (inclusive o de software) antes de desistir do vídeo.
+     */
+    private fun buildPlayer(): ExoPlayer {
+        val context = views.playerView.context
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(profile.bufferMinMs, profile.bufferMaxMs, BUFFER_FOR_PLAYBACK_MS, BUFFER_AFTER_REBUFFER_MS)
+            .setTargetBufferBytes(profile.bufferBytes)
+            .build()
+        val renderers = DefaultRenderersFactory(context).setEnableDecoderFallback(true)
+        return ExoPlayer.Builder(context, renderers).setLoadControl(loadControl).build()
     }
 
     private companion object {
@@ -255,6 +315,8 @@ class ZonePlayer(
         const val ALL_FAILED_PAUSE_MS = 5_000L
         const val VIDEO_GRACE_SECONDS = 15
         const val WEB_LOAD_TIMEOUT_MS = 30_000L
+        const val BUFFER_FOR_PLAYBACK_MS = 500
+        const val BUFFER_AFTER_REBUFFER_MS = 1_000
 
         /** Tira o anel de foco que o navegador desenha no primeiro link (ninguém aponta nada numa tela de sinalização). */
         const val HIDE_FOCUS_RING =

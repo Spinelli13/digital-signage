@@ -57,6 +57,48 @@ class Settings(context: Context) : ConfigStore {
             prefs.edit().putString(KEY_LAST_CRASH, value).commit()
         }
 
+    /** "Reabrir sozinho" (depois de uma queda e pelo vigia). Ligado por padrão; ver restart/Restarter. */
+    var autoRestart: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_RESTART, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_AUTO_RESTART, value).commit()
+        }
+
+    /** Último sinal de vida da tela do Player (ms desde 1970); 0 = nunca. Gravado sem esperar o disco. */
+    var lastAliveAt: Long
+        get() = prefs.getLong(KEY_ALIVE_AT, 0)
+        set(value) {
+            prefs.edit().putLong(KEY_ALIVE_AT, value).apply()
+        }
+
+    /** Até quando o vigia respeita uma saída de propósito (Voltar/Início). */
+    var userExitUntil: Long
+        get() = prefs.getLong(KEY_USER_EXIT_UNTIL, 0)
+        set(value) {
+            prefs.edit().putLong(KEY_USER_EXIT_UNTIL, value).commit()
+        }
+
+    /** Uma queda agendou a reabertura e ela ainda não aconteceu (a tela ao abrir apaga isto). */
+    var pendingCrashRestart: Boolean
+        get() = prefs.getBoolean(KEY_PENDING_RESTART, false)
+        set(value) {
+            prefs.edit().putBoolean(KEY_PENDING_RESTART, value).commit()
+        }
+
+    /** Instantes das últimas quedas, para a espera crescente quando o app cai em sequência. */
+    var crashTimes: List<Long>
+        get() = prefs.getString(KEY_CRASH_TIMES, "").orEmpty().split(',').mapNotNull { it.toLongOrNull() }
+        set(value) {
+            prefs.edit().putString(KEY_CRASH_TIMES, value.takeLast(10).joinToString(",")).commit()
+        }
+
+    /** Por que o Player foi reaberto sozinho da última vez (contado ao servidor na próxima abertura). */
+    var lastRestartReason: String?
+        get() = prefs.getString(KEY_RESTART_REASON, null)
+        set(value) {
+            prefs.edit().putString(KEY_RESTART_REASON, value).commit()
+        }
+
     /** Último pedido de verificação de atualização (vindo do painel) que este aparelho já tratou. */
     var lastUpdateToken: Long
         get() = prefs.getLong(KEY_UPDATE_TOKEN, 0)
@@ -104,6 +146,12 @@ class Settings(context: Context) : ConfigStore {
         const val KEY_UPDATE_STATUS = "update_status"
         const val KEY_UPDATE_TOKEN = "update_token"
         const val KEY_LAST_CRASH = "last_crash"
+        const val KEY_AUTO_RESTART = "auto_restart"
+        const val KEY_ALIVE_AT = "alive_at"
+        const val KEY_USER_EXIT_UNTIL = "user_exit_until"
+        const val KEY_PENDING_RESTART = "pending_restart"
+        const val KEY_CRASH_TIMES = "crash_times"
+        const val KEY_RESTART_REASON = "restart_reason"
     }
 
 }

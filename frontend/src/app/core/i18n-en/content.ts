@@ -104,8 +104,15 @@ export const CONTENT: Record<string, string> = {
 
   // biblioteca de mídia e QR Code
   'Biblioteca de Mídia': 'Media library',
-  'Imagens (JPG, PNG, WEBP), vídeos (MP4), páginas da web e QR Codes disponíveis para as playlists.':
-    'Images (JPG, PNG, WEBP), videos (MP4), web pages and QR Codes available for playlists.',
+  'Imagens (JPG, PNG, WEBP), vídeos (MP4 ou MOV do iPhone, até 1080p), páginas da web e QR Codes disponíveis para as playlists.':
+    'Images (JPG, PNG, WEBP), videos (MP4 or iPhone MOV, up to 1080p), web pages and QR Codes available for playlists.',
+  Entendi: 'Got it',
+  'O vídeo "{name}" tem {width}×{height}, mais que 1080p. Regrave ou reduza para 1080p antes de enviar (no iPhone: Ajustes > Câmera > Gravar vídeo > 1080p HD).':
+    'The video "{name}" is {width}×{height}, above 1080p. Re-record or shrink it to 1080p before uploading (on iPhone: Settings > Camera > Record Video > 1080p HD).',
+  '"{name}" está em HEVC (H.265), o formato padrão do iPhone. Funciona na maioria das TVs, mas aparelhos mais antigos não tocam: se a TV mostrar erro, grave em "Mais compatível" (H.264) em Ajustes > Câmera > Formatos.':
+    '"{name}" is HEVC (H.265), the iPhone default. It works on most TVs, but older devices cannot play it: if the TV shows an error, record using "Most Compatible" (H.264) under Settings > Camera > Formats.',
+  '"{name}" tem HDR (Dolby Vision, HLG ou HDR10): em TVs sem HDR as cores podem ficar apagadas. Prefira gravar sem HDR.':
+    '"{name}" has HDR (Dolby Vision, HLG or HDR10): on TVs without HDR the colors may look washed out. Prefer recording without HDR.',
   'QR Code': 'QR Code',
   Enviando: 'Uploading',
   '{n}s': '{n}s',
