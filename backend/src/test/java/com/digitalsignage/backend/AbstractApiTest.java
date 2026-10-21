@@ -87,7 +87,7 @@ public abstract class AbstractApiTest {
 		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media, locations, device_groups, campaigns, device_events, alerts, media_plays, layouts RESTART IDENTITY CASCADE");
 		// Clientes, usuários e planos criados pelos testes (o cliente 1 = reserva e o 2 = original, com o administrador, ficam).
 		jdbc.update("DELETE FROM invoices");
-		jdbc.update("UPDATE platform_settings SET company_name = 'Digital Signage', payment_instructions = 'Pague por PIX ou boleto e envie o comprovante para o suporte.', support_email = NULL, trial_days = 14, grace_days = 7, invoice_lead_days = 5");
+		jdbc.update("UPDATE platform_settings SET company_name = 'Smartplay', payment_instructions = 'Pague por PIX ou boleto e envie o comprovante para o suporte.', support_email = NULL, trial_days = 14, grace_days = 7, invoice_lead_days = 5");
 		jdbc.update("DELETE FROM monitoring_settings WHERE tenant_id > 2");
 		jdbc.update("DELETE FROM users WHERE tenant_id > 2");
 		jdbc.update("DELETE FROM tenants WHERE id > 2");

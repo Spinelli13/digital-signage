@@ -1,6 +1,6 @@
-# Digital Signage
+# Smartplay
 
-Plataforma de Digital Signage para controlar remotamente conteúdo exibido em TVs.
+Smartplay é uma plataforma de sinalização digital (digital signage) para controlar remotamente conteúdo exibido em TVs.
 Contexto e decisões completas em [PROJETO_DIGITAL_SIGNAGE_CONTEXTO_CLAUDE.md](./PROJETO_DIGITAL_SIGNAGE_CONTEXTO_CLAUDE.md).
 
 ## Estrutura

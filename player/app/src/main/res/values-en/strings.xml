@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Inglês: o Android escolhe este arquivo quando a TV está em inglês; em qualquer outro idioma vale values/strings.xml (português). -->
 <resources>
-    <string name="app_name">Digital Signage Player</string>
-    <string name="brand_title">DIGITAL SIGNAGE</string>
+    <string name="app_name">Smartplay</string>
+    <string name="brand_title">SMARTPLAY</string>
 
     <string name="starting_title">Starting…</string>
     <string name="starting_body">Connecting to the server.</string>

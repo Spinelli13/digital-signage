@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Digital Signage Player</string>
-    <string name="brand_title">DIGITAL SIGNAGE</string>
+    <string name="app_name">Smartplay</string>
+    <string name="brand_title">SMARTPLAY</string>
 
     <string name="starting_title">Iniciando…</string>
     <string name="starting_body">Conectando ao servidor.</string>

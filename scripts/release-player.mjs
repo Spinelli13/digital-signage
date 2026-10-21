@@ -282,11 +282,11 @@ function page(title, body) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(title)} — Digital Signage</title>
-<meta name="theme-color" content="#3563e9">
+<title>${escapeHtml(title)} — Smartplay</title>
+<meta name="theme-color" content="#1a6a49">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
-  :root { --blue:#3563e9; --text:#172033; --muted:#6d7788; --line:#e6eaf1; --bg:#f5f7fb; }
+  :root { --blue:#14774f; --text:#0d1612; --muted:#63716b; --line:#dde4e0; --bg:#eff3f1; }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; }
   main { max-width:760px; margin:0 auto; padding:28px 16px 60px; }
@@ -294,7 +294,7 @@ function page(title, body) {
   a { color:var(--blue); }
   .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:22px; margin:18px 0; }
   .btn { display:inline-block; background:var(--blue); color:#fff; text-decoration:none; font-weight:600; padding:13px 22px; border-radius:11px; }
-  .muted { color:var(--muted); font-size:14px; } code { background:#eef1f7; padding:1px 6px; border-radius:6px; font-size:.92em; }
+  .muted { color:var(--muted); font-size:14px; } code { background:#e3f0e9; padding:1px 6px; border-radius:6px; font-size:.92em; }
   table { width:100%; border-collapse:collapse; background:#fff; } th,td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; font-size:15px; }
   th { color:var(--muted); font-size:13px; }
   .brand { display:flex; align-items:center; gap:10px; font-weight:700; margin-bottom:6px; } .brand img { width:34px; height:34px; border-radius:9px; }
@@ -304,7 +304,7 @@ function page(title, body) {
 </style>
 </head>
 <body><main>
-<div class="brand"><img src="favicon.svg" alt=""> Digital Signage</div>
+<div class="brand"><img src="favicon.svg" alt=""> Smartplay</div>
 ${body}
 </main></body></html>
 `;

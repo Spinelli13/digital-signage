@@ -202,7 +202,7 @@ menuPath('tcl-fontes-desconhecidas.svg', 'TCL · Liberar "instalar apps desconhe
   { title: 'Configurações', target: 'Apps', before: 2, after: 2 },
   { title: 'Apps', target: 'Acesso especial', before: 2, after: 1 },
   { title: 'Acesso especial', target: 'Instalar apps desconhecidos', before: 1, after: 2 },
-  { title: 'Instalar apps desconhecidos', target: 'Digital Signage Player', toggle: true, note: 'Ligue a chave (Permitido)', before: 2, after: 1 },
+  { title: 'Instalar apps desconhecidos', target: 'Smartplay', toggle: true, note: 'Ligue a chave (Permitido)', before: 2, after: 1 },
 ]);
 
 menuPath('tcl-fontes-downloader.svg', 'TCL · Liberar o Downloader a instalar apps', [
@@ -216,7 +216,7 @@ menuPath('tcl-sobre-outros-apps.svg', 'TCL · Liberar "exibir sobre outros apps"
   { title: 'Configurações', target: 'Apps', before: 2, after: 2 },
   { title: 'Apps', target: 'Acesso especial', before: 2, after: 1 },
   { title: 'Acesso especial', target: 'Exibir sobre outros apps', before: 2, after: 1 },
-  { title: 'Exibir sobre outros apps', target: 'Digital Signage Player', toggle: true, note: 'Ligue a chave (Permitido)', before: 1, after: 2 },
+  { title: 'Exibir sobre outros apps', target: 'Smartplay', toggle: true, note: 'Ligue a chave (Permitido)', before: 1, after: 2 },
 ]);
 
 menuPath('firetv-modo-desenvolvedor.svg', 'Fire TV Stick · Opções do desenvolvedor', [
@@ -236,8 +236,8 @@ menuPath('firetv-fontes-desconhecidas.svg', 'Fire TV Stick · Liberar "instalar 
 menuPath('firetv-abrir-app.svg', 'Fire TV Stick · Abrir o Player depois de instalar', [
   { title: 'Configurações', target: 'Aplicativos', before: 2, after: 2 },
   { title: 'Aplicativos', target: 'Gerenciar aplicativos instalados', before: 2, after: 1 },
-  { title: 'Apps instalados', target: 'Digital Signage Player', before: 2, after: 2 },
-  { title: 'Digital Signage Player', target: 'Iniciar aplicativo', note: 'Aparece na tela de apps', before: 1, after: 2 },
+  { title: 'Apps instalados', target: 'Smartplay', before: 2, after: 2 },
+  { title: 'Smartplay', target: 'Iniciar aplicativo', note: 'Aparece na tela de apps', before: 1, after: 2 },
 ]);
 
 // =====================================================================================================

@@ -32,7 +32,7 @@ execFileSync(
   [
     '-genkeypair', '-alias', 'signage', '-keyalg', 'RSA', '-keysize', '4096', '-validity', '36500',
     '-storetype', 'PKCS12', '-keystore', keystore, '-storepass', password, '-keypass', password,
-    '-dname', 'CN=Digital Signage Player, O=Digital Signage, C=BR',
+    '-dname', 'CN=Smartplay, O=Smartplay, C=BR',
   ],
   { stdio: ['ignore', 'ignore', 'inherit'] },
 );

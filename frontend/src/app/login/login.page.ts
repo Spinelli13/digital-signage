@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../core/auth.service';
+import { BRAND } from '../core/brand';
 import { TPipe } from '../core/i18n';
 import { IconComponent } from '../shared/icon';
 import { PreferencesBar } from '../shared/preferences';
@@ -99,7 +100,7 @@ import { PreferencesBar } from '../shared/preferences';
   `,
 })
 export class LoginPage {
-  protected readonly brand = 'Digital Signage';
+  protected readonly brand = BRAND;
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 

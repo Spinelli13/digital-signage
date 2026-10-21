@@ -6,6 +6,7 @@ import { filter, map } from 'rxjs';
 
 import { ApiService } from '../core/api.service';
 import { AttentionService } from '../core/attention.service';
+import { BRAND } from '../core/brand';
 import { AuthService } from '../core/auth.service';
 import { TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
@@ -283,7 +284,7 @@ export class Shell {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
 
-  protected readonly brand = 'Digital Signage';
+  protected readonly brand = BRAND;
   protected readonly planName = planText;
 
   readonly notice = new Notice();

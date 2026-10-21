@@ -113,7 +113,7 @@ const CSS = `
   * { box-sizing: border-box; }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { margin:0; color:var(--text); font:10.5pt/1.55 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
-  @page { size: A4; margin: 18mm 16mm 20mm; @bottom-center { content: "Digital Signage  ·  " attr(data-title) "  ·  página " counter(page); font: 8pt 'Segoe UI', Arial, sans-serif; color: #8a9690; } }
+  @page { size: A4; margin: 18mm 16mm 20mm; @bottom-center { content: "Smartplay  ·  " attr(data-title) "  ·  página " counter(page); font: 8pt 'Segoe UI', Arial, sans-serif; color: #8a9690; } }
   @page :first { margin: 0; @bottom-center { content: none; } }
   .cover { height: 297mm; page-break-after: always; background: linear-gradient(160deg, #0c1410 0%, #123326 55%, #1a6a49 130%); color:#fff; padding: 34mm 24mm 24mm; display:flex; flex-direction:column; }
   .cover img.logo { width: 30mm; height: 30mm; border-radius: 7mm; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
@@ -167,13 +167,13 @@ function renderHtml(manual, bodyHtml, toc, { imageBase, forPdf }) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(manual.title)} — Digital Signage</title>
+<title>${escapeHtml(manual.title)} — Smartplay</title>
 <style>${CSS}</style>
 </head>
 <body data-title="${escapeHtml(manual.title)}">
 <section class="cover">
   <img class="logo" src="${logoUri}" alt="">
-  <div class="brand">Digital Signage</div>
+  <div class="brand">Smartplay</div>
   <h1>${escapeHtml(manual.title)}</h1>
   <p class="sub">${escapeHtml(manual.subtitle)}</p>
   <p class="aud">${escapeHtml(manual.audience)}</p>
