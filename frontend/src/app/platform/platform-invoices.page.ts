@@ -5,6 +5,9 @@ import { ApiService } from '../core/api.service';
 import { Invoice, InvoiceStatus } from '../core/models';
 import { FDatePipe, TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
+import { IconComponent } from '../shared/icon';
+import { IconName } from '../shared/icons';
+import { EmptyStateComponent, LEGACY_TONE, MenuComponent, PageHeaderComponent, PillComponent, SkeletonComponent, Tone } from '../shared/ui';
 import { formatMoney, INVOICE_STATUS_LABELS } from '../core/saas';
 
 export const PAYMENT_METHODS = ['PIX', 'BOLETO', 'TRANSFERENCIA', 'CARTAO', 'DINHEIRO', 'OUTRO'];
@@ -21,52 +24,54 @@ export const METHOD_LABELS: Record<string, string> = {
 
 @Component({
   selector: 'app-platform-invoices',
-  imports: [FDatePipe, FormsModule, TPipe],
+  imports: [FDatePipe, FormsModule, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, SkeletonComponent, MenuComponent],
   template: `
-    <div class="head">
-      <div>
-        <h1>{{ 'Faturas' | t }}</h1>
-        <p>{{ 'Cobranças dos clientes. Ao receber um pagamento, registre-o aqui: a fatura fica paga e o cliente volta ao normal.' | t }}</p>
-      </div>
-      <button class="secondary" [disabled]="running()" (click)="runBilling()">{{ (running() ? 'Rodando…' : 'Rodar cobrança agora') | t }}</button>
-    </div>
+    <app-page-header [title]="'Faturas' | t" [subtitle]="'Cobranças dos clientes. Ao receber um pagamento, registre-o aqui: a fatura fica paga e o cliente volta ao normal.' | t" icon="receipt-text">
+      <button class="secondary" [disabled]="running()" (click)="runBilling()"><app-icon name="refresh-cw" [size]="16" />{{ (running() ? 'Rodando…' : 'Rodar cobrança agora') | t }}</button>
+    </app-page-header>
 
     @if (notice.text(); as text) {
-      <div class="notice" role="status">{{ text }}</div>
+      <div class="notice" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ text }}</span></div>
     }
 
-    <div class="filters">
-      <label class="check"><input type="radio" name="f" [checked]="filter() === ''" (change)="setFilter('')" /> {{ 'Todas' | t }}</label>
-      <label class="check"><input type="radio" name="f" [checked]="filter() === 'OPEN'" (change)="setFilter('OPEN')" /> {{ 'A pagar' | t }}</label>
-      <label class="check"><input type="radio" name="f" [checked]="filter() === 'PAID'" (change)="setFilter('PAID')" /> {{ 'Pagas' | t }}</label>
-      <label class="check"><input type="radio" name="f" [checked]="filter() === 'VOID'" (change)="setFilter('VOID')" /> {{ 'Canceladas' | t }}</label>
+    <div class="filters" role="radiogroup" [attr.aria-label]="'Situação' | t">
+      <label class="chip" [class.on]="filter() === ''"><input type="radio" name="f" [checked]="filter() === ''" (change)="setFilter('')" />{{ 'Todas' | t }}</label>
+      <label class="chip" [class.on]="filter() === 'OPEN'"><input type="radio" name="f" [checked]="filter() === 'OPEN'" (change)="setFilter('OPEN')" /><app-icon name="hourglass" [size]="15" />{{ 'A pagar' | t }}</label>
+      <label class="chip" [class.on]="filter() === 'PAID'"><input type="radio" name="f" [checked]="filter() === 'PAID'" (change)="setFilter('PAID')" /><app-icon name="circle-check" [size]="15" />{{ 'Pagas' | t }}</label>
+      <label class="chip" [class.on]="filter() === 'VOID'"><input type="radio" name="f" [checked]="filter() === 'VOID'" (change)="setFilter('VOID')" /><app-icon name="circle-x" [size]="15" />{{ 'Canceladas' | t }}</label>
     </div>
 
     <div class="card">
       @if (items().length === 0) {
-        <div class="empty">{{ (loaded() ? 'Nenhuma fatura neste filtro.' : 'Carregando…') | t }}</div>
+        @if (loaded()) {
+          <app-empty-state icon="receipt-text" [title]="'Nenhuma fatura neste filtro.' | t" />
+        } @else {
+          <app-skeleton [rows]="4" />
+        }
       } @else {
         <table class="stack">
           <tr><th>{{ 'Número' | t }}</th><th>{{ 'Cliente' | t }}</th><th>{{ 'Descrição' | t }}</th><th>{{ 'Vencimento' | t }}</th><th>{{ 'Valor' | t }}</th><th>{{ 'Situação' | t }}</th><th></th></tr>
           @for (invoice of items(); track invoice.id) {
             <tr>
               <td class="mono first">{{ invoice.number }}</td>
-              <td [attr.data-label]="'Cliente' | t">{{ invoice.tenantName }}</td>
+              <td [attr.data-label]="'Cliente' | t"><b>{{ invoice.tenantName }}</b></td>
               <td [attr.data-label]="'Descrição' | t">{{ invoice.description }}</td>
-              <td [attr.data-label]="'Vencimento' | t">{{ invoice.dueDate | fdate }}</td>
-              <td [attr.data-label]="'Valor' | t">{{ money(invoice) }}</td>
+              <td [attr.data-label]="'Vencimento' | t"><span class="num">{{ invoice.dueDate | fdate }}</span></td>
+              <td [attr.data-label]="'Valor' | t"><b class="num">{{ money(invoice) }}</b></td>
               <td [attr.data-label]="'Situação' | t">
-                <span>
-                  <span class="dot" [class]="tone(invoice)"></span>{{ (invoice.overdue ? 'Vencida' : label(invoice.status)) | t }}
+                <span class="col">
+                  <app-pill [tone]="look(invoice).tone" [icon]="look(invoice).icon">{{ (invoice.overdue ? 'Vencida' : label(invoice.status)) | t }}</app-pill>
                   @if (invoice.paidAt) {
-                    <br /><small>{{ '{method} em {date}' | t: { method: methodText(invoice.paymentMethod), date: (invoice.paidAt | fdate) } }}</small>
+                    <small class="sub">{{ '{method} em {date}' | t: { method: methodText(invoice.paymentMethod), date: (invoice.paidAt | fdate) } }}</small>
                   }
                 </span>
               </td>
               <td class="row-actions">
                 @if (invoice.status === 'OPEN') {
-                  <button class="primary small" (click)="openPay(invoice)">{{ 'Registrar pagamento' | t }}</button>
-                  <button class="danger small" (click)="voidInvoice(invoice)">{{ 'Cancelar' | t }}</button>
+                  <button class="primary small" (click)="openPay(invoice)"><app-icon name="check" [size]="15" />{{ 'Registrar pagamento' | t }}</button>
+                  <app-menu [label]="'Mais ações' | t">
+                    <button type="button" class="menu-item danger" (click)="voidInvoice(invoice)"><app-icon name="circle-x" />{{ 'Cancelar' | t }}</button>
+                  </app-menu>
                 }
               </td>
             </tr>
@@ -78,7 +83,7 @@ export const METHOD_LABELS: Record<string, string> = {
     @if (paying(); as invoice) {
       <div class="modal" (click)="closePay()">
         <form class="modal-box" (click)="$event.stopPropagation()" (ngSubmit)="submitPay()">
-          <h2>{{ 'Registrar pagamento' | t }}</h2>
+          <h2 class="mh"><app-icon name="receipt-text" [size]="22" />{{ 'Registrar pagamento' | t }}</h2>
           <p class="label">{{ invoice.number }} — {{ invoice.tenantName }} — {{ money(invoice) }}</p>
           <div class="field">
             <label for="pay-method">{{ 'Forma de pagamento' | t }}</label>
@@ -101,10 +106,23 @@ export const METHOD_LABELS: Record<string, string> = {
     }
   `,
   styles: `
-    .filters { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 14px; }
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .chip {
+      position: relative; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 999px; cursor: pointer;
+      border: 1px solid var(--line-strong); background: var(--panel); color: var(--text-2); font-size: 13.5px; font-weight: 600; transition: all 0.15s var(--ease);
+    }
+    .chip:hover { background: var(--panel-2); }
+    .chip.on { background: var(--primary-soft); color: var(--primary); border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+    :host-context(:root[data-theme='dark']) .chip.on { color: var(--link); }
+    .chip input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+    .chip:has(input:focus-visible) { outline: 2px solid var(--ring-color, var(--primary)); outline-offset: 2px; }
     .row-actions { white-space: nowrap; text-align: right; }
-    .row-actions button { margin-left: 6px; }
-    @media (max-width: 720px) { .filters { gap: 12px 18px; } }
+    .row-actions > * { margin-left: 6px; vertical-align: middle; }
+    .col { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+    .sub { color: var(--muted); }
+    .mh { display: flex; align-items: center; gap: 10px; }
+    .mh app-icon { color: var(--primary); }
+    :host-context(:root[data-theme='dark']) .mh app-icon { color: var(--link); }
   `,
 })
 export class PlatformInvoicesPage implements OnInit {
@@ -141,11 +159,14 @@ export class PlatformInvoicesPage implements OnInit {
     return code ? tr(METHOD_LABELS[code] ?? code) : '';
   }
 
-  tone(invoice: Invoice): string {
+  look(invoice: Invoice): { tone: Tone; icon: IconName } {
     if (invoice.status === 'PAID') {
-      return 'on';
+      return LEGACY_TONE.on;
     }
-    return invoice.status === 'OPEN' ? (invoice.overdue ? 'off' : 'warn') : 'off';
+    if (invoice.status === 'OPEN') {
+      return invoice.overdue ? LEGACY_TONE.off : { tone: 'warn', icon: 'hourglass' };
+    }
+    return { tone: 'neutral', icon: 'circle-x' };
   }
 
   setFilter(value: '' | InvoiceStatus): void {

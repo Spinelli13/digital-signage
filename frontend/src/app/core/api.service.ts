@@ -342,8 +342,8 @@ export class ApiService {
   }
 
   // resumo do dashboard
-  summary(): Observable<Summary> {
-    return this.http.get<Summary>(this.url('/summary'));
+  summary(silent = false): Observable<Summary> {
+    return this.http.get<Summary>(this.url('/summary'), { context: new HttpContext().set(SILENT_ERRORS, silent) });
   }
 
   updateDevice(id: number, body: DeviceUpdateRequest): Observable<Device> {

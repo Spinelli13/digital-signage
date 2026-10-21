@@ -50,14 +50,14 @@ describe('painel em inglês', () => {
     backend.expectOne(`${API}/locations`).flush([location(1, 'Loja Centro')]);
     fixture.detectChanges();
     expect(text(fixture)).toContain('Pontos & Locais');
-    expect(text(fixture)).toContain('+ Novo local');
+    expect(text(fixture)).toContain('Novo local');
 
     setLang('en');
     fixture.detectChanges();
     await fixture.whenStable();
 
     expect(text(fixture)).toContain('Sites & Locations');
-    expect(text(fixture)).toContain('+ New location');
+    expect(text(fixture)).toContain('New location');
     expect(text(fixture)).toContain('1 of 2'); // "{online} de {total}"
     expect(text(fixture)).not.toContain('Novo local');
     // o nome que a pessoa digitou nunca é traduzido
@@ -123,10 +123,11 @@ describe('painel em inglês', () => {
     await fixture.whenStable();
 
     const content = text(fixture);
-    expect(content).toContain('Overview of your advertising network.');
-    expect(content).toContain('Online now');
-    expect(content).toContain('Devices needing attention');
-    expect(content).toContain('1 of 3');
+    expect(content).toContain('Hello, Ana. Here is how your network looks right now.');
+    expect(content).toContain('Network health');
+    expect(content).toContain('Needs attention');
+    expect(content).toContain('1 of 3 TVs online');
+    expect(content).toContain('Open alerts');
     expect(content).toContain('of 2'); // "de {total}" nas campanhas
     expect(content).toContain('Offline');
     expect(content).toContain('TV Vitrine');

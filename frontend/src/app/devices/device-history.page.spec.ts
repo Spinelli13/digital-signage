@@ -102,8 +102,12 @@ describe('DeviceHistoryPage', () => {
     expect(element.querySelectorAll('ol.timeline li')).toHaveLength(3);
     expect(element.textContent).toContain('Registro do Player');
     expect(element.textContent).toContain('Falha ao baixar a mídia');
-    expect(element.querySelector('.badge-error')?.textContent).toContain('Erro');
-    expect(element.querySelector('.badge-warn')?.textContent).toContain('Aviso');
+    // erro e aviso aparecem como selo (cor + texto) e o ícone do tipo vem do mapa de eventos
+    const levels = Array.from(element.querySelectorAll('app-pill.lvl')).map((pill) => pill.textContent?.trim());
+    expect(levels).toEqual(['Erro', 'Aviso']);
+    expect(element.querySelectorAll('ol.timeline .ev svg')).toHaveLength(3);
+    expect(element.querySelector('ol.timeline .ev.err')).not.toBeNull();
+    expect(element.querySelector('ol.timeline .ev.warn')).not.toBeNull();
     expect(element.textContent).toContain('na tela: Promoção');
     backend.verify();
   });

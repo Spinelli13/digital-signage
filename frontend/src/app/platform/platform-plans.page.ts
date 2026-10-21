@@ -5,47 +5,55 @@ import { ApiService } from '../core/api.service';
 import { PlatformPlan, PlatformPlanRequest } from '../core/models';
 import { TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
+import { IconComponent } from '../shared/icon';
+import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent, SkeletonComponent } from '../shared/ui';
 import { formatLimit, formatMoney, formatStorage, moneyInput, parseMoney, planText } from '../core/saas';
 
 @Component({
   selector: 'app-platform-plans',
-  imports: [FormsModule, TPipe],
+  imports: [FormsModule, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, SkeletonComponent, MenuComponent],
   template: `
-    <div class="head">
-      <div>
-        <h1>{{ 'Planos' | t }}</h1>
-        <p>{{ 'O que cada plano custa e o que inclui. Deixe um limite em branco para "ilimitado".' | t }}</p>
-      </div>
-      <button class="primary" (click)="openNew()">{{ '+ Novo plano' | t }}</button>
-    </div>
+    <app-page-header [title]="'Planos' | t" [subtitle]="'O que cada plano custa e o que inclui. Deixe um limite em branco para &quot;ilimitado&quot;.' | t" icon="layers">
+      <button class="primary" (click)="openNew()"><app-icon name="plus" />{{ 'Novo plano' | t }}</button>
+    </app-page-header>
 
     @if (notice.text(); as text) {
-      <div class="notice" role="status">{{ text }}</div>
+      <div class="notice" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ text }}</span></div>
     }
 
     <div class="card">
       @if (items().length === 0) {
-        <div class="empty">{{ (loaded() ? 'Nenhum plano.' : 'Carregando…') | t }}</div>
+        @if (loaded()) {
+          <app-empty-state icon="layers" [title]="'Nenhum plano.' | t">
+            <button class="primary" (click)="openNew()"><app-icon name="plus" />{{ 'Novo plano' | t }}</button>
+          </app-empty-state>
+        } @else {
+          <app-skeleton [rows]="3" />
+        }
       } @else {
         <table class="stack">
           <tr><th>{{ 'Plano' | t }}</th><th>{{ 'Preço/mês' | t }}</th><th>{{ 'TVs' | t }}</th><th>{{ 'Espaço' | t }}</th><th>{{ 'Usuários' | t }}</th><th>{{ 'Clientes' | t }}</th><th></th></tr>
           @for (plan of items(); track plan.id) {
             <tr>
               <td class="first">
-                <b>{{ planName(plan.name) }}</b>
-                @if (!plan.active) {
-                  <small> {{ '(desativado)' | t }}</small>
-                }
-                <br /><small class="mono">{{ plan.code }}</small>
+                <span class="place">
+                  <span class="place-icon"><app-icon name="tag" [size]="18" /></span>
+                  <span class="place-text">
+                    <b>{{ planName(plan.name) }}@if (!plan.active) {<small class="off"> {{ '(desativado)' | t }}</small>}</b>
+                    <small class="mono">{{ plan.code }}</small>
+                  </span>
+                </span>
               </td>
-              <td [attr.data-label]="'Preço/mês' | t">{{ money(plan.priceCents) }}</td>
-              <td [attr.data-label]="'TVs' | t">{{ limit(plan.maxDevices) }}</td>
-              <td [attr.data-label]="'Espaço' | t">{{ storage(plan.maxStorageMb) }}</td>
-              <td [attr.data-label]="'Usuários' | t">{{ limit(plan.maxUsers) }}</td>
-              <td [attr.data-label]="'Clientes' | t">{{ plan.tenantCount }}</td>
+              <td [attr.data-label]="'Preço/mês' | t"><b class="num">{{ money(plan.priceCents) }}</b></td>
+              <td [attr.data-label]="'TVs' | t"><span class="num">{{ limit(plan.maxDevices) }}</span></td>
+              <td [attr.data-label]="'Espaço' | t"><span class="num">{{ storage(plan.maxStorageMb) }}</span></td>
+              <td [attr.data-label]="'Usuários' | t"><span class="num">{{ limit(plan.maxUsers) }}</span></td>
+              <td [attr.data-label]="'Clientes' | t"><app-pill icon="building"><span class="num">{{ plan.tenantCount }}</span></app-pill></td>
               <td class="row-actions">
-                <button class="secondary small" (click)="openEdit(plan)">{{ 'Editar' | t }}</button>
-                <button class="danger small" [disabled]="plan.tenantCount > 0" [title]="plan.tenantCount > 0 ? ('Há clientes neste plano' | t) : ''" (click)="remove(plan)">{{ 'Excluir' | t }}</button>
+                <button class="secondary small" (click)="openEdit(plan)"><app-icon name="pencil" [size]="15" />{{ 'Editar' | t }}</button>
+                <app-menu [label]="'Mais ações' | t">
+                  <button type="button" class="menu-item danger" [disabled]="plan.tenantCount > 0" [title]="plan.tenantCount > 0 ? ('Há clientes neste plano' | t) : ''" (click)="remove(plan)"><app-icon name="trash" />{{ 'Excluir' | t }}</button>
+                </app-menu>
               </td>
             </tr>
           }
@@ -111,7 +119,13 @@ import { formatLimit, formatMoney, formatStorage, moneyInput, parseMoney, planTe
   `,
   styles: `
     .row-actions { white-space: nowrap; text-align: right; }
-    .row-actions button { margin-left: 6px; }
+    .row-actions > * { margin-left: 6px; vertical-align: middle; }
+    .place { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .place-icon { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: var(--primary); background: var(--primary-soft); border: 1px solid var(--primary-line); }
+    :host-context(:root[data-theme='dark']) .place-icon { color: var(--link); }
+    .place-text { display: flex; flex-direction: column; min-width: 0; }
+    .place-text small { color: var(--muted); }
+    .off { color: var(--warn-fg); font-weight: 600; }
     .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   `,

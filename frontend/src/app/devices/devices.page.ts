@@ -7,7 +7,7 @@ import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
 import { TPipe, tr } from '../core/i18n';
 import { hasFilters } from '../core/device-filters';
-import { deviceState, timeAgo } from '../core/format';
+import { connectionOf, deviceState, timeAgo } from '../core/format';
 import {
   BulkAction,
   BulkRequest,
@@ -22,6 +22,9 @@ import {
 } from '../core/models';
 import { Notice } from '../core/notice';
 import { isOutdated } from '../core/versions';
+import { SITUATION } from '../shared/connection';
+import { IconComponent } from '../shared/icon';
+import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent, SkeletonComponent } from '../shared/ui';
 
 const REFRESH_MS = 10_000;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -31,61 +34,63 @@ type LocationChoice = string;
 
 @Component({
   selector: 'app-devices',
-  imports: [FormsModule, RouterLink, TPipe],
+  imports: [FormsModule, RouterLink, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, SkeletonComponent, MenuComponent],
   template: `
-    <div class="head">
-      <div><h1>{{ 'Dispositivos' | t }}</h1><p>{{ 'Gerencie todas as telas e Players conectados.' | t }}</p></div>
+    <app-page-header [title]="'Dispositivos' | t" [subtitle]="'Gerencie todas as telas e Players conectados.' | t" icon="monitor">
       @if (auth.can('admin')) {
-        <div class="head-actions">
-          <button class="secondary" (click)="updateAll()" [title]="'Pede a todas as TVs que verifiquem agora se há versão nova do Player' | t">{{ '⬆ Atualizar todas as TVs' | t }}</button>
-          <button class="primary" (click)="openActivate()">{{ '+ Adicionar dispositivo' | t }}</button>
-        </div>
+        <button class="secondary" (click)="updateAll()" [title]="'Pede a todas as TVs que verifiquem agora se há versão nova do Player' | t"><app-icon name="refresh-cw" />{{ 'Atualizar todas as TVs' | t }}</button>
+        <button class="primary" (click)="openActivate()"><app-icon name="plus" />{{ 'Adicionar dispositivo' | t }}</button>
       }
-    </div>
+    </app-page-header>
 
     @if (notice.text(); as text) {
-      <div class="notice" role="status">{{ text }}</div>
+      <div class="notice" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ text }}</span></div>
     }
 
     <div class="card filters">
-      <input
-        type="search"
-        class="search"
-        [attr.aria-label]="'Buscar TV' | t"
-        [placeholder]="'Buscar por nome ou local…' | t"
-        [ngModel]="filters().q ?? ''"
-        (ngModelChange)="onSearch($event)"
-      />
-      <select [attr.aria-label]="'Situação' | t" [ngModel]="filters().connection ?? ''" (ngModelChange)="setConnection($event)">
-        <option value="">{{ 'Todas as situações' | t }}</option>
-        <option value="ONLINE">{{ 'Online' | t }}</option>
-        <option value="OFFLINE">{{ 'Offline' | t }}</option>
-        <option value="NEVER">{{ 'Nunca conectou' | t }}</option>
-        <option value="PENDING">{{ 'Aguardando ativação' | t }}</option>
-        <option value="DISABLED">{{ 'Desativado' | t }}</option>
-      </select>
-      <select [attr.aria-label]="'Local' | t" [ngModel]="locationFilterValue()" (ngModelChange)="setLocationFilter($event)">
-        <option value="">{{ 'Todos os locais' | t }}</option>
-        <option value="none">{{ 'Sem local' | t }}</option>
-        @for (location of locations(); track location.id) {
-          <option [value]="location.id">{{ location.name }}</option>
+      <div class="search-wrap">
+        <app-icon name="search" [size]="18" />
+        <input
+          type="search"
+          class="search"
+          [attr.aria-label]="'Buscar TV' | t"
+          [placeholder]="'Buscar por nome ou local…' | t"
+          [ngModel]="filters().q ?? ''"
+          (ngModelChange)="onSearch($event)"
+        />
+      </div>
+      <div class="chips-row" role="group" [attr.aria-label]="'Situação' | t">
+        <button type="button" class="chip-btn" [class.on]="!filters().connection" (click)="setConnection('')">{{ 'Todas' | t }}</button>
+        <button type="button" class="chip-btn" [class.on]="filters().connection === 'ONLINE'" (click)="setConnection('ONLINE')"><app-icon name="monitor-check" [size]="15" />{{ 'Online' | t }}</button>
+        <button type="button" class="chip-btn" [class.on]="filters().connection === 'OFFLINE'" (click)="setConnection('OFFLINE')"><app-icon name="wifi-off" [size]="15" />{{ 'Offline' | t }}</button>
+        <button type="button" class="chip-btn" [class.on]="filters().connection === 'NEVER'" (click)="setConnection('NEVER')"><app-icon name="plug-zap" [size]="15" />{{ 'Nunca conectou' | t }}</button>
+        <button type="button" class="chip-btn" [class.on]="filters().connection === 'PENDING'" (click)="setConnection('PENDING')"><app-icon name="hourglass" [size]="15" />{{ 'Aguardando ativação' | t }}</button>
+        <button type="button" class="chip-btn" [class.on]="filters().connection === 'DISABLED'" (click)="setConnection('DISABLED')"><app-icon name="monitor-off" [size]="15" />{{ 'Desativado' | t }}</button>
+      </div>
+      <div class="selects">
+        <select [attr.aria-label]="'Local' | t" [ngModel]="locationFilterValue()" (ngModelChange)="setLocationFilter($event)">
+          <option value="">{{ 'Todos os locais' | t }}</option>
+          <option value="none">{{ 'Sem local' | t }}</option>
+          @for (location of locations(); track location.id) {
+            <option [value]="location.id">{{ location.name }}</option>
+          }
+        </select>
+        <select [attr.aria-label]="'Grupo' | t" [ngModel]="groupFilterValue()" (ngModelChange)="setGroupFilter($event)">
+          <option value="">{{ 'Todos os grupos' | t }}</option>
+          @for (group of groups(); track group.id) {
+            <option [value]="group.id">{{ group.name }}</option>
+          }
+        </select>
+        @if (filtersActive()) {
+          <button class="ghost small" (click)="clearFilters()"><app-icon name="x" [size]="15" />{{ 'Limpar filtros' | t }}</button>
         }
-      </select>
-      <select [attr.aria-label]="'Grupo' | t" [ngModel]="groupFilterValue()" (ngModelChange)="setGroupFilter($event)">
-        <option value="">{{ 'Todos os grupos' | t }}</option>
-        @for (group of groups(); track group.id) {
-          <option [value]="group.id">{{ group.name }}</option>
-        }
-      </select>
-      @if (filtersActive()) {
-        <button class="secondary small" (click)="clearFilters()">{{ 'Limpar filtros' | t }}</button>
-      }
-      <span class="count">{{ '{n} TV(s)' | t: { n: devices().length } }}</span>
+        <span class="count num">{{ '{n} TV(s)' | t: { n: devices().length } }}</span>
+      </div>
     </div>
 
     @if (selectedCount() > 0 && auth.can('content')) {
       <div class="bulk" role="region" [attr.aria-label]="'Ações nas TVs selecionadas' | t">
-        <b>{{ '{n} selecionada(s)' | t: { n: selectedCount() } }}</b>
+        <b class="bulk-count"><app-icon name="check" [size]="16" />{{ '{n} selecionada(s)' | t: { n: selectedCount() } }}</b>
         <select [attr.aria-label]="'Playlist das selecionadas' | t" (change)="onBulkPlaylist($event)">
           <option value="">{{ 'Escolher playlist…' | t }}</option>
           <option value="none">{{ 'Nenhuma playlist' | t }}</option>
@@ -103,9 +108,9 @@ type LocationChoice = string;
           </select>
         }
         @if (auth.can('admin')) {
-          <button class="secondary small" (click)="bulkSimple('DISABLE')">{{ 'Desativar' | t }}</button>
-          <button class="secondary small" (click)="bulkSimple('ENABLE')">{{ 'Reativar' | t }}</button>
-          <button class="secondary small" (click)="bulkSimple('CHECK_UPDATE')">{{ 'Atualizar app' | t }}</button>
+          <button class="secondary small" (click)="bulkSimple('DISABLE')"><app-icon name="circle-pause" [size]="15" />{{ 'Desativar' | t }}</button>
+          <button class="secondary small" (click)="bulkSimple('ENABLE')"><app-icon name="play" [size]="15" />{{ 'Reativar' | t }}</button>
+          <button class="secondary small" (click)="bulkSimple('CHECK_UPDATE')"><app-icon name="refresh-cw" [size]="15" />{{ 'Atualizar app' | t }}</button>
           <select [attr.aria-label]="'Mover as selecionadas para um local' | t" (change)="onBulkLocation($event)">
             <option value="">{{ 'Mover para local…' | t }}</option>
             <option value="none">{{ 'Sem local' | t }}</option>
@@ -128,29 +133,33 @@ type LocationChoice = string;
             </select>
           }
         }
-        <button class="secondary small" (click)="clearSelection()">{{ 'Limpar seleção' | t }}</button>
+        <button class="ghost small" (click)="clearSelection()"><app-icon name="x" [size]="15" />{{ 'Limpar seleção' | t }}</button>
       </div>
     }
 
-    <div class="card">
+    <div class="card list">
       @if (devices().length === 0) {
-        <div class="empty">
-          @if (filtersActive()) {
-            {{ 'Nenhuma TV com esses filtros.' | t }}
-          } @else if (loaded()) {
-            {{ 'Nenhum dispositivo ainda. Abra o app Player na TV: ele mostra um código de 6 caracteres.' | t }}
-            {{ 'Clique em' | t }} <b>{{ 'Adicionar dispositivo' | t }}</b> {{ 'e digite esse código.' | t }}
-          } @else {
-            {{ 'Carregando…' | t }}
-          }
-        </div>
+        @if (!loaded()) {
+          <app-skeleton [rows]="5" />
+        } @else if (filtersActive()) {
+          <app-empty-state icon="search" [title]="'Nenhuma TV com esses filtros.' | t" [text]="'Tente outra busca ou limpe os filtros.' | t">
+            <button class="secondary" (click)="clearFilters()"><app-icon name="x" [size]="16" />{{ 'Limpar filtros' | t }}</button>
+          </app-empty-state>
+        } @else {
+          <app-empty-state icon="monitor-play" [title]="'Nenhum dispositivo ainda' | t"
+            [text]="'Abra o app Player na TV: ele mostra um código de 6 caracteres. Depois clique em Adicionar dispositivo e digite esse código.' | t">
+            @if (auth.can('admin')) {
+              <button class="primary" (click)="openActivate()"><app-icon name="plus" />{{ 'Adicionar dispositivo' | t }}</button>
+            }
+          </app-empty-state>
+        }
       } @else {
         <table class="stack">
           <tr>
             <th class="check-col">
               <input type="checkbox" [attr.aria-label]="'Selecionar todas as TVs da lista' | t" [checked]="allSelected()" (change)="toggleAll()" />
             </th>
-            <th>{{ 'Dispositivo' | t }}</th><th>{{ 'Status' | t }}</th><th>{{ 'Último contato' | t }}</th><th>{{ 'Playlist' | t }}</th><th></th>
+            <th>{{ 'Dispositivo' | t }}</th><th>{{ 'Status' | t }}</th><th>{{ 'Último contato' | t }}</th><th>{{ 'Conteúdo' | t }}</th><th></th>
           </tr>
           @for (device of devices(); track device.id) {
             <tr [class.selected]="isSelected(device.id)">
@@ -158,36 +167,51 @@ type LocationChoice = string;
                 <input type="checkbox" [attr.aria-label]="'Selecionar {name}' | t: { name: device.name }" [checked]="isSelected(device.id)" (change)="toggle(device.id)" />
               </td>
               <td class="first">
-                <b>{{ device.name }}</b><br /><small>{{ device.location || ('Sem local' | t) }}</small>
-                @for (group of groupsOf(device); track group.id) {
-                  <span class="chip">{{ group.name }}</span>
-                }
-                @if (device.layoutName) {
-                  <span class="chip layout" [title]="'Layout da tela desta TV' | t">🧩 {{ device.layoutName }}</span>
-                }
+                <div class="tv-name">
+                  <span class="tv-icon" [class]="sit(device).tone"><app-icon [name]="sit(device).icon" [size]="18" /></span>
+                  <span class="tv-text">
+                    <b>{{ device.name }}</b>
+                    <small>{{ device.location || ('Sem local' | t) }}</small>
+                  </span>
+                </div>
+                <div class="tv-tags">
+                  @for (group of groupsOf(device); track group.id) {
+                    <app-pill icon="layers">{{ group.name }}</app-pill>
+                  }
+                  @if (device.layoutName) {
+                    <app-pill tone="brand" icon="layout-template" [title]="'Layout da tela desta TV' | t">{{ device.layoutName }}</app-pill>
+                  }
+                </div>
               </td>
-              <td [attr.data-label]="'Status' | t"><span class="st"><span class="dot" [class]="state(device).tone"></span>{{ state(device).label }}</span></td>
-              <td [attr.data-label]="'Último contato' | t"><span>{{ ago(device.lastSeenAt) }}<br /><small>{{ device.playerVersion ? 'v' + device.playerVersion : '' }}</small>
-                @if (outdated(device)) {
-                  <br /><small class="stale" [title]="'Há uma versão mais nova do Player; ele se atualiza sozinho (alguém precisa confirmar na TV).' | t">{{ '⬆ desatualizado (última: v{version})' | t: { version: latest()?.versionName } }}</small>
-                }</span></td>
-              <td [attr.data-label]="'Playlist' | t">
+              <td [attr.data-label]="'Status' | t"><app-pill [tone]="sit(device).tone" [icon]="sit(device).icon">{{ state(device).label }}</app-pill></td>
+              <td [attr.data-label]="'Último contato' | t">
+                <span class="contact">
+                  <span class="num">{{ ago(device.lastSeenAt) }}</span>
+                  @if (device.playerVersion) {
+                    <small class="mono-v">{{ 'v' + device.playerVersion }}</small>
+                  }
+                  @if (outdated(device)) {
+                    <app-pill tone="warn" icon="download" [title]="'Há uma versão mais nova do Player; ele se atualiza sozinho (alguém precisa confirmar na TV).' | t">{{ 'v{version} disponível' | t: { version: latest()?.versionName } }}</app-pill>
+                  }
+                </span>
+              </td>
+              <td [attr.data-label]="'Conteúdo' | t">
                 @if (device.status === 'ACTIVE') {
                   <span class="plist">
-                    <select [ngModel]="device.currentPlaylistId" [disabled]="!auth.can('content')" (ngModelChange)="assignPlaylist(device, $event)">
+                    <select [ngModel]="device.currentPlaylistId" [disabled]="!auth.can('content')" [attr.aria-label]="'Playlist' | t" (ngModelChange)="assignPlaylist(device, $event)">
                       <option [ngValue]="null">{{ 'Nenhuma playlist' | t }}</option>
                       @for (playlist of playlists(); track playlist.id) {
                         <option [ngValue]="playlist.id">{{ playlist.name }}</option>
                       }
                     </select>
                     @if (device.campaignName) {
-                      <br /><small class="campaign" [title]="'Uma campanha vale agora para esta TV e tem prioridade sobre a playlist dela.' | t">{{ '📣 Agora: campanha {name}' | t: { name: device.campaignName } }}</small>
+                      <app-pill tone="brand" icon="megaphone" [title]="'Uma campanha vale agora para esta TV e tem prioridade sobre a playlist dela.' | t">{{ 'Agora: campanha {name}' | t: { name: device.campaignName } }}</app-pill>
                     }
                     @if (device.currentMediaName) {
-                      <br /><small class="onscreen" [title]="'A mídia que o Player disse estar exibindo no último contato.' | t">{{ '▶ Na tela: {name}' | t: { name: device.currentMediaName } }}</small>
+                      <small class="onscreen" [title]="'A mídia que o Player disse estar exibindo no último contato.' | t"><app-icon name="play" [size]="12" />{{ 'Na tela: {name}' | t: { name: device.currentMediaName } }}</small>
                     }
                     @if (syncing(device)) {
-                      <br /><small>{{ 'sincronizando…' | t }}</small>
+                      <small class="syncing"><app-icon name="refresh-cw" [size]="12" />{{ 'sincronizando…' | t }}</small>
                     }
                   </span>
                 } @else {
@@ -195,18 +219,23 @@ type LocationChoice = string;
                 }
               </td>
               <td class="row-actions">
-                <a class="secondary small btn" [routerLink]="['/dispositivos', device.id, 'historico']" [title]="'Quando conectou, caiu, mudou de conteúdo e o que o Player relatou' | t">{{ 'Histórico' | t }}</a>
+                <a class="icon-btn bordered" [routerLink]="['/dispositivos', device.id, 'historico']" [title]="'Quando conectou, caiu, mudou de conteúdo e o que o Player relatou' | t">
+                  <app-icon name="rotate-ccw-clock" [size]="18" /><span class="sr-only">{{ 'Histórico' | t }}</span>
+                </a>
                 @if (auth.can('content')) {
-                  <button class="secondary small" (click)="openEdit(device)">{{ 'Editar' | t }}</button>
+                  <button class="secondary small edit" (click)="openEdit(device)" [attr.aria-label]="'Editar' | t"><app-icon name="pencil" [size]="15" /><span class="lbl">{{ 'Editar' | t }}</span></button>
                 }
                 @if (auth.can('admin')) {
-                  @if (device.status === 'ACTIVE') {
-                    <button class="secondary small" (click)="checkUpdate(device)" [title]="'Pede que esta TV verifique agora se há versão nova do Player' | t">{{ 'Atualizar app' | t }}</button>
-                    <button class="secondary small" (click)="setStatus(device, 'disabled')">{{ 'Desativar' | t }}</button>
-                  } @else if (device.status === 'DISABLED') {
-                    <button class="secondary small" (click)="setStatus(device, 'active')">{{ 'Reativar' | t }}</button>
-                  }
-                  <button class="danger small" (click)="remove(device)">{{ 'Excluir' | t }}</button>
+                  <app-menu [label]="'Mais ações' | t">
+                    @if (device.status === 'ACTIVE') {
+                      <button type="button" class="menu-item" (click)="checkUpdate(device)" [title]="'Pede que esta TV verifique agora se há versão nova do Player' | t"><app-icon name="refresh-cw" />{{ 'Atualizar app' | t }}</button>
+                      <button type="button" class="menu-item" (click)="setStatus(device, 'disabled')"><app-icon name="circle-pause" />{{ 'Desativar' | t }}</button>
+                    } @else if (device.status === 'DISABLED') {
+                      <button type="button" class="menu-item" (click)="setStatus(device, 'active')"><app-icon name="play" />{{ 'Reativar' | t }}</button>
+                    }
+                    <div class="menu-sep"></div>
+                    <button type="button" class="menu-item danger" (click)="remove(device)"><app-icon name="trash" />{{ 'Excluir' | t }}</button>
+                  </app-menu>
                 }
               </td>
             </tr>
@@ -223,7 +252,7 @@ type LocationChoice = string;
             <p class="label">{{ 'Vincule um novo Player usando o código exibido na TV.' | t }}</p>
             <div class="field">
               <label for="code">{{ 'Código de ativação' | t }}</label>
-              <input id="code" name="code" class="mono" maxlength="6" [placeholder]="'Ex.: 8F32A9' | t" required
+              <input id="code" name="code" class="mono code-input" maxlength="6" [placeholder]="'Ex.: 8F32A9' | t" required
                 [ngModel]="code()" (ngModelChange)="code.set($event.toUpperCase())" />
             </div>
           } @else {
@@ -287,38 +316,83 @@ type LocationChoice = string;
     }
   `,
   styles: `
-    .row-actions { white-space: nowrap; text-align: right; }
-    .row-actions button, .row-actions .btn { margin-left: 6px; }
     select { min-width: 170px; }
-    .stale { color: var(--orange); font-weight: 600; }
-    .campaign { color: var(--link); font-weight: 600; }
-    .onscreen { color: var(--muted); }
-    .btn { display: inline-block; margin-left: 6px; border: 1px solid var(--line); border-radius: 10px; font-weight: 600; color: var(--text); }
-    .btn:hover { background: var(--primary-soft); }
-    .head-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-    .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; padding: 14px; }
-    .filters .search { flex: 1 1 220px; min-width: 180px; width: auto; }
-    .filters select { min-width: 150px; width: auto; }
-    .count { color: var(--muted); font-size: 13px; margin-left: auto; }
-    .bulk { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; background: var(--primary-soft); border: 1px solid var(--primary-line); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
-    .bulk select { min-width: 140px; width: auto; }
-    .check-col { width: 34px; }
-    tr.selected { background: var(--primary-soft); }
-    .chip.layout { background: var(--ok-bg); color: var(--ok-fg); }
-    .chip { display: inline-block; background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; font-size: 12px; margin: 4px 4px 0 0; }
+    .filters { display: grid; gap: 14px; margin-bottom: 14px; padding: 16px; }
+    .search-wrap { position: relative; }
+    .search-wrap > app-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+    .search { padding-left: 42px; height: 44px; }
+    .chips-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip-btn {
+      display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 13px; border-radius: 999px; border: 1px solid var(--line-strong);
+      background: var(--panel); color: var(--text-2); font-size: 13.5px; font-weight: 600; transition: all 0.15s var(--ease);
+    }
+    .chip-btn:hover { background: var(--panel-2); border-color: var(--silver); }
+    .chip-btn.on { background: var(--primary-soft); color: var(--primary); border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+    :host-context(:root[data-theme='dark']) .chip-btn.on { color: var(--link); }
+    .selects { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .selects select { width: auto; min-width: 170px; }
+    .count { margin-left: auto; color: var(--muted); font-size: 13px; }
+
+    .bulk {
+      position: sticky; top: 10px; z-index: 20; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; padding: 10px 14px;
+      background: var(--primary-soft); border: 1px solid var(--primary-line); border-radius: var(--r-lg); box-shadow: var(--sh-2);
+    }
+    .bulk-count { display: inline-flex; align-items: center; gap: 6px; margin-right: 6px; color: var(--primary); }
+    :host-context(:root[data-theme='dark']) .bulk-count { color: var(--link); }
+    .bulk select { min-width: 150px; width: auto; height: 36px; padding-top: 6px; padding-bottom: 6px; font-size: 13.5px; }
+
+    .list { padding: 6px 10px 10px; }
+    .check-col { width: 40px; }
+    tr.selected td { background: var(--primary-soft) !important; }
+    .tv-name { display: flex; align-items: center; gap: 12px; }
+    .tv-icon { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: var(--panel-3); color: var(--text-2); }
+    .tv-icon.ok { background: var(--ok-bg); color: var(--ok-fg); }
+    .tv-icon.err { background: var(--err-bg); color: var(--err-fg); }
+    .tv-icon.warn { background: var(--warn-bg); color: var(--warn-fg); }
+    .tv-icon.info { background: var(--info-bg); color: var(--info-fg); }
+    .tv-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+    .tv-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; padding-left: 50px; }
+    .tv-tags:empty { display: none; }
+    .tv-tags app-pill { height: 22px; font-size: 11.5px; max-width: 190px; }
+    .contact { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+    .contact app-pill { max-width: 150px; height: 22px; font-size: 11.5px; padding: 0 8px 0 6px; }
+    /* em telas médias a ação Editar vira só o lápis (o rótulo continua para o leitor de tela) para a tabela caber sem rolar */
+    @media (min-width: 721px) and (max-width: 1500px) { .edit .lbl { display: none; } .edit { padding-left: 10px; padding-right: 10px; } }
+    .plist app-pill { max-width: 100%; }
+    td { max-width: 280px; }
+    td.check-col, td.row-actions { max-width: none; }
+    .mono-v { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 12px; }
+    .plist { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; width: 210px; max-width: 100%; }
+    .plist select { width: 100%; min-width: 0; }
+    .plist select { height: 38px; padding-top: 6px; padding-bottom: 6px; font-size: 14px; }
+    .onscreen, .syncing { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); }
+    .syncing { color: var(--info-fg); }
+    .row-actions { white-space: nowrap; text-align: right; }
+    .row-actions > * { vertical-align: middle; margin-left: 6px; }
     .chips { display: flex; gap: 6px 14px; flex-wrap: wrap; }
     .below { margin-top: 8px; }
+    .code-input { font-size: 22px; letter-spacing: 6px; text-align: center; height: 54px; text-transform: uppercase; }
+
     @media (max-width: 720px) {
-      .filters { flex-direction: column; align-items: stretch; }
-      .filters .search, .filters select { width: 100%; min-width: 0; flex: none; }
+      .filters { padding: 12px; gap: 12px; }
+      .chips-row { flex-wrap: nowrap; overflow-x: auto; margin: 0 -12px; padding: 0 12px 4px; scrollbar-width: none; }
+      .chips-row::-webkit-scrollbar { display: none; }
+      .chip-btn { flex: none; height: 40px; }
+      .selects { flex-direction: column; align-items: stretch; }
+      .selects select { width: 100%; }
       .count { margin-left: 0; }
-      .bulk { flex-direction: column; align-items: stretch; }
-      .bulk select { width: 100%; }
-      .plist select { min-width: 0; width: 100%; }
-      table.stack td .plist { display: block; width: 100%; text-align: right; }
+      .bulk { flex-direction: column; align-items: stretch; top: calc(var(--appbar-h) + env(safe-area-inset-top) + 8px); }
+      .bulk select { width: 100%; height: 44px; }
+      .list { padding: 10px; background: transparent; border: 0; box-shadow: none; }
+      td { max-width: none; }
+      .plist { width: auto; flex: 1 1 0; min-width: 0; align-items: flex-end; }
+      .plist select { width: 100%; }
+      .contact { align-items: flex-end; }
+      table.stack td.first { padding-right: 40px; }
+      .tv-tags { padding-left: 0; }
       table.stack tr.selected { border-color: var(--primary); }
-      table.stack td.first { padding-right: 36px; }
-      table.stack td .btn { margin-left: 0; }
+      .row-actions { text-align: left; }
+      .row-actions > * { margin-left: 0; }
     }
   `,
 })
@@ -360,6 +434,7 @@ export class DevicesPage implements OnInit {
   private editing: Device | null = null;
 
   readonly state = deviceState;
+  readonly sit = (device: Device) => SITUATION[connectionOf(device)];
   readonly ago = (iso: string | null) => timeAgo(iso);
 
   outdated(device: Device): boolean {

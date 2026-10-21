@@ -24,7 +24,6 @@ export const OPS: Record<string, string> = {
   'O painel avisa quando uma TV some, nunca se conecta ou o Player não para de dar erro. Os avisos também podem ir para o seu Slack, Discord ou outro sistema.':
     'The panel warns you when a TV disappears, never connects, or the Player keeps failing. Warnings can also go to your Slack, Discord or another system.',
   'Só os abertos': 'Open only',
-  'Nenhum alerta aberto. Tudo certo por aqui.': 'No open alerts. All good here.',
   'Nenhum alerta até agora.': 'No alerts so far.',
   'O que aconteceu': 'What happened',
   Desde: 'Since',
@@ -65,10 +64,8 @@ export const OPS: Record<string, string> = {
   // dispositivos
   'Gerencie todas as telas e Players conectados.': 'Manage all connected screens and Players.',
   'Pede a todas as TVs que verifiquem agora se há versão nova do Player': 'Asks every TV to check now for a new Player version',
-  '⬆ Atualizar todas as TVs': '⬆ Update all TVs',
   'Buscar TV': 'Search TV',
   'Buscar por nome ou local…': 'Search by name or location…',
-  'Todas as situações': 'All statuses',
   'Todos os locais': 'All locations',
   Grupo: 'Group',
   'Todos os grupos': 'All groups',
@@ -88,21 +85,14 @@ export const OPS: Record<string, string> = {
   'Tirar do grupo…': 'Remove from group…',
   'Limpar seleção': 'Clear selection',
   'Nenhuma TV com esses filtros.': 'No TVs match these filters.',
-  'Nenhum dispositivo ainda. Abra o app Player na TV: ele mostra um código de 6 caracteres.':
-    'No devices yet. Open the Player app on the TV: it shows a 6-character code.',
-  'Clique em': 'Click',
   'Adicionar dispositivo': 'Add device',
-  'e digite esse código.': 'and type that code.',
   'Selecionar todas as TVs da lista': 'Select all TVs in the list',
   'Selecionar {name}': 'Select {name}',
   'Layout da tela desta TV': "This TV's screen layout",
   'Há uma versão mais nova do Player; ele se atualiza sozinho (alguém precisa confirmar na TV).':
     'A newer Player version is available; it updates itself (someone has to confirm on the TV).',
-  '⬆ desatualizado (última: v{version})': '⬆ outdated (latest: v{version})',
   'Uma campanha vale agora para esta TV e tem prioridade sobre a playlist dela.': 'A campaign applies to this TV right now and takes priority over its playlist.',
-  '📣 Agora: campanha {name}': '📣 Now: campaign {name}',
   'A mídia que o Player disse estar exibindo no último contato.': 'The media the Player said it was showing at the last contact.',
-  '▶ Na tela: {name}': '▶ On screen: {name}',
   'sincronizando…': 'syncing…',
   'Quando conectou, caiu, mudou de conteúdo e o que o Player relatou': 'When it connected, dropped, changed content and what the Player reported',
   'Pede que esta TV verifique agora se há versão nova do Player': 'Asks this TV to check now for a new Player version',
@@ -143,7 +133,6 @@ export const OPS: Record<string, string> = {
   Histórico: 'History',
   'último contato': 'last contact',
   'na tela:': 'on screen:',
-  '↻ Atualizar': '↻ Refresh',
   'Tipo de evento': 'Event type',
   'Todos os tipos': 'All types',
   Nível: 'Level',
@@ -158,8 +147,6 @@ export const OPS: Record<string, string> = {
   // grupos
   'Conjuntos de TVs para agir em várias de uma vez: escolher a playlist, atualizar o aplicativo ou filtrar.':
     'Sets of TVs to act on several at once: choose the playlist, update the app or filter.',
-  '+ Novo grupo': '+ New group',
-  'Nenhum grupo ainda. Crie um (ex.: "Recepções") e escolha quais TVs fazem parte.': 'No groups yet. Create one (e.g. "Receptions") and choose which TVs belong to it.',
   'Playlist para todas as TVs do grupo': 'Playlist for all TVs in the group',
   '{n} online': '{n} online',
   'Playlist do grupo {name}': 'Playlist of the group {name}',
@@ -187,9 +174,6 @@ export const OPS: Record<string, string> = {
   // locais
   'Onde estão as suas TVs. Cada TV pertence a um local; use os locais para filtrar e agir em várias TVs de uma vez.':
     'Where your TVs are. Each TV belongs to a location; use locations to filter and act on several TVs at once.',
-  '+ Novo local': '+ New location',
-  'Nenhum local ainda. Crie o primeiro (ex.: "Loja Centro") e escolha-o ao ativar cada TV.':
-    'No locations yet. Create the first one (e.g. "Downtown Store") and pick it when activating each TV.',
   'Novo local': 'New location',
   'Editar local': 'Edit location',
   'Nome do local': 'Location name',
@@ -210,11 +194,7 @@ export const OPS: Record<string, string> = {
   '{label} precisa de números inteiros na posição e no tamanho': '{label} needs whole numbers for position and size',
   'Divida a tela da TV em zonas: o conteúdo principal e, por exemplo, uma faixa lateral com avisos ou um QR Code. Sem layout, a TV exibe um conteúdo só, em tela cheia.':
     'Split the TV screen into zones: the main content and, for example, a side strip with notices or a QR Code. Without a layout, the TV shows a single content item in full screen.',
-  '+ Novo layout': '+ New layout',
-  'Nenhum layout ainda. Clique em': 'No layouts yet. Click',
   'Novo layout': 'New layout',
-  'e escolha um modelo pronto (por exemplo, principal + faixa lateral).': 'and pick a ready-made template (for example, main + side strip).',
-  '{n} zona(s) ·': '{n} zone(s) ·',
   'nenhuma TV usa': 'no TV uses it',
   'Escolha um modelo para começar. Depois você ajusta as zonas como quiser.': 'Pick a template to start. Then adjust the zones however you like.',
   'Nome do layout': 'Layout name',
@@ -235,7 +215,6 @@ export const OPS: Record<string, string> = {
   'Playlist da zona {n}': 'Playlist of zone {n}',
   'Sem conteúdo': 'No content',
   'Remover a zona {n}': 'Remove zone {n}',
-  '+ Adicionar zona': '+ Add zone',
   'Posição e tamanho em % da tela, a partir do canto superior esquerdo. A zona': 'Position and size as % of the screen, from the top-left corner. The',
   principal: 'main',
   'exibe a playlist escolhida para a TV (e as campanhas); as outras exibem a playlist fixa do layout.':
@@ -254,7 +233,6 @@ export const OPS: Record<string, string> = {
   'Quanto tempo as TVs ficaram no ar, o que foi exibido e o que aconteceu. Cada relatório pode ser baixado em CSV para abrir no Excel.':
     'How long the TVs were online, what was shown and what happened. Each report can be downloaded as CSV to open in Excel.',
   'Gerando…': 'Generating…',
-  '⬇ Baixar CSV': '⬇ Download CSV',
   Hoje: 'Today',
   '7 dias': '7 days',
   '30 dias': '30 days',
@@ -281,8 +259,6 @@ export const OPS: Record<string, string> = {
   'sem dados': 'no data',
   'Exibições no período': 'Plays in the period',
   'Tempo total na tela': 'Total time on screen',
-  'Nenhuma exibição registrada neste período. As contagens vêm do Player (versão 0.5 ou mais nova) a cada contato com o servidor.':
-    'No plays recorded in this period. Counts come from the Player (version 0.5 or newer) at each contact with the server.',
   'Tempo na tela': 'Time on screen',
   'Nenhuma TV cadastrada ainda.': 'No TVs registered yet.',
   'Local / grupos': 'Location / groups',
@@ -290,7 +266,6 @@ export const OPS: Record<string, string> = {
   Exibindo: 'Showing',
   ativada: 'activated',
   contato: 'contact',
-  '📣 campanha {name}': '📣 campaign {name}',
   'Sem playlist': 'No playlist',
   Quando: 'When',
   'Nenhum evento neste período e filtro.': 'No events in this period and filter.',

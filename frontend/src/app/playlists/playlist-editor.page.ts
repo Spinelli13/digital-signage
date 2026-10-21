@@ -6,31 +6,30 @@ import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
 import { mediaTypeLabel } from '../core/format';
 import { TPipe, tr } from '../core/i18n';
-import { Media, Playlist, PlaylistItem } from '../core/models';
+import { Media, MediaType, Playlist, PlaylistItem } from '../core/models';
 import { MediaThumb } from '../media/media-thumb';
+import { IconComponent } from '../shared/icon';
+import { IconName } from '../shared/icons';
+import { EmptyStateComponent, PageHeaderComponent, PillComponent } from '../shared/ui';
 import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, totalSeconds } from './playlist-editor';
 
 @Component({
   selector: 'app-playlist-editor',
-  imports: [FormsModule, RouterLink, MediaThumb, TPipe],
+  imports: [FormsModule, RouterLink, MediaThumb, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent],
   template: `
-    <div class="head">
-      <div>
-        <h1>{{ isNew() ? ('Nova playlist' | t) : (('Playlist:' | t) + ' ' + savedName()) }}</h1>
-        <p>{{ 'Defina a ordem e a duração dos conteúdos. Ao publicar, as telas sincronizam sozinhas.' | t }}</p>
-      </div>
+    <app-page-header [title]="isNew() ? ('Nova playlist' | t) : (('Playlist:' | t) + ' ' + savedName())" [subtitle]="'Defina a ordem e a duração dos conteúdos. Ao publicar, as telas sincronizam sozinhas.' | t" icon="list-video">
       <div class="top-actions">
-        <a class="secondary btn" routerLink="/playlists">{{ 'Voltar' | t }}</a>
+        <a class="secondary btn" routerLink="/playlists"><app-icon name="arrow-left" [size]="17" />{{ 'Voltar' | t }}</a>
         @if (auth.can('content')) {
           <button class="primary" (click)="save()" [disabled]="busy() || !canSave()">
-            {{ (busy() ? 'Publicando…' : 'Publicar alterações') | t }}
+            <app-icon name="rocket" [size]="17" />{{ (busy() ? 'Publicando…' : 'Publicar alterações') | t }}
           </button>
         }
       </div>
-    </div>
+    </app-page-header>
 
     @if (notice()) {
-      <div class="success">{{ notice() }}</div>
+      <div class="success" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ notice() }}</span></div>
     }
 
     <div class="layout">
@@ -44,9 +43,12 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
           <input id="pdesc" [ngModel]="description()" (ngModelChange)="description.set($event)" [placeholder]="'Opcional' | t" />
         </div>
 
-        <h3>{{ 'Sequência de reprodução' | t }} <small>· {{ 'ciclo de {time}' | t: { time: cycle() } }}</small></h3>
+        <h3 class="sec">
+          <app-icon name="list-video" [size]="18" />{{ 'Sequência de reprodução' | t }}
+          <app-pill icon="timer">{{ 'ciclo de {time}' | t: { time: cycle() } }}</app-pill>
+        </h3>
         @if (items().length === 0) {
-          <div class="empty">{{ 'Adicione mídias da biblioteca ao lado.' | t }}</div>
+          <app-empty-state [compact]="true" icon="image-plus" [title]="'Esta playlist está vazia' | t" [text]="'Adicione mídias da biblioteca ao lado.' | t" />
         }
         @for (item of items(); track $index) {
           <div class="row">
@@ -54,30 +56,32 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
             <div class="thumb"><app-media-thumb [mediaId]="item.mediaId" [type]="item.mediaType" [name]="item.mediaName" /></div>
             <div class="info">
               <b>{{ item.mediaName }}</b>
-              <small>{{ typeLabel(item.mediaType) }}</small>
+              <small class="kind"><app-icon [name]="kindIcon(item.mediaType)" [size]="12" />{{ typeLabel(item.mediaType) }}</small>
             </div>
             <div class="ctrl">
               <label class="dur">
                 <input type="number" min="1" [attr.aria-label]="'Duração (segundos)' | t" [ngModel]="item.durationSeconds" (ngModelChange)="changeDuration($index, $event)" />
                 <small>{{ 's' | t }}</small>
               </label>
-              <button class="secondary small" (click)="move($index, -1)" [disabled]="$first" [title]="'Subir' | t">↑</button>
-              <button class="secondary small" (click)="move($index, 1)" [disabled]="$last" [title]="'Descer' | t">↓</button>
-              <button class="danger small" (click)="remove($index)" [title]="'Remover' | t">✕</button>
+              <button type="button" class="icon-btn bordered" (click)="move($index, -1)" [disabled]="$first" [title]="'Subir' | t" [attr.aria-label]="'Subir' | t"><app-icon name="arrow-up" [size]="17" /></button>
+              <button type="button" class="icon-btn bordered" (click)="move($index, 1)" [disabled]="$last" [title]="'Descer' | t" [attr.aria-label]="'Descer' | t"><app-icon name="arrow-down" [size]="17" /></button>
+              <button type="button" class="icon-btn bordered danger-ghost" (click)="remove($index)" [title]="'Remover' | t" [attr.aria-label]="'Remover' | t"><app-icon name="trash" [size]="17" /></button>
             </div>
           </div>
         }
       </div>
 
       <div class="card">
-        <h3>{{ 'Biblioteca' | t }}</h3>
+        <h3 class="sec"><app-icon name="image" [size]="18" />{{ 'Biblioteca' | t }}</h3>
         @if (library().length === 0) {
-          <div class="empty">{{ 'Biblioteca vazia.' | t }} <a routerLink="/biblioteca">{{ 'Envie mídias' | t }}</a> {{ 'primeiro.' | t }}</div>
+          <app-empty-state [compact]="true" icon="image-plus" [title]="'Biblioteca vazia' | t">
+            <a class="secondary btn" routerLink="/biblioteca"><app-icon name="upload" [size]="16" />{{ 'Envie mídias' | t }}</a>
+          </app-empty-state>
         }
         <div class="lib">
           @for (media of library(); track media.id) {
             <button class="pick" (click)="add(media)" [title]="'Adicionar {name}' | t: { name: media.name }">
-              <div class="thumb"><app-media-thumb [mediaId]="media.id" [type]="media.type" [name]="media.name" /></div>
+              <div class="thumb"><app-media-thumb [mediaId]="media.id" [type]="media.type" [name]="media.name" /><span class="add"><app-icon name="plus" [size]="18" /></span></div>
               <small class="n">{{ media.name }}</small>
             </button>
           }
@@ -87,11 +91,22 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
   `,
   styles: `
     .top-actions { display: flex; gap: 10px; align-items: center; }
-    .btn { display: inline-block; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-weight: 600; text-align: center; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border-radius: var(--r); border: 1px solid var(--line-strong); background: var(--panel); color: var(--text); font-weight: 600; text-align: center; text-decoration: none; }
+    .btn:hover { background: var(--panel-3); }
+    .sec { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .sec app-icon { color: var(--primary); }
+    :host-context(:root[data-theme='dark']) .sec app-icon { color: var(--link); }
+    .sec app-pill { margin-left: auto; }
+    .kind { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); }
+    .danger-ghost { color: var(--err-fg); }
+    .danger-ghost:hover { background: var(--err-bg); }
+    .add { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; background: rgba(8, 40, 28, 0.55); opacity: 0; transition: opacity 0.15s; }
+    .pick:hover .add, .pick:focus-visible .add { opacity: 1; }
     .layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 18px; align-items: start; }
     .row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
-    .pos { width: 22px; text-align: center; color: var(--muted); font-weight: 700; }
-    .thumb { width: 64px; height: 44px; border-radius: 8px; overflow: hidden; flex: none; background: var(--primary-soft); }
+    .pos { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--primary-soft); color: var(--primary); font-weight: 700; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+    :host-context(:root[data-theme='dark']) .pos { color: var(--link); }
+    .thumb { position: relative; width: 64px; height: 44px; border-radius: 8px; overflow: hidden; flex: none; background: var(--primary-soft); }
     .info { flex: 1; display: flex; flex-direction: column; min-width: 0; }
     .info b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .ctrl { display: flex; align-items: center; gap: 8px; }
@@ -115,6 +130,7 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
 })
 export class PlaylistEditorPage implements OnInit {
   readonly typeLabel = mediaTypeLabel;
+  readonly kindIcon = (type: MediaType): IconName => (type === 'VIDEO' ? 'film' : type === 'WEB' ? 'globe' : 'image');
   private readonly api = inject(ApiService);
   protected readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);

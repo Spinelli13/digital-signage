@@ -288,3 +288,33 @@ Registro de decisões que complementam o [documento de contexto](../PROJETO_DIGI
 
 ### Testes
 - Painel: 412 testes (eram 345): motor de idioma (tr, trServer, datas, números), tema, barra de preferências, menu do celular, telas inteiras em inglês e a cobertura de tradução. Backend e Player sem mudança de código (só recursos do Player: cores, ícone, banner e `values-en`).
+
+## 2026-10-21 (parte 11) — Revisão de UX/UI do painel (visual novo, ícones gratuitos, sem emoji)
+
+Pedido: olhar de UX/UI sênior + tech lead de frontend, pesquisar e criar um layout mais intuitivo, bonito e chamativo, **sem emoji, só ícones gratuitos**. O diagnóstico, os princípios, o sistema de design e o antes/depois estão em [DESIGN_REVIEW.md](./DESIGN_REVIEW.md); aqui ficam as decisões e o porquê.
+
+### Decisões
+- **Ícones: Lucide (ISC), embutidos como SVG por um gerador** (`frontend/scripts/generate-icons.mjs` → `shared/icons.ts`, tipo `IconName`). Alternativas descartadas: fonte de ícones (peso, flash de texto antes de carregar, sem como saber quais são usados), pacote de componentes pronto (dependência grande para ~100 ícones) e SVGs soltos copiados à mão (sem tipo, sem licença rastreável). O custo é rodar o gerador ao acrescentar um ícone. Licenças em `frontend/THIRD_PARTY_NOTICES.md`.
+- **Proibição de emoji e símbolos decorativos garantida por teste** (`icon-policy.spec.ts` varre o código, menos comentários), junto com a checagem de que todo ícone citado existe e de que o registro só tem desenho de traço sem script. O Player e os manuais já seguem a marca; os ícones só mudam o painel.
+- **Tipografia Inter variável hospedada junto do painel** (`@fontsource-variable/inter`, OFL): mesma letra em qualquer aparelho, números tabulares (`.num`) onde há comparação. Sem pedido a Google Fonts (privacidade e funcionar offline).
+- **Estado = ícone + texto + cor (nunca só cor):** `app-pill` e as tabelas `SITUATION` (TV), `LEGACY_TONE` (tons antigos das faturas e dos clientes), `EVENT_LABELS` (eventos, agora com ícone e tom em vez de emoji; `eventTone` faz o erro e o aviso saltarem à vista) e `STATE_LOOK` (campanhas).
+- **Uma ação principal por linha + menu "mais ações":** Editar (ou Entrar, Baixar…) fica à vista; Excluir, Desativar, Atualizar app, Nova fatura vão para o menu, o destrutivo separado e em vermelho. Menos ruído, menos exclusão por engano e a mesma linha cabe no celular.
+- **Estados vazios que ensinam e esqueleto de carregamento** em vez de "Carregando…" (`app-empty-state`, `app-skeleton`); o dashboard ganhou o **assistente de primeiros passos** (4 passos) enquanto não há TV, e a **saúde da rede** (anel + "N de M TVs online") como primeira informação.
+- **Alertas visíveis no menu:** `AttentionService` consulta o resumo a cada 30 s, **em silêncio** (`SILENT_ERRORS`: se falhar, some o número, sem aviso de erro) e o menu mostra o contador (barra lateral) e o ponto vermelho (barra inferior do celular). Para somar zero requisições novas por tela, só o menu consulta.
+- **Menu da pessoa** (`app-user-menu`) junta tema, idioma, Minha conta e Sair (antes espalhados). O painel do menu lateral é `position: fixed` porque o menu rola e cortaria um painel mais largo que a coluna.
+- **Contraste medido, não presumido:** o degradê do botão primário começava em 3,8:1 (claro) e 3,0:1 (escuro) com texto branco; passou a ≥ 4,5:1 nos dois temas e o hover escurece.
+- **Largura:** a tabela de Dispositivos (a mais densa) passava de 1280 px; menu lateral de 240 px abaixo de 1400 px, "Editar" só com o lápis abaixo de 1500 px (rótulo mantido para o leitor de tela) e selos com reticências (`app-pill` tem um `span.txt` com `text-overflow`). Mudar tamanho de coluna é sempre conferido a 1280 px.
+- **Teste de cobertura de tradução agora lê todos os componentes de cada arquivo** (antes só o primeiro `template:` de cada arquivo; `shared/ui.ts` tem vários). Achado ao criar os componentes novos.
+
+### Achados no caminho (todos corrigidos)
+- Um `td { max-width }` não limita a largura mínima da tabela: selo `nowrap` precisa de `max-width` em pixels (percentual não entra no cálculo de largura intrínseca da tabela).
+- `.menu-item.danger` herdava o estilo do botão `.danger` (centralizado, com borda): o item de menu precisa redefinir `justify-content`, `padding`, `border` e `background`.
+- Conteúdo projetado (`ng-content`) não recebe os seletores com escopo do componente: estilo de `app-page-header` para os botões das telas é global em `styles.css`.
+- A mensagem "desatualizado" virou um selo pequeno de 22 px para caber na coluna; o texto completo continua no `title`.
+
+### Testes
+- Painel: **441 testes** (eram 412): `ui.spec.ts` (selo, cabeçalho, estado vazio, esqueleto, menu, ícone), `user-menu.spec.ts`, `attention.service.spec.ts`, `icon-policy.spec.ts`, contador de alertas no menu, linha do tempo com ícones e as telas existentes adaptadas (os botões "+ Novo…" agora são "Novo…" com ícone; o menu "mais ações" é aberto pelo teste de papéis para conferir o que cada papel enxerga).
+- Backend e Player: sem mudança.
+
+### Não feito
+- Teste visual automático (comparação de imagem), arrastar para reordenar, e modo "cartões" da tabela de Dispositivos em telas médias. Estão listados em `DESIGN_REVIEW.md`, seção 9.

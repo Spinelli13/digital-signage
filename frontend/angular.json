@@ -28,6 +28,7 @@
               }
             ],
             "styles": [
+              "node_modules/@fontsource-variable/inter/wght.css",
               "src/styles.css"
             ]
           },

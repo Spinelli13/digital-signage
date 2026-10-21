@@ -27,6 +27,8 @@ describe('Shell', () => {
 
   afterEach(() => {
     localStorage.clear();
+    // o menu consulta o resumo (alertas abertos) assim que a conta chega: as telas que não olham isso só o liberam
+    backend.match(`${API}/summary`).forEach((request) => request.flush({ openAlerts: 0 }));
     backend.verify();
   });
 
@@ -45,6 +47,34 @@ describe('Shell', () => {
   }
 
   const links = (element: HTMLElement) => Array.from(element.querySelectorAll('nav a')).map((a) => a.textContent?.trim() ?? '');
+
+  it('shows the number of open alerts on the Alertas link and a dot on the shortcut bar', async () => {
+    const fixture = TestBed.createComponent(Shell);
+    backend.expectOne(`${API}/auth/me`).flush(meFixture('ADMIN'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+    backend.expectOne(`${API}/summary`).flush({ openAlerts: 3 });
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-testid="alerts-badge"]')?.textContent?.trim()).toBe('3');
+    expect(element.querySelector('nav.bottombar .dotbadge')).not.toBeNull();
+  });
+
+  it('shows no alert badge when everything is fine', async () => {
+    const fixture = TestBed.createComponent(Shell);
+    backend.expectOne(`${API}/auth/me`).flush(meFixture('ADMIN'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+    backend.expectOne(`${API}/summary`).flush({ openAlerts: 0 });
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="alerts-badge"]')).toBeNull();
+  });
 
   it('shows who is logged in, the client and the plan', async () => {
     const element = await render(meFixture('ADMIN'));

@@ -147,18 +147,21 @@ function scan(): Finding[] {
     const source = readFileSync(path, 'utf8');
     const file = relative(ROOT, path);
     const keys: string[] = [];
-    let loose: string[] = [];
+    const loose: string[] = [];
 
-    const start = source.indexOf('template: `');
-    let code = source;
-    if (start >= 0) {
+    // um arquivo pode ter vários componentes: cada `template: `...`` é inspecionado (a crase fecha o texto)
+    let code = '';
+    let cursor = 0;
+    for (let start = source.indexOf('template: `'); start >= 0; start = source.indexOf('template: `', cursor)) {
       const from = start + 'template: `'.length;
-      const end = source.indexOf('\n  `,', from);
+      const end = source.indexOf('`', from);
       const result = inspectTemplate(source.slice(from, end), file);
       keys.push(...result.keys);
-      loose = result.loose.filter((text) => !STATIC_ALLOWED.has(text));
-      code = source.slice(0, start) + source.slice(end);
+      loose.push(...result.loose.filter((text) => !STATIC_ALLOWED.has(text)));
+      code += source.slice(cursor, start);
+      cursor = end + 1;
     }
+    code += source.slice(cursor);
     // chamadas tr('...') no código TypeScript (a chave é sempre um texto literal)
     for (const match of code.matchAll(/\btr\(\s*'((?:[^'\\\n]|\\.)*)'/g)) {
       keys.push(unescape(match[1]));

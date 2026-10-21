@@ -7,63 +7,72 @@ import { AuthService } from '../core/auth.service';
 import { Location } from '../core/models';
 import { TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
+import { IconComponent } from '../shared/icon';
+import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent, SkeletonComponent } from '../shared/ui';
 
 @Component({
   selector: 'app-locations',
-  imports: [FormsModule, RouterLink, TPipe],
+  imports: [FormsModule, RouterLink, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, SkeletonComponent, MenuComponent],
   template: `
-    <div class="head">
-      <div>
-        <h1>{{ 'Pontos & Locais' | t }}</h1>
-        <p>{{ 'Onde estão as suas TVs. Cada TV pertence a um local; use os locais para filtrar e agir em várias TVs de uma vez.' | t }}</p>
-      </div>
+    <app-page-header [title]="'Pontos & Locais' | t" [subtitle]="'Onde estão as suas TVs. Cada TV pertence a um local; use os locais para filtrar e agir em várias TVs de uma vez.' | t" icon="map-pin">
       @if (auth.can('admin')) {
-        <button class="primary" (click)="openNew()">{{ '+ Novo local' | t }}</button>
+        <button class="primary" (click)="openNew()"><app-icon name="plus" />{{ 'Novo local' | t }}</button>
       }
-    </div>
+    </app-page-header>
 
     @if (notice.text(); as text) {
-      <div class="notice" role="status">{{ text }}</div>
+      <div class="notice" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ text }}</span></div>
     }
 
     <div class="card">
       @if (items().length === 0) {
-        <div class="empty">
-          @if (loaded()) {
-            {{ 'Nenhum local ainda. Crie o primeiro (ex.: "Loja Centro") e escolha-o ao ativar cada TV.' | t }}
-          } @else {
-            {{ 'Carregando…' | t }}
-          }
-        </div>
+        @if (loaded()) {
+          <app-empty-state icon="map-pin" [title]="'Nenhum local ainda' | t"
+            [text]="'Crie o primeiro (por exemplo, Loja Centro) e escolha-o ao ativar cada TV. Assim você filtra e age em várias TVs de uma vez.' | t">
+            @if (auth.can('admin')) {
+              <button class="primary" (click)="openNew()"><app-icon name="plus" />{{ 'Novo local' | t }}</button>
+            }
+          </app-empty-state>
+        } @else {
+          <app-skeleton [rows]="4" />
+        }
       } @else {
         <table class="stack">
           <tr><th>{{ 'Local' | t }}</th><th>{{ 'TVs' | t }}</th><th>{{ 'Online' | t }}</th><th></th></tr>
           @for (location of items(); track location.id) {
             <tr>
               <td class="first">
-                <b>{{ location.name }}</b>
-                @if (location.description) {
-                  <br /><small>{{ location.description }}</small>
-                }
+                <span class="place">
+                  <span class="place-icon"><app-icon name="map-pin" [size]="18" /></span>
+                  <span class="place-text">
+                    <b>{{ location.name }}</b>
+                    @if (location.description) {
+                      <small>{{ location.description }}</small>
+                    }
+                  </span>
+                </span>
               </td>
               <td [attr.data-label]="'TVs' | t">
                 @if (location.deviceCount > 0) {
-                  <a routerLink="/dispositivos" [queryParams]="{ local: location.id }">{{ location.deviceCount }}</a>
+                  <a class="tvs" routerLink="/dispositivos" [queryParams]="{ local: location.id }" [title]="'Ver as TVs deste local' | t"><app-icon name="monitor" [size]="15" /><span class="num">{{ location.deviceCount }}</span></a>
                 } @else {
-                  0
+                  <span class="muted num">0</span>
                 }
               </td>
               <td [attr.data-label]="'Online' | t">
                 @if (location.deviceCount > 0) {
-                  <span class="st"><span class="dot" [class]="location.onlineCount === location.deviceCount ? 'on' : 'warn'"></span>{{ '{online} de {total}' | t: { online: location.onlineCount, total: location.deviceCount } }}</span>
+                  <app-pill [tone]="location.onlineCount === location.deviceCount ? 'ok' : location.onlineCount === 0 ? 'err' : 'warn'"
+                    [icon]="location.onlineCount === location.deviceCount ? 'monitor-check' : 'wifi-off'">{{ '{online} de {total}' | t: { online: location.onlineCount, total: location.deviceCount } }}</app-pill>
                 } @else {
                   <span class="muted">—</span>
                 }
               </td>
               <td class="row-actions">
                 @if (auth.can('admin')) {
-                  <button class="secondary small" (click)="openEdit(location)">{{ 'Editar' | t }}</button>
-                  <button class="danger small" (click)="remove(location)">{{ 'Excluir' | t }}</button>
+                  <button class="secondary small" (click)="openEdit(location)"><app-icon name="pencil" [size]="15" />{{ 'Editar' | t }}</button>
+                  <app-menu [label]="'Mais ações' | t">
+                    <button type="button" class="menu-item danger" (click)="remove(location)"><app-icon name="trash" />{{ 'Excluir' | t }}</button>
+                  </app-menu>
                 }
               </td>
             </tr>
@@ -94,7 +103,13 @@ import { Notice } from '../core/notice';
   `,
   styles: `
     .row-actions { white-space: nowrap; text-align: right; }
-    .row-actions button { margin-left: 6px; }
+    .row-actions > * { margin-left: 6px; vertical-align: middle; }
+    .place { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .place-icon { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: var(--primary); background: var(--primary-soft); border: 1px solid var(--primary-line); }
+    :host-context(:root[data-theme='dark']) .place-icon { color: var(--link); }
+    .place-text { display: flex; flex-direction: column; min-width: 0; }
+    .place-text small { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+    .tvs { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
   `,
 })
 export class LocationsPage implements OnInit {

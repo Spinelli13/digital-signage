@@ -6,8 +6,9 @@ import { ApiService } from '../core/api.service';
 import { FileSaver } from '../core/download';
 import { daysAgo, formatDateTime, formatPercent, humanSeconds, stateOfConnection } from '../core/format';
 import { FDatePipe, TPipe, tr, trServer } from '../core/i18n';
-import { EVENT_LABELS, EVENT_TYPES, eventLabel, levelLabel } from '../core/monitoring-labels';
+import { EVENT_LABELS, EVENT_TYPES, eventLabel, eventTone, levelLabel } from '../core/monitoring-labels';
 import {
+  Connection,
   Device,
   DeviceGroup,
   EventLevel,
@@ -20,31 +21,31 @@ import {
   ReportRange,
   UptimeReport,
 } from '../core/models';
+import { SITUATION } from '../shared/connection';
+import { IconComponent } from '../shared/icon';
+import { IconName } from '../shared/icons';
+import { EmptyStateComponent, PageHeaderComponent, PillComponent, SkeletonComponent } from '../shared/ui';
 
 export type ReportTab = 'uptime' | 'plays' | 'inventory' | 'events';
 
-export const TABS: { id: ReportTab; label: string }[] = [
-  { id: 'uptime', label: 'Disponibilidade' },
-  { id: 'plays', label: 'Exibições' },
-  { id: 'inventory', label: 'Inventário' },
-  { id: 'events', label: 'Eventos' },
+export const TABS: { id: ReportTab; label: string; icon: IconName }[] = [
+  { id: 'uptime', label: 'Disponibilidade', icon: 'activity' },
+  { id: 'plays', label: 'Exibições', icon: 'monitor-play' },
+  { id: 'inventory', label: 'Inventário', icon: 'package' },
+  { id: 'events', label: 'Eventos', icon: 'list' },
 ];
 
 @Component({
   selector: 'app-reports',
-  imports: [FormsModule, RouterLink, TPipe, FDatePipe],
+  imports: [FormsModule, RouterLink, TPipe, FDatePipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, SkeletonComponent],
   template: `
-    <div class="head">
-      <div>
-        <h1>{{ 'Relatórios' | t }}</h1>
-        <p>{{ 'Quanto tempo as TVs ficaram no ar, o que foi exibido e o que aconteceu. Cada relatório pode ser baixado em CSV para abrir no Excel.' | t }}</p>
-      </div>
-      <button class="secondary" (click)="downloadCsv()" [disabled]="downloading()">{{ (downloading() ? 'Gerando…' : '⬇ Baixar CSV') | t }}</button>
-    </div>
+    <app-page-header [title]="'Relatórios' | t" [subtitle]="'Quanto tempo as TVs ficaram no ar, o que foi exibido e o que aconteceu. Cada relatório pode ser baixado em CSV para abrir no Excel.' | t" icon="chart-column">
+      <button class="secondary" (click)="downloadCsv()" [disabled]="downloading()"><app-icon name="download" [size]="17" />{{ (downloading() ? 'Gerando…' : 'Baixar CSV') | t }}</button>
+    </app-page-header>
 
     <div class="tabs" role="tablist">
       @for (item of tabs; track item.id) {
-        <button role="tab" [attr.aria-selected]="tab() === item.id" [class.on]="tab() === item.id" (click)="select(item.id)">{{ item.label | t }}</button>
+        <button role="tab" [attr.aria-selected]="tab() === item.id" [class.on]="tab() === item.id" (click)="select(item.id)"><app-icon [name]="item.icon" [size]="17" />{{ item.label | t }}</button>
       }
     </div>
 
@@ -109,11 +110,11 @@ export const TABS: { id: ReportTab; label: string }[] = [
         @case ('uptime') {
           @if (uptime(); as report) {
             <div class="summary">
-              <div><span class="label">{{ 'Disponibilidade da frota' | t }}</span><div class="big">{{ percent(report.fleetUptimePercent) }}</div></div>
-              <div><span class="label">{{ 'Período' | t }}</span><div>{{ report.from | fdate }} {{ 'a' | t }} {{ report.to | fdate }}</div><small>{{ 'fuso' | t }} {{ report.timezone }}</small></div>
+              <div class="sum"><span class="sum-icon"><app-icon name="activity" [size]="20" /></span><div><span class="label">{{ 'Disponibilidade da frota' | t }}</span><div class="big num">{{ percent(report.fleetUptimePercent) }}</div></div></div>
+              <div class="sum"><span class="sum-icon"><app-icon name="calendar" [size]="20" /></span><div><span class="label">{{ 'Período' | t }}</span><div class="mid">{{ report.from | fdate }} {{ 'a' | t }} {{ report.to | fdate }}</div><small>{{ 'fuso' | t }} {{ report.timezone }}</small></div></div>
             </div>
             @if (report.devices.length === 0) {
-              <div class="empty">{{ 'Nenhuma TV neste filtro.' | t }}</div>
+              <app-empty-state [compact]="true" icon="monitor-off" [title]="'Nenhuma TV neste filtro.' | t" />
             } @else {
               <table class="stack">
                 <tr><th>{{ 'TV' | t }}</th><th>{{ 'Local' | t }}</th><th>{{ 'Disponibilidade' | t }}</th><th>{{ 'Online' | t }}</th><th>{{ 'Offline' | t }}</th><th>{{ 'Quedas' | t }}</th><th></th></tr>
@@ -122,73 +123,74 @@ export const TABS: { id: ReportTab; label: string }[] = [
                     <td class="first"><b>{{ row.name }}</b></td>
                     <td [attr.data-label]="'Local' | t">{{ row.location || '—' }}</td>
                     <td [attr.data-label]="'Disponibilidade' | t">
-                      <span>
+                      <span class="up">
                         @if (row.uptimePercent === null) {
                           <span class="muted" [title]="'A TV ainda não tinha se conectado neste período.' | t">{{ 'sem dados' | t }}</span>
                         } @else {
                           <span class="meter" [title]="percent(row.uptimePercent)"><span [style.width.%]="row.uptimePercent" [class.low]="row.uptimePercent < 95"></span></span>
-                          {{ percent(row.uptimePercent) }}
+                          <span class="num">{{ percent(row.uptimePercent) }}</span>
                         }
                       </span>
                     </td>
                     <td [attr.data-label]="'Online' | t">{{ human(row.onlineSeconds) }}</td>
                     <td [attr.data-label]="'Offline' | t">{{ human(row.offlineSeconds) }}</td>
                     <td [attr.data-label]="'Quedas' | t">{{ row.incidents }}</td>
-                    <td class="row-actions"><a [routerLink]="['/dispositivos', row.deviceId, 'historico']">{{ 'Histórico' | t }}</a></td>
+                    <td class="row-actions"><a class="secondary small btn" [routerLink]="['/dispositivos', row.deviceId, 'historico']"><app-icon name="rotate-ccw-clock" [size]="15" />{{ 'Histórico' | t }}</a></td>
                   </tr>
                 }
               </table>
             }
           } @else {
-            <div class="empty">{{ 'Carregando…' | t }}</div>
+            <app-skeleton [rows]="4" />
           }
         }
         @case ('plays') {
           @if (plays(); as report) {
             <div class="summary">
-              <div><span class="label">{{ 'Exibições no período' | t }}</span><div class="big">{{ report.totalPlays }}</div></div>
-              <div><span class="label">{{ 'Tempo total na tela' | t }}</span><div class="big">{{ human(report.totalSeconds) }}</div></div>
+              <div class="sum"><span class="sum-icon"><app-icon name="monitor-play" [size]="20" /></span><div><span class="label">{{ 'Exibições no período' | t }}</span><div class="big num">{{ report.totalPlays }}</div></div></div>
+              <div class="sum"><span class="sum-icon"><app-icon name="timer" [size]="20" /></span><div><span class="label">{{ 'Tempo total na tela' | t }}</span><div class="big num">{{ human(report.totalSeconds) }}</div></div></div>
             </div>
             @if (report.rows.length === 0) {
-              <div class="empty">{{ 'Nenhuma exibição registrada neste período. As contagens vêm do Player (versão 0.5 ou mais nova) a cada contato com o servidor.' | t }}</div>
+              <app-empty-state [compact]="true" icon="monitor-play" [title]="'Nenhuma exibição registrada neste período.' | t"
+                [text]="'As contagens vêm do Player (versão 0.5 ou mais nova) a cada contato com o servidor.' | t" />
             } @else {
               <table class="stack">
                 <tr><th>{{ playsColumn() }}</th><th>{{ 'Exibições' | t }}</th><th>{{ 'Tempo na tela' | t }}</th><th>{{ 'TVs' | t }}</th></tr>
                 @for (row of report.rows; track $index) {
                   <tr>
                     <td class="first"><b>{{ row.day ?? row.label }}</b></td>
-                    <td [attr.data-label]="'Exibições' | t">{{ row.plays }}</td>
-                    <td [attr.data-label]="'Tempo na tela' | t">{{ human(row.seconds) }}</td>
-                    <td [attr.data-label]="'TVs' | t">{{ row.devices }}</td>
+                    <td [attr.data-label]="'Exibições' | t"><span class="num">{{ row.plays }}</span></td>
+                    <td [attr.data-label]="'Tempo na tela' | t"><span class="num">{{ human(row.seconds) }}</span></td>
+                    <td [attr.data-label]="'TVs' | t"><span class="num">{{ row.devices }}</span></td>
                   </tr>
                 }
               </table>
             }
           } @else {
-            <div class="empty">{{ 'Carregando…' | t }}</div>
+            <app-skeleton [rows]="4" />
           }
         }
         @case ('inventory') {
           @if (inventory(); as rows) {
             @if (rows.length === 0) {
-              <div class="empty">{{ 'Nenhuma TV cadastrada ainda.' | t }}</div>
+              <app-empty-state icon="monitor-play" [title]="'Nenhuma TV cadastrada ainda.' | t" [text]="'Quando você ativar as TVs, o inventário completo aparece aqui.' | t" />
             } @else {
               <table class="stack">
                 <tr><th>{{ 'TV' | t }}</th><th>{{ 'Local / grupos' | t }}</th><th>{{ 'Situação' | t }}</th><th>{{ 'Player' | t }}</th><th>{{ 'Exibindo' | t }}</th></tr>
                 @for (row of rows; track row.id) {
                   <tr>
-                    <td class="first"><b>{{ row.name }}</b><br /><small>{{ 'ativada' | t }} {{ when(row.activatedAt) }}</small></td>
-                    <td [attr.data-label]="'Local / grupos' | t"><span>{{ row.location || ('Sem local' | t) }}@if (row.groups.length > 0) {<br /><small>{{ row.groups.join(', ') }}</small>}</span></td>
-                    <td [attr.data-label]="'Situação' | t"><span class="st"><span class="dot" [class]="stateOf(row.connection).tone"></span>{{ stateOf(row.connection).label }}<br /><small>{{ 'contato' | t }} {{ when(row.lastSeenAt) }}</small></span></td>
-                    <td [attr.data-label]="'Player' | t">{{ row.playerVersion ? 'v' + row.playerVersion : '—' }}</td>
+                    <td class="first"><b>{{ row.name }}</b><small class="sub">{{ 'ativada' | t }} {{ when(row.activatedAt) }}</small></td>
+                    <td [attr.data-label]="'Local / grupos' | t"><span class="col">{{ row.location || ('Sem local' | t) }}@if (row.groups.length > 0) {<small class="sub">{{ row.groups.join(', ') }}</small>}</span></td>
+                    <td [attr.data-label]="'Situação' | t"><span class="col"><app-pill [tone]="sit(row.connection).tone" [icon]="sit(row.connection).icon">{{ stateOf(row.connection).label }}</app-pill><small class="sub">{{ 'contato' | t }} {{ when(row.lastSeenAt) }}</small></span></td>
+                    <td [attr.data-label]="'Player' | t"><span class="num">{{ row.playerVersion ? 'v' + row.playerVersion : '—' }}</span></td>
                     <td [attr.data-label]="'Exibindo' | t">
-                      <span>
+                      <span class="col">
                         {{ row.playlist || ('Sem playlist' | t) }}
                         @if (row.campaign) {
-                          <br /><small>{{ '📣 campanha {name}' | t: { name: row.campaign } }}</small>
+                          <small class="sub"><app-icon name="megaphone" [size]="12" />{{ 'campanha {name}' | t: { name: row.campaign } }}</small>
                         }
                         @if (row.currentMedia) {
-                          <br /><small>▶ {{ row.currentMedia }}</small>
+                          <small class="sub"><app-icon name="play" [size]="12" />{{ row.currentMedia }}</small>
                         }
                       </span>
                     </td>
@@ -197,13 +199,13 @@ export const TABS: { id: ReportTab; label: string }[] = [
               </table>
             }
           } @else {
-            <div class="empty">{{ 'Carregando…' | t }}</div>
+            <app-skeleton [rows]="4" />
           }
         }
         @case ('events') {
           @if (events(); as rows) {
             @if (rows.length === 0) {
-              <div class="empty">{{ 'Nenhum evento neste período e filtro.' | t }}</div>
+              <app-empty-state [compact]="true" icon="list" [title]="'Nenhum evento neste período e filtro.' | t" />
             } @else {
               <table class="stack">
                 <tr><th>{{ 'Quando' | t }}</th><th>{{ 'TV' | t }}</th><th>{{ 'Tipo' | t }}</th><th>{{ 'O que aconteceu' | t }}</th></tr>
@@ -211,7 +213,7 @@ export const TABS: { id: ReportTab; label: string }[] = [
                   <tr>
                     <td class="nowrap first">{{ when(row.occurredAt) }}</td>
                     <td [attr.data-label]="'TV' | t">{{ row.deviceName || '—' }}</td>
-                    <td class="nowrap" [attr.data-label]="'Tipo' | t"><span>{{ eventLabels[row.type].icon }} {{ eventText(row.type) }}@if (row.level !== 'INFO') { <small>({{ levelText(row.level) }})</small> }</span></td>
+                    <td class="nowrap" [attr.data-label]="'Tipo' | t"><span class="col"><app-pill [tone]="tone(row)" [icon]="eventLabels[row.type].icon">{{ eventText(row.type) }}</app-pill>@if (row.level !== 'INFO') { <small class="sub">{{ levelText(row.level) }}</small> }</span></td>
                     <td [class.bad]="row.level === 'ERROR'" [attr.data-label]="'O que aconteceu' | t">{{ messageOf(row.message) }}</td>
                   </tr>
                 }
@@ -221,31 +223,42 @@ export const TABS: { id: ReportTab; label: string }[] = [
               }
             }
           } @else {
-            <div class="empty">{{ 'Carregando…' | t }}</div>
+            <app-skeleton [rows]="4" />
           }
         }
       }
     </div>
   `,
   styles: `
-    .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
-    .tabs button { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 9px 16px; font-weight: 600; color: var(--muted); }
-    .tabs button.on { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+    .tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 16px; width: fit-content; max-width: 100%; background: var(--panel-3); border: 1px solid var(--line); border-radius: var(--r-lg); }
+    .tabs button { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border: 0; border-radius: var(--r); background: transparent; font-weight: 600; color: var(--muted); }
+    .tabs button:hover { color: var(--text); }
+    .tabs button.on { background: var(--panel); color: var(--primary); box-shadow: var(--sh-1); }
+    :host-context(:root[data-theme='dark']) .tabs button.on { color: var(--link); }
     .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; padding: 14px; }
     .filters label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 14px; }
     .filters input[type='date'], .filters select { width: auto; min-width: 150px; }
     .presets { display: flex; gap: 6px; }
-    .summary { display: flex; gap: 40px; flex-wrap: wrap; margin-bottom: 14px; }
-    .big { font-size: 28px; font-weight: 700; margin-top: 4px; }
-    .meter { display: inline-block; width: 90px; height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; vertical-align: middle; margin-right: 8px; }
-    .meter span { display: block; height: 100%; background: var(--green); }
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .sum { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--r-lg); }
+    .sum-icon { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 13px; color: var(--primary); background: var(--primary-soft); border: 1px solid var(--primary-line); }
+    :host-context(:root[data-theme='dark']) .sum-icon { color: var(--link); }
+    .big { font-size: 28px; font-weight: 700; margin-top: 2px; letter-spacing: -0.02em; line-height: 1.15; }
+    .mid { font-weight: 600; margin-top: 2px; }
+    .up { display: inline-flex; align-items: center; gap: 8px; }
+    .meter { display: inline-block; width: 96px; height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; }
+    .meter span { display: block; height: 100%; border-radius: 999px; background: var(--green); }
     .meter span.low { background: var(--orange); }
+    .col { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+    .sub { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); }
+    td.first .sub { display: flex; }
+    .btn { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; }
     .row-actions { text-align: right; }
     .nowrap { white-space: nowrap; }
     .bad { color: var(--err-fg); }
     @media (max-width: 720px) {
-      .tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
-      .tabs button { flex: none; min-height: 44px; }
+      .tabs { width: 100%; flex-wrap: nowrap; overflow-x: auto; }
+      .tabs button { flex: 1 0 auto; justify-content: center; min-height: 44px; }
       .filters { flex-direction: column; align-items: stretch; }
       .filters label { display: flex; }
       .filters input[type='date'], .filters select { width: 100%; min-width: 0; }
@@ -289,6 +302,8 @@ export class ReportsPage implements OnInit {
   /** Mensagens que o servidor registrou (em português); as conhecidas aparecem traduzidas. */
   readonly messageOf = (message: string) => trServer(message);
   readonly stateOf = stateOfConnection;
+  readonly sit = (connection: Connection) => SITUATION[connection];
+  readonly tone = (row: EventRow) => eventTone(row.type, row.level);
   readonly human = humanSeconds;
   readonly percent = formatPercent;
   readonly when = (iso: string | null) => formatDateTime(iso);

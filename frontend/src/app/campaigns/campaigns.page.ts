@@ -4,9 +4,12 @@ import { forkJoin } from 'rxjs';
 
 import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
-import { Campaign, CampaignPreview, Device, DeviceGroup, Location, Playlist } from '../core/models';
+import { Campaign, CampaignPreview, CampaignState, Device, DeviceGroup, Location, Playlist } from '../core/models';
 import { TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
+import { IconName } from '../shared/icons';
+import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent, SkeletonComponent, Tone } from '../shared/ui';
+import { IconComponent } from '../shared/icon';
 import {
   ALL_DAYS,
   CampaignForm,
@@ -23,55 +26,71 @@ import {
 
 const REFRESH_MS = 15_000;
 
+/** Como cada situação aparece: ícone + cor (o texto sempre acompanha, nunca só a cor). */
+const STATE_LOOK: Record<CampaignState, { icon: IconName; tone: Tone }> = {
+  ACTIVE: { icon: 'play', tone: 'ok' },
+  WAITING: { icon: 'clock', tone: 'warn' },
+  SCHEDULED: { icon: 'calendar-clock', tone: 'info' },
+  ENDED: { icon: 'circle-check', tone: 'neutral' },
+  PAUSED: { icon: 'circle-pause', tone: 'neutral' },
+};
+
 type IdSet = 'locationIds' | 'groupIds' | 'deviceIds';
 
 @Component({
   selector: 'app-campaigns',
-  imports: [FormsModule, TPipe],
+  imports: [FormsModule, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, SkeletonComponent, MenuComponent],
   template: `
-    <div class="head">
-      <div>
-        <h1>{{ 'Campanhas' | t }}</h1>
-        <p>{{ 'Uma playlist que só vale em certas datas, dias e horários, para as TVs que você escolher.' | t }}</p>
-      </div>
+    <app-page-header [title]="'Campanhas' | t" [subtitle]="'Uma playlist que só vale em certas datas, dias e horários, para as TVs que você escolher.' | t" icon="megaphone">
       @if (auth.can('content')) {
-        <button class="primary" (click)="openNew()">{{ '+ Nova campanha' | t }}</button>
+        <button class="primary" (click)="openNew()"><app-icon name="plus" />{{ 'Nova campanha' | t }}</button>
       }
-    </div>
+    </app-page-header>
 
     @if (notice.text(); as text) {
-      <div class="notice" role="status">{{ text }}</div>
+      <div class="notice" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ text }}</span></div>
     }
 
     <div class="card">
       @if (campaigns().length === 0) {
-        <div class="empty">
-          @if (loaded()) {
-            {{ 'Nenhuma campanha ainda. Sem campanhas, cada TV exibe a sua playlist. Crie uma para, por exemplo, trocar o conteúdo nos fins de semana ou durante uma promoção.' | t }}
-          } @else {
-            {{ 'Carregando…' | t }}
-          }
-        </div>
+        @if (loaded()) {
+          <app-empty-state icon="megaphone" [title]="'Nenhuma campanha ainda' | t"
+            [text]="'Sem campanhas, cada TV exibe a sua playlist. Crie uma para, por exemplo, trocar o conteúdo nos fins de semana ou durante uma promoção.' | t">
+            @if (auth.can('content')) {
+              <button class="primary" (click)="openNew()"><app-icon name="plus" />{{ 'Nova campanha' | t }}</button>
+            }
+          </app-empty-state>
+        } @else {
+          <app-skeleton [rows]="4" />
+        }
       } @else {
         <table class="stack">
           <tr><th>{{ 'Campanha' | t }}</th><th>{{ 'Quando' | t }}</th><th>{{ 'Para quem' | t }}</th><th>{{ 'Prioridade' | t }}</th><th>{{ 'Situação' | t }}</th><th></th></tr>
           @for (campaign of campaigns(); track campaign.id) {
             <tr>
               <td class="first">
-                <b>{{ campaign.name }}</b><br />
-                <small>{{ 'Playlist:' | t }} {{ campaign.playlistName || '—' }}</small>
+                <span class="place">
+                  <span class="place-icon"><app-icon name="megaphone" [size]="18" /></span>
+                  <span class="place-text">
+                    <b>{{ campaign.name }}</b>
+                    <small><app-icon name="list-video" [size]="12" />{{ campaign.playlistName || '—' }}</small>
+                  </span>
+                </span>
               </td>
-              <td [attr.data-label]="'Quando' | t">{{ schedule(campaign) }}</td>
+              <td [attr.data-label]="'Quando' | t"><span class="when"><app-icon name="calendar-clock" [size]="15" />{{ schedule(campaign) }}</span></td>
               <td [attr.data-label]="'Para quem' | t"><span>{{ targets(campaign) }}<br /><small>{{ '{n} TV(s) alcançada(s)' | t: { n: campaign.deviceCount } }}</small></span></td>
-              <td [attr.data-label]="'Prioridade' | t">{{ campaign.priority }}</td>
+              <td [attr.data-label]="'Prioridade' | t"><span class="num prio">{{ campaign.priority }}</span></td>
               <td [attr.data-label]="'Situação' | t">
-                <span class="st"><span class="dot" [class]="badge(campaign).tone"></span><span [title]="badge(campaign).hint">{{ badge(campaign).label }}</span></span>
+                <app-pill [tone]="look(campaign).tone" [icon]="look(campaign).icon" [title]="badge(campaign).hint">{{ badge(campaign).label }}</app-pill>
               </td>
               <td class="row-actions">
                 @if (auth.can('content')) {
-                  <button class="secondary small" (click)="openEdit(campaign)">{{ 'Editar' | t }}</button>
-                  <button class="secondary small" (click)="togglePause(campaign)">{{ (campaign.enabled ? 'Pausar' : 'Reativar') | t }}</button>
-                  <button class="danger small" (click)="remove(campaign)">{{ 'Excluir' | t }}</button>
+                  <button class="secondary small" (click)="openEdit(campaign)"><app-icon name="pencil" [size]="15" />{{ 'Editar' | t }}</button>
+                  <app-menu [label]="'Mais ações' | t">
+                    <button type="button" class="menu-item" (click)="togglePause(campaign)"><app-icon [name]="campaign.enabled ? 'circle-pause' : 'play'" />{{ (campaign.enabled ? 'Pausar' : 'Reativar') | t }}</button>
+                    <div class="menu-sep"></div>
+                    <button type="button" class="menu-item danger" (click)="remove(campaign)"><app-icon name="trash" />{{ 'Excluir' | t }}</button>
+                  </app-menu>
                 }
               </td>
             </tr>
@@ -81,7 +100,7 @@ type IdSet = 'locationIds' | 'groupIds' | 'deviceIds';
     </div>
 
     <div class="card simulator">
-      <h3>{{ 'Simular: o que uma TV exibiria?' | t }}</h3>
+      <h3 class="sec"><app-icon name="monitor-play" [size]="18" />{{ 'Simular: o que uma TV exibiria?' | t }}</h3>
       <p class="label">{{ 'Escolha uma TV e um momento (no horário do seu computador) para conferir qual campanha venceria, antes de publicar.' | t }}</p>
       <div class="sim-row">
         <select [attr.aria-label]="'TV para simular' | t" [ngModel]="simDevice()" (ngModelChange)="simDevice.set($event)">
@@ -91,17 +110,20 @@ type IdSet = 'locationIds' | 'groupIds' | 'deviceIds';
           }
         </select>
         <input type="datetime-local" [attr.aria-label]="'Momento da simulação' | t" [ngModel]="simAt()" (ngModelChange)="simAt.set($event)" />
-        <button class="secondary" [disabled]="simDevice() === null" (click)="simulate()">{{ 'Simular' | t }}</button>
+        <button class="secondary" [disabled]="simDevice() === null" (click)="simulate()"><app-icon name="play" [size]="16" />{{ 'Simular' | t }}</button>
       </div>
       @if (simResult(); as result) {
         <div class="sim-result" role="status">
-          @if (result.source === 'CAMPAIGN') {
-            {{ 'A TV exibiria' | t }} <b>{{ result.playlistName }}</b>, {{ 'da campanha' | t }} <b>{{ result.campaignName }}</b>.
-          } @else if (result.source === 'BASE') {
-            {{ 'Nenhuma campanha vale nesse momento: a TV exibiria a playlist dela,' | t }} <b>{{ result.playlistName }}</b>.
-          } @else {
-            {{ 'Nenhuma campanha vale nesse momento e a TV não tem playlist: ela mostraria "Aguardando conteúdo".' | t }}
-          }
+          <app-icon [name]="result.source === 'CAMPAIGN' ? 'megaphone' : 'info'" [size]="18" />
+          <span>
+            @if (result.source === 'CAMPAIGN') {
+              {{ 'A TV exibiria' | t }} <b>{{ result.playlistName }}</b>, {{ 'da campanha' | t }} <b>{{ result.campaignName }}</b>.
+            } @else if (result.source === 'BASE') {
+              {{ 'Nenhuma campanha vale nesse momento: a TV exibiria a playlist dela,' | t }} <b>{{ result.playlistName }}</b>.
+            } @else {
+              {{ 'Nenhuma campanha vale nesse momento e a TV não tem playlist: ela mostraria "Aguardando conteúdo".' | t }}
+            }
+          </span>
         </div>
       }
     </div>
@@ -137,7 +159,7 @@ type IdSet = 'locationIds' | 'groupIds' | 'deviceIds';
           </div>
           <p class="hint">{{ 'Se duas campanhas valem ao mesmo tempo para a mesma TV, vence a de' | t }} <b>{{ 'maior prioridade' | t }}</b>. {{ 'Em empate, a que mira mais de perto (TV, depois grupo, depois local, depois todas) e, por fim, a mais nova.' | t }}</p>
 
-          <h3>{{ 'Quando' | t }}</h3>
+          <h3 class="sec"><app-icon name="calendar-clock" [size]="18" />{{ 'Quando' | t }}</h3>
           <div class="row">
             <div class="field grow">
               <label for="camp-start">{{ 'De (data)' | t }}</label>
@@ -187,7 +209,7 @@ type IdSet = 'locationIds' | 'groupIds' | 'deviceIds';
             </select>
           </div>
 
-          <h3>{{ 'Para quem' | t }}</h3>
+          <h3 class="sec"><app-icon name="monitor" [size]="18" />{{ 'Para quem' | t }}</h3>
           <div class="field">
             <label class="check"><input type="checkbox" [checked]="form().allDevices" (change)="set('allDevices', !form().allDevices)" /> {{ 'Todas as TVs' | t }}</label>
           </div>
@@ -225,7 +247,7 @@ type IdSet = 'locationIds' | 'groupIds' | 'deviceIds';
           </div>
 
           @if (formError(); as error) {
-            <div class="error" role="alert">{{ error }}</div>
+            <div class="error" role="alert"><app-icon name="circle-alert" [size]="18" /><span>{{ error }}</span></div>
           }
           <div class="actions">
             <button type="button" class="secondary" (click)="closeModal()">{{ 'Cancelar' | t }}</button>
@@ -237,12 +259,24 @@ type IdSet = 'locationIds' | 'groupIds' | 'deviceIds';
   `,
   styles: `
     .row-actions { white-space: nowrap; text-align: right; }
-    .row-actions button { margin-left: 6px; }
+    .row-actions > * { margin-left: 6px; vertical-align: middle; }
+    .place { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .place-icon { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: var(--primary); background: var(--primary-soft); border: 1px solid var(--primary-line); }
+    :host-context(:root[data-theme='dark']) .place-icon { color: var(--link); }
+    .place-text { display: flex; flex-direction: column; min-width: 0; }
+    .place-text small { display: flex; align-items: center; gap: 5px; color: var(--muted); max-width: 230px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .when { display: inline-flex; align-items: center; gap: 7px; }
+    .when app-icon { color: var(--muted); }
+    .prio { display: inline-grid; place-items: center; min-width: 30px; height: 26px; padding: 0 8px; border-radius: 8px; background: var(--panel-3); font-weight: 600; }
+    .sec { display: flex; align-items: center; gap: 8px; }
+    .sec app-icon { color: var(--primary); }
+    :host-context(:root[data-theme='dark']) .sec app-icon { color: var(--link); }
     .simulator { margin-top: 18px; }
     .sim-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .sim-row select { width: auto; min-width: 220px; }
     .sim-row input { width: auto; }
-    .sim-result { margin-top: 12px; background: var(--primary-soft); border: 1px solid var(--primary-line); border-radius: 10px; padding: 10px 14px; }
+    .sim-result { display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; background: var(--primary-soft); border: 1px solid var(--primary-line); border-radius: var(--r); padding: 12px 14px; }
+    .sim-result app-icon { flex: none; margin-top: 1px; color: var(--primary); }
     @media (max-width: 720px) {
       .sim-row select, .sim-row input, .sim-row button { width: 100%; min-width: 0; }
       .small-field { flex: 1 1 100%; }
@@ -290,6 +324,7 @@ export class CampaignsPage implements OnInit {
   readonly schedule = describeSchedule;
   readonly targets = (campaign: Campaign) => describeTargets(campaign.targets);
   readonly badge = (campaign: Campaign) => stateBadge(campaign.state);
+  readonly look = (campaign: Campaign) => STATE_LOOK[campaign.state];
 
   ngOnInit(): void {
     this.load();

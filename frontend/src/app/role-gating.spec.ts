@@ -37,7 +37,11 @@ async function render<T>(page: Type<T>, role: Role, responses: Record<string, ob
   fixture.detectChanges();
   await fixture.whenStable();
   fixture.detectChanges();
-  return (fixture.nativeElement as HTMLElement).textContent ?? '';
+  // As ações menos usadas ficam num menu "mais ações": abre-o para conferir o que o papel enxerga.
+  const root = fixture.nativeElement as HTMLElement;
+  root.querySelectorAll<HTMLElement>('[aria-haspopup="menu"]').forEach((trigger) => trigger.click());
+  fixture.detectChanges();
+  return root.textContent ?? '';
 }
 
 const device = {
@@ -71,7 +75,7 @@ describe('role gating of the existing pages', () => {
     it('gives the administrator every action', async () => {
       const text = await render(DevicesPage, 'ADMIN', { '/devices': [device] });
 
-      expect(text).toContain('+ Adicionar dispositivo');
+      expect(text).toContain('Adicionar dispositivo');
       expect(text).toContain('Atualizar todas as TVs');
       expect(text).toContain('Editar');
       expect(text).toContain('Desativar');
@@ -81,7 +85,7 @@ describe('role gating of the existing pages', () => {
     it('lets the editor edit (layout) but not add, disable or delete TVs', async () => {
       const text = await render(DevicesPage, 'EDITOR', { '/devices': [device] });
 
-      expect(text).not.toContain('+ Adicionar dispositivo');
+      expect(text).not.toContain('Adicionar dispositivo');
       expect(text).not.toContain('Atualizar todas as TVs');
       expect(text).toContain('Editar');
       expect(text).not.toContain('Desativar');
@@ -112,7 +116,7 @@ describe('role gating of the existing pages', () => {
       const text = await render(PlaylistsPage, 'VIEWER', { '/playlists': [row(1, 'Manhã')] });
 
       expect(text).toContain('Manhã');
-      expect(text).not.toContain('+ Nova playlist');
+      expect(text).not.toContain('Nova playlist');
       expect(text).not.toContain('Excluir');
       expect(text).toContain('Ver');
     });
@@ -120,22 +124,22 @@ describe('role gating of the existing pages', () => {
     it('offers editing to an editor', async () => {
       const text = await render(PlaylistsPage, 'EDITOR', { '/playlists': [row(1, 'Manhã')] });
 
-      expect(text).toContain('+ Nova playlist');
+      expect(text).toContain('Nova playlist');
       expect(text).toContain('Excluir');
     });
   });
 
   describe('Campanhas e layouts', () => {
     it('hides the campaign button from a viewer and shows it to an editor', async () => {
-      expect(await render(CampaignsPage, 'VIEWER')).not.toContain('+ Nova campanha');
+      expect(await render(CampaignsPage, 'VIEWER')).not.toContain('Nova campanha');
       TestBed.resetTestingModule();
-      expect(await render(CampaignsPage, 'EDITOR')).toContain('+ Nova campanha');
+      expect(await render(CampaignsPage, 'EDITOR')).toContain('Nova campanha');
     });
 
     it('hides the layout button from a viewer and shows it to an editor', async () => {
-      expect(await render(LayoutsPage, 'VIEWER')).not.toContain('+ Novo layout');
+      expect(await render(LayoutsPage, 'VIEWER')).not.toContain('Novo layout');
       TestBed.resetTestingModule();
-      expect(await render(LayoutsPage, 'EDITOR')).toContain('+ Novo layout');
+      expect(await render(LayoutsPage, 'EDITOR')).toContain('Novo layout');
     });
   });
 
@@ -144,14 +148,14 @@ describe('role gating of the existing pages', () => {
       const text = await render(LocationsPage, 'EDITOR', { '/locations': [row(1, 'Loja Centro')] });
 
       expect(text).toContain('Loja Centro');
-      expect(text).not.toContain('+ Novo local');
+      expect(text).not.toContain('Novo local');
       expect(text).not.toContain('Excluir');
     });
 
     it('lets the administrator manage locations', async () => {
       const text = await render(LocationsPage, 'ADMIN', { '/locations': [row(1, 'Loja Centro')] });
 
-      expect(text).toContain('+ Novo local');
+      expect(text).toContain('Novo local');
       expect(text).toContain('Excluir');
     });
 
@@ -159,7 +163,7 @@ describe('role gating of the existing pages', () => {
       const text = await render(GroupsPage, 'EDITOR', { '/groups': [row(1, 'Lojas')] });
 
       expect(text).toContain('Lojas');
-      expect(text).not.toContain('+ Novo grupo');
+      expect(text).not.toContain('Novo grupo');
       expect(text).not.toContain('Atualizar app');
     });
   });

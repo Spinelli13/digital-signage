@@ -829,6 +829,18 @@ Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 9) e no manual do pa
 
 Detalhes em [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 10) e no manual do painel (seções 2.1 a 2.3).
 
+### Revisão de UX/UI do painel ✅ (pedido pelo dono em 2026-10-21)
+
+```text
+[x] Diagnóstico de UX/UI e pesquisa (docs/DESIGN_REVIEW.md)
+[x] Sistema de design: ícones Lucide embutidos (sem emoji), Inter, selos, estados vazios, esqueleto, menu "mais ações"
+[x] Todas as telas refeitas (menu agrupado, alertas no menu, dashboard com saúde da rede e primeiros passos, tabelas com uma ação + menu)
+[x] Contraste AA medido e corrigido; conferência em 1280 e 390 px, claro e escuro
+[x] Teste que reprova emoji e símbolo decorativo no painel
+```
+
+Detalhes em [docs/DESIGN_REVIEW.md](./docs/DESIGN_REVIEW.md) e [docs/DECISIONS.md](./docs/DECISIONS.md) (parte 11).
+
 ---
 
 ## 20. O que NÃO fazer agora

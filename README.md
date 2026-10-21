@@ -9,7 +9,7 @@ Contexto e decisões completas em [PROJETO_DIGITAL_SIGNAGE_CONTEXTO_CLAUDE.md](.
 backend/    API REST em Java + Spring Boot
 frontend/   Painel Web em Angular + TypeScript
 player/     Player para Android TV / Google TV / Fire TV
-docs/       Decisões e documentação do projeto (DEPLOY.md = como colocar no ar e testar na TV)
+docs/       Decisões e documentação do projeto (DEPLOY.md = como colocar no ar e testar na TV; DESIGN_REVIEW.md = guia de UX/UI do painel)
 ```
 
 ## Rodando tudo localmente

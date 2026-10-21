@@ -8,6 +8,8 @@ import { AuthService } from '../core/auth.service';
 import { Layout, LayoutTemplate, Playlist } from '../core/models';
 import { TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
+import { IconComponent } from '../shared/icon';
+import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent, SkeletonComponent } from '../shared/ui';
 import {
   ZoneDraft,
   addZone,
@@ -25,38 +27,39 @@ import {
 /** Layouts: como a tela da TV é dividida em zonas, cada uma com a sua lista de mídias. */
 @Component({
   selector: 'app-layouts',
-  imports: [FormsModule, RouterLink, TPipe],
+  imports: [FormsModule, RouterLink, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, SkeletonComponent, MenuComponent],
   template: `
-    <div class="head">
-      <div>
-        <h1>{{ 'Layouts' | t }}</h1>
-        <p>{{ 'Divida a tela da TV em zonas: o conteúdo principal e, por exemplo, uma faixa lateral com avisos ou um QR Code. Sem layout, a TV exibe um conteúdo só, em tela cheia.' | t }}</p>
-      </div>
+    <app-page-header [title]="'Layouts' | t" [subtitle]="'Divida a tela da TV em zonas: o conteúdo principal e, por exemplo, uma faixa lateral com avisos ou um QR Code. Sem layout, a TV exibe um conteúdo só, em tela cheia.' | t" icon="layout-template">
       @if (auth.can('content')) {
-        <button class="primary" (click)="openNew()">{{ '+ Novo layout' | t }}</button>
+        <button class="primary" (click)="openNew()"><app-icon name="plus" />{{ 'Novo layout' | t }}</button>
       }
-    </div>
+    </app-page-header>
 
     @if (notice.text(); as text) {
-      <div class="notice" role="status">{{ text }}</div>
+      <div class="notice" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ text }}</span></div>
     }
 
     @if (layouts().length === 0) {
-      <div class="card empty">
+      <div class="card">
         @if (loaded()) {
-          {{ 'Nenhum layout ainda. Clique em' | t }} <b>{{ 'Novo layout' | t }}</b> {{ 'e escolha um modelo pronto (por exemplo, principal + faixa lateral).' | t }}
+          <app-empty-state icon="layout-template" [title]="'Nenhum layout ainda' | t"
+            [text]="'Escolha um modelo pronto (por exemplo, principal + faixa lateral) e ajuste as zonas. Sem layout, a TV exibe um conteúdo só, em tela cheia.' | t">
+            @if (auth.can('content')) {
+              <button class="primary" (click)="openNew()"><app-icon name="plus" />{{ 'Novo layout' | t }}</button>
+            }
+          </app-empty-state>
         } @else {
-          {{ 'Carregando…' | t }}
+          <app-skeleton [rows]="3" [height]="64" />
         }
       </div>
     } @else {
       <div class="grid">
         @for (layout of layouts(); track layout.id) {
-          <div class="card item">
+          <div class="card hoverable item">
             <div class="screen" aria-hidden="true">
               @for (zone of layout.zones; track zone.id; let i = $index) {
                 <div class="zone" [style.left.%]="zone.x" [style.top.%]="zone.y" [style.width.%]="zone.width" [style.height.%]="zone.height" [style.background]="color(layout.zones, i)">
-                  <span>{{ zone.main ? '★ ' : '' }}{{ zone.name }}</span>
+                  <span>@if (zone.main) {<app-icon name="star" [size]="11" />}{{ zone.name }}</span>
                 </div>
               }
             </div>
@@ -65,19 +68,21 @@ import {
               @if (layout.description) {
                 <small>{{ layout.description }}</small>
               }
-              <small>
-                {{ '{n} zona(s) ·' | t: { n: layout.zones.length } }}
+              <span class="facts">
+                <app-pill icon="layers">{{ '{n} zona(s)' | t: { n: layout.zones.length } }}</app-pill>
                 @if (layout.deviceCount > 0) {
-                  <a routerLink="/dispositivos">{{ '{n} TV(s)' | t: { n: layout.deviceCount } }}</a>
+                  <a routerLink="/dispositivos" class="linkpill"><app-pill tone="brand" icon="monitor">{{ '{n} TV(s)' | t: { n: layout.deviceCount } }}</app-pill></a>
                 } @else {
-                  {{ 'nenhuma TV usa' | t }}
+                  <app-pill>{{ 'nenhuma TV usa' | t }}</app-pill>
                 }
-              </small>
+              </span>
             </div>
             <div class="buttons">
               @if (auth.can('content')) {
-                <button class="secondary small" (click)="openEdit(layout)">{{ 'Editar' | t }}</button>
-                <button class="danger small" (click)="remove(layout)">{{ 'Excluir' | t }}</button>
+                <button class="secondary small" (click)="openEdit(layout)"><app-icon name="pencil" [size]="15" />{{ 'Editar' | t }}</button>
+                <app-menu [label]="'Mais ações' | t" class="push">
+                  <button type="button" class="menu-item danger" (click)="remove(layout)"><app-icon name="trash" />{{ 'Excluir' | t }}</button>
+                </app-menu>
               }
             </div>
           </div>
@@ -134,7 +139,7 @@ import {
           <div class="screen big" [attr.aria-label]="'Pré-visualização do layout' | t">
             @for (zone of zones(); track zone.key; let i = $index) {
               <div class="zone" [style.left.%]="zone.x" [style.top.%]="zone.y" [style.width.%]="zone.width" [style.height.%]="zone.height" [style.background]="color(zones(), i)">
-                <span>{{ zone.main ? '★ ' : '' }}{{ zone.name }}</span>
+                <span>@if (zone.main) {<app-icon name="star" [size]="11" />}{{ zone.name }}</span>
               </div>
             }
           </div>
@@ -161,14 +166,14 @@ import {
                     </select>
                   }
                 </td>
-                <td class="row-actions"><button type="button" class="danger small" [disabled]="zones().length <= 1" (click)="dropZone(zone.key)" [attr.aria-label]="'Remover a zona {n}' | t: { n: i + 1 }">✕</button></td>
+                <td class="row-actions"><button type="button" class="danger small" [disabled]="zones().length <= 1" (click)="dropZone(zone.key)" [attr.aria-label]="'Remover a zona {n}' | t: { n: i + 1 }"><app-icon name="trash" [size]="15" /></button></td>
               </tr>
             }
           </table>
-          <button type="button" class="secondary small" (click)="newZone()">{{ '+ Adicionar zona' | t }}</button>
+          <button type="button" class="secondary small" (click)="newZone()"><app-icon name="plus" [size]="15" />{{ 'Adicionar zona' | t }}</button>
 
           @if (problem(); as text) {
-            <div class="error" role="alert">{{ text }}</div>
+            <div class="error" role="alert"><app-icon name="circle-alert" [size]="18" /><span>{{ text }}</span></div>
           }
           <p class="label">{{ 'Posição e tamanho em % da tela, a partir do canto superior esquerdo. A zona' | t }} <b>{{ 'principal' | t }}</b> {{ 'exibe a playlist escolhida para a TV (e as campanhas); as outras exibem a playlist fixa do layout.' | t }}</p>
 
@@ -187,9 +192,12 @@ import {
     .screen.big { max-width: 560px; margin: 4px auto 16px; }
     .small-screen { margin-bottom: 8px; }
     .zone { position: absolute; border: 1px solid #fff; box-sizing: border-box; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-    .zone span { color: #fff; font-size: 12px; font-weight: 600; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); padding: 2px; text-align: center; }
+    .zone span { display: inline-flex; align-items: center; gap: 3px; color: #fff; font-size: 12px; font-weight: 600; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); padding: 2px; text-align: center; }
     .meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-    .buttons { display: flex; gap: 8px; }
+    .facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .linkpill { text-decoration: none; }
+    .buttons { display: flex; gap: 8px; align-items: center; }
+    .buttons .push { margin-left: auto; }
     .modal-box.wide { max-width: 860px; }
     .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
     .templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin: 12px 0; }

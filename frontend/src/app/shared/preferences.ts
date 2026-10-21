@@ -3,8 +3,10 @@ import { FormsModule } from '@angular/forms';
 
 import { I18nService, Lang, TPipe } from '../core/i18n';
 import { ThemeMode, ThemeService } from '../core/theme';
+import { IconComponent } from './icon';
+import { IconName } from './icons';
 
-const THEME_ICONS: Record<ThemeMode, string> = { system: '🖥', light: '☀', dark: '🌙' };
+const THEME_ICONS: Record<ThemeMode, IconName> = { system: 'monitor', light: 'sun', dark: 'moon' };
 export const THEME_LABELS: Record<ThemeMode, string> = { system: 'Automático', light: 'Claro', dark: 'Escuro' };
 const NEXT: Record<ThemeMode, ThemeMode> = { system: 'light', light: 'dark', dark: 'system' };
 
@@ -14,7 +16,7 @@ const NEXT: Record<ThemeMode, ThemeMode> = { system: 'light', light: 'dark', dar
  */
 @Component({
   selector: 'app-preferences',
-  imports: [FormsModule, TPipe],
+  imports: [FormsModule, TPipe, IconComponent],
   template: `
     @if (full()) {
       <div class="field">
@@ -42,7 +44,7 @@ const NEXT: Record<ThemeMode, ThemeMode> = { system: 'light', light: 'dark', dar
           [title]="('Tema' | t) + ': ' + (themeLabel() | t)"
           [attr.aria-label]="('Tema' | t) + ': ' + (themeLabel() | t)"
           (click)="cycle()"
-        >{{ icon() }}</button>
+        ><app-icon [name]="icon()" [size]="18" /></button>
         <select
           class="pref lang"
           data-testid="lang-select"
@@ -62,11 +64,11 @@ const NEXT: Record<ThemeMode, ThemeMode> = { system: 'light', light: 'dark', dar
     :host { display: inline-block; }
     .prefs { display: flex; gap: 6px; align-items: center; }
     .pref {
-      width: auto; min-height: 36px; padding: 6px 10px; border-radius: 10px; font-size: 15px; line-height: 1;
+      width: auto; min-height: 40px; padding: 6px 10px; border-radius: var(--r); font-size: 15px; line-height: 1;
       color: var(--prefs-fg, var(--text)); background: var(--prefs-bg, var(--panel));
       border: 1px solid var(--prefs-line, var(--line));
     }
-    button.pref { cursor: pointer; }
+    button.pref { cursor: pointer; display: inline-grid; place-items: center; min-width: 40px; }
     select.pref { padding-right: 6px; font-size: 13px; font-weight: 600; }
     select.pref option { color: var(--text); background: var(--panel); }
   `,

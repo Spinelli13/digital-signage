@@ -7,6 +7,8 @@ import { AuthService } from '../core/auth.service';
 import { PlatformPlan, TenantStatus, TenantSummary } from '../core/models';
 import { FDatePipe, TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
+import { IconComponent } from '../shared/icon';
+import { EmptyStateComponent, LEGACY_TONE, MenuComponent, PageHeaderComponent, PillComponent, SkeletonComponent } from '../shared/ui';
 import {
   dateInput,
   endOfDayIso,
@@ -22,41 +24,48 @@ const STATUSES: TenantStatus[] = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'C
 
 @Component({
   selector: 'app-platform-clients',
-  imports: [FDatePipe, FormsModule, TPipe],
+  imports: [FDatePipe, FormsModule, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, SkeletonComponent, MenuComponent],
   template: `
-    <div class="head">
-      <div>
-        <h1>{{ 'Clientes' | t }}</h1>
-        <p>{{ 'As empresas que usam a plataforma. "Entrar" abre o painel do cliente para você dar suporte.' | t }}</p>
-      </div>
-      <button class="primary" (click)="openNew()">{{ '+ Novo cliente' | t }}</button>
-    </div>
+    <app-page-header [title]="'Clientes' | t" [subtitle]="'As empresas que usam a plataforma. &quot;Entrar&quot; abre o painel do cliente para você dar suporte.' | t" icon="building">
+      <button class="primary" (click)="openNew()"><app-icon name="plus" />{{ 'Novo cliente' | t }}</button>
+    </app-page-header>
 
     @if (notice.text(); as text) {
-      <div class="notice" role="status">{{ text }}</div>
+      <div class="notice" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ text }}</span></div>
     }
 
     <div class="card">
       @if (items().length === 0) {
-        <div class="empty">{{ (loaded() ? 'Nenhum cliente ainda. Cadastre o primeiro.' : 'Carregando…') | t }}</div>
+        @if (loaded()) {
+          <app-empty-state icon="building" [title]="'Nenhum cliente ainda' | t" [text]="'Cadastre o primeiro.' | t">
+            <button class="primary" (click)="openNew()"><app-icon name="plus" />{{ 'Novo cliente' | t }}</button>
+          </app-empty-state>
+        } @else {
+          <app-skeleton [rows]="4" />
+        }
       } @else {
         <table class="stack">
           <tr><th>{{ 'Cliente' | t }}</th><th>{{ 'Plano' | t }}</th><th>{{ 'Situação' | t }}</th><th>{{ 'Uso' | t }}</th><th>{{ 'Próximo vencimento' | t }}</th><th></th></tr>
           @for (tenant of items(); track tenant.id) {
             <tr>
               <td class="first">
-                <b>{{ tenant.name }}</b>
-                @if (tenant.billingEmail) {
-                  <br /><small>{{ tenant.billingEmail }}</small>
-                }
+                <span class="place">
+                  <span class="place-icon"><app-icon name="building" [size]="18" /></span>
+                  <span class="place-text">
+                    <b>{{ tenant.name }}</b>
+                    @if (tenant.billingEmail) {
+                      <small>{{ tenant.billingEmail }}</small>
+                    }
+                  </span>
+                </span>
               </td>
-              <td [attr.data-label]="'Plano' | t"><span>{{ planName(tenant.plan.name) }}<br /><small>{{ money(tenant.plan.priceCents) }}</small></span></td>
-              <td [attr.data-label]="'Situação' | t"><span class="st"><span class="dot" [class]="tone(tenant.status)"></span>{{ label(tenant.status) }}</span></td>
+              <td [attr.data-label]="'Plano' | t"><span class="col">{{ planName(tenant.plan.name) }}<small class="sub num">{{ money(tenant.plan.priceCents) }}</small></span></td>
+              <td [attr.data-label]="'Situação' | t"><app-pill [tone]="look(tenant.status).tone" [icon]="look(tenant.status).icon">{{ label(tenant.status) }}</app-pill></td>
               <td [attr.data-label]="'Uso' | t">
-                <small>
-                  {{ tenant.usage.devices }}/{{ limit(tenant.plan.maxDevices) }} {{ 'TVs' | t }}<br />
-                  {{ tenant.usage.users }}/{{ limit(tenant.plan.maxUsers) }} {{ 'usuários' | t }}
-                </small>
+                <span class="col">
+                  <small class="sub"><app-icon name="monitor" [size]="13" /><span class="num">{{ tenant.usage.devices }}/{{ limit(tenant.plan.maxDevices) }}</span> {{ 'TVs' | t }}</small>
+                  <small class="sub"><app-icon name="users" [size]="13" /><span class="num">{{ tenant.usage.users }}/{{ limit(tenant.plan.maxUsers) }}</span> {{ 'usuários' | t }}</small>
+                </span>
               </td>
               <td [attr.data-label]="'Próximo vencimento' | t">
                 @if (tenant.status === 'TRIAL' && tenant.trialEndsAt) {
@@ -68,9 +77,11 @@ const STATUSES: TenantStatus[] = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'C
                 }
               </td>
               <td class="row-actions">
-                <button class="secondary small" (click)="enter(tenant)">{{ 'Entrar' | t }}</button>
-                <button class="secondary small" (click)="openInvoice(tenant)">{{ 'Nova fatura' | t }}</button>
-                <button class="secondary small" (click)="openEdit(tenant)">{{ 'Editar' | t }}</button>
+                <button class="secondary small" (click)="enter(tenant)"><app-icon name="arrow-right" [size]="15" />{{ 'Entrar' | t }}</button>
+                <button class="secondary small" (click)="openEdit(tenant)"><app-icon name="pencil" [size]="15" />{{ 'Editar' | t }}</button>
+                <app-menu [label]="'Mais ações' | t">
+                  <button type="button" class="menu-item" (click)="openInvoice(tenant)"><app-icon name="receipt-text" />{{ 'Nova fatura' | t }}</button>
+                </app-menu>
               </td>
             </tr>
           }
@@ -176,7 +187,14 @@ const STATUSES: TenantStatus[] = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'C
   `,
   styles: `
     .row-actions { white-space: nowrap; text-align: right; }
-    .row-actions button { margin-left: 6px; }
+    .row-actions > * { margin-left: 6px; vertical-align: middle; }
+    .place { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .place-icon { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: var(--primary); background: var(--primary-soft); border: 1px solid var(--primary-line); }
+    :host-context(:root[data-theme='dark']) .place-icon { color: var(--link); }
+    .place-text { display: flex; flex-direction: column; min-width: 0; }
+    .place-text small { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+    .col { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+    .sub { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); }
     .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .sub { margin: 14px 0 10px; font-size: 15px; }
   `,
@@ -188,6 +206,7 @@ export class PlatformClientsPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly statuses = STATUSES;
+  readonly look = (status: TenantStatus) => LEGACY_TONE[TENANT_STATUS_TONES[status]];
   readonly items = signal<TenantSummary[]>([]);
   readonly plans = signal<PlatformPlan[]>([]);
   readonly loaded = signal(false);

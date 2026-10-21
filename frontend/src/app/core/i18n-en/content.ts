@@ -3,9 +3,6 @@ export const CONTENT: Record<string, string> = {
   // campanhas
   'Uma playlist que só vale em certas datas, dias e horários, para as TVs que você escolher.':
     'A playlist that only applies on certain dates, days and times, for the TVs you choose.',
-  '+ Nova campanha': '+ New campaign',
-  'Nenhuma campanha ainda. Sem campanhas, cada TV exibe a sua playlist. Crie uma para, por exemplo, trocar o conteúdo nos fins de semana ou durante uma promoção.':
-    'No campaigns yet. Without campaigns, each TV shows its own playlist. Create one to, for example, change the content on weekends or during a promotion.',
   Campanha: 'Campaign',
   'Para quem': 'For whom',
   Prioridade: 'Priority',
@@ -110,9 +107,7 @@ export const CONTENT: Record<string, string> = {
   'Imagens (JPG, PNG, WEBP), vídeos (MP4), páginas da web e QR Codes disponíveis para as playlists.':
     'Images (JPG, PNG, WEBP), videos (MP4), web pages and QR Codes available for playlists.',
   'QR Code': 'QR Code',
-  '+ Enviar mídia': '+ Upload media',
   Enviando: 'Uploading',
-  'Nenhuma mídia ainda. Envie sua primeira imagem ou vídeo.': 'No media yet. Upload your first image or video.',
   '{n}s': '{n}s',
   'Página da web': 'Web page',
   'A TV abre a página e a exibe pelo tempo escolhido (um painel de vendas, o cardápio online, a previsão do tempo…). Precisa de internet na TV e o endereço precisa ser':
@@ -157,14 +152,10 @@ export const CONTENT: Record<string, string> = {
   Subir: 'Move up',
   Descer: 'Move down',
   Remover: 'Remove',
-  'Biblioteca vazia.': 'The library is empty.',
   'Envie mídias': 'Upload media',
-  'primeiro.': 'first.',
   'Adicionar {name}': 'Add {name}',
   'Publicado — versão {version}. As telas vinculadas sincronizam em instantes.': 'Published — version {version}. The linked screens sync shortly.',
   'Defina a ordem e a duração dos conteúdos exibidos nas telas.': 'Set the order and duration of the content shown on the screens.',
-  '+ Nova playlist': '+ New playlist',
-  'Nenhuma playlist ainda. Crie uma e adicione mídias da biblioteca.': 'No playlists yet. Create one and add media from the library.',
   Itens: 'Items',
   'Duração do ciclo': 'Cycle duration',
   Ver: 'View',

@@ -6,41 +6,42 @@ import { PlatformOverview, TenantStatus } from '../core/models';
 import { TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
 import { formatMoney, tenantStatusLabel, TENANT_STATUS_TONES } from '../core/saas';
+import { IconComponent } from '../shared/icon';
+import { LEGACY_TONE, PageHeaderComponent, PillComponent, SkeletonComponent } from '../shared/ui';
 
 const ORDER: TenantStatus[] = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELED'];
 
 @Component({
   selector: 'app-platform-overview',
-  imports: [RouterLink, TPipe],
+  imports: [RouterLink, TPipe, IconComponent, PillComponent, PageHeaderComponent, SkeletonComponent],
   template: `
-    <div class="head">
-      <div>
-        <h1>{{ 'Plataforma' | t }}</h1>
-        <p>{{ 'Visão geral dos clientes, da receita recorrente e das cobranças.' | t }}</p>
-      </div>
+    <app-page-header [title]="'Plataforma' | t" [subtitle]="'Visão geral dos clientes, da receita recorrente e das cobranças.' | t" icon="server">
       <button class="secondary" [disabled]="running()" (click)="runBilling()">
-        {{ (running() ? 'Rodando…' : 'Rodar cobrança agora') | t }}
+        <app-icon name="refresh-cw" [size]="16" />{{ (running() ? 'Rodando…' : 'Rodar cobrança agora') | t }}
       </button>
-    </div>
+    </app-page-header>
 
     @if (notice.text(); as text) {
-      <div class="notice" role="status">{{ text }}</div>
+      <div class="notice" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ text }}</span></div>
     }
 
     @if (overview(); as data) {
       <div class="stats">
-        <div class="stat"><div class="label">{{ 'Clientes' | t }}</div><div class="n">{{ data.tenants }}</div></div>
-        <div class="stat"><div class="label">{{ 'TVs ativadas' | t }}</div><div class="n">{{ data.devices }}</div></div>
+        <div class="stat"><span class="s-icon"><app-icon name="building" [size]="18" /></span><div class="label">{{ 'Clientes' | t }}</div><div class="n">{{ data.tenants }}</div></div>
+        <div class="stat"><span class="s-icon"><app-icon name="monitor-play" [size]="18" /></span><div class="label">{{ 'TVs ativadas' | t }}</div><div class="n">{{ data.devices }}</div></div>
         <div class="stat">
+          <span class="s-icon"><app-icon name="trending-up" [size]="18" /></span>
           <div class="label">{{ 'Receita mensal (planos ativos)' | t }}</div>
           <div class="n">{{ money(data.monthlyRecurringCents) }}</div>
         </div>
         <div class="stat">
+          <span class="s-icon"><app-icon name="receipt-text" [size]="18" /></span>
           <div class="label">{{ 'Faturas em aberto' | t }}</div>
           <div class="n">{{ data.openInvoices }}</div>
           <small>{{ money(data.openInvoicesCents) }}</small>
         </div>
         <div class="stat" [class.alert]="data.overdueInvoices > 0">
+          <span class="s-icon"><app-icon name="triangle-alert" [size]="18" /></span>
           <div class="label">{{ 'Vencidas' | t }}</div>
           <div class="n">{{ data.overdueInvoices }}</div>
           <small>{{ money(data.overdueInvoicesCents) }}</small>
@@ -48,26 +49,33 @@ const ORDER: TenantStatus[] = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANC
       </div>
 
       <div class="card">
-        <h3>{{ 'Clientes por situação' | t }}</h3>
+        <h3 class="sec"><app-icon name="chart-column" [size]="18" />{{ 'Clientes por situação' | t }}</h3>
         <table>
           @for (status of order; track status) {
             <tr>
-              <td><span class="dot" [class]="tone(status)"></span>{{ label(status) }}</td>
-              <td>{{ data.tenantsByStatus[status] ?? 0 }}</td>
+              <td><app-pill [tone]="look(status).tone" [icon]="look(status).icon">{{ label(status) }}</app-pill></td>
+              <td class="qty"><b class="num">{{ data.tenantsByStatus[status] ?? 0 }}</b></td>
             </tr>
           }
         </table>
         <p class="actions-line">
-          <a routerLink="/plataforma/clientes">{{ 'Ver clientes' | t }}</a> · <a routerLink="/plataforma/faturas">{{ 'Ver faturas' | t }}</a>
+          <a class="secondary small btn" routerLink="/plataforma/clientes"><app-icon name="building" [size]="15" />{{ 'Ver clientes' | t }}</a>
+          <a class="secondary small btn" routerLink="/plataforma/faturas"><app-icon name="receipt-text" [size]="15" />{{ 'Ver faturas' | t }}</a>
         </p>
       </div>
     } @else {
-      <div class="card"><div class="empty">{{ 'Carregando…' | t }}</div></div>
+      <div class="card"><app-skeleton [rows]="5" /></div>
     }
   `,
   styles: `
-    .stat.alert .n { color: var(--red); }
-    .actions-line { margin-top: 14px; }
+    .stat.alert .n { color: var(--err-fg); }
+    .stat.alert .s-icon { color: var(--err-fg); background: var(--err-bg); border-color: var(--err-line); }
+    .sec { display: flex; align-items: center; gap: 8px; }
+    .sec app-icon { color: var(--primary); }
+    :host-context(:root[data-theme='dark']) .sec app-icon { color: var(--link); }
+    .qty { text-align: right; }
+    .actions-line { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; color: var(--text); }
   `,
 })
 export class PlatformOverviewPage implements OnInit {
@@ -92,8 +100,8 @@ export class PlatformOverviewPage implements OnInit {
     return tenantStatusLabel(status);
   }
 
-  tone(status: TenantStatus): string {
-    return TENANT_STATUS_TONES[status];
+  look(status: TenantStatus) {
+    return LEGACY_TONE[TENANT_STATUS_TONES[status]];
   }
 
   runBilling(): void {

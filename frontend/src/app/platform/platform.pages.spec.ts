@@ -363,8 +363,8 @@ describe('PlatformInvoicesPage', () => {
   it('starts on the open invoices', () => {
     expect(page.filter()).toBe('OPEN');
     expect(page.items()).toHaveLength(2);
-    expect(page.tone(page.items()[0])).toBe('warn');
-    expect(page.tone(page.items()[1])).toBe('off');
+    expect(page.look(page.items()[0]).tone).toBe('warn');
+    expect(page.look(page.items()[1]).tone).toBe('err');
   });
 
   it('shows everything when the filter is cleared (no status in the query)', () => {

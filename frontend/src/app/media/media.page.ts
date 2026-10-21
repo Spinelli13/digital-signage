@@ -6,9 +6,12 @@ import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
 import { ErrorService } from '../core/error.service';
 import { formatBytes, mediaTypeLabel } from '../core/format';
-import { Media } from '../core/models';
+import { Media, MediaType } from '../core/models';
 import { TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
+import { IconComponent } from '../shared/icon';
+import { IconName } from '../shared/icons';
+import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent } from '../shared/ui';
 import { MediaThumb } from './media-thumb';
 import { QR_THEMES, QR_IMAGE_SIZE, QrTheme, drawQr, qrFileName } from './qr';
 
@@ -18,54 +21,70 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
 
 @Component({
   selector: 'app-media',
-  imports: [MediaThumb, FormsModule, TPipe],
+  imports: [MediaThumb, FormsModule, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, MenuComponent],
   template: `
-    <div class="head">
-      <div><h1>{{ 'Biblioteca de Mídia' | t }}</h1><p>{{ 'Imagens (JPG, PNG, WEBP), vídeos (MP4), páginas da web e QR Codes disponíveis para as playlists.' | t }}</p></div>
+    <app-page-header [title]="'Biblioteca de Mídia' | t" [subtitle]="'Imagens (JPG, PNG, WEBP), vídeos (MP4), páginas da web e QR Codes disponíveis para as playlists.' | t" icon="image">
       @if (auth.can('content')) {
         <div class="head-actions">
-          <button class="secondary" (click)="openWeb()">🌐 {{ 'Página web' | t }}</button>
-          <button class="secondary" (click)="openQr()">▦ {{ 'QR Code' | t }}</button>
+          <button class="secondary" (click)="openWeb()"><app-icon name="globe" />{{ 'Página web' | t }}</button>
+          <button class="secondary" (click)="openQr()"><app-icon name="qr-code" />{{ 'QR Code' | t }}</button>
           <label class="primary upload">
-            {{ '+ Enviar mídia' | t }}
+            <app-icon name="upload" />{{ 'Enviar mídia' | t }}
             <input type="file" multiple [accept]="accepted" (change)="onFiles($event)" [disabled]="uploading()" hidden />
           </label>
         </div>
       }
-    </div>
+    </app-page-header>
 
     @if (notice.text(); as text) {
-      <div class="notice" role="status">{{ text }}</div>
+      <div class="notice" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ text }}</span></div>
     }
 
     @if (uploading()) {
       <div class="card progress">
-        {{ 'Enviando' | t }} <b>{{ currentFile() }}</b>… {{ progress() }}%
+        <div class="prog-row">
+          <app-icon name="cloud-upload" [size]="20" />
+          <span class="prog-text">{{ 'Enviando' | t }} <b>{{ currentFile() }}</b>…</span>
+          <span class="num prog-pct">{{ progress() }}%</span>
+        </div>
         <div class="bar"><div class="fill" [style.width.%]="progress()"></div></div>
       </div>
     }
 
     @if (items().length === 0 && !uploading()) {
-      <div class="card empty">{{ 'Nenhuma mídia ainda. Envie sua primeira imagem ou vídeo.' | t }}</div>
+      <div class="card">
+        <app-empty-state icon="image-plus" [title]="'Nenhuma mídia ainda' | t"
+          [text]="'Envie sua primeira imagem ou vídeo. Também dá para usar uma página da web ou gerar um QR Code.' | t">
+          @if (auth.can('content')) {
+            <label class="primary upload"><app-icon name="upload" />{{ 'Enviar mídia' | t }}<input type="file" multiple [accept]="accepted" (change)="onFiles($event)" [disabled]="uploading()" hidden /></label>
+          }
+        </app-empty-state>
+      </div>
     } @else {
       <div class="grid">
         @for (media of items(); track media.id) {
-          <div class="card item">
-            <div class="thumb"><app-media-thumb [mediaId]="media.id" [type]="media.type" [name]="media.name" /></div>
+          <div class="card hoverable item">
+            <div class="thumb">
+              <app-media-thumb [mediaId]="media.id" [type]="media.type" [name]="media.name" />
+              <app-pill class="kind" [icon]="kindIcon(media.type)">{{ typeLabel(media.type) }}</app-pill>
+            </div>
             <div class="meta">
-              <b class="name" [title]="media.name">{{ media.name }}</b>
+              <div class="line">
+                <b class="name" [title]="media.name">{{ media.name }}</b>
+                @if (auth.can('content')) {
+                  <app-menu [label]="'Mais ações' | t">
+                    <button type="button" class="menu-item danger" (click)="remove(media)"><app-icon name="trash" />{{ 'Excluir' | t }}</button>
+                  </app-menu>
+                }
+              </div>
               <small>
-                {{ typeLabel(media.type) }}
-                @if (media.type !== 'WEB') { · {{ size(media.fileSize) }} }
-                @if (media.durationSeconds) { · {{ '{n}s' | t: { n: media.durationSeconds } }} }
+                @if (media.type !== 'WEB') { {{ size(media.fileSize) }} }
+                @if (media.durationSeconds) { @if (media.type !== 'WEB') { · } {{ '{n}s' | t: { n: media.durationSeconds } }} }
               </small>
               @if (media.type === 'WEB') {
                 <small class="url" [title]="media.url">{{ media.url }}</small>
               }
             </div>
-            @if (auth.can('content')) {
-              <button class="danger small" (click)="remove(media)">{{ 'Excluir' | t }}</button>
-            }
           </div>
         }
       </div>
@@ -74,7 +93,7 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
     @if (modal() === 'web') {
       <div class="modal" (click)="closeModal()">
         <form class="modal-box" (click)="$event.stopPropagation()" (ngSubmit)="saveWeb()">
-          <h2>{{ 'Página da web' | t }}</h2>
+          <h2 class="mh"><app-icon name="globe" [size]="22" />{{ 'Página da web' | t }}</h2>
           <p class="label">{{ 'A TV abre a página e a exibe pelo tempo escolhido (um painel de vendas, o cardápio online, a previsão do tempo…). Precisa de internet na TV e o endereço precisa ser' | t }} <b>https://</b>. {{ 'A página não fica guardada na TV.' | t }}</p>
           <div class="field">
             <label for="web-url">{{ 'Endereço da página' | t }}</label>
@@ -99,7 +118,7 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
     @if (modal() === 'qr') {
       <div class="modal" (click)="closeModal()">
         <form class="modal-box qr" (click)="$event.stopPropagation()" (ngSubmit)="saveQr()">
-          <h2>{{ 'QR Code' | t }}</h2>
+          <h2 class="mh"><app-icon name="qr-code" [size]="22" />{{ 'QR Code' | t }}</h2>
           <p class="label">{{ 'Gera uma imagem com o QR Code (um endereço, um Wi‑Fi, um cardápio…) e a guarda na biblioteca, pronta para entrar numa playlist.' | t }}</p>
           <div class="qr-layout">
             <div>
@@ -127,7 +146,7 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
             <div class="preview">
               <canvas #qrCanvas [width]="imageSize" [height]="imageSize" [attr.aria-label]="'Pré-visualização do QR Code' | t"></canvas>
               @if (qrProblem(); as text) {
-                <div class="error" role="alert">{{ text }}</div>
+                <div class="error" role="alert"><app-icon name="circle-alert" [size]="18" /><span>{{ text }}</span></div>
               }
             </div>
           </div>
@@ -140,16 +159,24 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
     }
   `,
   styles: `
-    .upload { cursor: pointer; display: inline-block; }
+    .upload { cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .mh { display: flex; align-items: center; gap: 10px; }
+    .mh app-icon { color: var(--primary); }
+    :host-context(:root[data-theme='dark']) .mh app-icon { color: var(--link); }
+    .prog-row { display: flex; align-items: center; gap: 10px; }
+    .prog-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .prog-pct { font-weight: 700; color: var(--primary); }
     .head-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .progress { margin-bottom: 16px; }
     .bar { height: 8px; background: var(--primary-soft); border-radius: 8px; margin-top: 10px; overflow: hidden; }
     .fill { height: 100%; background: var(--primary); transition: width 0.2s; }
-    .item { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
-    .thumb { height: 120px; background: var(--primary-soft); }
-    .meta { padding: 10px 12px 4px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .item { padding: 0; display: flex; flex-direction: column; }
+    .thumb { position: relative; height: 130px; overflow: hidden; border-radius: var(--r-lg) var(--r-lg) 0 0; background: var(--primary-soft); }
+    .kind { position: absolute; left: 8px; top: 8px; box-shadow: var(--sh-1); }
+    .meta { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .line { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
     .name, .url { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .item button { margin: 8px 12px 12px; }
+    .meta small { color: var(--muted); min-height: 1.2em; }
     .modal-box.qr { max-width: 820px; }
     .qr-layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; align-items: start; }
     .preview canvas { width: 100%; height: auto; aspect-ratio: 1; border: 1px solid var(--line); border-radius: 10px; background: #fff; display: block; }
@@ -174,6 +201,7 @@ export class MediaPage implements OnInit {
   readonly currentFile = signal('');
   readonly size = formatBytes;
   readonly typeLabel = mediaTypeLabel;
+  readonly kindIcon = (type: MediaType): IconName => (type === 'VIDEO' ? 'film' : type === 'WEB' ? 'globe' : 'image');
   readonly notice = new Notice();
 
   readonly modal = signal<'web' | 'qr' | null>(null);

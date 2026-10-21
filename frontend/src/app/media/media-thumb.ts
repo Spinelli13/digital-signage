@@ -1,7 +1,9 @@
-import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 
 import { ApiService } from '../core/api.service';
 import { MediaType } from '../core/models';
+import { IconComponent } from '../shared/icon';
+import { IconName } from '../shared/icons';
 
 /**
  * Miniatura de uma mídia. Com armazenamento externo (S3) usa a URL assinada direto; com disco local
@@ -9,17 +11,19 @@ import { MediaType } from '../core/models';
  */
 @Component({
   selector: 'app-media-thumb',
+  imports: [IconComponent],
   template: `
     @if (type() === 'IMAGE' && src()) {
       <img [src]="src()" [alt]="name()" loading="lazy" />
     } @else {
-      <div class="ph">{{ type() === 'VIDEO' ? '🎬' : type() === 'WEB' ? '🌐' : '🖼' }}</div>
+      <div class="ph"><app-icon [name]="icon()" [size]="34" [stroke]="1.6" /></div>
     }
   `,
   styles: `
     :host { display: block; width: 100%; height: 100%; }
     img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 34px; background: var(--blue2); }
+    .ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--primary); background: linear-gradient(135deg, var(--primary-soft), var(--panel-3)); }
+    :host-context(:root[data-theme='dark']) .ph { color: var(--link); }
   `,
 })
 export class MediaThumb implements OnInit, OnDestroy {
@@ -29,6 +33,7 @@ export class MediaThumb implements OnInit, OnDestroy {
   readonly type = input.required<MediaType>();
   readonly name = input('');
   readonly src = signal<string | null>(null);
+  protected readonly icon = computed<IconName>(() => (this.type() === 'VIDEO' ? 'film' : this.type() === 'WEB' ? 'globe' : 'image'));
 
   private objectUrl: string | null = null;
 

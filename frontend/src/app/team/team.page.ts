@@ -7,50 +7,57 @@ import { TPipe, tr } from '../core/i18n';
 import { Role, TeamMember } from '../core/models';
 import { Notice } from '../core/notice';
 import { formatLimit, roleHelp, roleLabel, TEAM_ROLES } from '../core/saas';
+import { IconComponent } from '../shared/icon';
+import { IconName } from '../shared/icons';
+import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent, SkeletonComponent } from '../shared/ui';
+
+const ROLE_ICONS: Record<Role, IconName> = { VIEWER: 'eye', EDITOR: 'pencil', ADMIN: 'shield-check', PLATFORM_ADMIN: 'key-round' };
 
 @Component({
   selector: 'app-team',
-  imports: [FormsModule, TPipe],
+  imports: [FormsModule, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, SkeletonComponent, MenuComponent],
   template: `
-    <div class="head">
-      <div>
-        <h1>{{ 'Equipe' | t }}</h1>
-        <p>
-          {{ 'Quem acessa o painel deste cliente e o que cada pessoa pode fazer.' | t }}
-          @if (auth.me(); as me) {
-            {{ 'Usuários ativos:' | t }} <b>{{ '{used} de {limit}' | t: { used: me.tenant.usage.users, limit: limit() } }}</b>.
-          }
-        </p>
-      </div>
-      <button class="primary" (click)="openNew()">{{ '+ Novo usuário' | t }}</button>
-    </div>
+    <app-page-header [title]="'Equipe' | t" [subtitle]="'Quem acessa o painel deste cliente e o que cada pessoa pode fazer.' | t" icon="users">
+      @if (auth.me(); as me) {
+        <app-pill icon="users">{{ 'Usuários ativos:' | t }} <b class="num">{{ '{used} de {limit}' | t: { used: me.tenant.usage.users, limit: limit() } }}</b></app-pill>
+      }
+      <button class="primary" (click)="openNew()"><app-icon name="plus" />{{ 'Novo usuário' | t }}</button>
+    </app-page-header>
 
     @if (notice.text(); as text) {
-      <div class="notice" role="status">{{ text }}</div>
+      <div class="notice" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ text }}</span></div>
     }
 
     <div class="card">
       @if (items().length === 0) {
-        <div class="empty">{{ (loaded() ? 'Nenhum usuário.' : 'Carregando…') | t }}</div>
+        @if (loaded()) {
+          <app-empty-state icon="users" [title]="'Nenhum usuário.' | t" />
+        } @else {
+          <app-skeleton [rows]="3" />
+        }
       } @else {
         <table class="stack">
           <tr><th>{{ 'Nome' | t }}</th><th>{{ 'Papel' | t }}</th><th>{{ 'Situação' | t }}</th><th></th></tr>
           @for (member of items(); track member.id) {
             <tr>
               <td class="first">
-                <b>{{ member.name }}</b>
-                @if (isMe(member)) {
-                  <small> {{ '(você)' | t }}</small>
-                }
-                <br /><small>{{ member.email }}</small>
+                <span class="who">
+                  <span class="avatar" aria-hidden="true">{{ initials(member.name) }}</span>
+                  <span class="who-text">
+                    <b>{{ member.name }}@if (isMe(member)) {<small class="me"> {{ '(você)' | t }}</small>}</b>
+                    <small>{{ member.email }}</small>
+                  </span>
+                </span>
               </td>
-              <td [attr.data-label]="'Papel' | t">{{ roleText(member.role) }}</td>
+              <td [attr.data-label]="'Papel' | t"><app-pill tone="brand" [icon]="roleIcon(member.role)">{{ roleText(member.role) }}</app-pill></td>
               <td [attr.data-label]="'Situação' | t">
-                <span class="st"><span class="dot" [class]="member.active ? 'on' : 'off'"></span>{{ (member.active ? 'Ativo' : 'Desativado') | t }}</span>
+                <app-pill [tone]="member.active ? 'ok' : 'neutral'" [icon]="member.active ? 'circle-check' : 'circle-pause'">{{ (member.active ? 'Ativo' : 'Desativado') | t }}</app-pill>
               </td>
               <td class="row-actions">
-                <button class="secondary small" (click)="openEdit(member)">{{ 'Editar' | t }}</button>
-                <button class="danger small" [disabled]="isMe(member)" (click)="remove(member)">{{ 'Excluir' | t }}</button>
+                <button class="secondary small" (click)="openEdit(member)"><app-icon name="pencil" [size]="15" />{{ 'Editar' | t }}</button>
+                <app-menu [label]="'Mais ações' | t">
+                  <button type="button" class="menu-item danger" [disabled]="isMe(member)" (click)="remove(member)"><app-icon name="trash" />{{ 'Excluir' | t }}</button>
+                </app-menu>
               </td>
             </tr>
           }
@@ -59,10 +66,16 @@ import { formatLimit, roleHelp, roleLabel, TEAM_ROLES } from '../core/saas';
     </div>
 
     <div class="card roles">
-      <h3>{{ 'O que cada papel pode' | t }}</h3>
-      @for (role of roles; track role) {
-        <p><b>{{ roleText(role) }}</b> — {{ helpText(role) }}</p>
-      }
+      <h3 class="sec"><app-icon name="shield-check" [size]="18" />{{ 'O que cada papel pode' | t }}</h3>
+      <div class="role-grid">
+        @for (role of roles; track role) {
+          <div class="role-card">
+            <span class="role-icon"><app-icon [name]="roleIcon(role)" [size]="20" /></span>
+            <b>{{ roleText(role) }}</b>
+            <span class="muted">{{ helpText(role) }}</span>
+          </div>
+        }
+      </div>
     </div>
 
     @if (modal() !== null) {
@@ -112,9 +125,20 @@ import { formatLimit, roleHelp, roleLabel, TEAM_ROLES } from '../core/saas';
   `,
   styles: `
     .row-actions { white-space: nowrap; text-align: right; }
-    .row-actions button { margin-left: 6px; }
+    .row-actions > * { margin-left: 6px; vertical-align: middle; }
+    .who { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .avatar { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 13.5px; background: var(--grad-primary); }
+    .who-text { display: flex; flex-direction: column; min-width: 0; }
+    .who-text small { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+    .me { color: var(--muted); font-weight: 400; }
     .roles { margin-top: 18px; }
-    .roles p { margin: 6px 0; }
+    .sec { display: flex; align-items: center; gap: 8px; }
+    .sec app-icon { color: var(--primary); }
+    :host-context(:root[data-theme='dark']) .sec app-icon { color: var(--link); }
+    .role-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 12px; }
+    .role-card { display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel-2); }
+    .role-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; color: var(--primary); background: var(--primary-soft); border: 1px solid var(--primary-line); }
+    :host-context(:root[data-theme='dark']) .role-icon { color: var(--link); }
   `,
 })
 export class TeamPage implements OnInit {
@@ -156,6 +180,14 @@ export class TeamPage implements OnInit {
   ngOnInit(): void {
     this.destroyRef.onDestroy(() => this.notice.dispose());
     this.load();
+  }
+
+  initials(name: string): string {
+    return name.trim().split(/\s+/).slice(0, 2).map((part) => part.charAt(0)).join('').toUpperCase() || '?';
+  }
+
+  roleIcon(role: Role): IconName {
+    return ROLE_ICONS[role];
   }
 
   roleText(role: Role): string {

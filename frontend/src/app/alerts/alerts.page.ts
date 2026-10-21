@@ -9,66 +9,62 @@ import { TPipe, tr, trServer } from '../core/i18n';
 import { alertLabel } from '../core/monitoring-labels';
 import { Alert, MonitoringSettings, MonitoringSettingsRequest, WebhookTestResult } from '../core/models';
 import { Notice } from '../core/notice';
+import { IconComponent } from '../shared/icon';
+import { EmptyStateComponent, PageHeaderComponent, PillComponent, SkeletonComponent } from '../shared/ui';
 
 const REFRESH_MS = 15_000;
 
 @Component({
   selector: 'app-alerts',
-  imports: [FormsModule, RouterLink, TPipe],
+  imports: [FormsModule, RouterLink, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, SkeletonComponent],
   template: `
-    <div class="head">
-      <div>
-        <h1>{{ 'Alertas' | t }}</h1>
-        <p>{{ 'O painel avisa quando uma TV some, nunca se conecta ou o Player não para de dar erro. Os avisos também podem ir para o seu Slack, Discord ou outro sistema.' | t }}</p>
-      </div>
-    </div>
+    <app-page-header [title]="'Alertas' | t" [subtitle]="'O painel avisa quando uma TV some, nunca se conecta ou o Player não para de dar erro. Os avisos também podem ir para o seu Slack, Discord ou outro sistema.' | t" icon="bell"></app-page-header>
 
     @if (notice.text(); as text) {
-      <div class="notice" role="status">{{ text }}</div>
+      <div class="notice" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ text }}</span></div>
     }
 
     <div class="card">
       <div class="bar">
-        <h3>{{ 'Alertas' | t }}</h3>
+        <h3 class="sec"><app-icon name="bell" [size]="18" />{{ 'Alertas' | t }}</h3>
         <label class="check">
           <input type="checkbox" [ngModel]="onlyOpen()" (ngModelChange)="setOnlyOpen($event)" /> {{ 'Só os abertos' | t }}
         </label>
       </div>
       @if (alerts().length === 0) {
-        <div class="empty">
-          @if (!loaded()) {
-            {{ 'Carregando…' | t }}
-          } @else if (onlyOpen()) {
-            {{ 'Nenhum alerta aberto. Tudo certo por aqui.' | t }} 🎉
-          } @else {
-            {{ 'Nenhum alerta até agora.' | t }}
-          }
-        </div>
+        @if (!loaded()) {
+          <app-skeleton [rows]="3" />
+        } @else if (onlyOpen()) {
+          <app-empty-state icon="shield-check" [title]="'Nenhum alerta aberto' | t" [text]="'Tudo certo por aqui.' | t" />
+        } @else {
+          <app-empty-state icon="bell" [title]="'Nenhum alerta até agora.' | t" [text]="'Quando uma TV ficar sem contato, nunca se conectar ou o Player errar demais, o aviso aparece aqui.' | t" />
+        }
       } @else {
         <table class="stack">
           <tr><th></th><th>{{ 'O que aconteceu' | t }}</th><th>{{ 'Desde' | t }}</th><th>{{ 'Situação' | t }}</th><th></th></tr>
           @for (alert of alerts(); track alert.id) {
             <tr [class.resolved]="!alert.open">
-              <td class="dot-col"><span class="dot" [class]="alert.open ? 'off' : 'on'"></span></td>
+              <td class="dot-col"><span class="state-icon" [class.open]="alert.open"><app-icon [name]="alert.open ? 'triangle-alert' : 'circle-check'" [size]="18" /></span></td>
               <td class="first">
-                <b>{{ label(alert) }}</b><br />
-                <small>{{ messageOf(alert.message) }}</small>
+                <b>{{ label(alert) }}</b>
+                <small class="msg">{{ messageOf(alert.message) }}</small>
               </td>
               <td [attr.data-label]="'Desde' | t" [title]="when(alert.openedAt)">{{ ago(alert.openedAt) }}</td>
               <td [attr.data-label]="'Situação' | t">
-                <span>
+                <span class="situation">
                   @if (alert.open) {
-                    <b class="bad">{{ 'Aberto' | t }}</b>
+                    <app-pill tone="err" icon="circle-alert">{{ 'Aberto' | t }}</app-pill>
                   } @else {
-                    {{ 'Resolvido' | t }} {{ ago(alert.resolvedAt) }}
+                    <app-pill tone="ok" icon="circle-check">{{ 'Resolvido' | t }}</app-pill>
+                    <small>{{ ago(alert.resolvedAt) }}</small>
                   }
                   @if (settings()?.webhookConfigured) {
-                    <br /><small>{{ (alert.notified ? 'Webhook avisado' : 'Webhook: aguardando') | t }}</small>
+                    <small class="hook"><app-icon name="send" [size]="12" />{{ (alert.notified ? 'Webhook avisado' : 'Webhook: aguardando') | t }}</small>
                   }
                 </span>
               </td>
               <td class="row-actions">
-                <a class="secondary small btn" [routerLink]="['/dispositivos', alert.deviceId, 'historico']">{{ 'Ver histórico' | t }}</a>
+                <a class="secondary small btn" [routerLink]="['/dispositivos', alert.deviceId, 'historico']"><app-icon name="rotate-ccw-clock" [size]="15" />{{ 'Ver histórico' | t }}</a>
               </td>
             </tr>
           }
@@ -78,7 +74,7 @@ const REFRESH_MS = 15_000;
 
     @if (auth.can('admin')) {
     <div class="card settings">
-      <h3>{{ 'Quando avisar' | t }}</h3>
+      <h3 class="sec"><app-icon name="settings" [size]="18" />{{ 'Quando avisar' | t }}</h3>
       <div class="fields">
         <div class="field">
           <label for="offline">{{ 'TV sem contato há mais de (minutos)' | t }}</label>
@@ -98,7 +94,7 @@ const REFRESH_MS = 15_000;
         </div>
       </div>
 
-      <h3 class="sub">{{ 'Aviso externo (webhook)' | t }}</h3>
+      <h3 class="sub sec"><app-icon name="send" [size]="18" />{{ 'Aviso externo (webhook)' | t }}</h3>
       <p class="label">
         {{ 'Cole o endereço de um webhook do Slack, Discord, Teams ou Zapier: cada alerta vira uma mensagem por lá.' | t }}
         {{ 'Por segurança só aceitamos endereços' | t }} <b>https://</b> {{ 'públicos, e o endereço completo nunca é exibido de volta.' | t }}
@@ -115,16 +111,17 @@ const REFRESH_MS = 15_000;
 
       @if (testResult(); as result) {
         <div [class]="result.ok ? 'success' : 'error'" role="status">
-          {{ testMessage(result) }}
+          <app-icon [name]="result.ok ? 'circle-check' : 'circle-alert'" [size]="18" />
+          <span>{{ testMessage(result) }}</span>
         </div>
       }
 
       <div class="actions">
         @if (settings()?.webhookConfigured) {
-          <button class="danger" (click)="removeWebhook()" [disabled]="saving()">{{ 'Remover webhook' | t }}</button>
-          <button class="secondary" (click)="test()" [disabled]="saving() || testing()">{{ (testing() ? 'Enviando…' : 'Enviar teste') | t }}</button>
+          <button class="danger" (click)="removeWebhook()" [disabled]="saving()"><app-icon name="trash" [size]="16" />{{ 'Remover webhook' | t }}</button>
+          <button class="secondary" (click)="test()" [disabled]="saving() || testing()"><app-icon name="send" [size]="16" />{{ (testing() ? 'Enviando…' : 'Enviar teste') | t }}</button>
         }
-        <button class="primary" (click)="save()" [disabled]="saving()">{{ (saving() ? 'Salvando…' : 'Salvar configurações') | t }}</button>
+        <button class="primary" (click)="save()" [disabled]="saving()"><app-icon name="check" [size]="16" />{{ (saving() ? 'Salvando…' : 'Salvar configurações') | t }}</button>
       </div>
     </div>
     }
@@ -132,9 +129,16 @@ const REFRESH_MS = 15_000;
   styles: `
     .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
     .bar h3 { margin: 0; }
-    .btn { display: inline-block; }
-    .bad { color: var(--red); }
-    tr.resolved td { color: var(--muted); }
+    .btn { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; }
+    .sec { display: flex; align-items: center; gap: 8px; }
+    .sec app-icon { color: var(--primary); }
+    :host-context(:root[data-theme='dark']) .sec app-icon { color: var(--link); }
+    .state-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; color: var(--ok-fg); background: var(--ok-bg); border: 1px solid var(--ok-line); }
+    .state-icon.open { color: var(--err-fg); background: var(--err-bg); border-color: var(--err-line); }
+    .msg { display: block; color: var(--muted); }
+    .situation { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+    .hook { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); }
+    tr.resolved td.first b { color: var(--text-2); }
     .row-actions { text-align: right; white-space: nowrap; }
     @media (max-width: 720px) {
       table.stack td.dot-col { position: absolute; top: 12px; right: 12px; border: 0; padding: 0; width: auto; }

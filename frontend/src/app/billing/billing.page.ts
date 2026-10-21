@@ -6,6 +6,9 @@ import { AuthService } from '../core/auth.service';
 import { BillingInfo, PlanOption } from '../core/models';
 import { TPipe, formatDate, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
+import { IconComponent } from '../shared/icon';
+import { IconName } from '../shared/icons';
+import { EmptyStateComponent, LEGACY_TONE, PageHeaderComponent, PillComponent, SkeletonComponent, Tone } from '../shared/ui';
 import {
   daysUntil,
   formatLimit,
@@ -20,44 +23,39 @@ import {
 
 @Component({
   selector: 'app-billing',
-  imports: [FormsModule, TPipe],
+  imports: [FormsModule, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, SkeletonComponent],
   template: `
-    <div class="head">
-      <div>
-        <h1>{{ 'Plano e cobrança' | t }}</h1>
-        <p>{{ 'O plano contratado, o quanto você já usa, as faturas e como pagar.' | t }}</p>
-      </div>
-    </div>
+    <app-page-header [title]="'Plano e cobrança' | t" [subtitle]="'O plano contratado, o quanto você já usa, as faturas e como pagar.' | t" icon="credit-card"></app-page-header>
 
     @if (notice.text(); as text) {
-      <div class="notice" role="status">{{ text }}</div>
+      <div class="notice" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ text }}</span></div>
     }
 
     @if (info(); as billing) {
       @if (blockedText(); as text) {
-        <div class="error" role="alert">{{ text }}</div>
+        <div class="error" role="alert"><app-icon name="triangle-alert" [size]="18" /><span>{{ text }}</span></div>
       }
 
       <div class="card plan">
         <div class="plan-top">
           <div>
-            <small>{{ 'Seu plano' | t }}</small>
+            <small class="eyebrow"><app-icon name="sparkles" [size]="14" />{{ 'Seu plano' | t }}</small>
             <h2>{{ planName(billing.tenant.plan.name) }}</h2>
-            <span class="price">{{ price(billing.tenant.plan.priceCents, billing.tenant.plan.currency) }}</span>
+            <span class="price num">{{ price(billing.tenant.plan.priceCents, billing.tenant.plan.currency) }}</span>
           </div>
           <div class="status">
-            <span class="dot" [class]="tone()"></span><b>{{ statusLabel() }}</b>
+            <app-pill [tone]="look().tone" [icon]="look().icon">{{ statusLabel() }}</app-pill>
             @if (billing.tenant.status === 'TRIAL' && billing.tenant.trialEndsAt) {
-              <br /><small>{{ 'Teste até {date} ({n} dia(s))' | t: { date: date(billing.tenant.trialEndsAt), n: trialDays() } }}</small>
+              <small>{{ 'Teste até {date} ({n} dia(s))' | t: { date: date(billing.tenant.trialEndsAt), n: trialDays() } }}</small>
             } @else if (billing.tenant.currentPeriodEnd) {
-              <br /><small>{{ 'Pago até {date}' | t: { date: date(billing.tenant.currentPeriodEnd) } }}</small>
+              <small>{{ 'Pago até {date}' | t: { date: date(billing.tenant.currentPeriodEnd) } }}</small>
             }
           </div>
         </div>
         <div class="usage">
-          @for (row of rows(); track row.label) {
+          @for (row of rows(); track row.label; let i = $index) {
             <div class="usage-row">
-              <div class="usage-head"><span>{{ row.label }}</span><small>{{ row.text }}</small></div>
+              <div class="usage-head"><span class="usage-label"><app-icon [name]="usageIcons[i]" [size]="16" />{{ row.label }}</span><small class="num">{{ row.text }}</small></div>
               <div class="bar" [class.full]="row.percent >= 100" [class.high]="row.percent >= 80 && row.percent < 100">
                 <div class="fill" [style.width.%]="row.percent"></div>
               </div>
@@ -67,9 +65,9 @@ import {
       </div>
 
       <div class="card section">
-        <h3>{{ 'Faturas' | t }}</h3>
+        <h3 class="sec"><app-icon name="receipt-text" [size]="18" />{{ 'Faturas' | t }}</h3>
         @if (billing.invoices.length === 0) {
-          <div class="empty">{{ 'Nenhuma fatura ainda. A primeira é gerada perto do fim do período de teste.' | t }}</div>
+          <app-empty-state [compact]="true" icon="receipt-text" [title]="'Nenhuma fatura ainda.' | t" [text]="'A primeira é gerada perto do fim do período de teste.' | t" />
         } @else {
           <table class="stack">
             <tr><th>{{ 'Número' | t }}</th><th>{{ 'Descrição' | t }}</th><th>{{ 'Vencimento' | t }}</th><th>{{ 'Valor' | t }}</th><th>{{ 'Situação' | t }}</th></tr>
@@ -80,10 +78,10 @@ import {
                 <td [attr.data-label]="'Vencimento' | t">{{ date(invoice.dueDate) }}</td>
                 <td [attr.data-label]="'Valor' | t">{{ price(invoice.amountCents, invoice.currency) }}</td>
                 <td [attr.data-label]="'Situação' | t">
-                  <span>
-                    <span class="dot" [class]="invoiceTone(invoice.status, invoice.overdue)"></span>{{ (invoice.overdue ? 'Vencida' : invoiceLabel(invoice.status)) | t }}
+                  <span class="inv">
+                    <app-pill [tone]="invoiceLook(invoice.status, invoice.overdue).tone" [icon]="invoiceLook(invoice.status, invoice.overdue).icon">{{ (invoice.overdue ? 'Vencida' : invoiceLabel(invoice.status)) | t }}</app-pill>
                     @if (invoice.paidAt) {
-                      <br /><small>{{ 'em {date}' | t: { date: date(invoice.paidAt) } }}</small>
+                      <small>{{ 'em {date}' | t: { date: date(invoice.paidAt) } }}</small>
                     }
                   </span>
                 </td>
@@ -94,7 +92,7 @@ import {
       </div>
 
       <div class="card section">
-        <h3>{{ 'Como pagar' | t }}</h3>
+        <h3 class="sec"><app-icon name="credit-card" [size]="18" />{{ 'Como pagar' | t }}</h3>
         @if (billing.paymentInstructions) {
           <p class="instructions">{{ billing.paymentInstructions }}</p>
         } @else {
@@ -109,7 +107,7 @@ import {
       </div>
 
       <div class="card section">
-        <h3>{{ 'Planos disponíveis' | t }}</h3>
+        <h3 class="sec"><app-icon name="layers" [size]="18" />{{ 'Planos disponíveis' | t }}</h3>
         <div class="plans">
           @for (plan of billing.plans; track plan.id) {
             <div class="plan-card" [class.current]="plan.id === billing.tenant.plan.id">
@@ -119,14 +117,14 @@ import {
                 <small>{{ planName(plan.description) }}</small>
               }
               <ul>
-                <li>{{ 'TVs' | t }}: {{ limitText(plan.maxDevices) }}</li>
-                <li>{{ 'Espaço de mídias' | t }}: {{ storageText(plan) }}</li>
-                <li>{{ 'Usuários' | t }}: {{ limitText(plan.maxUsers) }}</li>
+                <li><app-icon name="monitor" [size]="15" />{{ 'TVs' | t }}: <b class="num">{{ limitText(plan.maxDevices) }}</b></li>
+                <li><app-icon name="hard-drive" [size]="15" />{{ 'Espaço de mídias' | t }}: <b class="num">{{ storageText(plan) }}</b></li>
+                <li><app-icon name="users" [size]="15" />{{ 'Usuários' | t }}: <b class="num">{{ limitText(plan.maxUsers) }}</b></li>
               </ul>
               @if (plan.id === billing.tenant.plan.id) {
-                <small class="current-tag">{{ 'Seu plano' | t }}</small>
+                <app-pill tone="brand" icon="badge-check" class="current-tag">{{ 'Seu plano' | t }}</app-pill>
               } @else if (billing.supportEmail) {
-                <a class="secondary small" [href]="changeLink(plan, billing)">{{ 'Pedir este plano' | t }}</a>
+                <a class="secondary small ask" [href]="changeLink(plan, billing)"><app-icon name="mail" [size]="15" />{{ 'Pedir este plano' | t }}</a>
               }
             </div>
           }
@@ -134,7 +132,7 @@ import {
       </div>
 
       <div class="card section">
-        <h3>{{ 'Dados da conta' | t }}</h3>
+        <h3 class="sec"><app-icon name="building" [size]="18" />{{ 'Dados da conta' | t }}</h3>
         <form (ngSubmit)="saveProfile()">
           <div class="field">
             <label for="b-name">{{ 'Nome do cliente' | t }}</label>
@@ -148,34 +146,47 @@ import {
             <label for="b-doc">{{ 'CPF/CNPJ (opcional)' | t }}</label>
             <input id="b-doc" name="document" [ngModel]="document()" (ngModelChange)="document.set($event)" />
           </div>
-          <button type="submit" class="primary" [disabled]="busy() || !name().trim()">{{ 'Salvar' | t }}</button>
+          <button type="submit" class="primary" [disabled]="busy() || !name().trim()"><app-icon name="check" [size]="16" />{{ 'Salvar' | t }}</button>
         </form>
       </div>
     } @else {
-      <div class="card"><div class="empty">{{ 'Carregando…' | t }}</div></div>
+      <div class="card"><app-skeleton [rows]="5" /></div>
     }
   `,
   styles: `
     .section { margin-top: 18px; }
-    .plan-top { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-    .plan h2 { margin: 2px 0; }
-    .price { font-size: 20px; font-weight: 700; }
-    .price small { font-weight: 400; }
-    .status { text-align: right; }
-    .usage { margin-top: 18px; display: grid; gap: 14px; }
-    .usage-head { display: flex; justify-content: space-between; margin-bottom: 6px; }
-    .bar { height: 9px; border-radius: 6px; background: var(--line); overflow: hidden; }
-    .fill { height: 100%; background: var(--green); }
-    .bar.high .fill { background: var(--orange); }
-    .bar.full .fill { background: var(--red); }
+    .sec { display: flex; align-items: center; gap: 8px; }
+    .sec app-icon { color: var(--primary); }
+    :host-context(:root[data-theme='dark']) .sec app-icon { color: var(--link); }
+    .plan { position: relative; overflow: hidden; background: var(--grad-hero); color: #fff; border: 0; padding: 24px; }
+    .plan::after { content: ''; position: absolute; width: 360px; height: 360px; right: -120px; top: -160px; border-radius: 50%; background: radial-gradient(circle, rgba(63, 224, 162, 0.28), transparent 65%); pointer-events: none; }
+    .plan > * { position: relative; z-index: 1; }
+    .plan-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 6px; color: rgba(255, 255, 255, 0.78); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; font-size: 11.5px; }
+    .plan h2 { margin: 6px 0 2px; font-size: 28px; letter-spacing: -0.02em; color: #fff; }
+    .price { font-size: 22px; font-weight: 700; color: var(--accent); }
+    .status { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .status small { color: rgba(255, 255, 255, 0.82); }
+    .usage { margin-top: 22px; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .usage-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+    .usage-label { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
+    .usage-head small { color: rgba(255, 255, 255, 0.82); }
+    .bar { height: 9px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); overflow: hidden; }
+    .fill { height: 100%; border-radius: 999px; background: var(--accent); }
+    .bar.high .fill { background: #f5b342; }
+    .bar.full .fill { background: #ff7a7a; }
+    .inv { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
     .instructions { white-space: pre-line; }
-    .plans { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
-    .plan-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
-    .plan-card.current { border-color: var(--blue); background: var(--blue2); }
-    .plan-card ul { margin: 6px 0; padding-left: 18px; }
-    .plan-card a { text-align: center; }
-    .secondary { display: inline-block; }
-    .current-tag { color: var(--blue); font-weight: 600; }
+    .plans { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-top: 12px; }
+    .plan-card { border: 1px solid var(--line); border-radius: var(--r-lg); padding: 18px; display: flex; flex-direction: column; gap: 6px; background: var(--panel); }
+    .plan-card.current { border-color: var(--primary); background: var(--primary-soft); box-shadow: 0 0 0 1px var(--primary) inset; }
+    .plan-card .price { color: var(--text); }
+    .plan-card ul { margin: 8px 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+    .plan-card li { display: flex; align-items: center; gap: 8px; }
+    .plan-card li app-icon { color: var(--primary); flex: none; }
+    :host-context(:root[data-theme='dark']) .plan-card li app-icon { color: var(--link); }
+    .ask { display: inline-flex; align-items: center; justify-content: center; gap: 7px; text-decoration: none; color: var(--text); margin-top: auto; }
+    .current-tag { align-self: flex-start; margin-top: auto; }
   `,
 })
 export class BillingPage implements OnInit {
@@ -236,14 +247,19 @@ export class BillingPage implements OnInit {
     return INVOICE_STATUS_LABELS[status];
   }
 
+  readonly usageIcons: IconName[] = ['monitor', 'hard-drive', 'users'];
+  readonly look = computed(() => LEGACY_TONE[this.tone() as 'on' | 'warn' | 'off']);
   readonly planName = planText;
   readonly date = (value: string | null) => formatDate(value);
 
-  invoiceTone(status: 'OPEN' | 'PAID' | 'VOID', overdue: boolean): string {
+  invoiceLook(status: 'OPEN' | 'PAID' | 'VOID', overdue: boolean): { tone: Tone; icon: IconName } {
     if (status === 'PAID') {
-      return 'on';
+      return LEGACY_TONE.on;
     }
-    return status === 'OPEN' ? (overdue ? 'off' : 'warn') : 'off';
+    if (status === 'OPEN') {
+      return overdue ? LEGACY_TONE.off : { tone: 'warn', icon: 'hourglass' };
+    }
+    return { tone: 'neutral', icon: 'circle-x' };
   }
 
   limitText(value: number | null): string {

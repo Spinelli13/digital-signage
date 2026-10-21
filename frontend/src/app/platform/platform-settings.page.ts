@@ -4,24 +4,21 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../core/api.service';
 import { TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
+import { IconComponent } from '../shared/icon';
+import { PageHeaderComponent } from '../shared/ui';
 
 @Component({
   selector: 'app-platform-settings',
-  imports: [FormsModule, TPipe],
+  imports: [FormsModule, TPipe, IconComponent, PageHeaderComponent],
   template: `
-    <div class="head">
-      <div>
-        <h1>{{ 'Configurações da plataforma' | t }}</h1>
-        <p>{{ 'O texto de pagamento que os clientes veem e as regras da cobrança automática.' | t }}</p>
-      </div>
-    </div>
+    <app-page-header [title]="'Configurações da plataforma' | t" [subtitle]="'O texto de pagamento que os clientes veem e as regras da cobrança automática.' | t" icon="settings"></app-page-header>
 
     @if (notice.text(); as text) {
-      <div class="notice" role="status">{{ text }}</div>
+      <div class="notice" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ text }}</span></div>
     }
 
     <form class="card" (ngSubmit)="save()">
-      <h3>{{ 'Empresa e pagamento' | t }}</h3>
+      <h3 class="sec"><app-icon name="building" [size]="18" />{{ 'Empresa e pagamento' | t }}</h3>
       <div class="field">
         <label for="s-company">{{ 'Nome da empresa' | t }}</label>
         <input id="s-company" name="companyName" required [ngModel]="companyName()" (ngModelChange)="companyName.set($event)" />
@@ -37,7 +34,7 @@ import { Notice } from '../core/notice';
           [ngModel]="paymentInstructions()" (ngModelChange)="paymentInstructions.set($event)"></textarea>
       </div>
 
-      <h3 class="sub">{{ 'Cobrança automática' | t }}</h3>
+      <h3 class="sub sec"><app-icon name="receipt-text" [size]="18" />{{ 'Cobrança automática' | t }}</h3>
       <div class="three">
         <div class="field">
           <label for="s-trial">{{ 'Dias de teste' | t }}</label>
@@ -55,11 +52,14 @@ import { Notice } from '../core/notice';
           <small>{{ 'Dias antes do fim do período em que a fatura é gerada.' | t }}</small>
         </div>
       </div>
-      <button type="submit" class="primary" [disabled]="busy() || !companyName().trim()">{{ 'Salvar' | t }}</button>
+      <button type="submit" class="primary" [disabled]="busy() || !companyName().trim()"><app-icon name="check" [size]="16" />{{ 'Salvar' | t }}</button>
     </form>
   `,
   styles: `
     .sub { margin: 22px 0 10px; }
+    .sec { display: flex; align-items: center; gap: 8px; }
+    .sec app-icon { color: var(--primary); }
+    :host-context(:root[data-theme='dark']) .sec app-icon { color: var(--link); }
     .three { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
   `,
 })

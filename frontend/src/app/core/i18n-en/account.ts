@@ -3,7 +3,6 @@ export const ACCOUNT: Record<string, string> = {
   // equipe
   'Quem acessa o painel deste cliente e o que cada pessoa pode fazer.': 'Who can access this client\'s panel and what each person can do.',
   'Usuários ativos:': 'Active users:',
-  '+ Novo usuário': '+ New user',
   'Nenhum usuário.': 'No users.',
   Papel: 'Role',
   '(você)': '(you)',
@@ -26,7 +25,6 @@ export const ACCOUNT: Record<string, string> = {
   'Seu plano': 'Your plan',
   'Teste até {date} ({n} dia(s))': 'Trial until {date} ({n} day(s))',
   'Pago até {date}': 'Paid until {date}',
-  'Nenhuma fatura ainda. A primeira é gerada perto do fim do período de teste.': 'No invoices yet. The first one is generated near the end of the trial period.',
   Número: 'Number',
   Descrição: 'Description',
   Vencimento: 'Due date',
@@ -56,8 +54,6 @@ export const ACCOUNT: Record<string, string> = {
   // plataforma: clientes
   'As empresas que usam a plataforma. "Entrar" abre o painel do cliente para você dar suporte.':
     'The companies that use the platform. "Sign in" opens the client\'s panel so you can give support.',
-  '+ Novo cliente': '+ New client',
-  'Nenhum cliente ainda. Cadastre o primeiro.': 'No clients yet. Register the first one.',
   Cliente: 'Client',
   Plano: 'Plan',
   Uso: 'Usage',
@@ -120,7 +116,6 @@ export const ACCOUNT: Record<string, string> = {
 
   // plataforma: planos
   'O que cada plano custa e o que inclui. Deixe um limite em branco para "ilimitado".': 'What each plan costs and includes. Leave a limit blank for "unlimited".',
-  '+ Novo plano': '+ New plan',
   'Nenhum plano.': 'No plans.',
   'Preço/mês': 'Price/month',
   Espaço: 'Storage',

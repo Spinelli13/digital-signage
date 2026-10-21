@@ -8,53 +8,59 @@ import { AuthService } from '../core/auth.service';
 import { TPipe, tr } from '../core/i18n';
 import { Device, DeviceGroup, Playlist } from '../core/models';
 import { Notice } from '../core/notice';
+import { IconComponent } from '../shared/icon';
+import { EmptyStateComponent, MenuComponent, PageHeaderComponent, SkeletonComponent } from '../shared/ui';
 
 @Component({
   selector: 'app-groups',
-  imports: [FormsModule, RouterLink, TPipe],
+  imports: [FormsModule, RouterLink, TPipe, IconComponent, PageHeaderComponent, EmptyStateComponent, SkeletonComponent, MenuComponent],
   template: `
-    <div class="head">
-      <div>
-        <h1>{{ 'Grupos' | t }}</h1>
-        <p>{{ 'Conjuntos de TVs para agir em várias de uma vez: escolher a playlist, atualizar o aplicativo ou filtrar.' | t }}</p>
-      </div>
+    <app-page-header [title]="'Grupos' | t" [subtitle]="'Conjuntos de TVs para agir em várias de uma vez: escolher a playlist, atualizar o aplicativo ou filtrar.' | t" icon="layers">
       @if (auth.can('admin')) {
-        <button class="primary" (click)="openNew()">{{ '+ Novo grupo' | t }}</button>
+        <button class="primary" (click)="openNew()"><app-icon name="plus" />{{ 'Novo grupo' | t }}</button>
       }
-    </div>
+    </app-page-header>
 
     @if (notice.text(); as text) {
-      <div class="notice" role="status">{{ text }}</div>
+      <div class="notice" role="status"><app-icon name="circle-check" [size]="18" /><span>{{ text }}</span></div>
     }
 
     <div class="card">
       @if (groups().length === 0) {
-        <div class="empty">
-          @if (loaded()) {
-            {{ 'Nenhum grupo ainda. Crie um (ex.: "Recepções") e escolha quais TVs fazem parte.' | t }}
-          } @else {
-            {{ 'Carregando…' | t }}
-          }
-        </div>
+        @if (loaded()) {
+          <app-empty-state icon="layers" [title]="'Nenhum grupo ainda' | t"
+            [text]="'Crie um (por exemplo, Recepções) e escolha quais TVs fazem parte. Depois é só trocar a playlist de todas de uma vez.' | t">
+            @if (auth.can('admin')) {
+              <button class="primary" (click)="openNew()"><app-icon name="plus" />{{ 'Novo grupo' | t }}</button>
+            }
+          </app-empty-state>
+        } @else {
+          <app-skeleton [rows]="4" />
+        }
       } @else {
         <table class="stack">
           <tr><th>{{ 'Grupo' | t }}</th><th>{{ 'TVs' | t }}</th><th>{{ 'Playlist para todas as TVs do grupo' | t }}</th><th></th></tr>
           @for (group of groups(); track group.id) {
             <tr>
               <td class="first">
-                <b>{{ group.name }}</b>
-                @if (group.description) {
-                  <br /><small>{{ group.description }}</small>
-                }
+                <span class="place">
+                  <span class="place-icon"><app-icon name="layers" [size]="18" /></span>
+                  <span class="place-text">
+                    <b>{{ group.name }}</b>
+                    @if (group.description) {
+                      <small>{{ group.description }}</small>
+                    }
+                  </span>
+                </span>
               </td>
               <td [attr.data-label]="'TVs' | t">
                 @if (group.deviceCount > 0) {
-                  <span>
-                    <a routerLink="/dispositivos" [queryParams]="{ grupo: group.id }">{{ group.deviceCount }}</a>
-                    <br /><small>{{ '{n} online' | t: { n: group.onlineCount } }}</small>
+                  <span class="tvcol">
+                    <a class="tvs" routerLink="/dispositivos" [queryParams]="{ grupo: group.id }" [title]="'Ver as TVs deste grupo' | t"><app-icon name="monitor" [size]="15" /><span class="num">{{ group.deviceCount }}</span></a>
+                    <small>{{ '{n} online' | t: { n: group.onlineCount } }}</small>
                   </span>
                 } @else {
-                  0
+                  <span class="muted num">0</span>
                 }
               </td>
               <td [attr.data-label]="'Playlist' | t">
@@ -72,9 +78,12 @@ import { Notice } from '../core/notice';
               </td>
               <td class="row-actions">
                 @if (auth.can('admin')) {
-                  <button class="secondary small" (click)="openEdit(group)">{{ 'Editar' | t }}</button>
-                  <button class="secondary small" [disabled]="group.deviceCount === 0" (click)="checkUpdate(group)">{{ 'Atualizar app' | t }}</button>
-                  <button class="danger small" (click)="remove(group)">{{ 'Excluir' | t }}</button>
+                  <button class="secondary small" (click)="openEdit(group)"><app-icon name="pencil" [size]="15" />{{ 'Editar' | t }}</button>
+                  <app-menu [label]="'Mais ações' | t">
+                    <button type="button" class="menu-item" [disabled]="group.deviceCount === 0" (click)="checkUpdate(group)"><app-icon name="refresh-cw" />{{ 'Atualizar app' | t }}</button>
+                    <div class="menu-sep"></div>
+                    <button type="button" class="menu-item danger" (click)="remove(group)"><app-icon name="trash" />{{ 'Excluir' | t }}</button>
+                  </app-menu>
                 }
               </td>
             </tr>
@@ -120,7 +129,14 @@ import { Notice } from '../core/notice';
   `,
   styles: `
     .row-actions { white-space: nowrap; text-align: right; }
-    .row-actions button { margin-left: 6px; }
+    .row-actions > * { margin-left: 6px; vertical-align: middle; }
+    .place { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .place-icon { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: var(--primary); background: var(--primary-soft); border: 1px solid var(--primary-line); }
+    :host-context(:root[data-theme='dark']) .place-icon { color: var(--link); }
+    .place-text { display: flex; flex-direction: column; min-width: 0; }
+    .place-text small { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+    .tvs { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+    .tvcol { display: flex; flex-direction: column; gap: 2px; }
     select { min-width: 190px; width: auto; }
     @media (max-width: 720px) { select { min-width: 0; width: 100%; } }
     .picker { max-height: 260px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; }

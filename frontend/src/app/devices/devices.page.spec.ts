@@ -794,7 +794,7 @@ describe('DevicesPage — layout display', () => {
     await ctx.fixture.whenStable();
 
     const element = ctx.fixture.nativeElement as HTMLElement;
-    expect(element.querySelector('.chip.layout')?.textContent).toContain('Lateral');
+    expect(element.querySelector('.tv-tags')?.textContent).toContain('Lateral');
     expect(element.querySelector('select[aria-label="Layout das selecionadas"]')).not.toBeNull();
     ctx.backend.verify();
   });
