@@ -19,6 +19,7 @@ export const WIDGET_KINDS: WidgetKindInfo[] = [
   { kind: 'NOTICE', icon: 'megaphone', label: 'Recado', description: 'Um título e uma mensagem em destaque: horário especial, promoção, recado.' },
   { kind: 'COUNTDOWN', icon: 'timer', label: 'Contagem regressiva', description: 'Quanto falta para uma data: inauguração, promoção, Natal.' },
   { kind: 'PRICES', icon: 'badge-dollar-sign', label: 'Tabela de preços', description: 'Um painel de preços (cardápio, lista de serviços) com os preços por horário que você cadastrou em Preços.' },
+  { kind: 'QUEUE', icon: 'hourglass', label: 'Painel de chamadas', description: 'A senha chamada agora, com o guichê, e as últimas chamadas da fila de atendimento. Atualiza em segundos e avisa com um som.' },
 ];
 
 export function widgetInfo(kind: WidgetKind | null | undefined): WidgetKindInfo | undefined {
@@ -43,6 +44,8 @@ export function defaultWidgetSettings(kind: WidgetKind, lang: string): WidgetSet
       return { ...common, label: '', target: '', timezone: 'America/Sao_Paulo', finishedText: 'Chegou o dia!' };
     case 'PRICES':
       return { ...common, priceListId: null, title: '', columns: 1, rowsPerColumn: 8, secondsPerPage: 8, showCategories: true };
+    case 'QUEUE':
+      return { ...common, title: '', queueIds: [], calls: 5, sound: true };
   }
 }
 

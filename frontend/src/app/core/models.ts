@@ -559,10 +559,101 @@ export interface LayoutTemplate {
 
 // ---------- widgets (conteúdo dinâmico) ----------
 
-export type WidgetKind = 'CLOCK' | 'WEATHER' | 'NEWS' | 'RATES' | 'NOTICE' | 'COUNTDOWN' | 'PRICES';
+export type WidgetKind = 'CLOCK' | 'WEATHER' | 'NEWS' | 'RATES' | 'NOTICE' | 'COUNTDOWN' | 'PRICES' | 'QUEUE';
 
 /** As escolhas do painel para um widget (o servidor confere e limpa; chaves de cada tipo em docs/DECISIONS). */
-export type WidgetSettings = Record<string, string | number | boolean | string[] | null | undefined>;
+export type WidgetSettings = Record<string, string | number | boolean | string[] | number[] | null | undefined>;
+
+// ---------- atendimento (filas e senhas) ----------
+
+export interface QueueInfo {
+  id: number;
+  name: string;
+  /** A letra (ou letras) que começa a senha: A001. */
+  prefix: string;
+  priority: boolean;
+  active: boolean;
+  timezone: string;
+  /** Quantas senhas esperam agora. */
+  waiting: number;
+}
+
+export interface QueueRequest {
+  name: string;
+  prefix: string;
+  priority: boolean;
+  active: boolean;
+  timezone?: string;
+}
+
+export type TicketStatus = 'WAITING' | 'CALLING' | 'SERVING' | 'DONE' | 'NO_SHOW' | 'CANCELED';
+
+export interface Ticket {
+  id: number;
+  label: string;
+  queueId: number;
+  queueName: string | null;
+  priority: boolean;
+  status: TicketStatus;
+  counterId: number | null;
+  counterName: string | null;
+  customerName: string | null;
+  source: string;
+  issuedAt: string;
+  calledAt: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  callCount: number;
+}
+
+export interface CounterInfo {
+  id: number;
+  name: string;
+  /** As filas que o guichê atende (vazio = todas). */
+  queueIds: number[];
+  active: boolean;
+  /** A senha que o guichê está chamando ou atendendo agora. */
+  current: Ticket | null;
+}
+
+export interface CounterRequest {
+  name: string;
+  queueIds: number[];
+  active: boolean;
+}
+
+export interface WaitingTicket {
+  id: number;
+  label: string;
+  queueId: number;
+  queueName: string;
+  priority: boolean;
+  customerName: string | null;
+  source: string;
+  issuedAt: string;
+  waitingSeconds: number;
+}
+
+export interface AttendanceToday {
+  issued: number;
+  waiting: number;
+  serving: number;
+  served: number;
+  noShow: number;
+  canceled: number;
+  averageWaitSeconds: number | null;
+  averageServiceSeconds: number | null;
+}
+
+export interface AttendanceOverview {
+  queues: QueueInfo[];
+  counters: CounterInfo[];
+  waiting: WaitingTicket[];
+  today: AttendanceToday;
+  serverTimeMs: number;
+}
+
+export type TicketAction = 'recall' | 'start' | 'finish' | 'no-show' | 'cancel';
 
 export interface WidgetInfo {
   kind: WidgetKind;

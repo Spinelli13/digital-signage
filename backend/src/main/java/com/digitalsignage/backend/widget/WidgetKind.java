@@ -9,7 +9,8 @@ public enum WidgetKind {
 	RATES("Cotações", 12, true),
 	NOTICE("Recado", 10, false),
 	COUNTDOWN("Contagem regressiva", 10, false),
-	PRICES("Tabela de preços", 20, true);
+	PRICES("Tabela de preços", 20, true),
+	QUEUE("Painel de chamadas", 15, true);
 
 	private final String label;
 	private final int defaultSeconds;

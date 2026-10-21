@@ -45,6 +45,8 @@
       noNews: 'Sem notícias no momento', next: 'A seguir', source: 'Fonte', ratesSource: 'Fonte: Banco Central Europeu', soldOut: 'Esgotado', noItems: 'Nenhum item na tabela', was: 'de',
       days: 'dias', hours: 'horas', minutes: 'min', seconds: 'seg', until: 'até', today: 'Hoje',
       m: 'min', h: 'h', d: 'd', ago: 'há', now: 'agora', news: 'Notícias', rates: 'Cotações',
+      queueTitle: 'Chamadas', queueCalling: 'Senha chamada', queueNone: 'Aguardando a primeira chamada', queueNoneHint: 'As senhas chamadas aparecem aqui.',
+      queueWaiting: 'Aguardando', queueLast: 'Últimas chamadas', queuePriority: 'Prioritária', queueAgain: 'Chamando de novo',
       names: { USD: 'Dólar americano', EUR: 'Euro', GBP: 'Libra esterlina', JPY: 'Iene japonês', CAD: 'Dólar canadense', AUD: 'Dólar australiano', CHF: 'Franco suíço', CNY: 'Yuan chinês', MXN: 'Peso mexicano' },
       wmo: { clear: 'Céu limpo', mostlyClear: 'Poucas nuvens', partly: 'Parcialmente nublado', cloudy: 'Nublado', fog: 'Neblina', drizzle: 'Garoa', rain: 'Chuva', snow: 'Neve', showers: 'Pancadas de chuva', snowShowers: 'Pancadas de neve', storm: 'Tempestade' }
     },
@@ -54,6 +56,8 @@
       noNews: 'No news right now', next: 'Up next', source: 'Source', ratesSource: 'Source: European Central Bank', soldOut: 'Sold out', noItems: 'No items in the table', was: 'was',
       days: 'days', hours: 'hours', minutes: 'min', seconds: 'sec', until: 'until', today: 'Today',
       m: 'min', h: 'h', d: 'd', ago: 'ago', now: 'now', news: 'News', rates: 'Exchange rates',
+      queueTitle: 'Calls', queueCalling: 'Now calling', queueNone: 'Waiting for the first call', queueNoneHint: 'Called tickets show up here.',
+      queueWaiting: 'Waiting', queueLast: 'Latest calls', queuePriority: 'Priority', queueAgain: 'Calling again',
       names: { USD: 'US dollar', EUR: 'Euro', GBP: 'Pound sterling', JPY: 'Japanese yen', CAD: 'Canadian dollar', AUD: 'Australian dollar', CHF: 'Swiss franc', CNY: 'Chinese yuan', MXN: 'Mexican peso' },
       wmo: { clear: 'Clear sky', mostlyClear: 'Mostly clear', partly: 'Partly cloudy', cloudy: 'Cloudy', fog: 'Fog', drizzle: 'Drizzle', rain: 'Rain', snow: 'Snow', showers: 'Rain showers', snowShowers: 'Snow showers', storm: 'Thunderstorm' }
     }
@@ -596,9 +600,78 @@
     every(500, tick);
   }
 
+  // ---------- painel de chamadas (fila de atendimento) ----------
+
+  /** A chamada é "fresca" (destacada) por este tempo depois de feita: o painel pisca para chamar a atenção. */
+  var QUEUE_FRESH_MS = 20000;
+
+  function renderQueue(root, settings, data) {
+    var s = state.s;
+    var box = el('div', 'w queue');
+    var head = el('div', 'qhead');
+    head.appendChild(el('div', 'qttl', settings.title || s.queueTitle));
+    var wait = el('div', 'qwait');
+    head.appendChild(wait);
+    var cur = el('div', 'qnow');
+    var list = el('div', 'qlist');
+    box.appendChild(head);
+    box.appendChild(cur);
+    box.appendChild(list);
+    root.appendChild(box);
+    var shown = null;
+
+    function paint(d) {
+      shown = d;
+      var calls = (d && d.calls) || [];
+      clear(cur);
+      clear(list);
+      wait.textContent = s.queueWaiting + ': ' + ((d && d.waiting) || 0);
+      if (!calls.length) {
+        cur.className = 'qnow none';
+        cur.appendChild(icon('megaphone', 'big'));
+        cur.appendChild(el('div', 'qsmall', s.queueNone));
+        cur.appendChild(el('div', 'qhint', s.queueNoneHint));
+        return;
+      }
+      var first = calls[0];
+      var fresh = first.status === 'CALLING' && now() - first.calledAtMs < QUEUE_FRESH_MS;
+      cur.className = 'qnow' + (fresh ? ' fresh' : '');
+      cur.appendChild(el('div', 'qsmall', first.callCount > 1 ? s.queueAgain : s.queueCalling));
+      cur.appendChild(el('div', 'qlabel', first.label));
+      cur.appendChild(el('div', 'qcounter', first.counter));
+      if (first.priority) cur.appendChild(el('div', 'qpri', s.queuePriority));
+      if (calls.length > 1) {
+        list.appendChild(el('div', 'qsmall', s.queueLast));
+        for (var i = 1; i < calls.length; i++) {
+          var row = el('div', 'qrow');
+          row.appendChild(el('b', null, calls[i].label));
+          row.appendChild(el('span', null, calls[i].counter));
+          list.appendChild(row);
+        }
+      }
+    }
+
+    paint(data);
+    // O destaque some sozinho depois de alguns segundos, sem esperar a próxima consulta ao servidor.
+    every(1000, function () {
+      var first = shown && shown.calls && shown.calls[0];
+      var stale = first && cur.className.indexOf('fresh') >= 0 && now() - first.calledAtMs >= QUEUE_FRESH_MS;
+      if (stale) paint(shown);
+    });
+    // A TV entrega dados novos a cada poucos segundos: Smartplay.update({ data: { calls, waiting }, nowMs }).
+    state.update = function (payload) {
+      if (payload && payload.nowMs) {
+        state.clock.base = payload.nowMs;
+        state.clock.t0 = perfNow();
+      }
+      paint(payload && payload.data ? payload.data : payload);
+    };
+  }
+
   // ---------- entrada ----------
 
   var RENDERERS = {
+    QUEUE: function (root, init) { renderQueue(root, init.settings, init.data); },
     CLOCK: function (root, init) { renderClock(root, init.settings); },
     WEATHER: function (root, init) { renderWeather(root, init.settings, init.data); },
     NEWS: function (root, init) { renderNews(root, init.settings, init.data); },
@@ -615,6 +688,7 @@
     state.s = STR[state.lang] || STR['pt-BR'];
     state.clock.base = init.nowMs || new Date().getTime();
     state.clock.t0 = perfNow();
+    state.update = null;
     var theme = (init.settings && init.settings.theme) || 'dark';
     document.body.className = 'theme-' + (theme === 'light' || theme === 'brand' ? theme : 'dark');
     var root = document.getElementById('root');
@@ -632,7 +706,7 @@
     }
   }
 
-  window.Smartplay = { start: start };
+  window.Smartplay = { start: start, update: function (payload) { if (state.update) state.update(payload); } };
   // Pré-visualização do painel: o painel manda a configuração por postMessage.
   window.addEventListener('message', function (event) {
     if (event.data && event.data.smartplay === 'start') start(event.data.init);

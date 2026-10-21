@@ -600,6 +600,40 @@ Em **Biblioteca**, clique em **Página web**. Informe o **endereço** (precisa c
 
 > **Requisito:** layouts, QR Code e páginas da web exigem o Player **0.6 ou mais novo** nas TVs. Use **Atualizar app** em **Dispositivos**. Um Player mais antigo ignora o layout e mostra a zona principal em tela cheia (e não exibe as páginas da web).
 
+
+### 10.4 Atendimento: fila de senhas e painel de chamadas
+
+Para lojas, clínicas, cartórios e qualquer lugar com fila: o Smartplay emite **senhas**, o atendente **chama a próxima** e a TV mostra, em poucos segundos e com um aviso sonoro, **qual senha foi chamada e em qual guichê**. Tudo fica em **Atendimento**, no menu **Operação**.
+
+**1. Montar as filas e os guichês (Administrador).** Em **Atendimento**, clique em **Filas e guichês**.
+
+- **Fila:** um nome (por exemplo *Atendimento geral*) e uma **letra de 1 a 3 caracteres** (A, P, VIP). As senhas ficam **A001, A002...** e a numeração **recomeça todo dia**. Marque **Fila prioritária** para idosos, gestantes e pessoas com deficiência.
+- **Guichê:** um nome (*Guichê 1*, *Mesa da recepção*) e as **filas que ele atende** (sem nenhuma marcada, atende todas).
+
+**2. Emitir senhas.** Em **Atendimento**, escolha a fila (botão com a letra) e, se quiser, escreva o **nome da pessoa** antes (só os atendentes veem). A senha entra na **Fila de espera**, por ordem de chegada. Quem desistiu sai da fila com o **X**.
+
+**3. Chamar (atendente).** Escolha o seu **guichê** (o painel lembra no seu navegador) e use:
+
+| Botão | O que faz |
+|---|---|
+| **Chamar a próxima senha** | Chama a senha que espera há mais tempo nas filas do seu guichê. Duas pessoas chamando ao mesmo tempo **nunca pegam a mesma senha**. |
+| **Chamar de novo** | A TV toca o aviso outra vez para a mesma senha (a pessoa não ouviu). |
+| **Iniciar atendimento** | A pessoa chegou ao guichê. |
+| **Concluir** | Termina o atendimento e libera o guichê para a próxima. |
+| **Não compareceu** | A pessoa foi chamada e não apareceu. |
+
+**Prioridade, sem deixar ninguém para trás.** As filas prioritárias são chamadas primeiro, mas **a cada 3 chamadas prioritárias seguidas é chamada uma senha normal** (se houver), para a fila normal nunca ficar parada. Dentro de cada grupo vale a ordem de chegada.
+
+**4. Mostrar na TV: o painel de chamadas.** Em **Biblioteca**, clique em **Widget** e escolha **Painel de chamadas**: dê um título, marque as filas (ou nenhuma, para todas), o número de chamadas na lista (3 a 8) e se a TV deve **tocar um aviso** a cada chamada. Coloque o widget **sozinho numa playlist** e a playlist numa **zona de um layout** (por exemplo, a lateral direita) ou na TV inteira. Enquanto está na tela, o painel **se atualiza em até 3 segundos**: mostra a senha chamada em letras grandes, o guichê e as últimas chamadas, e a senha **pisca por 20 segundos** para chamar a atenção.
+
+**Números do dia.** No alto da página: senhas emitidas, atendidas, aguardando, quantas **não compareceram**, a **espera média** e o **atendimento médio**.
+
+**Quem pode o quê.** O **Visualizador** só acompanha; o **Editor** emite, chama e conclui senhas; o **Administrador** monta as filas e os guichês. Por enquanto o atendente precisa do papel **Editor** (que também mexe em conteúdo); um papel só para atendimento é um próximo passo.
+
+**Privacidade.** O nome digitado na senha é um dado pessoal: as senhas são **apagadas depois de 30 dias**. Prefira não pedir o nome quando não for necessário.
+
+> **Requisito:** o painel de chamadas na TV exige o Player **0.14 ou mais novo** (Dispositivos > **Atualizar app**). **Limites desta versão:** o aviso é um **duplo bip** (a TV não fala o número); a pessoa **não** tira a senha pelo celular (isso fica para uma próxima etapa); a TV precisa de internet para se atualizar (sem internet ela mostra a última chamada que recebeu).
+
 ---
 
 ## 11. Equipe e papéis
@@ -611,7 +645,7 @@ Cada pessoa entra no painel com o **seu próprio e-mail e senha**, e o **papel**
 | Papel | O que pode |
 |---|---|
 | **Visualizador** | Só consulta: vê as TVs, a biblioteca, playlists, campanhas, layouts, alertas, relatórios e o histórico. Não altera nada. |
-| **Editor** | Tudo do Visualizador **e** cuida do conteúdo: envia e exclui mídias, monta playlists, campanhas e layouts, e escolhe a **playlist e o layout** de cada TV (também em várias TVs de uma vez). |
+| **Editor** | Tudo do Visualizador **e** cuida do conteúdo: envia e exclui mídias, monta playlists, campanhas e layouts, e escolhe a **playlist e o layout** de cada TV (também em várias TVs de uma vez). Também **emite e chama senhas** no **Atendimento**. |
 | **Administrador** | Tudo do Editor **e** administra o cliente: ativa, renomeia, move, desativa e exclui TVs, cria locais e grupos, pede atualização do aplicativo, configura os alertas e gerencia a **Equipe** e o **Plano e cobrança**. |
 
 O painel **só mostra os botões que o seu papel pode usar**. Se alguém tentar o que não pode (por exemplo, por um endereço antigo), o servidor recusa e o painel avisa em português.

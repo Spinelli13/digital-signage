@@ -29,7 +29,9 @@ import com.digitalsignage.player.proof.PlayLog
 import com.digitalsignage.player.telemetry.Level
 import com.digitalsignage.player.telemetry.Telemetry
 import com.digitalsignage.player.time.TrustedClock
+import com.digitalsignage.player.widget.AndroidBeeper
 import com.digitalsignage.player.widget.AndroidWidgetAssets
+import com.digitalsignage.player.widget.LiveWidgetFeed
 import com.digitalsignage.player.widget.WidgetHost
 import com.digitalsignage.player.widget.WidgetRefresher
 import com.digitalsignage.player.widget.WidgetStore
@@ -105,6 +107,8 @@ class MainActivity : AppCompatActivity() {
         // Widgets: o último dado de cada um fica no aparelho (clima, notícias e cotações continuam aparecendo sem internet).
         val widgetStore = WidgetStore(java.io.File(filesDir, "widgets"))
         val widgetHost = WidgetHost(AndroidWidgetAssets(applicationContext), widgetStore, clock)
+        // O painel de chamadas da fila de atendimento se atualiza em segundos (e avisa com um som) enquanto está na tela.
+        val liveWidgets = LiveWidgetFeed(api, { settings.deviceToken }, widgetStore, clock, AndroidBeeper())
         val updates = UpdateManager(applicationContext, settings)
         val updateTrigger = UpdateRequestTrigger(
             lastHandled = { settings.lastUpdateToken },
@@ -139,6 +143,7 @@ class MainActivity : AppCompatActivity() {
             profile = MemoryProfile.detect(this),
             recorder = playLog,
             widgets = widgetHost,
+            live = liveWidgets,
         )
         // Sinal de vida enquanto a tela está aberta: é o que o vigia confere (ver restart/Restarter).
         lifecycleScope.launch {

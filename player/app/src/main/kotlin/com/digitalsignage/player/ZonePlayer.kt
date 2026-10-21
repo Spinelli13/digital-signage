@@ -23,6 +23,7 @@ import com.digitalsignage.player.proof.PlayContext
 import com.digitalsignage.player.proof.PlayInfo
 import com.digitalsignage.player.proof.PlayRecorder
 import com.digitalsignage.player.telemetry.Telemetry
+import com.digitalsignage.player.widget.LiveWidgetFeed
 import com.digitalsignage.player.widget.WidgetHost
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -62,6 +63,8 @@ class ZonePlayer(
     private val zoneName: String = "Principal",
     /** Desenha os widgets (relógio, clima, notícias...); sem ele a zona pula esse tipo de item. */
     private val widgets: WidgetHost? = null,
+    /** Mantém em dia, enquanto estão na tela, os widgets que mudam em segundos (painel de chamadas). */
+    private val live: LiveWidgetFeed? = null,
 ) {
 
     private var job: Job? = null
@@ -128,7 +131,7 @@ class ZonePlayer(
             lastFailure = null
             val shown = try {
                 when {
-                    item.isWidget -> showWidget(item)
+                    item.isWidget -> showWidget(item, alone = playable.size == 1)
                     item.isWeb -> showWeb(item)
                     item.isVideo -> playVideo(item, loop = playable.size == 1)
                     else -> showImage(item)
@@ -294,13 +297,38 @@ class ZonePlayer(
         )
     }
 
+    /**
+     * Fica com o widget na tela por [totalMs]. Os widgets ao vivo (painel de chamadas) perguntam ao servidor logo de início e
+     * depois a cada [LIVE_POLL_MS], entregando o dado novo à página já aberta; sem internet ficam com o último dado.
+     */
+    private suspend fun holdWidget(item: ConfigItem, web: WebView, totalMs: Long) {
+        val feed = live
+        if (feed == null || item.widget?.live != true) {
+            delay(totalMs)
+            return
+        }
+        val started = SystemClock.elapsedRealtime()
+        while (true) {
+            try {
+                feed.fetch(item)?.let { update -> web.evaluateJavascript("Smartplay.update(" + WidgetHost.safeScript(update) + ");", null) }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // sem internet ou servidor ocupado: a página fica com o último dado até a próxima tentativa
+            }
+            val left = totalMs - (SystemClock.elapsedRealtime() - started)
+            if (left <= 0) return
+            delay(minOf(LIVE_POLL_MS, left))
+        }
+    }
+
     /** Abre a página e a exibe pelo tempo escolhido. Sem internet, ou se a página falhar, o item é pulado. */
     @Suppress("DEPRECATION")
     /**
      * Widget: a página é montada aqui mesmo (modelo + escolhas + últimos dados + hora de verdade) e não acessa a internet.
      * Qualquer pedido de rede feito pela página é bloqueado: o que o widget precisa já veio dentro dela.
      */
-    private suspend fun showWidget(item: ConfigItem): Boolean {
+    private suspend fun showWidget(item: ConfigItem, alone: Boolean = false): Boolean {
         val host = widgets ?: throw IOException("este Player não sabe desenhar widgets")
         val web = views.web(views.playerView.context)
         val loaded = CompletableDeferred<Boolean>()
@@ -338,7 +366,8 @@ class ZonePlayer(
         val watch = Stopwatch()
         var finished = false
         try {
-            delay(seconds * 1000L)
+            // Um painel ao vivo sozinho na lista não recarrega a página a cada volta (piscaria): fica até 5 minutos e então é medido.
+            holdWidget(item, web, if (alone && item.widget?.live == true) LIVE_ALONE_HOLD_MS else seconds * 1000L)
             finished = true
         } finally {
             report(item, watch, finished)
@@ -437,6 +466,12 @@ class ZonePlayer(
 
         /** A "origem" da página de um widget (nunca é acessada: a página vem pronta, e o que ela pedir à rede é bloqueado). */
         const val WIDGET_BASE_URL = "https://widget.smartplay.invalid/"
+
+        /** De quanto em quanto tempo um widget ao vivo pergunta ao servidor o que mudou. */
+        const val LIVE_POLL_MS = 3_000L
+
+        /** Quanto tempo um painel ao vivo que está sozinho na lista fica na tela antes de a página ser recarregada. */
+        const val LIVE_ALONE_HOLD_MS = 5 * 60_000L
         const val BUFFER_FOR_PLAYBACK_MS = 500
         const val BUFFER_AFTER_REBUFFER_MS = 1_000
 

@@ -86,6 +86,12 @@ public final class WidgetSettings {
 				out.put("secondsPerPage", (int) Math.round(number(in, "secondsPerPage", 4, 30, 8.0, null)));
 				out.put("showCategories", bool(in, "showCategories", true));
 			}
+			case QUEUE -> {
+				out.put("title", text(in, "title", 60, ""));
+				out.put("queueIds", queueIds(in));
+				out.put("calls", (int) Math.round(number(in, "calls", 3, 8, 5.0, null)));
+				out.put("sound", bool(in, "sound", true));
+			}
 			case COUNTDOWN -> {
 				String label = text(in, "label", 80, "");
 				if (label.isBlank()) {
@@ -175,6 +181,31 @@ public final class WidgetSettings {
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException("Fuso horário desconhecido: " + id);
 		}
+	}
+
+	/** As filas que o painel de chamadas mostra (vazio = todas). */
+	private static List<Long> queueIds(Map<String, Object> in) {
+		List<Long> ids = new ArrayList<>();
+		if (in.get("queueIds") instanceof List<?> list) {
+			for (Object item : list) {
+				long id;
+				try {
+					id = item instanceof Number n ? n.longValue() : Long.parseLong(String.valueOf(item).trim());
+				} catch (NumberFormatException e) {
+					throw new IllegalArgumentException("Fila inválida no painel de chamadas: " + item);
+				}
+				if (id < 1) {
+					throw new IllegalArgumentException("Fila inválida no painel de chamadas: " + item);
+				}
+				if (!ids.contains(id)) {
+					ids.add(id);
+				}
+			}
+		}
+		if (ids.size() > 20) {
+			throw new IllegalArgumentException("Escolha no máximo 20 filas");
+		}
+		return ids;
 	}
 
 	private static List<String> currencies(Map<String, Object> in) {

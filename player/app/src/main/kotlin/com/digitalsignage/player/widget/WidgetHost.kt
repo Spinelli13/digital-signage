@@ -58,5 +58,10 @@ class WidgetHost(
     }
 
     /** Dentro de um script, o texto "barra-script" numa manchete fecharia a página, e U+2028/2029 quebram o JavaScript antigo. */
-    private fun safe(json: String): String = json.replace("</", "<\\/").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
+    private fun safe(json: String): String = safeScript(json)
+
+    companion object {
+        /** O mesmo cuidado para o JSON que o Player entrega à página já aberta (`Smartplay.update`). */
+        fun safeScript(json: String): String = json.replace("</", "<\\/").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
+    }
 }

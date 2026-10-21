@@ -6,7 +6,7 @@ import { TIMEZONES } from '../campaigns/campaign-form';
 import { ApiService } from '../core/api.service';
 import { currentLang } from '../core/i18n';
 import { TPipe } from '../core/i18n';
-import { Media, PriceList, WidgetCatalog, WidgetKind, WidgetPlace, WidgetRequest, WidgetSettings } from '../core/models';
+import { Media, PriceList, QueueInfo, WidgetCatalog, WidgetKind, WidgetPlace, WidgetRequest, WidgetSettings } from '../core/models';
 import { WIDGET_KINDS, defaultWidgetSettings, widgetInfo } from '../core/widgets';
 import { IconComponent } from '../shared/icon';
 import { WidgetPreviewComponent } from './widget-preview';
@@ -220,6 +220,37 @@ const PREVIEW_DELAY_MS = 450;
                   </div>
                   <p class="label">{{ 'Quando há mais itens do que cabem, o painel troca de página sozinho: use um tempo na tela longo o bastante para todas as páginas.' | t }}</p>
                 }
+                @case ('QUEUE') {
+                  <div class="field">
+                    <label for="w-qtitle">{{ 'Título do painel (opcional)' | t }}</label>
+                    <input id="w-qtitle" name="qtitle" [placeholder]="'Ex.: Senhas chamadas' | t" [ngModel]="text('title')" (ngModelChange)="set('title', $event)" maxlength="60" />
+                  </div>
+                  <div class="field">
+                    <label>{{ 'Filas mostradas' | t }}</label>
+                    @if (queueList().length === 0) {
+                      <p class="label">{{ 'Você ainda não tem nenhuma fila de atendimento.' | t }} <a routerLink="/atendimento" (click)="closed.emit()">{{ 'Criar as filas' | t }}</a></p>
+                    } @else {
+                      <div class="chips">
+                        @for (queue of queueList(); track queue.id) {
+                          <label class="check">
+                            <input type="checkbox" [name]="'q-' + queue.id" [ngModel]="hasQueue(queue.id)" (ngModelChange)="toggleQueue(queue.id)" />{{ queue.name }}
+                          </label>
+                        }
+                      </div>
+                      <p class="label">{{ 'Sem nenhuma marcada, o painel mostra todas as filas.' | t }}</p>
+                    }
+                  </div>
+                  <div class="two">
+                    <div class="field">
+                      <label for="w-calls">{{ 'Chamadas na lista (3 a 8)' | t }}</label>
+                      <input id="w-calls" name="calls" type="number" min="3" max="8" [ngModel]="num('calls')" (ngModelChange)="set('calls', +$event)" />
+                    </div>
+                    <div class="field">
+                      <label class="check pad"><input type="checkbox" name="sound" [ngModel]="flag('sound')" (ngModelChange)="set('sound', $event)" /> {{ 'Tocar um aviso a cada chamada' | t }}</label>
+                    </div>
+                  </div>
+                  <p class="label">{{ 'Coloque este widget sozinho numa playlist, numa zona de um layout: ele se atualiza em poucos segundos enquanto está na tela.' | t }}</p>
+                }
                 @case ('COUNTDOWN') {
                   <div class="field">
                     <label for="w-clabel">{{ 'O que está sendo esperado' | t }}</label>
@@ -366,6 +397,8 @@ export class WidgetEditorComponent {
   readonly catalog = signal<WidgetCatalog | null>(null);
   /** As tabelas de preços para escolher (só carregadas quando o widget é um painel de preços). */
   readonly priceLists = signal<PriceList[]>([]);
+  /** As filas de atendimento para escolher (só carregadas quando o widget é um painel de chamadas). */
+  readonly queueList = signal<QueueInfo[]>([]);
 
   /** O que o servidor devolveu na última conferência: escolhas limpas, dados e o motivo de uma escolha inválida. */
   readonly shown = signal<WidgetSettings>({});
@@ -421,6 +454,9 @@ export class WidgetEditorComponent {
     if (kind === 'PRICES') {
       this.api.priceLists().subscribe({ next: (lists) => this.priceLists.set(lists), error: () => undefined });
     }
+    if (kind === 'QUEUE') {
+      this.api.queues().subscribe({ next: (queues) => this.queueList.set(queues), error: () => undefined });
+    }
   }
 
   choose(kind: WidgetKind): void {
@@ -431,7 +467,7 @@ export class WidgetEditorComponent {
     this.seconds.set(this.catalog()?.kinds.find((entry) => entry.kind === kind)?.defaultSeconds ?? 10);
   }
 
-  set(key: string, value: string | number | boolean | string[] | null): void {
+  set(key: string, value: string | number | boolean | string[] | number[] | null): void {
     this.settings.update((current) => ({ ...current, [key]: value }));
   }
 
@@ -448,11 +484,23 @@ export class WidgetEditorComponent {
     return this.settings()[key] === true;
   }
 
+  // ---------- filas do painel de chamadas ----------
+
+  hasQueue(id: number): boolean {
+    const value = this.settings()['queueIds'];
+    return Array.isArray(value) && (value as number[]).includes(id);
+  }
+
+  toggleQueue(id: number): void {
+    const current = (this.settings()['queueIds'] as number[] | undefined) ?? [];
+    this.set('queueIds', current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  }
+
   // ---------- moedas ----------
 
   hasCurrency(code: string): boolean {
     const value = this.settings()['currencies'];
-    return Array.isArray(value) && value.includes(code);
+    return Array.isArray(value) && (value as string[]).includes(code);
   }
 
   toggleCurrency(code: string): void {

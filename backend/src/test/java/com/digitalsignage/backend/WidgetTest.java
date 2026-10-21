@@ -433,7 +433,7 @@ class WidgetTest extends AbstractApiTest {
 	@Test
 	void theCatalogListsKindsNewsSourcesAndCurrencies() throws Exception {
 		mvc.perform(asAdmin(get("/api/v1/widgets/catalog"))).andExpect(status().isOk())
-				.andExpect(jsonPath("$.kinds.length()").value(7))
+				.andExpect(jsonPath("$.kinds.length()").value(8))
 				.andExpect(jsonPath("$.kinds[1].kind").value("WEATHER"))
 				.andExpect(jsonPath("$.kinds[1].needsData").value(true))
 				.andExpect(jsonPath("$.newsSources[0].id").value("g1"))

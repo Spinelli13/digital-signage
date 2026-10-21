@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.digitalsignage.backend.price.PriceBoardService;
+import com.digitalsignage.backend.queue.QueueBoardService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,13 +59,15 @@ public class WidgetDataService {
 	private final ObjectMapper json;
 	private final Clock clock;
 	private final PriceBoardService prices;
+	private final QueueBoardService queueBoard;
 	private final Map<String, Cached> cache = new ConcurrentHashMap<>();
 
-	public WidgetDataService(WidgetHttp http, ObjectMapper json, Clock clock, PriceBoardService prices) {
+	public WidgetDataService(WidgetHttp http, ObjectMapper json, Clock clock, PriceBoardService prices, QueueBoardService queueBoard) {
 		this.http = http;
 		this.json = json;
 		this.clock = clock;
 		this.prices = prices;
+		this.queueBoard = queueBoard;
 	}
 
 	/** Os dados do widget já com o instante em que foram buscados (o Player mostra "atualizado há…"). */
@@ -78,6 +81,7 @@ public class WidgetDataService {
 				case NEWS -> new Result(news(settings), null);
 				case RATES -> new Result(rates(settings), null);
 				case PRICES -> new Result(prices(settings), null);
+				case QUEUE -> new Result(queueBoard.dataFor(settings), null);
 				default -> new Result(Map.of(), null);
 			};
 		} catch (UnavailableException e) {

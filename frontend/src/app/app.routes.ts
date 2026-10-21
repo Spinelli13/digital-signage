@@ -21,6 +21,7 @@ export const routes: Routes = [
       { path: 'relatorios', loadComponent: () => import('./reports/reports.page').then((m) => m.ReportsPage) },
       { path: 'campanhas', loadComponent: () => import('./campaigns/campaigns.page').then((m) => m.CampaignsPage) },
       { path: 'layouts', loadComponent: () => import('./layouts/layouts.page').then((m) => m.LayoutsPage) },
+      { path: 'atendimento', loadComponent: () => import('./attendance/attendance.page').then((m) => m.AttendancePage) },
       { path: 'precos', loadComponent: () => import('./prices/prices.page').then((m) => m.PricesPage) },
       { path: 'precos/:id', loadComponent: () => import('./prices/price-editor.page').then((m) => m.PriceEditorPage) },
       { path: 'locais', loadComponent: () => import('./locations/locations.page').then((m) => m.LocationsPage) },

@@ -19,6 +19,7 @@ const CATALOG: WidgetCatalog = {
     { kind: 'NOTICE', label: 'Recado', defaultSeconds: 10, needsData: false },
     { kind: 'COUNTDOWN', label: 'Contagem regressiva', defaultSeconds: 10, needsData: false },
     { kind: 'PRICES', label: 'Tabela de preços', defaultSeconds: 20, needsData: true },
+    { kind: 'QUEUE', label: 'Painel de chamadas', defaultSeconds: 15, needsData: true },
   ],
   newsSources: [
     { id: 'g1', name: 'G1' },
@@ -88,11 +89,11 @@ describe('WidgetEditorComponent', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('starts by offering the seven kinds, each with an explanation', () => {
+  it('starts by offering the eight kinds, each with an explanation', () => {
     const { text, fixture } = setup();
 
     const cards = (fixture.nativeElement as HTMLElement).querySelectorAll('.kind');
-    expect(cards).toHaveLength(7);
+    expect(cards).toHaveLength(8);
     expect(text()).toContain('Previsão do tempo');
     expect(text()).toContain('Quanto falta para uma data');
   });
@@ -206,6 +207,41 @@ describe('WidgetEditorComponent', () => {
     const body = answerPreview(backend, { kind: 'PRICES' });
     expect(body.settings['priceListId']).toBe(4);
     expect(body.settings['columns']).toBe(1);
+  });
+
+  it('the call board lists the queues to choose, keeps the choices as numbers and points to the page that creates them', () => {
+    const { editor, fixture, backend, text } = setup();
+
+    editor.choose('QUEUE');
+    backend.expectOne(`${API}/queues`).flush([
+      { id: 1, name: 'Atendimento geral', prefix: 'A', priority: false, active: true, timezone: 'UTC', waiting: 0 },
+      { id: 2, name: 'Prioritário', prefix: 'P', priority: true, active: true, timezone: 'UTC', waiting: 0 },
+    ]);
+    fixture.detectChanges();
+
+    expect(editor.queueList()).toHaveLength(2);
+    expect(text()).toContain('Filas mostradas');
+    expect(text()).toContain('Atendimento geral');
+    expect(editor.settings()['calls']).toBe(5);
+    expect(editor.settings()['sound']).toBe(true);
+    editor.toggleQueue(2);
+    expect(editor.hasQueue(2)).toBe(true);
+    expect(editor.hasQueue(1)).toBe(false);
+    const body = answerPreview(backend, { kind: 'QUEUE' });
+    expect(body.settings['queueIds']).toEqual([2]);
+    editor.toggleQueue(2);
+    expect(editor.settings()['queueIds']).toEqual([]);
+  });
+
+  it('without any queue the call board points to the page that creates them', () => {
+    const { editor, fixture, backend, text } = setup();
+
+    editor.choose('QUEUE');
+    backend.expectOne(`${API}/queues`).flush([]);
+    fixture.detectChanges();
+
+    expect(text()).toContain('Você ainda não tem nenhuma fila de atendimento');
+    expect(text()).toContain('Criar as filas');
   });
 
   it('without any price table it points to the page that creates one', () => {

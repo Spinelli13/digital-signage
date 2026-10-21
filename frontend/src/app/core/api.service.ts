@@ -25,8 +25,15 @@ import {
   InventoryRow,
   BillingInfo,
   Invoice,
+  AttendanceOverview,
+  CounterInfo,
+  CounterRequest,
   Layout,
   LayoutRequest,
+  QueueInfo,
+  QueueRequest,
+  Ticket,
+  TicketAction,
   LayoutTemplate,
   Location,
   LocationRequest,
@@ -473,6 +480,53 @@ export class ApiService {
       form.append('durationSeconds', String(durationSeconds));
     }
     return this.http.post<Media>(this.url('/media'), form, { reportProgress: true, observe: 'events' });
+  }
+
+  // ---------- atendimento (filas, guichês e senhas) ----------
+
+  /** Silencioso: a tela consulta a cada poucos segundos, e um tropeço de rede não pode encher a tela de avisos. */
+  attendanceOverview(): Observable<AttendanceOverview> {
+    return this.http.get<AttendanceOverview>(this.url(`/attendance/overview`), { context: new HttpContext().set(SILENT_ERRORS, true) });
+  }
+
+  queues(): Observable<QueueInfo[]> {
+    return this.http.get<QueueInfo[]>(this.url(`/queues`));
+  }
+
+  createQueue(body: QueueRequest): Observable<QueueInfo> {
+    return this.http.post<QueueInfo>(this.url(`/queues`), body);
+  }
+
+  updateQueue(id: number, body: QueueRequest): Observable<QueueInfo> {
+    return this.http.put<QueueInfo>(this.url(`/queues/${id}`), body);
+  }
+
+  deleteQueue(id: number): Observable<void> {
+    return this.http.delete<void>(this.url(`/queues/${id}`));
+  }
+
+  createCounter(body: CounterRequest): Observable<CounterInfo> {
+    return this.http.post<CounterInfo>(this.url(`/counters`), body);
+  }
+
+  updateCounter(id: number, body: CounterRequest): Observable<CounterInfo> {
+    return this.http.put<CounterInfo>(this.url(`/counters/${id}`), body);
+  }
+
+  deleteCounter(id: number): Observable<void> {
+    return this.http.delete<void>(this.url(`/counters/${id}`));
+  }
+
+  issueTicket(queueId: number, customerName: string | null): Observable<Ticket> {
+    return this.http.post<Ticket>(this.url(`/attendance/tickets`), { queueId, customerName });
+  }
+
+  callNextTicket(counterId: number): Observable<Ticket> {
+    return this.http.post<Ticket>(this.url(`/attendance/counters/${counterId}/call-next`), {});
+  }
+
+  ticketAction(id: number, action: TicketAction): Observable<Ticket> {
+    return this.http.post<Ticket>(this.url(`/attendance/tickets/${id}/${action}`), {});
   }
 
   deleteMedia(id: number): Observable<void> {
