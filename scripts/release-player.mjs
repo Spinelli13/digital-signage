@@ -286,7 +286,7 @@ function page(title, body) {
 <meta name="theme-color" content="#6d28d9">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
-  :root { --brand:#6d28d9; --text:#0d1612; --muted:#6a6a73; --line:#e4e4e7; --bg:#f4f4f5; }
+  :root { --brand:#6d28d9; --text:#100b18; --muted:#6a6a73; --line:#e4e4e7; --bg:#f4f4f5; }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; }
   main { max-width:760px; margin:0 auto; padding:28px 16px 60px; }

@@ -1,23 +1,53 @@
 import qrcode from 'qrcode-generator';
 
+import { contrastRatio, luminance, toRgb } from '../core/color';
 import { tr } from '../core/i18n';
 
-export type QrTheme = 'claro' | 'escuro' | 'verde';
+export type QrPresetTheme = 'claro' | 'escuro' | 'violeta' | 'verde';
+/** Os visuais prontos mais o "personalizado", em que a pessoa escolhe as quatro cores. */
+export type QrTheme = QrPresetTheme | 'personalizado';
 
-export interface QrThemeColors {
-  label: string;
+/** As quatro cores de um QR Code: o fundo da imagem, o texto (título e legenda), o cartão do código e os módulos do código. */
+export interface QrColors {
   background: string;
   card: string;
   modules: string;
   text: string;
 }
 
-/** Os três visuais do QR Code. O cartão do código é sempre claro com módulos escuros: leitores de celular exigem contraste. */
-export const QR_THEMES: Record<QrTheme, QrThemeColors> = {
-  claro: { label: 'Claro', background: '#ffffff', card: '#ffffff', modules: '#0c1410', text: '#0c1410' },
-  escuro: { label: 'Escuro', background: '#0c1410', card: '#ffffff', modules: '#0c1410', text: '#ffffff' },
-  verde: { label: 'Verde', background: '#1a6a49', card: '#ffffff', modules: '#0c1410', text: '#ffffff' },
+export interface QrThemeColors extends QrColors {
+  label: string;
+}
+
+/** Os visuais prontos do QR Code. Nos prontos, o cartão do código é claro com módulos escuros: leitores de celular exigem contraste. */
+export const QR_THEMES: Record<QrPresetTheme, QrThemeColors> = {
+  claro: { label: 'Claro', background: '#ffffff', card: '#ffffff', modules: '#0f0a16', text: '#0f0a16' },
+  escuro: { label: 'Escuro', background: '#0f0a16', card: '#ffffff', modules: '#0f0a16', text: '#ffffff' },
+  violeta: { label: 'Violeta', background: '#6d28d9', card: '#ffffff', modules: '#0f0a16', text: '#ffffff' },
+  verde: { label: 'Verde', background: '#1a6a49', card: '#ffffff', modules: '#0f0a16', text: '#ffffff' },
 };
+
+/** As cores com que o "personalizado" começa (as do visual escuro). */
+export function defaultQrColors(): QrColors {
+  const { background, card, modules, text } = QR_THEMES.escuro;
+  return { background, card, modules, text };
+}
+
+/**
+ * O QR Code só é lido pelo celular com o código ESCURO sobre o cartão CLARO e com bom contraste. Devolve o problema quando as
+ * cores escolhidas não permitem isso (e a imagem não deve ser salva), ou null se estiver tudo certo.
+ */
+export function qrReadProblem(colors: QrColors): 'inverted' | 'low' | null {
+  if (luminance(toRgb(colors.modules)) >= luminance(toRgb(colors.card))) {
+    return 'inverted';
+  }
+  return contrastRatio(colors.modules, colors.card) < 3 ? 'low' : null;
+}
+
+/** Título e legenda sobre o fundo: contraste menor que 4,5:1 é difícil de ler (só um aviso, não impede). */
+export function qrTextContrastLow(colors: QrColors): boolean {
+  return contrastRatio(colors.text, colors.background) < 4.5;
+}
 
 /** O QR Code como uma grade de módulos escuros/claros. */
 export interface QrMatrix {
@@ -82,11 +112,18 @@ export interface QrDrawing {
   title: string;
   caption: string;
   theme: QrTheme;
+  /** As cores do tema "personalizado" (ignoradas nos temas prontos). */
+  colors?: QrColors;
+}
+
+/** As cores que valem para o desenho: as do tema pronto ou, no personalizado, as que a pessoa escolheu. */
+export function colorsOf(drawing: Pick<QrDrawing, 'theme' | 'colors'>): QrColors {
+  return drawing.theme === 'personalizado' ? (drawing.colors ?? defaultQrColors()) : QR_THEMES[drawing.theme];
 }
 
 /** Desenha o QR Code (fundo, título, cartão com os módulos e legenda) num contexto 2D. */
 export function drawQr(ctx: CanvasRenderingContext2D, drawing: QrDrawing, size = QR_IMAGE_SIZE): void {
-  const colors = QR_THEMES[drawing.theme];
+  const colors = colorsOf(drawing);
   const matrix = buildMatrix(drawing.text);
   const title = drawing.title.trim();
   const caption = drawing.caption.trim();

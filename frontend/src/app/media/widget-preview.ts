@@ -12,7 +12,7 @@ import { WidgetTemplates } from '../core/widgets';
   template: `<div class="frame" [class.portrait]="portrait()"><iframe #frame sandbox="allow-scripts" [attr.title]="title()"></iframe></div>`,
   styles: `
     :host { display: block; }
-    .frame { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: var(--r); overflow: hidden; border: 1px solid var(--line); background: #071a15; box-shadow: var(--sh-1); }
+    .frame { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: var(--r); overflow: hidden; border: 1px solid var(--line); background: #0b0710; box-shadow: var(--sh-1); }
     .frame.portrait { aspect-ratio: 9 / 16; max-width: 260px; margin: 0 auto; }
     iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
   `,

@@ -109,13 +109,13 @@ function figures(html, imageBase) {
 }
 
 const CSS = `
-  :root { --brand:#6d28d9; --navy:#0c1410; --text:#0c1410; --muted:#6a6a73; --line:#e4e4e7; --bg:#f4f4f5; }
+  :root { --brand:#6d28d9; --navy:#0f0a16; --text:#0f0a16; --muted:#6a6a73; --line:#e4e4e7; --bg:#f4f4f5; }
   * { box-sizing: border-box; }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { margin:0; color:var(--text); font:10.5pt/1.55 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
   @page { size: A4; margin: 18mm 16mm 20mm; @bottom-center { content: "Vyzzu  ·  " attr(data-title) "  ·  página " counter(page); font: 8pt 'Segoe UI', Arial, sans-serif; color: #8b8b94; } }
   @page :first { margin: 0; @bottom-center { content: none; } }
-  .cover { height: 297mm; page-break-after: always; background: linear-gradient(160deg, #0c1410 0%, #2a1457 58%, #5b21b6 130%); color:#fff; padding: 34mm 24mm 24mm; display:flex; flex-direction:column; }
+  .cover { height: 297mm; page-break-after: always; background: linear-gradient(160deg, #0f0a16 0%, #2a1457 58%, #5b21b6 130%); color:#fff; padding: 34mm 24mm 24mm; display:flex; flex-direction:column; }
   .cover img.logo { width: 30mm; height: 30mm; border-radius: 7mm; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
   .cover .brand { margin-top: 10mm; letter-spacing: .28em; text-transform: uppercase; font-size: 10pt; color:#c4b5fd; font-weight:700; }
   .cover h1 { font-size: 34pt; line-height: 1.1; margin: 8mm 0 4mm; border:0; color:#fff; }

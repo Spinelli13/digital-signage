@@ -14,7 +14,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = join(root, 'docs', 'manual', 'img');
 mkdirSync(outDir, { recursive: true });
 
-const C = { brand: '#6d28d9', navy: '#0c1410', text: '#0c1410', muted: '#6a6a73', line: '#e4e4e7', bg: '#f4f4f5', green: '#19a66a', magenta: '#d946ef', orange: '#e89a32', red: '#d6455d', white: '#ffffff', panel: '#16201c' };
+const C = { brand: '#6d28d9', navy: '#0f0a16', text: '#0f0a16', muted: '#6a6a73', line: '#e4e4e7', bg: '#f4f4f5', green: '#19a66a', magenta: '#d946ef', orange: '#e89a32', red: '#d6455d', white: '#ffffff', panel: '#191323' };
 const FONT = "'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -90,7 +90,7 @@ const iconBrowser = (x, y, s = 1) =>
 const iconCloud = (x, y, s = 1, fill = C.brand) =>
   `<g transform="translate(${x} ${y}) scale(${s})"><path d="M30 70h72a24 24 0 0 0 2-48 34 34 0 0 0-66-6A28 28 0 0 0 30 70z" fill="${fill}"/></g>`;
 const iconPc = (x, y, s = 1) =>
-  `<g transform="translate(${x} ${y}) scale(${s})"><rect width="120" height="78" rx="7" fill="${C.navy}"/><rect x="7" y="7" width="106" height="64" rx="3" fill="#070a09"/><text x="14" y="30" font-size="12" fill="#7ee0a6" font-family="Consolas, monospace">PS&gt; adb connect</text><text x="14" y="48" font-size="12" fill="#7ee0a6" font-family="Consolas, monospace">connected to 192…</text><rect x="-8" y="82" width="136" height="8" rx="4" fill="#93a19b"/></g>`;
+  `<g transform="translate(${x} ${y}) scale(${s})"><rect width="120" height="78" rx="7" fill="${C.navy}"/><rect x="7" y="7" width="106" height="64" rx="3" fill="#08050c"/><text x="14" y="30" font-size="12" fill="#7ee0a6" font-family="Consolas, monospace">PS&gt; adb connect</text><text x="14" y="48" font-size="12" fill="#7ee0a6" font-family="Consolas, monospace">connected to 192…</text><rect x="-8" y="82" width="136" height="8" rx="4" fill="#93a19b"/></g>`;
 
 // =====================================================================================================
 // 1. Fluxo geral (os 4 passos)
@@ -249,7 +249,7 @@ menuPath('firetv-abrir-app.svg', 'Fire TV Stick · Abrir o Player depois de inst
   body += `<rect x="40" y="70" width="520" height="250" rx="14" fill="${C.panel}" filter="url(#shadow)"/>`;
   body += text(64, 104, 'Downloader', { size: 15, weight: 700, fill: '#c9d1ce' });
   body += text(64, 136, 'Digite o endereço (URL):', { size: 14, fill: '#aab4b0' });
-  body += `<rect x="64" y="148" width="472" height="46" rx="10" fill="#070a09" stroke="${C.brand}" stroke-width="3"/>`;
+  body += `<rect x="64" y="148" width="472" height="46" rx="10" fill="#08050c" stroke="${C.brand}" stroke-width="3"/>`;
   body += text(80, 178, 'signage-downloads.pages.dev/d', { size: 19, weight: 700, fill: C.white });
   body += `<rect x="64" y="216" width="96" height="42" rx="21" fill="${C.brand}"/>` + text(112, 243, 'Ir', { size: 17, weight: 800, fill: C.white, anchor: 'middle' });
   body += text(180, 243, '← aperte OK aqui', { size: 13, fill: '#aab4b0' });

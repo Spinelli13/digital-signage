@@ -1,4 +1,4 @@
-import { QR_THEMES, QrTooLongError, buildMatrix, drawQr, qrFileName, qrLayout } from './qr';
+import { QR_THEMES, QrTooLongError, buildMatrix, colorsOf, defaultQrColors, drawQr, qrFileName, qrLayout, qrReadProblem, qrTextContrastLow } from './qr';
 
 /** Um contexto 2D "de mentira" que só anota o que foi desenhado (o jsdom não tem canvas). */
 function fakeContext() {
@@ -102,7 +102,7 @@ describe('drawQr', () => {
   it('keeps the code dark on a light card in every theme (phones need the contrast)', () => {
     for (const colors of Object.values(QR_THEMES)) {
       expect(colors.card).toBe('#ffffff');
-      expect(colors.modules).toBe('#0c1410');
+      expect(colors.modules).toBe('#0f0a16');
     }
   });
 });
@@ -112,5 +112,39 @@ describe('qrFileName', () => {
     expect(qrFileName({ text: 'https://exemplo.com/promo', title: '' })).toBe('QR Code - exemplo.com promo.png');
     expect(qrFileName({ text: 'https://exemplo.com', title: 'Cardápio' })).toBe('QR Code - Cardápio.png');
     expect(qrFileName({ text: '   ', title: '' })).toBe('QR Code - sem nome.png');
+  });
+});
+
+describe('QR Code com cores personalizadas', () => {
+  const custom = { background: '#1f0a3d', card: '#fdf4ff', modules: '#3b0764', text: '#f5d0fe' };
+
+  it('desenha com as cores escolhidas no tema personalizado e ignora-as nos temas prontos', () => {
+    const personalized = fakeContext();
+    drawQr(personalized.ctx, { text: 'https://exemplo.com', title: 'Oi', caption: '', theme: 'personalizado', colors: custom });
+    const fills = personalized.rects.map((rect) => rect.fill);
+    expect(fills[0]).toBe(custom.background);
+    expect(fills[1]).toBe(custom.card);
+    expect(fills.slice(2).every((fill) => fill === custom.modules)).toBe(true);
+
+    const preset = fakeContext();
+    drawQr(preset.ctx, { text: 'https://exemplo.com', title: '', caption: '', theme: 'violeta', colors: custom });
+    expect(preset.rects[0].fill).toBe(QR_THEMES.violeta.background);
+    expect(colorsOf({ theme: 'claro', colors: custom })).toEqual(QR_THEMES.claro);
+    expect(colorsOf({ theme: 'personalizado' })).toEqual(defaultQrColors());
+  });
+
+  it('só deixa salvar se o celular conseguir ler: código escuro sobre cartão claro, com contraste', () => {
+    expect(qrReadProblem(custom)).toBeNull();
+    expect(qrReadProblem(defaultQrColors())).toBeNull();
+    expect(qrReadProblem({ ...custom, modules: '#fdf4ff', card: '#3b0764' })).toBe('inverted');
+    expect(qrReadProblem({ ...custom, modules: '#cccccc', card: '#ffffff' })).toBe('low');
+    for (const preset of Object.values(QR_THEMES)) {
+      expect(qrReadProblem(preset), preset.label).toBeNull();
+    }
+  });
+
+  it('avisa quando o texto fica difícil de ler sobre o fundo', () => {
+    expect(qrTextContrastLow(custom)).toBe(false);
+    expect(qrTextContrastLow({ ...custom, text: '#2a1050' })).toBe(true);
   });
 });

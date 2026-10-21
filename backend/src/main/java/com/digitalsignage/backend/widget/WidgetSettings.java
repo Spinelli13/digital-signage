@@ -19,7 +19,11 @@ import com.digitalsignage.backend.monitoring.WebhookUrlPolicy;
  */
 public final class WidgetSettings {
 
-	static final Set<String> THEMES = Set.of("dark", "light", "brand");
+	/** Os temas prontos (escuro, claro, violeta da marca e o verde de antes); as cores da pessoa vão por cima deles. */
+	static final Set<String> THEMES = Set.of("dark", "light", "brand", "green");
+	/** As cores que a pessoa pode escolher no lugar das do tema: fundo, texto e destaque, no formato #rrggbb. */
+	static final List<String> COLOR_KEYS = List.of("bgColor", "textColor", "accentColor");
+	private static final java.util.regex.Pattern HEX_COLOR = java.util.regex.Pattern.compile("^#[0-9a-fA-F]{6}$");
 	static final Set<String> ACCENTS = Set.of("brand", "blue", "amber", "red", "green");
 	static final Set<String> ALIGNS = Set.of("center", "left");
 	static final List<String> LANGS = List.of("pt-BR", "en");
@@ -36,6 +40,12 @@ public final class WidgetSettings {
 		Map<String, Object> out = new LinkedHashMap<>();
 		out.put("theme", oneOf(in, "theme", THEMES, "dark"));
 		out.put("lang", oneOfList(in, "lang", LANGS, "pt-BR"));
+		for (String key : COLOR_KEYS) {
+			String color = color(in, key);
+			if (color != null) {
+				out.put(key, color);
+			}
+		}
 		switch (kind) {
 			case CLOCK -> {
 				out.put("timezone", zone(in, "timezone", "America/Sao_Paulo"));
@@ -104,6 +114,19 @@ public final class WidgetSettings {
 			}
 		}
 		return out;
+	}
+
+	/** Uma cor no formato #rrggbb (guardada em minúsculas); nula se a pessoa deixou em branco (vale a cor do tema). */
+	private static String color(Map<String, Object> in, String key) {
+		Object value = in.get(key);
+		if (value == null || value.toString().isBlank()) {
+			return null;
+		}
+		String color = value.toString().strip();
+		if (!HEX_COLOR.matcher(color).matches()) {
+			throw new IllegalArgumentException("Cor inválida: use o formato #RRGGBB (por exemplo, #8B5CF6)");
+		}
+		return color.toLowerCase(java.util.Locale.ROOT);
 	}
 
 	private static String text(Map<String, Object> in, String key, int max, String fallback) {

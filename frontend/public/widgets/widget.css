@@ -1,5 +1,40 @@
-/* Smartplay widgets: o mesmo visual na TV e na pré-visualização do painel. Tudo em vmin: o widget se adapta a qualquer zona. */
+/* Vyzzu widgets: o mesmo visual na TV e na pré-visualização do painel. Tudo em vmin: o widget se adapta a qualquer zona.
+   Cores: um tema (escuro, claro, violeta, verde) e, por cima dele, as cores da pessoa (fundo, texto, destaque), aplicadas pelo widget.js. */
 :root {
+  --bg1: #0b0710;
+  --bg2: #1d1236;
+  --fg: #f5f3ff;
+  --muted: rgba(245, 243, 255, 0.7);
+  --card: rgba(255, 255, 255, 0.08);
+  --line: rgba(255, 255, 255, 0.16);
+  --accent: #c4b5fd;
+  --up: #86efac;
+  --down: #fda4af;
+}
+body.theme-light {
+  --bg1: #faf8ff;
+  --bg2: #ebe5fb;
+  --fg: #170f2a;
+  --muted: rgba(23, 15, 42, 0.66);
+  --card: rgba(23, 15, 42, 0.06);
+  --line: rgba(23, 15, 42, 0.14);
+  --accent: #6d28d9;
+  --up: #15803d;
+  --down: #c62828;
+}
+body.theme-brand {
+  --bg1: #6d28d9;
+  --bg2: #3b1480;
+  --fg: #ffffff;
+  --muted: rgba(255, 255, 255, 0.82);
+  --card: rgba(255, 255, 255, 0.14);
+  --line: rgba(255, 255, 255, 0.26);
+  --accent: #e9d5ff;
+  --up: #bbf7d0;
+  --down: #fecdd3;
+}
+/* o verde de antes, para quem prefere (era o tema escuro e o da marca anterior) */
+body.theme-green {
   --bg1: #071a15;
   --bg2: #0d2e25;
   --fg: #f2fbf7;
@@ -9,28 +44,6 @@
   --accent: #3ddc97;
   --up: #3ddc97;
   --down: #ff8a8a;
-}
-body.theme-light {
-  --bg1: #f6fbf8;
-  --bg2: #e1f0e8;
-  --fg: #0b2a21;
-  --muted: rgba(11, 42, 33, 0.64);
-  --card: rgba(11, 42, 33, 0.06);
-  --line: rgba(11, 42, 33, 0.14);
-  --accent: #0f8a5f;
-  --up: #0f8a5f;
-  --down: #c62828;
-}
-body.theme-brand {
-  --bg1: #11825a;
-  --bg2: #0a573d;
-  --fg: #ffffff;
-  --muted: rgba(255, 255, 255, 0.8);
-  --card: rgba(255, 255, 255, 0.13);
-  --line: rgba(255, 255, 255, 0.24);
-  --accent: #c6f7de;
-  --up: #c6f7de;
-  --down: #ffd0d0;
 }
 
 * { box-sizing: border-box; }

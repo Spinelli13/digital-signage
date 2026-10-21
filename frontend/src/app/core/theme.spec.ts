@@ -107,6 +107,6 @@ describe('ThemeService', () => {
 
     theme.set('dark');
 
-    expect(color()).toBe('#050807');
+    expect(color()).toBe('#060409');
   });
 });

@@ -6,7 +6,7 @@ Este é o guia da identidade visual do Vyzzu (painel, app da TV, manuais e site 
 
 O Vyzzu é uma plataforma de comunicação audiovisual: telas de LED, totens, widgets, vídeo, cupons, cardápios, filas e atendimento, tudo controlado num lugar só. A identidade traduz isso em três coisas: **o preto de uma tela desligada, a luz que acende nela (violeta e magenta) e a prata dos metais e dos textos de apoio**.
 
-Não é um painel genérico: o preto domina, a cor aparece onde há interação ou identidade, e o resto é neutro.
+Não é um painel genérico: o preto domina (um preto com um leve tom violeta), a cor aparece onde há interação ou identidade, e o resto é neutro.
 
 ## 2. O símbolo
 
@@ -16,6 +16,7 @@ O símbolo é um **V formado por linhas de tela**: a silhueta de um V cortada em
 - **Onde fica:** `frontend/public/favicon.svg` (painel, manuais, site de downloads), `favicon.ico`, `apple-touch-icon.png`, o ícone e o banner do app da TV.
 - **Como mudar:** o desenho é gerado por código (`scripts/gerar-icones-marca.cjs`: número de faixas, espaçamento, cores). Rode o script e todos os arquivos saem juntos, inclusive o ícone vetorial do Android.
 - **Versão para fundo claro:** o próprio símbolo já traz o preto da marca como fundo (um quadrado de cantos arredondados), por isso funciona em qualquer cor de página. Sobre o preto do menu o fundo some e o V parece flutuar.
+- **Aprovado pelo dono em 2026-10-21** (a versão das faixas de LED, depois de recusada a primeira, o V dentro de uma caixa roxa).
 
 ## 3. O logotipo tipográfico
 
@@ -27,7 +28,7 @@ Use o nome sempre escrito **Vyzzu** (V maiúsculo, o resto minúsculo).
 
 | Função | Cor | Código | Onde aparece |
 |---|---|---|---|
-| Preto da interface | o de sempre | **não mudou** (tabela da seção 5) | fundos, painéis, menu lateral |
+| Preto da interface | preto com leve tom violeta | tabela da seção 5 (ex.: `#0B0710`) | fundos, painéis, menu lateral |
 | **Violeta elétrico** (marca) | | `#8B5CF6` | foco, seleção, ícones, detalhes, símbolo |
 | Violeta de preenchimento | | `#7C3AED` | botões (texto branco, 5,7:1) |
 | Violeta profundo | | `#6D28D9` | links no tema claro, botão em hover |
@@ -42,25 +43,26 @@ Use o nome sempre escrito **Vyzzu** (V maiúsculo, o resto minúsculo).
 - **Sem azul.** Nenhuma cor da marca, de destaque ou decorativa é azul. O estado "informação" é prata neutra (com ícone).
 - **Sem verde de marca.** O verde que sobrou tem **um único significado**: sucesso, "online", "em dia" (veja a seção 6).
 
-## 5. O preto não mudou
+## 5. O preto: preto de verdade, com um leve tom violeta
 
-Estes valores são os de **antes do rebranding**, idênticos. Estão marcados no `styles.css` com `PRETO PRESERVADO` e o teste confere um por um:
+Em 2026-10-21 o dono pediu que o preto fosse "levemente roxo, mas continuasse preto". Foi feito assim: cada preto e superfície escura **manteve a mesma luminosidade** de antes (não ficou mais claro nem mais colorido) e só trocou o fundo esverdeado de fábrica por violeta (tom 264°). Estão marcados no `styles.css` com `PRETO DA MARCA` e o teste confere um por um, **inclusive que continuam escuros e violeta**.
 
 | Token | Tema claro | Tema escuro |
 |---|---|---|
-| Fundo da página `--bg` | (cinza claro) | `#090E0C` |
-| Painéis `--panel`, `--panel-2`, `--panel-3` | (branco e cinzas claros) | `#111917`, `#16201C`, `#1C2924` |
-| Linhas `--line`, `--line-strong` | (cinzas claros) | `#243029`, `#32413A` |
-| Menu lateral `--sidebar`, `--sidebar-2` | `#0A0F0D`, `#101815` | `#060A08`, `#0B110F` |
-| Texto preto `--text` | `#0D1612` | (texto claro) |
-| Tela `--screen` | `#0B0F0D` | `#050807` |
-| Cortina de janelas `--overlay` | `rgba(6,12,9,.6)` | `rgba(0,0,0,.72)` |
-| Fundo do app da TV | `#070A09` | |
-| Preto do QR Code | `#0C1410` | |
+| Fundo da página `--bg` | (cinza claro) | `#0B0710` |
+| Painéis `--panel`, `--panel-2`, `--panel-3` | (branco e cinzas claros) | `#130D1D`, `#191323`, `#20182D` |
+| Linhas `--line`, `--line-strong` | (cinzas claros) | `#271D37`, `#36284B` |
+| Menu lateral `--sidebar`, `--sidebar-2` | `#0C0811`, `#120C1C` | `#07050B`, `#0D0913` |
+| Texto preto `--text` | `#100B18` | (texto claro) |
+| Tela `--screen` | `#0C0812` | `#060409` |
+| Cortina de janelas `--overlay` | `rgba(8,5,12,.6)` | `rgba(5,3,9,.72)` |
+| Fundo do app da TV | `#08050C` | |
+| Preto do QR Code | `#0F0A16` | |
+| Fundo do símbolo | `#0C0811` | |
 
-Observação de transparência: esses pretos de origem têm um fundo levemente esverdeado (por exemplo `#090E0C`), de quando a marca era verde. Foram mantidos porque a regra do projeto é não alterar o preto. Trocar para um preto neutro seria só mudar esses valores (e o teste que os confere).
+Os valores de antes (esverdeados) eram `#090E0C`, `#111917`, `#0A0F0D`, `#070A09` e afins; não voltam. Se for preciso ajustar o tom, é trocar estes valores (e os do teste `brand-tokens.spec.ts`) mantendo a luminosidade.
 
-Os cinzas **claros** do tema claro e os textos do tema escuro, que tinham um tom esverdeado, passaram a ser prata/zinco neutros (`#F4F4F5`, `#E4E4E7`, `#A1A1AA`…).
+Os cinzas **claros** do tema claro e os textos do tema escuro são prata/zinco neutros (`#F4F4F5`, `#E4E4E7`, `#A1A1AA`…).
 
 ## 6. Estados
 
@@ -74,27 +76,29 @@ Os cinzas **claros** do tema claro e os textos do tema escuro, que tinham um tom
 
 Todos têm contraste de texto acima de 4,5:1 nos dois temas (tabela da seção 8).
 
-## 7. O que NÃO é a marca (conteúdo dos clientes)
+## 7. Conteúdo dos clientes: as cores são deles (configuráveis)
 
-O conteúdo que os clientes põem nas TVs, nos painéis de LED e nos totens continua sendo deles. **Não foi mexido**: os temas e as cores dos widgets (inclusive o tema "Verde" e o acento "Azul"), os temas do gerador de QR Code (inclusive "Verde"), os vídeos, as imagens, os cardápios e as promoções. O painel só ganhou a identidade do Vyzzu nas partes administrativas.
+O conteúdo que os clientes põem nas TVs, nos painéis de LED e nos totens é deles: vídeos, imagens, cardápios, promoções. E o que o **Vyzzu gera** para a biblioteca (widgets e QR Codes) tem as cores **configuráveis e personalizáveis** (decisão do dono, 2026-10-21):
 
-Duas observações: o tema "Verde" dos widgets é o antigo "Verde Smartplay"; mantive as cores para não mudar o que já está nas TVs dos clientes e só tirei o nome antigo do rótulo. O acento "Azul" dos widgets é uma escolha do cliente, não da marca.
+- **Widgets** (relógio, clima, notícias, cotações, recado, contagem, preços e chamadas): um **tema pronto** (Escuro, Claro, Violeta da marca ou Verde) e, por cima dele, **Fundo**, **Texto** e **Destaque** em qualquer cor `#RRGGBB`. O que ficar em branco vem do tema. O padrão dos widgets novos é o tema Escuro (preto violeta com destaque lavanda). O servidor guarda as cores limpas (minúsculas, só no formato certo; outra coisa é recusada) e o `widget.js` as aplica na TV e na pré-visualização. O painel avisa de contraste baixo (texto 4,5:1; destaque 3:1) sem impedir.
+- **QR Code**: os visuais prontos (Claro, Escuro, Violeta, Verde) ou **Personalizado** (Fundo, Texto, Cartão do código e Código). Como o celular só lê código escuro sobre cartão claro, o painel **não deixa salvar** código mais claro que o cartão ou com contraste menor que 3:1.
+- As cores personalizadas valem sem mexer na marca: a paleta do Vyzzu aparece como **temas prontos** (Violeta), não como imposição.
 
 ## 8. Acessibilidade: contraste
 
-Medido por `frontend/src/app/brand-tokens.spec.ts` (e conferido à mão). AA pede 4,5:1 para texto normal.
+Medido por `frontend/src/app/brand-tokens.spec.ts` (e conferido à mão, com o preto violeta). AA pede 4,5:1 para texto normal.
 
 | Par | Contraste |
 |---|---|
-| Claro: texto `#0D1612` sobre `#F4F4F5` | 16,8:1 |
+| Claro: texto `#100B18` sobre `#F4F4F5` | 17,6:1 |
 | Claro: texto auxiliar `#6A6A73` sobre o fundo `#F4F4F5` / o cartão `#FFFFFF` | 4,9:1 / 5,4:1 |
 | Claro: link `#6D28D9` sobre branco | 7,1:1 |
 | Botão: branco sobre `#7C3AED` / hover `#6D28D9` | 5,7:1 / 7,1:1 |
-| Escuro: texto `#F4F4F5` sobre `#090E0C` | 17,7:1 |
-| Escuro: texto auxiliar `#A1A1AA` sobre `#111917` | 7,0:1 |
-| Escuro: link `#A78BFA` sobre `#111917` | 6,6:1 |
-| Menu: texto `#D4D4D8` / auxiliar `#A1A1AA` / destaque `#C4B5FD` sobre `#0A0F0D` | 13,1 / 7,5 / 10,5:1 |
-| App da TV: texto `#F4F4F5` / auxiliar `#A1A1AA` / destaque `#C4B5FD` sobre `#070A09` | 18,1 / 7,8 / 10,8:1 |
+| Escuro: texto `#F4F4F5` sobre `#0B0710` | 18,2:1 |
+| Escuro: texto auxiliar `#A1A1AA` sobre `#130D1D` | 7,4:1 |
+| Escuro: link `#A78BFA` sobre `#130D1D` | 7,0:1 |
+| Menu: texto `#D4D4D8` / auxiliar `#A1A1AA` / destaque `#C4B5FD` sobre `#0C0811` | 13,4 / 7,7 / 10,7:1 |
+| App da TV: texto `#F4F4F5` / auxiliar `#A1A1AA` / destaque `#C4B5FD` sobre `#08050C` | 18,4 / 7,9 / 11,0:1 |
 | Estados (sucesso, erro, alerta, informação) | de 6,0 a 11,1:1 |
 
 O violeta puro `#8B5CF6` (4,2:1 com texto branco) **não** é usado como fundo de botão com texto: o preenchimento é `#7C3AED`. O `#8B5CF6` fica em ícones, foco e detalhes, onde 3:1 basta.
@@ -114,6 +118,9 @@ O violeta puro `#8B5CF6` (4,2:1 com texto branco) **não** é usado como fundo d
 | Nome do produto | `frontend/src/app/core/brand.ts` (`BRAND`) |
 | Logotipo tipográfico | `frontend/src/app/shared/wordmark.ts` |
 | Símbolo, favicon, ícone e banner da TV | `scripts/gerar-icones-marca.cjs` → `frontend/public/*`, `player/app/src/main/res/*` |
+| Temas e cores personalizadas dos widgets | `frontend/public/widgets/widget.css` (temas) e `widget.js` (cores da pessoa); validação no servidor em `WidgetSettings.java` |
+| Cores do QR Code | `frontend/src/app/media/qr.ts` |
+| Campo de cor reutilizável | `frontend/src/app/shared/color-field.ts` e `core/color.ts` (formato e contraste) |
 | Cor do navegador no celular | `index.html` e `core/theme.ts` (`theme-color`) |
 | Cores e nome do app da TV | `player/app/src/main/res/values/colors.xml`, `strings.xml` |
 | Manuais (PDF/HTML) e site de downloads | `scripts/build-manuals.mjs`, `scripts/release-player.mjs`, `scripts/manual-illustrations.mjs` |

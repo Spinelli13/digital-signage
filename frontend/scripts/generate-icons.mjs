@@ -19,7 +19,7 @@ const ICONS = [
   'list-video', 'users', 'credit-card', 'download', 'building', 'receipt-text', 'tag', 'settings', 'menu', 'life-buoy',
   // ações
   'plus', 'pencil', 'trash', 'x', 'check', 'search', 'funnel', 'refresh-cw', 'upload', 'copy', 'external-link', 'send',
-  'ellipsis', 'ellipsis-vertical', 'log-out', 'eye', 'link', 'qr-code', 'rotate-ccw-clock', 'play', 'pause', 'rocket',
+  'ellipsis', 'ellipsis-vertical', 'log-out', 'eye', 'link', 'qr-code', 'rotate-ccw-clock', 'rotate-ccw', 'play', 'pause', 'rocket',
   'arrow-right', 'arrow-left', 'arrow-up', 'arrow-down', 'chevron-down', 'chevron-up', 'chevron-right', 'chevron-left',
   'image-plus', 'grip-vertical', 'file-text', 'book-open', 'mail', 'key-round', 'lock',
   // tema, idioma e conta

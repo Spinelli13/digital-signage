@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Vyzzu">
   <!-- GERADO por scripts/gerar-icones-marca.cjs: o V do Vyzzu, varrido por linhas de tela (faixas de LED, da lavanda ao magenta), sobre o preto da marca -->
-  <rect width="64" height="64" rx="15" fill="#0a0f0d"/>
+  <rect width="64" height="64" rx="15" fill="#0c0811"/>
   <polygon points="8.48,11 21.5,11 24.76,17.52 12.13,17.52" fill="#c4b5fd"/>
   <polygon points="42.5,11 55.52,11 51.87,17.52 39.24,17.52" fill="#c4b5fd"/>
   <polygon points="13.45,19.87 25.94,19.87 29.19,26.39 17.1,26.39" fill="#a78bfa"/>

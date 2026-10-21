@@ -323,6 +323,64 @@ describe('WidgetEditorComponent', () => {
     expect(editor.busy()).toBe(false);
   });
 
+  it('the person can pick the colors of any widget: they go to the server and an empty field goes back to the theme', () => {
+    const { editor, fixture, backend } = setup();
+    editor.choose('CLOCK');
+    fixture.detectChanges();
+    answerPreview(backend, { kind: 'CLOCK' });
+
+    editor.setColor('bgColor', '#1f0a3d');
+    editor.setColor('accentColor', '#d946ef');
+    fixture.detectChanges();
+
+    expect(editor.hasCustomColors()).toBe(true);
+    const body = answerPreview(backend, { kind: 'CLOCK' });
+    expect(body.settings['bgColor']).toBe('#1f0a3d');
+    expect(body.settings['accentColor']).toBe('#d946ef');
+    expect(body.settings['textColor']).toBeUndefined();
+
+    editor.setColor('accentColor', null);
+    expect(editor.color('accentColor')).toBeNull();
+    expect(editor.settings()['accentColor']).toBeUndefined();
+    editor.resetColors();
+    expect(editor.hasCustomColors()).toBe(false);
+    expect(editor.settings()['bgColor']).toBeUndefined();
+    backend.match(`${API}/widgets/preview`);
+  });
+
+  it('warns about low contrast between background and text, and between background and highlight, without blocking', () => {
+    const { editor, fixture, text } = setup();
+    editor.choose('CLOCK');
+    fixture.detectChanges();
+    expect(editor.lowTextContrast()).toBe(false);
+
+    editor.setColor('bgColor', '#444444');
+    editor.setColor('textColor', '#555555');
+    fixture.detectChanges();
+
+    expect(editor.lowTextContrast()).toBe(true);
+    expect(text()).toContain('Contraste baixo entre o fundo e o texto');
+    expect(editor.problem()).toBeNull();
+
+    editor.setColor('textColor', '#ffffff');
+    editor.setColor('accentColor', '#464646');
+    fixture.detectChanges();
+    expect(editor.lowTextContrast()).toBe(false);
+    expect(editor.lowAccentContrast()).toBe(true);
+    expect(text()).toContain('Contraste baixo entre o fundo e o destaque');
+  });
+
+  it('without a text color the widget picks one that reads on the chosen background', () => {
+    const { editor, fixture } = setup();
+    editor.choose('CLOCK');
+    fixture.detectChanges();
+
+    editor.setColor('bgColor', '#ffffff');
+    expect(editor.lowTextContrast()).toBe(false);
+    editor.setColor('bgColor', '#101010');
+    expect(editor.lowTextContrast()).toBe(false);
+  });
+
   it('closing does not save anything', () => {
     const { fixture, closed, backend } = setup();
 

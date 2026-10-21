@@ -156,6 +156,14 @@ export const CONTENT: Record<string, string> = {
   'Excluir "{name}"?': 'Delete "{name}"?',
   'O texto é grande demais para um QR Code. Use um endereço mais curto.': 'The text is too large for a QR Code. Use a shorter address.',
   'Informe o endereço ou o texto do QR Code': 'Enter the address or text of the QR Code',
+  Personalizado: 'Custom',
+  'Cartão do código': 'Code card',
+  Código: 'Code',
+  'O código precisa ser mais escuro que o cartão: o celular não lê um código claro sobre um cartão escuro.':
+    'The code must be darker than the card: a phone cannot read a light code on a dark card.',
+  'Contraste baixo entre o código e o cartão: o celular pode não conseguir ler. Escolha um código mais escuro ou um cartão mais claro.':
+    'Low contrast between the code and the card: a phone may not be able to read it. Pick a darker code or a lighter card.',
+  'Contraste baixo entre o fundo e o texto: o título e a legenda ficam difíceis de ler.': 'Low contrast between the background and the text: the title and caption are hard to read.',
   'sem nome': 'untitled',
   'Aponte a câmera do celular': 'Point your phone camera here',
   Verde: 'Green',

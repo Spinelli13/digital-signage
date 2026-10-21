@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 /**
  * A identidade do Vyzzu (preto + violeta + magenta + prata) é regra do produto, não gosto: este teste a protege.
- *  1. o PRETO de antes do rebranding continua exatamente igual (um a um, nos dois temas);
+ *  1. o PRETO da marca (levemente violeta, mas preto) tem os valores combinados, um a um, nos dois temas, e continua escuro;
  *  2. a paleta da marca está nos tokens;
  *  3. a cor da marca é violeta/magenta (nunca verde, nunca azul);
  *  4. verde só existe como estado de "tudo certo" (ou como o preto preservado) e azul não existe;
@@ -28,30 +28,33 @@ function tokens(selector: string): Map<string, string> {
 const light = tokens(':root {');
 const dark = tokens(":root[data-theme='dark'] {");
 
-/** Os pretos e as superfícies escuras de ANTES do rebranding (valores do styles.css original). Não podem mudar. */
+/**
+ * Os pretos e as superfícies escuras da marca. Têm a MESMA luminosidade dos pretos de antes do rebranding (continuam pretos)
+ * e um leve tom violeta (264°) no lugar do esverdeado de fábrica. Pedido do dono em 2026-10-21.
+ */
 const PRESERVED_BLACKS: Record<'light' | 'dark', Record<string, string>> = {
   light: {
-    '--text': '#0d1612',
-    '--sidebar': '#0a0f0d',
-    '--sidebar-2': '#101815',
-    '--overlay': 'rgba(6, 12, 9, 0.6)',
-    '--screen': '#0b0f0d',
+    '--text': '#100b18',
+    '--sidebar': '#0c0811',
+    '--sidebar-2': '#120c1c',
+    '--overlay': 'rgba(8, 5, 12, 0.6)',
+    '--screen': '#0c0812',
   },
   dark: {
-    '--bg': '#090e0c',
-    '--panel': '#111917',
-    '--panel-2': '#16201c',
-    '--panel-3': '#1c2924',
-    '--line': '#243029',
-    '--line-strong': '#32413a',
-    '--sidebar': '#060a08',
-    '--sidebar-2': '#0b110f',
-    '--overlay': 'rgba(0, 0, 0, 0.72)',
-    '--screen': '#050807',
+    '--bg': '#0b0710',
+    '--panel': '#130d1d',
+    '--panel-2': '#191323',
+    '--panel-3': '#20182d',
+    '--line': '#271d37',
+    '--line-strong': '#36284b',
+    '--sidebar': '#07050b',
+    '--sidebar-2': '#0d0913',
+    '--overlay': 'rgba(5, 3, 9, 0.72)',
+    '--screen': '#060409',
   },
 };
 
-/** Os tokens que, por origem, são pretos ou superfícies escuras (podem ter um leve fundo esverdeado de fábrica). */
+/** Os tokens que são pretos ou superfícies escuras da marca. */
 const BLACK_TOKENS = new Set(['--text', '--sidebar', '--sidebar-2', '--overlay', '--screen', '--bg', '--panel', '--panel-2', '--panel-3', '--line', '--line-strong']);
 /** O verde que ficou: só o significado de "tudo certo / online". */
 const SUCCESS_TOKENS = new Set(['--green', '--ok-bg', '--ok-fg', '--ok-line']);
@@ -99,7 +102,7 @@ function contrast(foreground: string, background: string): number {
 }
 
 describe('identidade visual do Vyzzu', () => {
-  it('mantém o preto de antes do rebranding, valor por valor, nos dois temas', () => {
+  it('mantém o preto da marca, valor por valor, nos dois temas', () => {
     for (const [name, expected] of Object.entries(PRESERVED_BLACKS.light)) {
       expect(light.get(name), `tema claro ${name}`).toBe(expected);
     }
@@ -108,9 +111,22 @@ describe('identidade visual do Vyzzu', () => {
     }
   });
 
+  it('os pretos continuam pretos (bem escuros) e têm um leve tom violeta', () => {
+    for (const [theme, set, blacks] of [['claro', light, PRESERVED_BLACKS.light], ['escuro', dark, PRESERVED_BLACKS.dark]] as const) {
+      for (const name of Object.keys(blacks)) {
+        const color = parse(set.get(name) ?? '') as Rgb;
+        const { hue, sat } = hsv(color);
+        expect(luminance(color), `${theme} ${name} deve continuar preto`).toBeLessThanOrEqual(0.04);
+        expect(hue, `${theme} ${name} deve ter tom violeta`).toBeGreaterThanOrEqual(250);
+        expect(hue, `${theme} ${name} deve ter tom violeta`).toBeLessThanOrEqual(290);
+        expect(sat, `${theme} ${name} deve ter um leve tom de cor`).toBeGreaterThanOrEqual(0.2);
+      }
+    }
+  });
+
   it('mantém o preto do Player (fundo das telas da TV)', () => {
     const colors = readFileSync(join(ROOT, '..', 'player', 'app', 'src', 'main', 'res', 'values', 'colors.xml'), 'utf8');
-    expect(colors).toMatch(/<color name="brand_background">#070A09<\/color>/);
+    expect(colors).toMatch(/<color name="brand_background">#08050C<\/color>/);
   });
 
   it('traz a paleta da marca: violeta, magenta, lavanda e prata', () => {

@@ -15,10 +15,11 @@
  *   O preenchimento dos botões usa #7c3aed (--primary): é o violeta da marca um pouco mais fundo, para o texto branco
  *   passar de 4,5:1 (AA). O #8b5cf6 puro fica nos ícones, no foco e nos detalhes.
  *
- * O PRETO NÃO MUDA
- *   Os pretos e as superfícies escuras do sistema (menu lateral, fundos, painéis, linhas, tela, cortina e o texto preto
- *   do tema claro) mantêm EXATAMENTE os valores de antes do rebranding. Estão marcados com "PRETO PRESERVADO" e o teste
- *   src/app/brand-tokens.spec.ts confere um a um. Só a cor da marca, os cinzas claros e os estados mudaram.
+ * O PRETO É PRETO, COM UM LEVE TOM VIOLETA
+ *   Os pretos e as superfícies escuras (menu lateral, fundos, painéis, linhas, tela, cortina e o texto preto do tema claro)
+ *   são pretos de verdade: a luminosidade é a mesma dos pretos de antes do rebranding (o preto não ficou mais claro nem
+ *   mais colorido), só o fundo passou de esverdeado para violeta (tom 264°). Estão marcados com "PRETO DA MARCA" e o teste
+ *   src/app/brand-tokens.spec.ts confere um a um, inclusive que continuam escuros e violeta.
  *
  * ESTADOS
  *   Sucesso (verde), alerta (âmbar) e erro (vermelho) continuam com as cores do significado, sempre com ícone e texto.
@@ -27,14 +28,14 @@
 :root {
   color-scheme: light;
 
-  /* superfícies e texto (cinzas neutros; o preto do texto é o de sempre) */
+  /* superfícies e texto (cinzas neutros; o texto é o preto da marca) */
   --bg: #f4f4f5;
   --panel: #ffffff;
   --panel-2: #fafafa;
   --panel-3: #f0f0f2;
   --line: #e4e4e7;
   --line-strong: #d4d4d8;
-  --text: #0d1612; /* PRETO PRESERVADO */
+  --text: #100b18; /* PRETO DA MARCA */
   --text-2: #3f3f46;
   --muted: #6a6a73;
   --silver: #d4d4d8;
@@ -53,7 +54,7 @@
   --link: #6d28d9;
   --accent: #c4b5fd;
   --grad-primary: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-  --grad-hero: linear-gradient(135deg, #0a0f0d 0%, #2a1457 62%, #5b21b6 120%);
+  --grad-hero: linear-gradient(135deg, #0c0811 0%, #2a1457 62%, #5b21b6 120%);
   --grad-bar: linear-gradient(180deg, #8b5cf6 0%, #d946ef 100%);
   --glow: rgba(139, 92, 246, 0.3);
   --nav-active: rgba(139, 92, 246, 0.22);
@@ -76,8 +77,8 @@
   --info-line: #d4d4d4;
 
   /* menu lateral (sempre escuro) */
-  --sidebar: #0a0f0d; /* PRETO PRESERVADO */
-  --sidebar-2: #101815; /* PRETO PRESERVADO */
+  --sidebar: #0c0811; /* PRETO DA MARCA */
+  --sidebar-2: #120c1c; /* PRETO DA MARCA */
   --sidebar-text: #d4d4d8;
   --sidebar-muted: #a1a1aa;
   --sidebar-hover: rgba(255, 255, 255, 0.06);
@@ -93,8 +94,8 @@
   --sh-3: 0 16px 40px rgba(9, 9, 11, 0.2);
   --shadow: var(--sh-3);
   --ring: 0 0 0 3px rgba(139, 92, 246, 0.35);
-  --overlay: rgba(6, 12, 9, 0.6); /* PRETO PRESERVADO */
-  --screen: #0b0f0d; /* PRETO PRESERVADO */
+  --overlay: rgba(8, 5, 12, 0.6); /* PRETO DA MARCA */
+  --screen: #0c0812; /* PRETO DA MARCA */
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --appbar-h: 56px;
   --bottombar-h: 62px;
@@ -105,13 +106,13 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  /* as superfícies escuras são as de sempre (PRETO PRESERVADO); só os textos viraram prata/cinza claro */
-  --bg: #090e0c; /* PRETO PRESERVADO */
-  --panel: #111917; /* PRETO PRESERVADO */
-  --panel-2: #16201c; /* PRETO PRESERVADO */
-  --panel-3: #1c2924; /* PRETO PRESERVADO */
-  --line: #243029; /* PRETO PRESERVADO */
-  --line-strong: #32413a; /* PRETO PRESERVADO */
+  /* superfícies escuras: o preto da marca (levemente violeta); os textos são prata/cinza claro */
+  --bg: #0b0710; /* PRETO DA MARCA */
+  --panel: #130d1d; /* PRETO DA MARCA */
+  --panel-2: #191323; /* PRETO DA MARCA */
+  --panel-3: #20182d; /* PRETO DA MARCA */
+  --line: #271d37; /* PRETO DA MARCA */
+  --line-strong: #36284b; /* PRETO DA MARCA */
   --text: #f4f4f5;
   --text-2: #d4d4d8;
   --muted: #a1a1aa;
@@ -125,7 +126,7 @@
   --link: #a78bfa;
   --accent: #c4b5fd;
   --grad-primary: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-  --grad-hero: linear-gradient(135deg, #060a08 0%, #22114a 60%, #4c1d95 120%);
+  --grad-hero: linear-gradient(135deg, #07050b 0%, #22114a 60%, #4c1d95 120%);
   --glow: rgba(139, 92, 246, 0.3);
   --nav-active: rgba(139, 92, 246, 0.22);
 
@@ -145,8 +146,8 @@
   --info-fg: #d4d4d4;
   --info-line: #404040;
 
-  --sidebar: #060a08; /* PRETO PRESERVADO */
-  --sidebar-2: #0b110f; /* PRETO PRESERVADO */
+  --sidebar: #07050b; /* PRETO DA MARCA */
+  --sidebar-2: #0d0913; /* PRETO DA MARCA */
   --sidebar-text: #d4d4d8;
   --sidebar-muted: #a1a1aa;
 
@@ -154,8 +155,8 @@
   --sh-2: 0 8px 22px rgba(0, 0, 0, 0.4);
   --sh-3: 0 18px 44px rgba(0, 0, 0, 0.6);
   --ring: 0 0 0 3px rgba(167, 139, 250, 0.4);
-  --overlay: rgba(0, 0, 0, 0.72); /* PRETO PRESERVADO */
-  --screen: #050807; /* PRETO PRESERVADO */
+  --overlay: rgba(5, 3, 9, 0.72); /* PRETO DA MARCA */
+  --screen: #060409; /* PRETO DA MARCA */
 }
 
 * { box-sizing: border-box; }

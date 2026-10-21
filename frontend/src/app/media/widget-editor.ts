@@ -1,27 +1,30 @@
-import { Component, DestroyRef, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { TIMEZONES } from '../campaigns/campaign-form';
 import { ApiService } from '../core/api.service';
+import { contrastRatio, isHexColor, readableOn } from '../core/color';
 import { currentLang } from '../core/i18n';
 import { TPipe } from '../core/i18n';
 import { Media, PriceList, QueueInfo, WidgetCatalog, WidgetKind, WidgetPlace, WidgetRequest, WidgetSettings } from '../core/models';
-import { WIDGET_KINDS, defaultWidgetSettings, widgetInfo } from '../core/widgets';
+import { COLOR_KEYS, THEME_COLORS, WIDGET_KINDS, defaultWidgetSettings, widgetInfo } from '../core/widgets';
+import { ColorFieldComponent } from '../shared/color-field';
 import { IconComponent } from '../shared/icon';
 import { WidgetPreviewComponent } from './widget-preview';
 
 export const THEMES: { value: string; label: string }[] = [
   { value: 'dark', label: 'Escuro' },
   { value: 'light', label: 'Claro' },
-  { value: 'brand', label: 'Verde' },
+  { value: 'brand', label: 'Violeta' },
+  { value: 'green', label: 'Verde' },
 ];
 export const ACCENTS: { value: string; label: string }[] = [
-  { value: 'brand', label: 'Verde' },
+  { value: 'brand', label: 'Violeta' },
   { value: 'blue', label: 'Azul' },
   { value: 'amber', label: 'Amarelo' },
   { value: 'red', label: 'Vermelho' },
-  { value: 'green', label: 'Verde-claro' },
+  { value: 'green', label: 'Verde' },
 ];
 const PREVIEW_DELAY_MS = 450;
 
@@ -32,7 +35,7 @@ const PREVIEW_DELAY_MS = 450;
  */
 @Component({
   selector: 'app-widget-editor',
-  imports: [FormsModule, RouterLink, TPipe, IconComponent, WidgetPreviewComponent],
+  imports: [FormsModule, RouterLink, TPipe, IconComponent, WidgetPreviewComponent, ColorFieldComponent],
   template: `
     <div class="modal" (click)="closed.emit()">
       <form class="modal-box wide" (click)="$event.stopPropagation()" (ngSubmit)="save()">
@@ -294,6 +297,24 @@ const PREVIEW_DELAY_MS = 450;
                   </select>
                 </div>
               </div>
+              <fieldset class="colors">
+                <legend>{{ 'Cores personalizadas' | t }}</legend>
+                <p class="label">{{ 'Escolha o fundo, o texto e o destaque do widget. O que ficar em branco usa as cores do tema.' | t }}</p>
+                <div class="three">
+                  <app-color-field fieldId="w-bg" [label]="'Fundo' | t" [value]="color('bgColor')" [fallback]="themeColors().bg" (valueChange)="setColor('bgColor', $event)" />
+                  <app-color-field fieldId="w-fg" [label]="'Texto' | t" [value]="color('textColor')" [fallback]="themeColors().fg" (valueChange)="setColor('textColor', $event)" />
+                  <app-color-field fieldId="w-ac" [label]="'Destaque' | t" [value]="color('accentColor')" [fallback]="themeColors().accent" (valueChange)="setColor('accentColor', $event)" />
+                </div>
+                @if (lowTextContrast()) {
+                  <p class="warn-line" role="status"><app-icon name="triangle-alert" [size]="15" />{{ 'Contraste baixo entre o fundo e o texto: na TV, de longe, fica difícil de ler. Escolha cores mais diferentes.' | t }}</p>
+                }
+                @if (lowAccentContrast()) {
+                  <p class="warn-line" role="status"><app-icon name="triangle-alert" [size]="15" />{{ 'Contraste baixo entre o fundo e o destaque: os detalhes podem sumir. Escolha uma cor de destaque mais diferente.' | t }}</p>
+                }
+                @if (hasCustomColors()) {
+                  <button type="button" class="secondary" (click)="resetColors()"><app-icon name="rotate-ccw" [size]="15" />{{ 'Voltar às cores do tema' | t }}</button>
+                }
+              </fieldset>
               <div class="field">
                 <label for="w-seconds">{{ 'Tempo na tela (segundos)' | t }}</label>
                 <input id="w-seconds" name="seconds" type="number" min="5" max="3600" [ngModel]="seconds()" (ngModelChange)="seconds.set($event)" />
@@ -345,6 +366,13 @@ const PREVIEW_DELAY_MS = 450;
     .orient button.on { background: var(--panel); color: var(--primary); box-shadow: var(--sh-1); }
     :host-context(:root[data-theme='dark']) .orient button.on { color: var(--link); }
     .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 10px 0; }
+    .colors { margin: 4px 0 16px; padding: 12px 14px 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel-2); }
+    .colors legend { padding: 0 6px; font-weight: 650; }
+    .colors .label { margin: 0; }
+    .colors .secondary { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; }
+    .warn-line { display: flex; gap: 8px; align-items: flex-start; margin: 8px 0 0; font-size: 13.5px; color: var(--warn-fg); }
+    .warn-line app-icon { flex: none; margin-top: 2px; }
     .checks { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
     .search { display: flex; gap: 8px; }
     .search input { flex: 1; min-width: 0; }
@@ -370,6 +398,7 @@ const PREVIEW_DELAY_MS = 450;
       .layout { grid-template-columns: 1fr; }
       .side { position: static; order: -1; }
       .two { grid-template-columns: 1fr; }
+      .three { grid-template-columns: 1fr; }
     }
   `,
 })
@@ -449,6 +478,58 @@ export class WidgetEditorComponent {
   info() {
     return widgetInfo(this.kind());
   }
+
+  // ---------- cores personalizadas ----------
+
+  readonly themeColors = computed(() => THEME_COLORS[this.text('theme')] ?? THEME_COLORS['dark']);
+
+  color(key: string): string | null {
+    const value = this.settings()[key];
+    return isHexColor(value as string) ? (value as string) : null;
+  }
+
+  setColor(key: string, value: string | null): void {
+    this.settings.update((current) => {
+      const next = { ...current };
+      if (value) {
+        next[key] = value;
+      } else {
+        delete next[key];
+      }
+      return next;
+    });
+  }
+
+  readonly hasCustomColors = computed(() => COLOR_KEYS.some((key) => !!this.color(key)));
+
+  resetColors(): void {
+    this.settings.update((current) => {
+      const next = { ...current };
+      for (const key of COLOR_KEYS) {
+        delete next[key];
+      }
+      return next;
+    });
+  }
+
+  /** O fundo e o texto de verdade (os do tema, trocados pelos da pessoa); sem texto escolhido, o widget usa o que se lê no fundo. */
+  private readonly effectiveColors = computed(() => {
+    this.settings();
+    const theme = this.themeColors();
+    const bg = this.color('bgColor') ?? theme.bg;
+    const fg = this.color('textColor') ?? (this.color('bgColor') ? readableOn(bg) : theme.fg);
+    return { bg, fg, accent: this.color('accentColor') ?? theme.accent };
+  });
+
+  readonly lowTextContrast = computed(() => {
+    const { bg, fg } = this.effectiveColors();
+    return contrastRatio(fg, bg) < 4.5;
+  });
+
+  readonly lowAccentContrast = computed(() => {
+    const { bg, accent } = this.effectiveColors();
+    return contrastRatio(accent, bg) < 3;
+  });
 
   private loadPriceLists(kind: WidgetKind): void {
     if (kind === 'PRICES') {

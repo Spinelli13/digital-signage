@@ -12,7 +12,7 @@
 //   NODE_PATH=<pasta com node_modules/puppeteer-core> node scripts/gerar-icones-marca.cjs
 //   (CHROME_PATH aponta outro navegador, se o Edge não estiver no caminho padrão do Windows)
 //
-// As cores seguem o guia da marca (docs/MARCA_VYZZU.md). O preto do fundo é o do menu lateral (#0A0F0D); o do Player, #070A09.
+// As cores seguem o guia da marca (docs/MARCA_VYZZU.md). O preto do fundo é o do menu lateral (#0C0811); o do Player, #08050C.
 const fs = require('node:fs');
 const path = require('node:path');
 const puppeteer = require('puppeteer-core');
@@ -22,7 +22,7 @@ const PUBLIC = path.join(root, 'frontend', 'public');
 const RES = path.join(root, 'player', 'app', 'src', 'main', 'res');
 const BROWSER = process.env.CHROME_PATH || 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 
-const TILE = '#0a0f0d';
+const TILE = '#0c0811';
 /** Da lavanda ao magenta: a luz desce do alto do V até a ponta. */
 const BAND_COLORS = ['#c4b5fd', '#a78bfa', '#8b5cf6', '#a855f7', '#d946ef'];
 const BANDS = 5;
@@ -82,7 +82,7 @@ function androidVector() {
     .join('\n');
   return `<?xml version="1.0" encoding="utf-8"?>
 <!-- GERADO por scripts/gerar-icones-marca.cjs. Mesmo símbolo do painel (frontend/public/favicon.svg), em vetor, com cores sólidas
-     (degradê em vetor só existe a partir do Android 7 e o app aceita Android 5). O fundo é o preto do Player (#070A09). -->
+     (degradê em vetor só existe a partir do Android 7 e o app aceita Android 5). O fundo é o preto do Player (#08050C). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
@@ -91,7 +91,7 @@ function androidVector() {
 
     <!-- fundo -->
     <path
-        android:fillColor="#070A09"
+        android:fillColor="#08050C"
         android:pathData="M15,0 H49 A15,15 0 0 1 64,15 V49 A15,15 0 0 1 49,64 H15 A15,15 0 0 1 0,49 V15 A15,15 0 0 1 15,0 Z" />
 
     <!-- o V em faixas de LED -->
@@ -132,7 +132,7 @@ function ico(png, size) {
 async function banner(browser) {
   const page = await browser.newPage();
   await page.setViewport({ width: 640, height: 360, deviceScaleFactor: 1 });
-  await page.setContent(`<html><body style="margin:0;width:640px;height:360px;background:#070a09;display:flex;align-items:center;font-family:'Segoe UI',Arial,sans-serif">
+  await page.setContent(`<html><body style="margin:0;width:640px;height:360px;background:#08050c;display:flex;align-items:center;font-family:'Segoe UI',Arial,sans-serif">
     <div style="margin-left:56px">${sized(symbolSvg, 180)}</div>
     <div style="margin-left:36px;font-size:84px;font-weight:800;letter-spacing:-3px;color:#f4f4f5">Vy<span style="color:#c4b5fd">zz</span>u</div>
   </body></html>`);

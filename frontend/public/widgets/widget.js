@@ -539,15 +539,71 @@
     staleFooter(root, data);
   }
 
+  // ---------- cores da pessoa ----------
+  // Por cima do tema, a pessoa pode escolher o fundo, o texto e o destaque (#rrggbb). O que faltar vem do tema.
+
+  /** "#rrggbb" -> [r, g, b]; null se não for uma cor assim. */
+  function parseHex(value) {
+    var m = /^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/.exec(typeof value === 'string' ? value : '');
+    return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : null;
+  }
+
+  function lum(c) {
+    var v = [];
+    for (var i = 0; i < 3; i++) {
+      var x = c[i] / 255;
+      v.push(x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4));
+    }
+    return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+  }
+
+  function mix(a, b, t) {
+    return [Math.round(a[0] + (b[0] - a[0]) * t), Math.round(a[1] + (b[1] - a[1]) * t), Math.round(a[2] + (b[2] - a[2]) * t)];
+  }
+
+  function css(c, alpha) {
+    return alpha === undefined ? 'rgb(' + c.join(',') + ')' : 'rgba(' + c.join(',') + ',' + alpha + ')';
+  }
+
+  function applyColors(settings) {
+    var bg = parseHex(settings.bgColor);
+    var fg = parseHex(settings.textColor);
+    var accent = parseHex(settings.accentColor);
+    var st = document.body.style;
+    var names = ['--bg1', '--bg2', '--fg', '--muted', '--card', '--line', '--accent', '--up', '--down'];
+    for (var i = 0; i < names.length; i++) st.removeProperty(names[i]);
+    if (!bg && !fg && !accent) return;
+    var darkBg = null;
+    if (bg) {
+      darkBg = lum(bg) < 0.36;
+      st.setProperty('--bg1', css(bg));
+      // o segundo tom do degradê: um pouco mais claro num fundo escuro, um pouco mais escuro num fundo claro
+      st.setProperty('--bg2', css(mix(bg, darkBg ? [255, 255, 255] : [0, 0, 0], darkBg ? 0.12 : 0.1)));
+      st.setProperty('--down', darkBg ? '#fda4af' : '#c62828');
+      st.setProperty('--up', darkBg ? '#86efac' : '#15803d');
+      // sem cor de texto escolhida, o texto fica claro ou escuro conforme o fundo, para sempre dar para ler
+      if (!fg) fg = darkBg ? [250, 250, 252] : [20, 16, 31];
+    }
+    if (fg) {
+      st.setProperty('--fg', css(fg));
+      st.setProperty('--muted', css(fg, 0.68));
+      st.setProperty('--card', css(fg, 0.08));
+      st.setProperty('--line', css(fg, 0.16));
+    }
+    if (accent) {
+      st.setProperty('--accent', css(accent));
+    }
+  }
+
   // ---------- aviso ----------
 
-  var TONES = { brand: '#2fd08f', blue: '#4b9bff', amber: '#ffb020', red: '#ff5d5d', green: '#4ade80' };
+  var TONES = { brand: '#a78bfa', blue: '#4b9bff', amber: '#ffb020', red: '#ff5d5d', green: '#4ade80' };
 
   function renderNotice(root, settings) {
     var holder = el('div', 'notice ' + (settings.align === 'left' ? 'left' : 'center'));
     holder.style.width = '100%';
     holder.style.height = '100%';
-    holder.style.setProperty('--tone', TONES[settings.accent] || TONES.brand);
+    holder.style.setProperty('--tone', parseHex(settings.accentColor) ? settings.accentColor : TONES[settings.accent] || TONES.brand);
     var box = el('div', 'w');
     box.appendChild(el('div', 'bar'));
     var inner = el('div', 'box');
@@ -690,7 +746,8 @@
     state.clock.t0 = perfNow();
     state.update = null;
     var theme = (init.settings && init.settings.theme) || 'dark';
-    document.body.className = 'theme-' + (theme === 'light' || theme === 'brand' ? theme : 'dark');
+    document.body.className = 'theme-' + (theme === 'light' || theme === 'brand' || theme === 'green' ? theme : 'dark');
+    applyColors(init.settings || {});
     var root = document.getElementById('root');
     clear(root);
     var render = RENDERERS[init.kind];

@@ -26,6 +26,17 @@ export function widgetInfo(kind: WidgetKind | null | undefined): WidgetKindInfo 
   return WIDGET_KINDS.find((info) => info.kind === kind);
 }
 
+/** As cores de cada tema pronto (as mesmas do widget.css): o seletor de cores mostra estas quando a pessoa não escolheu uma. */
+export const THEME_COLORS: Record<string, { bg: string; fg: string; accent: string }> = {
+  dark: { bg: '#0b0710', fg: '#f5f3ff', accent: '#c4b5fd' },
+  light: { bg: '#faf8ff', fg: '#170f2a', accent: '#6d28d9' },
+  brand: { bg: '#6d28d9', fg: '#ffffff', accent: '#e9d5ff' },
+  green: { bg: '#071a15', fg: '#f2fbf7', accent: '#3ddc97' },
+};
+
+/** As escolhas de cor da pessoa, que valem por cima do tema. */
+export const COLOR_KEYS = ['bgColor', 'textColor', 'accentColor'] as const;
+
 /** As escolhas iniciais de cada tipo (o servidor completa o que faltar e recusa o que não faz sentido). */
 export function defaultWidgetSettings(kind: WidgetKind, lang: string): WidgetSettings {
   const common = { theme: 'dark', lang };

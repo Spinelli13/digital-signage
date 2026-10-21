@@ -80,7 +80,7 @@ O painel foi pensado para o **celular**: abra o mesmo endereço no navegador do 
 
 ### 2.2 Tema claro e escuro
 
-O painel tem um **tema claro** e um **tema escuro**, ambos em verde escuro, prata e preto. A escolha fica no **menu da pessoa** (clique no seu nome no pé do menu à esquerda; no celular, na bolinha do alto) e também no botão do canto da tela de entrada. As opções:
+O painel tem um **tema claro** e um **tema escuro**, ambos em preto, violeta e prata. A escolha fica no **menu da pessoa** (clique no seu nome no pé do menu à esquerda; no celular, na bolinha do alto) e também no botão do canto da tela de entrada. As opções:
 
 | Opção | O que faz |
 |---|---|
@@ -149,7 +149,9 @@ Um **widget** é um conteúdo que **se atualiza sozinho**, sem você enviar arqu
 | **Recado** | Um título e uma mensagem em destaque (horário especial, promoção, aviso). | Título, mensagem, cor de destaque e alinhamento. |
 | **Contagem regressiva** | Dias, horas, minutos e segundos que faltam para uma data, e uma frase quando ela chega. | Nome (ex.: Natal), data e hora, fuso e a frase final. |
 
-Em todos: **Cores** (escuro, claro ou verde), **idioma** do texto do widget e **tempo na tela**.
+Em todos: **Cores** (veja abaixo), **idioma** do texto do widget e **tempo na tela**.
+
+**Cores do widget.** Escolha um **tema pronto** (Escuro, Claro, Violeta ou Verde) e, se quiser, personalize por cima dele em **Cores personalizadas**: **Fundo**, **Texto** e **Destaque**. Cada campo tem o seletor de cor e o código `#RRGGBB` (por exemplo `#8B5CF6`); deixe em branco para usar a cor do tema e clique em **Voltar às cores do tema** para limpar tudo. A pré-visualização muda na hora. Se as cores ficarem parecidas demais, o painel avisa ("Contraste baixo…") porque, de longe, na TV, o texto fica difícil de ler; o aviso não impede de salvar. Sem escolher a cor do texto, o widget usa texto claro em fundo escuro e texto escuro em fundo claro. As cores personalizadas valem para todos os tipos de widget (relógio, clima, notícias, cotações, recado, contagem, preços e chamadas). Exigem a **versão mais recente do Player** nas TVs (use **Atualizar app** em **Dispositivos**); um Player mais antigo mostra o tema pronto, sem as suas cores.
 
 ![Previsão do tempo de Campinas: escolhas à esquerda, como fica na TV à direita (captura real)](manual/img/painel-widget-clima.png)
 
@@ -267,7 +269,7 @@ O contador à direita mostra quantas TVs aparecem. **Limpar filtros** volta à l
 ### 5.5 Agir em várias TVs de uma vez
 
 1. Marque as TVs na primeira coluna (ou a caixa do cabeçalho para marcar **todas as da lista**, respeitando os filtros).
-2. Aparece a barra verde **"N selecionadas"** com as ações:
+2. Aparece a barra violeta **"N selecionadas"** com as ações:
 
 | Ação | O que faz |
 |---|---|
@@ -306,7 +308,7 @@ Uma TV presa na parede **em pé** continua recebendo da caixa de TV um vídeo **
    - **Horizontal, de cabeça para baixo**: TV deitada, mas invertida (instalada no teto, por exemplo).
 3. **Salvar.** Em até 1 minuto a TV gira o conteúdo. Se a escolha ficou de cabeça para baixo, é só trocar entre as duas opções verticais.
 
-Para várias TVs de uma vez, marque-as e use **Orientação…** na barra verde (só Administrador).
+Para várias TVs de uma vez, marque-as e use **Orientação…** na barra violeta (só Administrador).
 
 - Em TV **vertical**, o **layout** usa a **versão em pé** (veja 10.1.1); sem versão em pé, o layout horizontal é girado junto, como está.
 - As TVs verticais mostram um selo **Vertical** (ou **De cabeça para baixo**) na lista, e o **Histórico** registra a mudança.
@@ -564,7 +566,7 @@ Sem versão em pé, a TV em pé continua mostrando o layout horizontal como ante
 - **Caber inteira (com faixas)**: a imagem ou o vídeo aparece **inteiro**; se a proporção da mídia não for a da zona, sobram faixas pretas. É o padrão e o comportamento de sempre.
 - **Preencher (corta as bordas)**: a mídia cobre a zona toda e o que passa da borda é cortado. Fica bonito em fotos e vídeos; **não use** em imagens com texto perto da borda.
 
-**Usar o layout numa TV:** em **Dispositivos**, clique em **Editar** na TV e escolha o **Layout da tela** (ou **Tela cheia** para voltar ao normal). Para várias TVs de uma vez, marque-as e use **Aplicar layout…** na barra verde. A TV mostra um selo com o ícone de layout e o nome dele, e o **Histórico** dela registra a mudança.
+**Usar o layout numa TV:** em **Dispositivos**, clique em **Editar** na TV e escolha o **Layout da tela** (ou **Tela cheia** para voltar ao normal). Para várias TVs de uma vez, marque-as e use **Aplicar layout…** na barra violeta. A TV mostra um selo com o ícone de layout e o nome dele, e o **Histórico** dela registra a mudança.
 
 ![Editar a TV: a lista "Layout da tela" (captura real)](manual/img/painel-dispositivo-layout.png)
 
@@ -581,11 +583,11 @@ Sem versão em pé, a TV em pé continua mostrando o layout horizontal como ante
 
 ### 10.2 QR Code
 
-Em **Biblioteca**, clique em **QR Code**. Digite o **endereço ou texto** (um cardápio, o Wi‑Fi do local, um WhatsApp…), um **título** e uma **legenda** (opcionais) e escolha as **cores**. A pré-visualização aparece na hora. **Salvar na biblioteca** guarda o QR Code como uma **imagem** comum: coloque-a em qualquer playlist (a de uma zona lateral é uma ótima ideia).
+Em **Biblioteca**, clique em **QR Code**. Digite o **endereço ou texto** (um cardápio, o Wi‑Fi do local, um WhatsApp…), um **título** e uma **legenda** (opcionais) e escolha as **cores**: os visuais prontos (Claro, Escuro, Violeta, Verde) ou **Personalizado**, em que você escolhe o **Fundo**, o **Texto** (título e legenda), o **Cartão do código** e o **Código**. A pré-visualização aparece na hora. **Salvar na biblioteca** guarda o QR Code como uma **imagem** comum: coloque-a em qualquer playlist (a de uma zona lateral é uma ótima ideia).
 
 ![Criando um QR Code: texto, título, legenda, cores e a pré-visualização (captura real)](manual/img/painel-qr-code.png)
 
-O QR Code sempre fica **escuro sobre fundo claro** (celulares precisam desse contraste). Teste lendo-o com o seu celular antes de publicar. Textos muito longos não cabem num QR Code: prefira um endereço curto.
+O código precisa ficar **mais escuro que o cartão** e com bom contraste (celulares só leem assim): se as cores escolhidas não permitirem, o painel explica e **não deixa salvar**. Ele guarda as suas cores para a próxima vez, neste navegador. Teste lendo o QR Code com o seu celular antes de publicar. Textos muito longos não cabem num QR Code: prefira um endereço curto.
 
 ### 10.3 Página da web
 
@@ -780,11 +782,11 @@ Cada cliente é uma empresa com os **seus próprios dados**: um cliente nunca v�
 - **Novo cliente:** informe o nome da empresa, o **plano** e o **primeiro administrador** (nome, e-mail e senha inicial). O cliente começa **em teste**. Envie o endereço do painel e esses dados ao administrador.
 - **Editar:** muda o nome, o plano, a **situação** (por exemplo, reativar à mão ou suspender), o e-mail de cobrança, o CPF/CNPJ e as datas do teste e do período pago.
 - **Nova fatura** (no menu **⋮** do cliente): cobrança avulsa (um serviço, uma instalação) com descrição, valor e vencimento. As mensalidades são geradas sozinhas.
-- **Entrar:** abre o painel **como se fosse aquele cliente**, para dar suporte (ver ou ajustar TVs, playlists etc.). Enquanto estiver lá, um aviso verde diz **"Você está atuando no cliente …"** e tudo o que você fizer vale para ele. Clique em **Voltar ao meu cliente** para sair. Isso vale só para a aba do navegador em que você entrou.
+- **Entrar:** abre o painel **como se fosse aquele cliente**, para dar suporte (ver ou ajustar TVs, playlists etc.). Enquanto estiver lá, um aviso violeta diz **"Você está atuando no cliente …"** e tudo o que você fizer vale para ele. Clique em **Voltar ao meu cliente** para sair. Isso vale só para a aba do navegador em que você entrou.
 
 ![Janela para cadastrar um cliente novo (captura real)](manual/img/painel-cliente-novo.png)
 
-![Gestor dentro do painel de um cliente: o aviso verde lembra em qual cliente ele está atuando (captura real)](manual/img/painel-atuando-como.png)
+![Gestor dentro do painel de um cliente: o aviso violeta lembra em qual cliente ele está atuando (captura real)](manual/img/painel-atuando-como.png)
 
 ### 13.3 Planos
 

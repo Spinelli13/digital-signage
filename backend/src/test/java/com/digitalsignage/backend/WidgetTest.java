@@ -166,6 +166,23 @@ class WidgetTest extends AbstractApiTest {
 	}
 
 	@Test
+	void thePersonCanPickTheColorsOfAnyWidgetAndTheServerKeepsThemCleanOrRefusesThem() throws Exception {
+		createWidget("CLOCK", clockSettings(Map.of("theme", "green", "bgColor", "#0B0710", "textColor", " #FFFFFF ", "accentColor", "")), null)
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.widget.settings.theme").value("green"))
+				.andExpect(jsonPath("$.widget.settings.bgColor").value("#0b0710"))
+				.andExpect(jsonPath("$.widget.settings.textColor").value("#ffffff"))
+				.andExpect(jsonPath("$.widget.settings.accentColor").doesNotExist());
+		createWidget("NOTICE", Map.of("title", "Fechado", "accent", "brand", "accentColor", "#D946EF"), null).andExpect(status().isCreated())
+				.andExpect(jsonPath("$.widget.settings.accentColor").value("#d946ef"));
+		for (String invalid : List.of("roxo", "#fff", "#12345g", "rgb(1,2,3)", "#8B5CF6; background: url(x)")) {
+			createWidget("CLOCK", clockSettings(Map.of("bgColor", invalid)), null).andExpect(status().isBadRequest())
+					.andExpect(jsonPath("$.error").value("Cor inválida: use o formato #RRGGBB (por exemplo, #8B5CF6)"));
+		}
+		createWidget("CLOCK", clockSettings(Map.of("accentColor", "azul")), null).andExpect(status().isBadRequest());
+	}
+
+	@Test
 	void aCustomFeedMustBeHttpsAndPublic() {
 		WebhookUrlPolicy strict = new WebhookUrlPolicy(false);
 

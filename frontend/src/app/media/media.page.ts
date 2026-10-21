@@ -1,5 +1,5 @@
 import { HttpEventType } from '@angular/common/http';
-import { Component, ElementRef, OnInit, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '../core/api.service';
@@ -17,16 +17,42 @@ import { MediaThumb } from './media-thumb';
 import { WidgetEditorComponent } from './widget-editor';
 import { MAX_UPLOAD_BYTES, VIDEO_CONVERTER, planConversion } from './video-convert';
 import { VideoInfo, exceedsFullHd, looksLikeVideo, probeVideo } from './video-probe';
-import { QR_THEMES, QR_IMAGE_SIZE, QrTheme, drawQr, qrFileName } from './qr';
+import { ColorFieldComponent } from '../shared/color-field';
+import { QR_THEMES, QR_IMAGE_SIZE, QrColors, QrTheme, defaultQrColors, drawQr, qrFileName, qrReadProblem, qrTextContrastLow } from './qr';
+import { isHexColor } from '../core/color';
 
 // MP4 e MOV (o que o iPhone grava, em H.264 ou HEVC); a extensão vale quando o celular não informa o tipo.
 const ACCEPTED = 'image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/x-m4v,.mov,.m4v';
 export const DEFAULT_WEB_SECONDS = 30;
 export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
 
+const QR_COLORS_KEY = 'vyzzu.qr.colors';
+
+/** As cores personalizadas do QR Code usadas da última vez neste navegador (comodidade: nunca é obrigatório). */
+function loadQrColors(): QrColors {
+  const fallback = defaultQrColors();
+  try {
+    const saved = JSON.parse(localStorage.getItem(QR_COLORS_KEY) ?? 'null') as Partial<QrColors> | null;
+    if (saved && (['background', 'card', 'modules', 'text'] as const).every((key) => isHexColor(saved[key]))) {
+      return saved as QrColors;
+    }
+  } catch {
+    // sem armazenamento (janela privada, por exemplo): vale o padrão
+  }
+  return fallback;
+}
+
+function saveQrColors(colors: QrColors): void {
+  try {
+    localStorage.setItem(QR_COLORS_KEY, JSON.stringify(colors));
+  } catch {
+    // sem armazenamento: a escolha vale só nesta abertura
+  }
+}
+
 @Component({
   selector: 'app-media',
-  imports: [MediaThumb, FormsModule, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, MenuComponent, WidgetEditorComponent],
+  imports: [MediaThumb, FormsModule, TPipe, IconComponent, PillComponent, PageHeaderComponent, EmptyStateComponent, MenuComponent, WidgetEditorComponent, ColorFieldComponent],
   template: `
     <app-page-header [title]="'Biblioteca de Mídia' | t" [subtitle]="'Imagens (JPG, PNG, WEBP), vídeos (MP4 ou MOV do iPhone: a conversão para MP4 Full HD é feita ao enviar), páginas da web e QR Codes disponíveis para as playlists.' | t" icon="image">
       @if (auth.can('content')) {
@@ -178,8 +204,23 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
                   @for (theme of themes; track theme[0]) {
                     <option [value]="theme[0]">{{ theme[1].label | t }}</option>
                   }
+                  <option value="personalizado">{{ 'Personalizado' | t }}</option>
                 </select>
               </div>
+              @if (qrTheme() === 'personalizado') {
+                <fieldset class="colors">
+                  <legend>{{ 'Cores personalizadas' | t }}</legend>
+                  <div class="two">
+                    <app-color-field fieldId="qr-bg" [label]="'Fundo' | t" [value]="qrColors().background" [fallback]="defaults.background" (valueChange)="setQrColor('background', $event)" />
+                    <app-color-field fieldId="qr-text-color" [label]="'Texto' | t" [value]="qrColors().text" [fallback]="defaults.text" (valueChange)="setQrColor('text', $event)" />
+                    <app-color-field fieldId="qr-card" [label]="'Cartão do código' | t" [value]="qrColors().card" [fallback]="defaults.card" (valueChange)="setQrColor('card', $event)" />
+                    <app-color-field fieldId="qr-modules" [label]="'Código' | t" [value]="qrColors().modules" [fallback]="defaults.modules" (valueChange)="setQrColor('modules', $event)" />
+                  </div>
+                  @if (colorProblem(); as text) {
+                    <p class="warn-line" [class.bad]="colorBlocks()" role="status"><app-icon name="triangle-alert" [size]="15" />{{ text }}</p>
+                  }
+                </fieldset>
+              }
             </div>
             <div class="preview">
               <canvas #qrCanvas [width]="imageSize" [height]="imageSize" [attr.aria-label]="'Pré-visualização do QR Code' | t"></canvas>
@@ -190,7 +231,7 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
           </div>
           <div class="actions">
             <button type="button" class="secondary" (click)="closeModal()">{{ 'Cancelar' | t }}</button>
-            <button type="submit" class="primary" [disabled]="busy() || !qrText().trim() || !!qrProblem()">{{ 'Salvar na biblioteca' | t }}</button>
+            <button type="submit" class="primary" [disabled]="busy() || !qrText().trim() || !!qrProblem() || colorBlocks()">{{ 'Salvar na biblioteca' | t }}</button>
           </div>
         </form>
       </div>
@@ -222,11 +263,18 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
     .name, .url { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .meta small { color: var(--muted); min-height: 1.2em; }
     .modal-box.qr { max-width: 820px; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .colors { margin: 4px 0 16px; padding: 12px 14px 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel-2); }
+    .colors legend { padding: 0 6px; font-weight: 650; }
+    .warn-line { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0 0; font-size: 13.5px; color: var(--warn-fg); }
+    .warn-line.bad { color: var(--err-fg); }
+    .warn-line app-icon { flex: none; margin-top: 2px; }
     .qr-layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; align-items: start; }
     .preview canvas { width: 100%; height: auto; aspect-ratio: 1; border: 1px solid var(--line); border-radius: 10px; background: #fff; display: block; }
     .preview .error { margin-top: 10px; }
     @media (max-width: 720px) {
       .qr-layout { grid-template-columns: 1fr; }
+      .two { grid-template-columns: 1fr; }
       .upload { width: 100%; text-align: center; padding: 12px 16px; }
       .head-actions { display: grid; grid-template-columns: 1fr 1fr; }
       .head-actions .upload { grid-column: 1 / -1; }
@@ -267,6 +315,25 @@ export class MediaPage implements OnInit {
   readonly qrTitle = signal('');
   readonly qrCaption = signal(DEFAULT_QR_CAPTION);
   readonly qrTheme = signal<QrTheme>('escuro');
+  /** As cores do tema "personalizado"; ficam guardadas neste navegador para a próxima vez. */
+  readonly qrColors = signal<QrColors>(loadQrColors());
+  readonly defaults = defaultQrColors();
+  /** O motivo de as cores escolhidas não servirem (ou de merecerem atenção); só no tema personalizado. */
+  readonly colorProblem = computed(() => {
+    if (this.qrTheme() !== 'personalizado') {
+      return null;
+    }
+    const read = qrReadProblem(this.qrColors());
+    if (read === 'inverted') {
+      return tr('O código precisa ser mais escuro que o cartão: o celular não lê um código claro sobre um cartão escuro.');
+    }
+    if (read === 'low') {
+      return tr('Contraste baixo entre o código e o cartão: o celular pode não conseguir ler. Escolha um código mais escuro ou um cartão mais claro.');
+    }
+    return qrTextContrastLow(this.qrColors()) ? tr('Contraste baixo entre o fundo e o texto: o título e a legenda ficam difíceis de ler.') : null;
+  });
+  /** Código claro sobre cartão escuro (ou quase sem contraste) não se lê: impede de salvar. */
+  readonly colorBlocks = computed(() => this.qrTheme() === 'personalizado' && qrReadProblem(this.qrColors()) !== null);
   readonly qrProblem = signal<string | null>(null);
   readonly themes = Object.entries(QR_THEMES);
   readonly imageSize = QR_IMAGE_SIZE;
@@ -276,7 +343,7 @@ export class MediaPage implements OnInit {
     // A pré-visualização é redesenhada a cada tecla (e quando a janela abre e o canvas passa a existir).
     effect(() => {
       const canvas = this.qrCanvas()?.nativeElement;
-      const drawing = { text: this.qrText(), title: this.qrTitle(), caption: this.qrCaption(), theme: this.qrTheme() };
+      const drawing = { text: this.qrText(), title: this.qrTitle(), caption: this.qrCaption(), theme: this.qrTheme(), colors: this.qrColors() };
       if (canvas) {
         this.paintQr(canvas, drawing);
       }
@@ -347,8 +414,8 @@ export class MediaPage implements OnInit {
 
   saveQr(): void {
     const canvas = this.qrCanvas()?.nativeElement;
-    const drawing = { text: this.qrText(), title: this.qrTitle(), caption: this.qrCaption(), theme: this.qrTheme() };
-    if (!canvas || this.qrProblem() || !drawing.text.trim()) {
+    const drawing = { text: this.qrText(), title: this.qrTitle(), caption: this.qrCaption(), theme: this.qrTheme(), colors: this.qrColors() };
+    if (!canvas || this.qrProblem() || this.colorBlocks() || !drawing.text.trim()) {
       return;
     }
     this.busy.set(true);
@@ -375,7 +442,13 @@ export class MediaPage implements OnInit {
     }, 'image/png');
   }
 
-  private paintQr(canvas: HTMLCanvasElement, drawing: { text: string; title: string; caption: string; theme: QrTheme }): void {
+  /** Uma cor do tema personalizado; em branco (null) volta ao padrão. A escolha fica guardada neste navegador. */
+  setQrColor(key: keyof QrColors, value: string | null): void {
+    this.qrColors.update((current) => ({ ...current, [key]: value ?? this.defaults[key] }));
+    saveQrColors(this.qrColors());
+  }
+
+  private paintQr(canvas: HTMLCanvasElement, drawing: { text: string; title: string; caption: string; theme: QrTheme; colors: QrColors }): void {
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       return;

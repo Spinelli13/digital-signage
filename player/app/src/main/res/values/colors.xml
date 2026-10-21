@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="brand_background">#070A09</color>
+    <color name="brand_background">#08050C</color>
     <color name="brand_accent">#C4B5FD</color>
     <color name="brand_text">#F4F4F5</color>
     <color name="brand_muted">#A1A1AA</color>

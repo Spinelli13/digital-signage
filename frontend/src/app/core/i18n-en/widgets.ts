@@ -67,11 +67,24 @@ export const WIDGETS: Record<string, string> = {
   // cores
   Escuro: 'Dark',
   Claro: 'Light',
+  Violeta: 'Violet',
   Verde: 'Green',
   Azul: 'Blue',
   Amarelo: 'Yellow',
   Vermelho: 'Red',
-  'Verde-claro': 'Light green',
+  'Cores personalizadas': 'Custom colors',
+  'Escolha o fundo, o texto e o destaque do widget. O que ficar em branco usa as cores do tema.':
+    'Pick the widget background, text and highlight. Anything left blank uses the theme colors.',
+  Fundo: 'Background',
+  Texto: 'Text',
+  Destaque: 'Highlight',
+  'Use o formato #RRGGBB': 'Use the #RRGGBB format',
+  'Usar a cor do tema': 'Use the theme color',
+  'Voltar às cores do tema': 'Back to the theme colors',
+  'Contraste baixo entre o fundo e o texto: na TV, de longe, fica difícil de ler. Escolha cores mais diferentes.':
+    'Low contrast between the background and the text: from a distance on the TV it is hard to read. Pick colors that differ more.',
+  'Contraste baixo entre o fundo e o destaque: os detalhes podem sumir. Escolha uma cor de destaque mais diferente.':
+    'Low contrast between the background and the highlight: details may disappear. Pick a highlight color that differs more.',
 
   // pré-visualização
   'Como fica na TV': 'How it looks on the TV',
