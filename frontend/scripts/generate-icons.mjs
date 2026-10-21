@@ -23,7 +23,7 @@ const ICONS = [
   'arrow-right', 'arrow-left', 'arrow-up', 'arrow-down', 'chevron-down', 'chevron-up', 'chevron-right', 'chevron-left',
   'image-plus', 'grip-vertical', 'file-text', 'book-open', 'mail', 'key-round', 'lock',
   // tema, idioma e conta
-  'sun', 'moon', 'globe', 'languages', 'user', 'palette',
+  'sun', 'moon', 'globe', 'languages', 'user', 'palette', 'ticket',
   // estado
   'circle-check', 'circle-x', 'circle-alert', 'triangle-alert', 'info', 'wifi', 'wifi-off', 'clock', 'calendar',
   'calendar-clock', 'hourglass', 'circle-pause', 'badge-check', 'shield-check',

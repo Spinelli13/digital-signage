@@ -82,7 +82,7 @@ export class AuthService {
    */
   has(feature: FeatureCode): boolean {
     const me = this.me();
-    return !me || me.platformAdmin || (me.tenant.plan.features?.includes(feature) ?? true);
+    return !me || me.platformAdmin || ((me.tenant.effectivePlan ?? me.tenant.plan).features?.includes(feature) ?? true);
   }
 
   /** O operador entra no cliente indicado (todas as chamadas passam a atuar nele). */

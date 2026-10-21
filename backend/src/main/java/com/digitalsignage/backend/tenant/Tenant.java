@@ -35,6 +35,14 @@ public class Tenant {
 	@JoinColumn(name = "plan_id", nullable = false)
 	private Plan plan;
 
+	/** Plano liberado por um cupom, valendo até {@code bonusPlanUntil}. O plano cobrado continua sendo {@link #plan}. */
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "bonus_plan_id")
+	private Plan bonusPlan;
+
+	@Column(name = "bonus_plan_until")
+	private Instant bonusPlanUntil;
+
 	@Column(nullable = false)
 	private String status = TenantStatus.TRIAL.name();
 
@@ -101,6 +109,28 @@ public class Tenant {
 
 	public void setPlan(Plan plan) {
 		this.plan = plan;
+	}
+
+	public Plan getBonusPlan() {
+		return bonusPlan;
+	}
+
+	public Instant getBonusPlanUntil() {
+		return bonusPlanUntil;
+	}
+
+	public void setBonus(Plan bonusPlan, Instant until) {
+		this.bonusPlan = bonusPlan;
+		this.bonusPlanUntil = until;
+	}
+
+	public boolean hasBonusAt(Instant now) {
+		return bonusPlan != null && bonusPlanUntil != null && bonusPlanUntil.isAfter(now);
+	}
+
+	/** O plano que vale agora para limites e recursos: o liberado por cupom (se ainda vale) ou o contratado. A cobrança usa sempre {@link #getPlan()}. */
+	public Plan getEffectivePlan(Instant now) {
+		return hasBonusAt(now) ? bonusPlan : plan;
 	}
 
 	public TenantStatus getStatus() {

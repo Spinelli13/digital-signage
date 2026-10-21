@@ -165,7 +165,7 @@ export class TeamPage implements OnInit {
     return this.editing !== null && this.isMe(this.editing);
   }
 
-  readonly limit = computed(() => formatLimit(this.auth.me()?.tenant.plan.maxUsers ?? null));
+  readonly limit = computed(() => formatLimit(this.auth.me()?.tenant.effectivePlan?.maxUsers ?? this.auth.me()?.tenant.plan.maxUsers ?? null));
 
   readonly canSubmit = computed(() => {
     if (!this.name().trim()) {

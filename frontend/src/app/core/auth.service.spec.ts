@@ -177,7 +177,7 @@ describe('capabilityGuard', () => {
 
 describe('plan features', () => {
   const withFeatures = (role: 'ADMIN' | 'PLATFORM_ADMIN', features: string[]) =>
-    meFixture(role, { tenant: tenantFixture({ plan: { ...PLAN, features: features as typeof PLAN.features } }) });
+    meFixture(role, { tenant: tenantFixture({ effectivePlan: { ...PLAN, features: features as typeof PLAN.features } }) });
 
   it('is optimistic while the account has not arrived', () => {
     const { auth } = open('jwt');
@@ -192,6 +192,16 @@ describe('plan features', () => {
     expect(auth.has('CAMPAIGNS')).toBe(true);
     expect(auth.has('QUEUE')).toBe(false);
     expect(auth.has('PROOF_OF_PLAY')).toBe(false);
+  });
+
+  it('counts the plan unlocked by a coupon, not only the contracted one', () => {
+    const { auth } = open('jwt');
+    auth.me.set(
+      meFixture('ADMIN', { tenant: tenantFixture({ plan: { ...PLAN, features: [] }, effectivePlan: { ...PLAN, features: ['QUEUE'] }, bonusUntil: '2026-12-05T12:00:00Z' }) }),
+    );
+
+    expect(auth.has('QUEUE')).toBe(true);
+    expect(auth.has('CAMPAIGNS')).toBe(false);
   });
 
   it('shows everything to the platform operator, whatever the plan of the client being visited', () => {
@@ -215,7 +225,7 @@ describe('featureGuard', () => {
 
   it('explains instead of opening a feature the plan does not include', async () => {
     const { auth } = open('jwt');
-    auth.me.set(meFixture('ADMIN', { tenant: tenantFixture({ plan: { ...PLAN, features: ['CAMPAIGNS'] } }) }));
+    auth.me.set(meFixture('ADMIN', { tenant: tenantFixture({ effectivePlan: { ...PLAN, features: ['CAMPAIGNS'] } }) }));
 
     const result = await run('QUEUE');
 

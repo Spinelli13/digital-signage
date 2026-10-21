@@ -21,6 +21,8 @@ export function tenantFixture(overrides: Partial<TenantSummary> = {}): TenantSum
     slug: 'minha-empresa',
     status: 'ACTIVE' as TenantStatus,
     plan: PLAN,
+    effectivePlan: PLAN,
+    bonusUntil: null,
     usage: { devices: 2, storageBytes: 300 * 1024 * 1024, users: 2 },
     trialEndsAt: null,
     currentPeriodEnd: null,

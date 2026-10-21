@@ -10,12 +10,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.digitalsignage.backend.common.ConflictException;
+import com.digitalsignage.backend.coupon.CouponService;
 import com.digitalsignage.backend.plan.Plan;
 import com.digitalsignage.backend.plan.PlanRepository;
 import com.digitalsignage.backend.security.PanelUser;
@@ -25,6 +27,7 @@ import com.digitalsignage.backend.tenant.TenantSummary;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /** "Plano e cobrança" do cliente: o plano, o uso, as faturas e como pagar. Só o Administrador do cliente. */
@@ -52,7 +55,12 @@ public class BillingController {
 			String paymentInstructions,
 			String supportEmail,
 			/** Os planos disponíveis (para o cliente comparar e pedir a troca). */
-			List<PlanOption> plans) {
+			List<PlanOption> plans,
+			/** Os cupons que o cliente já resgatou (os que ainda valem vêm marcados). */
+			List<CouponService.RedeemedCoupon> coupons) {
+	}
+
+	public record RedeemRequest(@NotBlank @Size(max = 60) String code) {
 	}
 
 	/** Campos ausentes não mudam. */
@@ -63,6 +71,7 @@ public class BillingController {
 	private final InvoiceRepository invoices;
 	private final PlanRepository plans;
 	private final PlatformSettingsRepository settings;
+	private final CouponService coupons;
 	private final TenantSummary.Factory summaries;
 	private final Clock clock;
 	private final ZoneId zone;
@@ -72,6 +81,7 @@ public class BillingController {
 			InvoiceRepository invoices,
 			PlanRepository plans,
 			PlatformSettingsRepository settings,
+			CouponService coupons,
 			TenantSummary.Factory summaries,
 			Clock clock,
 			@Value("${app.billing.timezone:America/Sao_Paulo}") String zone) {
@@ -79,6 +89,7 @@ public class BillingController {
 		this.invoices = invoices;
 		this.plans = plans;
 		this.settings = settings;
+		this.coupons = coupons;
 		this.summaries = summaries;
 		this.clock = clock;
 		this.zone = ZoneId.of(zone);
@@ -96,7 +107,14 @@ public class BillingController {
 				// só as faturas DESTE cliente (a consulta recebe o cliente: as faturas não passam pelo isolamento automático)
 				invoices.findByTenantIdOrderByCreatedAtDescIdDesc(tenant.getId()).stream().map(invoice -> InvoiceResponse.of(invoice, tenant.getName(), today)).toList(),
 				platform.getCompanyName(), platform.getPaymentInstructions(), platform.getSupportEmail(),
-				plans.findAllByOrderBySortOrderAscIdAsc().stream().filter(Plan::isActive).filter(plan -> !"interno".equals(plan.getCode())).map(PlanOption::of).toList());
+				plans.findAllByOrderBySortOrderAscIdAsc().stream().filter(Plan::isActive).filter(plan -> !"interno".equals(plan.getCode())).map(PlanOption::of).toList(),
+				coupons.redeemedBy(tenant.getId()));
+	}
+
+	/** O administrador do cliente resgata um cupom de assinatura (desconto, dias grátis ou plano liberado). */
+	@PostMapping("/coupon")
+	public CouponService.RedeemedCoupon redeemCoupon(@AuthenticationPrincipal PanelUser user, @Valid @RequestBody RedeemRequest request) {
+		return coupons.redeem(user.tenantId(), user.email(), request.code());
 	}
 
 	/** Dados cadastrais do cliente (nome e contato de cobrança). */

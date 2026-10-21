@@ -3,13 +3,14 @@ import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
-import { BillingInfo, PlanOption } from '../core/models';
+import { BillingInfo, PlanOption, RedeemedCoupon } from '../core/models';
 import { TPipe, formatDate, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
 import { IconComponent } from '../shared/icon';
 import { IconName } from '../shared/icons';
 import { EmptyStateComponent, LEGACY_TONE, PageHeaderComponent, PillComponent, SkeletonComponent, Tone } from '../shared/ui';
 import {
+  couponBenefit,
   daysUntil,
   FEATURES,
   formatLimit,
@@ -43,6 +44,9 @@ import {
             <small class="eyebrow"><app-icon name="sparkles" [size]="14" />{{ 'Seu plano' | t }}</small>
             <h2>{{ planName(billing.tenant.plan.name) }}</h2>
             <span class="price num">{{ price(billing.tenant.plan.priceCents, billing.tenant.plan.currency) }}</span>
+            @if (billing.tenant.bonusUntil) {
+              <small class="bonus"><app-icon name="ticket" [size]="14" />{{ 'Plano {plan} liberado por cupom até {date}' | t: { plan: planName(billing.tenant.effectivePlan.name), date: date(billing.tenant.bonusUntil) } }}</small>
+            }
           </div>
           <div class="status">
             <app-pill [tone]="look().tone" [icon]="look().icon">{{ statusLabel() }}</app-pill>
@@ -63,6 +67,32 @@ import {
             </div>
           }
         </div>
+      </div>
+
+      <div class="card section">
+        <h3 class="sec"><app-icon name="ticket" [size]="18" />{{ 'Cupom' | t }}</h3>
+        <form class="redeem" (ngSubmit)="redeem()">
+          <input name="coupon" autocomplete="off" autocapitalize="characters" [attr.aria-label]="'Código do cupom' | t" [placeholder]="'Digite o código do cupom' | t"
+            [ngModel]="couponCode()" (ngModelChange)="couponCode.set($event)" />
+          <button type="submit" class="primary" [disabled]="busy() || !couponCode().trim()"><app-icon name="check" [size]="16" />{{ 'Resgatar' | t }}</button>
+        </form>
+        @if (billing.coupons.length === 0) {
+          <p class="muted">{{ 'Tem um cupom de desconto, dias grátis ou plano liberado? Digite o código acima.' | t }}</p>
+        } @else {
+          <ul class="redeemed">
+            @for (item of billing.coupons; track item.code) {
+              <li>
+                <span class="mono">{{ item.code }}</span>
+                <span class="grow">{{ benefit(item) }}</span>
+                @if (item.active) {
+                  <app-pill tone="ok" icon="circle-check">{{ detail(item) }}</app-pill>
+                } @else {
+                  <app-pill icon="circle-pause">{{ 'Já usado' | t }}</app-pill>
+                }
+              </li>
+            }
+          </ul>
+        }
       </div>
 
       <div class="card section">
@@ -186,6 +216,12 @@ import {
     .fill { height: 100%; border-radius: 999px; background: var(--accent); }
     .bar.high .fill { background: #f5b342; }
     .bar.full .fill { background: #ff7a7a; }
+    .bonus { display: flex; align-items: center; gap: 6px; margin-top: 6px; color: rgba(255, 255, 255, 0.9); }
+    .redeem { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    .redeem input { flex: 1 1 220px; min-width: 0; text-transform: uppercase; }
+    .redeemed { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
+    .redeemed li { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel-2); }
+    .redeemed .grow { flex: 1 1 200px; }
     .inv { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
     .instructions { white-space: pre-line; }
     .plans { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-top: 12px; }
@@ -214,10 +250,11 @@ export class BillingPage implements OnInit {
   readonly name = signal('');
   readonly billingEmail = signal('');
   readonly document = signal('');
+  readonly couponCode = signal('');
 
   readonly rows = computed(() => {
     const billing = this.info();
-    return billing ? usageRows(billing.tenant.plan, billing.tenant.usage) : [];
+    return billing ? usageRows(billing.tenant.effectivePlan ?? billing.tenant.plan, billing.tenant.usage) : [];
   });
 
   readonly statusLabel = computed(() => {
@@ -299,6 +336,37 @@ export class BillingPage implements OnInit {
       }),
     );
     return `mailto:${billing.supportEmail}?subject=${subject}&body=${body}`;
+  }
+
+  benefit(item: RedeemedCoupon): string {
+    return couponBenefit(item);
+  }
+
+  /** Para o cupom que ainda vale: quantas faturas faltam ou até quando o plano está liberado. */
+  detail(item: RedeemedCoupon): string {
+    if (item.kind === 'PLAN_UPGRADE') {
+      return tr('até {date}', { date: formatDate(item.until) });
+    }
+    return tr('{n} fatura(s) restante(s)', { n: item.invoicesLeft ?? 0 });
+  }
+
+  redeem(): void {
+    const code = this.couponCode().trim();
+    if (!code || this.busy()) {
+      return;
+    }
+    this.busy.set(true);
+    this.api.redeemCoupon(code).subscribe({
+      next: (redeemed) => {
+        this.busy.set(false);
+        this.couponCode.set('');
+        this.notice.show(tr('Cupom {code} resgatado: {benefit}.', { code: redeemed.code, benefit: couponBenefit(redeemed) }));
+        this.load();
+        void this.auth.loadMe();
+      },
+      // "Cupom inválido ou expirado." e os demais motivos aparecem no aviso de erro
+      error: () => this.busy.set(false),
+    });
   }
 
   saveProfile(): void {

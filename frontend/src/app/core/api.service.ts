@@ -45,6 +45,11 @@ import {
   MonitoringSettings,
   MonitoringSettingsRequest,
   PlatformOverview,
+  Coupon,
+  CouponBatch,
+  CouponBatchRequest,
+  CouponRedemption,
+  CouponRequest,
   Manager,
   ManagerRequest,
   ManagerUpdate,
@@ -68,6 +73,7 @@ import {
   ReleaseInfo,
   ReportRange,
   Summary,
+  RedeemedCoupon,
   TeamMember,
   TeamMemberRequest,
   TeamMemberUpdate,
@@ -241,6 +247,34 @@ export class ApiService {
 
   deletePlatformPlan(id: number): Observable<void> {
     return this.http.delete<void>(this.url(`/platform/plans/${id}`));
+  }
+
+  redeemCoupon(code: string): Observable<RedeemedCoupon> {
+    return this.http.post<RedeemedCoupon>(this.url('/billing/coupon'), { code });
+  }
+
+  platformCoupons(): Observable<Coupon[]> {
+    return this.http.get<Coupon[]>(this.url('/platform/coupons'));
+  }
+
+  createCoupon(body: CouponRequest): Observable<Coupon> {
+    return this.http.post<Coupon>(this.url('/platform/coupons'), body);
+  }
+
+  updateCoupon(id: number, body: CouponRequest): Observable<Coupon> {
+    return this.http.put<Coupon>(this.url(`/platform/coupons/${id}`), body);
+  }
+
+  deleteCoupon(id: number): Observable<void> {
+    return this.http.delete<void>(this.url(`/platform/coupons/${id}`));
+  }
+
+  createCouponBatch(body: CouponBatchRequest): Observable<CouponBatch> {
+    return this.http.post<CouponBatch>(this.url('/platform/coupons/batch'), body);
+  }
+
+  couponRedemptions(id: number): Observable<CouponRedemption[]> {
+    return this.http.get<CouponRedemption[]>(this.url(`/platform/coupons/${id}/redemptions`));
   }
 
   managers(): Observable<Manager[]> {

@@ -1,5 +1,5 @@
 import { currentLocale, tr, trServer } from './i18n';
-import { FeatureCode, InvoiceStatus, PlanInfo, Role, TenantStatus, Usage } from './models';
+import { CouponKind, CouponState, FeatureCode, InvoiceStatus, PlanInfo, Role, TenantStatus, Usage } from './models';
 
 /** Os textos abaixo são as chaves em português; use roleLabel() etc. para obter o texto no idioma atual. */
 export const ROLE_LABELS: Record<Role, string> = {
@@ -152,4 +152,45 @@ export function dateInput(iso: string | null): string {
 /** Data do campo (AAAA-MM-DD) como instante: fim do dia no fuso do navegador. */
 export function endOfDayIso(date: string): string {
   return new Date(`${date}T23:59:59`).toISOString();
+}
+
+/** Os tipos de cupom, na ordem em que aparecem ao criar. */
+export const COUPON_KINDS: { code: CouponKind; label: string; help: string }[] = [
+  { code: 'PERCENT_OFF', label: 'Desconto em porcentagem', help: 'Tira uma porcentagem das próximas faturas.' },
+  { code: 'AMOUNT_OFF', label: 'Desconto em valor', help: 'Tira um valor fixo das próximas faturas.' },
+  { code: 'FREE_DAYS', label: 'Dias grátis', help: 'Estende o teste ou o período já pago.' },
+  { code: 'PLAN_UPGRADE', label: 'Plano liberado por um tempo', help: 'Libera um plano maior, sem mudar o que é cobrado.' },
+];
+
+export const COUPON_STATE_LABELS: Record<CouponState, string> = {
+  ACTIVE: 'Valendo',
+  SCHEDULED: 'Programado',
+  EXPIRED: 'Expirado',
+  EXHAUSTED: 'Esgotado',
+  OFF: 'Desligado',
+};
+
+export const COUPON_STATE_TONES: Record<CouponState, 'ok' | 'warn' | 'neutral' | 'err'> = {
+  ACTIVE: 'ok',
+  SCHEDULED: 'warn',
+  EXPIRED: 'neutral',
+  EXHAUSTED: 'neutral',
+  OFF: 'neutral',
+};
+
+export const couponKindLabel = (kind: CouponKind): string => tr(COUPON_KINDS.find((item) => item.code === kind)?.label ?? kind);
+export const couponStateLabel = (state: CouponState): string => tr(COUPON_STATE_LABELS[state]);
+
+/** Em uma frase, o que o cupom dá ("20% de desconto em 3 fatura(s)"). */
+export function couponBenefit(coupon: { kind: CouponKind; value: number; durationMonths: number | null; planName?: string | null }): string {
+  switch (coupon.kind) {
+    case 'PERCENT_OFF':
+      return tr('{value}% de desconto em {n} fatura(s)', { value: coupon.value, n: coupon.durationMonths ?? 1 });
+    case 'AMOUNT_OFF':
+      return tr('{amount} de desconto em {n} fatura(s)', { amount: formatMoney(coupon.value), n: coupon.durationMonths ?? 1 });
+    case 'FREE_DAYS':
+      return tr('{n} dia(s) grátis', { n: coupon.value });
+    default:
+      return tr('Plano {plan} liberado por {n} dia(s)', { plan: planText(coupon.planName ?? ''), n: coupon.value });
+  }
 }

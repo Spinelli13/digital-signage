@@ -41,6 +41,7 @@ const billing = (overrides: Partial<BillingInfo> = {}): BillingInfo => ({
     { id: 3, code: 'basico', name: 'Básico', description: null, priceCents: 4900, currency: 'BRL', maxDevices: 5, maxStorageMb: 2048, maxUsers: 5, maxUploadMb: null, features: ['CAMPAIGNS', 'QUEUE'] },
     { id: 4, code: 'pro', name: 'Profissional', description: 'Para redes', priceCents: 14900, currency: 'BRL', maxDevices: null, maxStorageMb: null, maxUsers: 20, maxUploadMb: 100, features: ['CAMPAIGNS', 'LAYOUTS', 'WIDGETS', 'PRICES', 'QUEUE', 'PROOF_OF_PLAY'] },
   ],
+  coupons: [],
   ...overrides,
 });
 
@@ -167,6 +168,55 @@ describe('BillingPage', () => {
     expect(page.notice.text()).toBe('Dados da conta salvos.');
     backend.expectOne(`${API}/billing`).flush(billing());
     backend.expectOne(`${API}/auth/me`).flush(meFixture('ADMIN'));
+  });
+
+  it('redeems a coupon, tells what it gives and refreshes both the page and the account', async () => {
+    await show(billing());
+    page.couponCode.set('  dez20 ');
+
+    page.redeem();
+
+    const request = backend.expectOne(`${API}/billing/coupon`);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ code: 'dez20' });
+    request.flush({ code: 'DEZ20', description: null, kind: 'PERCENT_OFF', value: 20, durationMonths: 3, invoicesLeft: 3, planName: null, redeemedAt: '2026-10-21T10:00:00Z', until: null, active: true });
+    expect(page.notice.text()).toBe('Cupom DEZ20 resgatado: 20% de desconto em 3 fatura(s).');
+    expect(page.couponCode()).toBe('');
+    backend.expectOne(`${API}/billing`).flush(billing());
+    backend.expectOne(`${API}/auth/me`).flush(meFixture('ADMIN'));
+  });
+
+  it('keeps the typed code when the coupon is refused and does not call the server with an empty one', async () => {
+    await show(billing());
+    page.couponCode.set('   ');
+    page.redeem();
+    backend.expectNone(`${API}/billing/coupon`);
+
+    page.couponCode.set('NAOEXISTE');
+    page.redeem();
+    backend.expectOne(`${API}/billing/coupon`).flush({ error: 'Cupom inválido ou expirado.' }, { status: 400, statusText: 'Bad Request' });
+    expect(page.couponCode()).toBe('NAOEXISTE');
+    expect(page.busy()).toBe(false);
+  });
+
+  it('lists the coupons already redeemed and the plan unlocked by one', async () => {
+    const info = billing({
+      tenant: tenantFixture({ bonusUntil: '2026-12-05T12:00:00Z', effectivePlan: { ...tenantFixture().plan, name: 'Profissional' } }),
+      coupons: [
+        { code: 'DEZ20', description: null, kind: 'PERCENT_OFF', value: 20, durationMonths: 3, invoicesLeft: 2, planName: null, redeemedAt: '2026-10-21T10:00:00Z', until: null, active: true },
+        { code: 'PRO30', description: null, kind: 'PLAN_UPGRADE', value: 30, durationMonths: null, invoicesLeft: null, planName: 'Profissional', redeemedAt: '2026-10-21T10:00:00Z', until: '2026-12-05T12:00:00Z', active: true },
+        { code: 'DIAS5', description: null, kind: 'FREE_DAYS', value: 5, durationMonths: null, invoicesLeft: null, planName: null, redeemedAt: '2026-09-01T10:00:00Z', until: null, active: false },
+      ],
+    });
+    const element = await show(info);
+    const text = element.textContent ?? '';
+    expect(text).toContain('DEZ20');
+    expect(text).toContain('20% de desconto em 3 fatura(s)');
+    expect(text).toContain('2 fatura(s) restante(s)');
+    expect(text).toContain('Plano Profissional liberado por 30 dia(s)');
+    expect(text).toContain('Plano Profissional liberado por cupom até');
+    expect(text).toContain('5 dia(s) grátis');
+    expect(text).toContain('Já usado');
   });
 
   it('does not save without a name', async () => {

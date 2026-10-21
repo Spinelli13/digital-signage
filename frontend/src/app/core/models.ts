@@ -830,6 +830,10 @@ export interface TenantSummary {
   slug: string;
   status: TenantStatus;
   plan: PlanInfo;
+  /** O plano que vale agora para limites e recursos (o liberado por cupom, se houver; senão, o contratado). */
+  effectivePlan: PlanInfo;
+  /** Até quando vale o plano liberado por cupom. */
+  bonusUntil: string | null;
   usage: Usage;
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
@@ -941,6 +945,84 @@ export interface BillingInfo {
   paymentInstructions: string | null;
   supportEmail: string | null;
   plans: PlanOption[];
+  /** Os cupons que o cliente já resgatou. */
+  coupons: RedeemedCoupon[];
+}
+
+export type CouponKind = 'PERCENT_OFF' | 'AMOUNT_OFF' | 'FREE_DAYS' | 'PLAN_UPGRADE';
+
+/** Um cupom que o cliente resgatou (em "Plano e cobrança"). */
+export interface RedeemedCoupon {
+  code: string;
+  description: string | null;
+  kind: CouponKind;
+  value: number;
+  durationMonths: number | null;
+  invoicesLeft: number | null;
+  planName: string | null;
+  redeemedAt: string;
+  until: string | null;
+  active: boolean;
+}
+
+export type CouponState = 'ACTIVE' | 'SCHEDULED' | 'EXPIRED' | 'EXHAUSTED' | 'OFF';
+
+/** Um cupom de assinatura, como o gestor o vê. */
+export interface Coupon {
+  id: number;
+  code: string;
+  description: string | null;
+  kind: CouponKind;
+  value: number;
+  durationMonths: number | null;
+  upgradePlanId: number | null;
+  upgradePlanName: string | null;
+  validFrom: string | null;
+  validUntil: string | null;
+  maxRedemptions: number | null;
+  redeemedCount: number;
+  active: boolean;
+  batch: string | null;
+  state: CouponState;
+  createdAt: string;
+}
+
+export interface CouponRequest {
+  code: string;
+  description: string | null;
+  kind: CouponKind;
+  value: number;
+  durationMonths: number | null;
+  upgradePlanId: number | null;
+  validFrom: string | null;
+  validUntil: string | null;
+  maxRedemptions: number | null;
+  active: boolean;
+}
+
+export interface CouponBatchRequest {
+  prefix: string;
+  quantity: number;
+  batch: string;
+  description: string | null;
+  kind: CouponKind;
+  value: number;
+  durationMonths: number | null;
+  upgradePlanId: number | null;
+  validFrom: string | null;
+  validUntil: string | null;
+}
+
+export interface CouponBatch {
+  batch: string;
+  coupons: Coupon[];
+}
+
+export interface CouponRedemption {
+  tenantId: number;
+  tenantName: string;
+  redeemedBy: string | null;
+  redeemedAt: string;
 }
 
 export interface PlatformPlan extends PlanOption {

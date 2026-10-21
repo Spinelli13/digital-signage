@@ -62,6 +62,10 @@ export const routes: Routes = [
             loadComponent: () => import('./platform/platform-invoices.page').then((m) => m.PlatformInvoicesPage),
           },
           {
+            path: 'cupons',
+            loadComponent: () => import('./platform/platform-coupons.page').then((m) => m.PlatformCouponsPage),
+          },
+          {
             path: 'gestores',
             loadComponent: () => import('./platform/platform-managers.page').then((m) => m.PlatformManagersPage),
           },

@@ -1,5 +1,6 @@
 package com.digitalsignage.backend.tenant;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 
@@ -15,6 +16,10 @@ public record TenantSummary(
 		String slug,
 		String status,
 		PlanInfo plan,
+		/** O plano que vale agora (o liberado por cupom, se houver) para limites e recursos. */
+		PlanInfo effectivePlan,
+		/** Até quando vale o plano liberado por cupom (nulo = nenhum). */
+		Instant bonusUntil,
 		UsageService.Usage usage,
 		Instant trialEndsAt,
 		Instant currentPeriodEnd,
@@ -35,15 +40,18 @@ public record TenantSummary(
 	public static class Factory {
 
 		private final UsageService usage;
+		private final Clock clock;
 
-		public Factory(UsageService usage) {
+		public Factory(UsageService usage, Clock clock) {
 			this.usage = usage;
+			this.clock = clock;
 		}
 
 		public TenantSummary of(Tenant tenant) {
+			Instant now = clock.instant();
 			return new TenantSummary(tenant.getId(), tenant.getName(), tenant.getSlug(), tenant.getStatus().name(),
-					PlanInfo.of(tenant.getPlan()), usage.of(tenant.getId()), tenant.getTrialEndsAt(), tenant.getCurrentPeriodEnd(),
-					tenant.getBillingEmail());
+					PlanInfo.of(tenant.getPlan()), PlanInfo.of(tenant.getEffectivePlan(now)), tenant.hasBonusAt(now) ? tenant.getBonusPlanUntil() : null,
+					usage.of(tenant.getId()), tenant.getTrialEndsAt(), tenant.getCurrentPeriodEnd(), tenant.getBillingEmail());
 		}
 	}
 

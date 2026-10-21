@@ -729,6 +729,18 @@ A lista mostra o número, a descrição, o vencimento, o valor e a situação de
 
 > **O pagamento não é automático.** Esta versão não está ligada a um meio de pagamento (cartão, boleto ou PIX automático): a baixa é feita por uma pessoa da operação em **Plataforma → Faturas**.
 
+### 12.3.1 Cupons
+
+Se você recebeu um **código de cupom**, digite-o em **Plano e cobrança → Cupom** e clique em **Resgatar** (só o Administrador). O código vale com maiúsculas ou minúsculas. Um cupom pode dar:
+
+| O que dá | Como funciona |
+|---|---|
+| **Desconto** (em porcentagem ou em valor) | Abate as **próximas faturas** (o cupom diz quantas). Se o desconto cobrir a fatura inteira, ela é dada como paga pelo cupom e o período já vale. Só um desconto por vez; planos gratuitos não têm o que abater. |
+| **Dias grátis** | Empurra o fim do **teste** ou do **período já pago**. Não funciona com fatura em aberto: pague antes. |
+| **Plano liberado por um tempo** | Você usa os limites e recursos de um plano maior até a data indicada; **o que é cobrado não muda**. Quando acaba, volta ao seu plano (nada que você montou é apagado). |
+
+Cada cliente usa **cada cupom uma vez**. "Cupom inválido ou expirado" aparece quando o código não existe, foi desligado, passou da validade, ainda não começou ou já esgotou os usos (de propósito não se diz qual, para não ajudar quem tenta adivinhar). Depois de **10 códigos errados seguidos** o resgate fica bloqueado por cerca de uma hora. Os cupons já resgatados aparecem na própria tela, com o que ainda vale.
+
 ### 12.4 Trocar de plano e dados da conta
 
 Em **Planos disponíveis** você compara preços e limites. O botão **Pedir este plano** abre um e-mail para a operação, que faz a troca. Em **Dados da conta** você ajusta o nome do cliente, o e-mail de cobrança e o CPF/CNPJ.
@@ -769,6 +781,15 @@ Define o **preço**, os **limites** (TVs, espaço em MB, usuários e tamanho má
 ### 13.3.1 Gestores
 
 Em **Plataforma → Gestores** ficam as pessoas que operam o serviço. Cada gestor entra **com o próprio e-mail e senha** (não é preciso dividir o login) e tem acesso a tudo da plataforma. **Novo gestor** pede nome, e-mail (que é o login) e uma **senha provisória** de pelo menos 6 caracteres. Ao entrar pela primeira vez, a pessoa vê a tela **Defina a sua senha** e **precisa trocar a senha provisória** (a nova tem pelo menos 8 caracteres) antes de usar qualquer outra parte do painel. O mesmo vale quando você define uma senha nova para alguém que esqueceu a dela; a sua própria senha você troca em **Minha conta**. Em **Editar** dá para trocar o nome, definir uma senha nova (se ela esquecer) e **desativar** o acesso, que vale na hora. Você não consegue desativar nem excluir o seu próprio usuário (ficaria sem acesso).
+
+### 13.3.2 Cupons de assinatura
+
+Em **Plataforma → Cupons** o gestor cria os cupons que os clientes resgatam em "Plano e cobrança" (ver 12.3.1).
+
+- **Novo cupom:** o código (use **Gerar** para um aleatório), o que dá (desconto em porcentagem, desconto em valor, dias grátis ou plano liberado por um tempo), por quantas faturas ou dias vale, a validade (de/até, opcionais) e **quantos clientes podem usar** (vazio = ilimitado). Uma descrição só para você ajuda a lembrar para quê o cupom serve.
+- **Gerar em lote:** de 1 a 500 códigos de uma vez, aleatórios e **de uso único** (cada código vale para um cliente só), com um começo opcional (ex.: `FEIRA-7K3Q-M9XD`) e o nome do lote. Os códigos aparecem numa caixa para **copiar todos** e entregar um a cada pessoa. Não usam letras que se confundem (0/O, 1/I/L), porque são digitados à mão.
+- **Situação** de cada cupom: *Valendo*, *Programado* (ainda não começou), *Expirado*, *Esgotado* (os usos acabaram) ou *Desligado*. **Ver quem usou** (menu ⋮) mostra os clientes e as datas.
+- Depois que alguém usa um cupom, **o que ele dá não muda mais** (quem já resgatou contou com isso): dá para ajustar a validade, o limite de usos, a descrição e ligar/desligar. Um cupom usado não se exclui: **desligue-o**.
 
 ### 13.4 Faturas e pagamentos
 

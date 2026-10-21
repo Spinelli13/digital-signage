@@ -34,7 +34,7 @@ export class LockedPage {
   readonly title = computed(() => featureLabel(this.code));
   readonly text = computed(() =>
     tr('O plano {plan} não inclui {feature}. Peça um plano que inclua este recurso em "Plano e cobrança".', {
-      plan: planText(this.auth.me()?.tenant.plan.name),
+      plan: planText((this.auth.me()?.tenant.effectivePlan ?? this.auth.me()?.tenant.plan)?.name),
       feature: featureLabel(this.code),
     }),
   );

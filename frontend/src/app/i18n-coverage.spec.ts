@@ -7,7 +7,7 @@ import { ACTIONS } from './core/http-errors';
 import { EN, DICTIONARY_CONFLICTS } from './core/i18n-en';
 import { MEDIA_TYPE_LABELS, STATES } from './core/format';
 import { ALERT_LABELS, EVENT_LABELS, LEVEL_LABELS } from './core/monitoring-labels';
-import { FEATURES, INVOICE_STATUS_LABELS, ROLE_HELP, ROLE_LABELS, TENANT_STATUS_LABELS } from './core/saas';
+import { COUPON_KINDS, COUPON_STATE_LABELS, FEATURES, INVOICE_STATUS_LABELS, ROLE_HELP, ROLE_LABELS, TENANT_STATUS_LABELS } from './core/saas';
 import { DEFAULT_QR_CAPTION } from './media/media.page';
 import { QR_THEMES } from './media/qr';
 import { ACCENTS as WIDGET_ACCENTS, THEMES as WIDGET_THEMES } from './media/widget-editor';
@@ -220,6 +220,8 @@ const TABLES: Record<string, string[]> = {
   'ações dos avisos de erro': ACTIONS.map((action) => action[2]),
   'tipos de widget': WIDGET_KINDS.flatMap((info) => [info.label, info.description]),
   'cores dos widgets': [...WIDGET_THEMES, ...WIDGET_ACCENTS].map((color) => color.label),
+  'tipos de cupom': COUPON_KINDS.flatMap((kind) => [kind.label, kind.help]),
+  'situações do cupom': Object.values(COUPON_STATE_LABELS),
   'recursos dos planos': FEATURES.flatMap((feature) => [feature.label, feature.help]),
   'orientação da TV': ORIENTATIONS.flatMap((option) => [option.label, option.hint]),
 };

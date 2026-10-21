@@ -1,5 +1,6 @@
 package com.digitalsignage.backend.tenant;
 
+import java.time.Clock;
 import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
@@ -13,10 +14,12 @@ public class PlanLimits {
 
 	private final TenantRepository tenants;
 	private final UsageService usage;
+	private final Clock clock;
 
-	public PlanLimits(TenantRepository tenants, UsageService usage) {
+	public PlanLimits(TenantRepository tenants, UsageService usage, Clock clock) {
 		this.tenants = tenants;
 		this.usage = usage;
+		this.clock = clock;
 	}
 
 	public void requireRoomForDevice(long tenantId) {
@@ -58,7 +61,7 @@ public class PlanLimits {
 	}
 
 	private Plan planOf(long tenantId) {
-		return tenants.findById(tenantId).orElseThrow(() -> new NoSuchElementException("Cliente não encontrado: " + tenantId)).getPlan();
+		return tenants.findById(tenantId).orElseThrow(() -> new NoSuchElementException("Cliente não encontrado: " + tenantId)).getEffectivePlan(clock.instant());
 	}
 
 }

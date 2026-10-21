@@ -96,6 +96,7 @@ import { UserMenuComponent } from '../shared/user-menu';
           <a routerLink="/plataforma/clientes" routerLinkActive="active"><app-icon name="building" /><span>{{ 'Clientes' | t }}</span></a>
           <a routerLink="/plataforma/planos" routerLinkActive="active"><app-icon name="tag" /><span>{{ 'Planos' | t }}</span></a>
           <a routerLink="/plataforma/faturas" routerLinkActive="active"><app-icon name="receipt-text" /><span>{{ 'Faturas' | t }}</span></a>
+          <a routerLink="/plataforma/cupons" routerLinkActive="active"><app-icon name="ticket" /><span>{{ 'Cupons' | t }}</span></a>
           <a routerLink="/plataforma/gestores" routerLinkActive="active"><app-icon name="key-round" /><span>{{ 'Gestores' | t }}</span></a>
           <a routerLink="/plataforma/configuracoes" routerLinkActive="active"><app-icon name="settings" /><span>{{ 'Configurações' | t }}</span></a>
         }

@@ -8,6 +8,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.digitalsignage.backend.common.ConflictException;
+import com.digitalsignage.backend.coupon.CouponService;
 import com.digitalsignage.backend.plan.Plan;
 import com.digitalsignage.backend.tenant.Tenant;
 import com.digitalsignage.backend.tenant.TenantRepository;
@@ -43,6 +45,7 @@ public class BillingService {
 	private final TenantRepository tenants;
 	private final InvoiceRepository invoices;
 	private final PlatformSettingsRepository settingsRepository;
+	private final CouponService coupons;
 	private final JdbcTemplate jdbc;
 	private final Clock clock;
 	private final ZoneId zone;
@@ -51,12 +54,14 @@ public class BillingService {
 			TenantRepository tenants,
 			InvoiceRepository invoices,
 			PlatformSettingsRepository settingsRepository,
+			CouponService coupons,
 			JdbcTemplate jdbc,
 			Clock clock,
 			@Value("${app.billing.timezone:America/Sao_Paulo}") String zone) {
 		this.tenants = tenants;
 		this.invoices = invoices;
 		this.settingsRepository = settingsRepository;
+		this.coupons = coupons;
 		this.jdbc = jdbc;
 		this.clock = clock;
 		this.zone = ZoneId.of(zone);
@@ -85,6 +90,11 @@ public class BillingService {
 		TenantStatus status = tenant.getStatus();
 		if (status == TenantStatus.CANCELED || status == TenantStatus.SYSTEM) {
 			return;
+		}
+		if (tenant.getBonusPlanUntil() != null && !tenant.hasBonusAt(now)) {
+			// o plano liberado por cupom acabou: volta ao contratado
+			tenant.setBonus(null, null);
+			tenants.save(tenant);
 		}
 		Plan plan = tenant.getPlan();
 		if (plan.getPriceCents() <= 0) {
@@ -132,8 +142,27 @@ public class BillingService {
 		LocalDate due = tenant.getStatus() == TenantStatus.TRIAL
 				? periodStart.atZone(zone).toLocalDate().plusDays(settings.getInvoiceLeadDays())
 				: periodStart.atZone(zone).toLocalDate();
-		create(tenant.getId(), "Assinatura " + plan.getName() + " (" + periodStart.atZone(zone).toLocalDate() + " a " + periodEnd.atZone(zone).toLocalDate() + ")",
-				periodStart, periodEnd, plan.getPriceCents(), plan.getCurrency(), due);
+		String description = "Assinatura " + plan.getName() + " (" + periodStart.atZone(zone).toLocalDate() + " a " + periodEnd.atZone(zone).toLocalDate() + ")";
+		int amount = plan.getPriceCents();
+		Optional<CouponService.Discount> discount = coupons.consumeDiscount(tenant.getId(), amount);
+		if (discount.isPresent()) {
+			amount -= discount.get().cents();
+			description += " - cupom " + discount.get().code() + " (-R$ " + money(discount.get().cents()) + ")";
+		}
+		Invoice invoice = create(tenant.getId(), description, periodStart, periodEnd, amount, plan.getCurrency(), due);
+		if (amount == 0) {
+			// o cupom cobriu tudo: não há o que cobrar, o período já vale
+			invoice.markPaid(now, "CUPOM", "Valor coberto pelo cupom " + discount.map(CouponService.Discount::code).orElse(""));
+			invoices.save(invoice);
+			if (tenant.getCurrentPeriodEnd() == null || periodEnd.isAfter(tenant.getCurrentPeriodEnd())) {
+				tenant.setCurrentPeriodEnd(periodEnd);
+			}
+			reactivateIfSettled(tenant, now);
+		}
+	}
+
+	private static String money(int cents) {
+		return String.format("%d,%02d", cents / 100, cents % 100);
 	}
 
 	/** Fatura vencida deixa o cliente em atraso; passada a carência, suspende. */
