@@ -67,6 +67,10 @@ export function reasonOf(error: unknown): string {
   return tr('Não foi possível falar com o servidor agora. Confira a internet e tente de novo.');
 }
 
+/**
+ * O estilo comum das duas páginas. Cada componente acrescenta o seu próprio trecho: dois componentes do mesmo arquivo com o MESMO
+ * estilo, palavra por palavra, fazem o `ng test` não terminar (o processo fica pendurado depois de passar tudo).
+ */
 const LAYOUT_CSS = `
   :host { display: block; min-height: 100vh; background: var(--bg); color: var(--text); }
   .prefs-corner { position: absolute; top: calc(12px + env(safe-area-inset-top)); right: 12px; }
@@ -121,7 +125,7 @@ const LAYOUT_CSS = `
       }
     </main>
   `,
-  styles: LAYOUT_CSS,
+  styles: LAYOUT_CSS + '.take { display: block; }',
 })
 export class QueueTakePage implements OnInit {
   private readonly api = inject(ApiService);
@@ -223,7 +227,7 @@ export class QueueTakePage implements OnInit {
       }
     </main>
   `,
-  styles: LAYOUT_CSS,
+  styles: LAYOUT_CSS + '.status { display: block; }',
 })
 export class TicketStatusPage implements OnInit {
   private readonly api = inject(ApiService);

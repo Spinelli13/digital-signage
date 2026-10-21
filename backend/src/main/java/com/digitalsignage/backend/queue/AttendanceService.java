@@ -47,7 +47,6 @@ public class AttendanceService {
 	/** O nome que a pessoa informou é dado pessoal: as senhas somem depois disto. */
 	public static final int RETENTION_DAYS = 30;
 	private static final int MAX_WAITING_LISTED = 200;
-	private static final int CLAIM_ATTEMPTS = 5;
 	private static final String DEFAULT_ZONE = "America/Sao_Paulo";
 
 	public record QueueRequest(@NotBlank @Size(max = 60) String name, @NotBlank @Size(max = 3) String prefix, Boolean priority, Boolean active,
@@ -256,18 +255,18 @@ public class AttendanceService {
 		Map<Long, ServiceQueue> byId = served.stream().collect(Collectors.toMap(ServiceQueue::getId, queue -> queue));
 		served.forEach(queue -> tickets.cancelStale(queue.getId(), today(queue, now), now));
 
-		for (int attempt = 0; attempt < CLAIM_ATTEMPTS; attempt++) {
-			List<Ticket> waiting = tickets.waitingIn(byId.keySet());
-			Optional<Ticket> choice = choose(waiting, byId, recentPriorityStreak(now));
-			if (choice.isEmpty()) {
-				throw new ConflictException("Não há senhas aguardando para este guichê");
+		// Se outro atendente pegou a senha escolhida no mesmo instante, tenta a seguinte da lista (e não a mesma de novo): assim
+		// vários guichês chamando juntos nunca disputam a mesma senha por muitas rodadas.
+		List<Ticket> waiting = new ArrayList<>(tickets.waitingIn(byId.keySet()));
+		int streak = recentPriorityStreak(now);
+		while (!waiting.isEmpty()) {
+			Ticket choice = choose(waiting, byId, streak).orElseThrow();
+			if (tickets.claim(choice.getId(), counterId, now) == 1) {
+				return tickets.findById(choice.getId()).orElseThrow();
 			}
-			Long id = choice.get().getId();
-			if (tickets.claim(id, counterId, now) == 1) {
-				return tickets.findById(id).orElseThrow();
-			}
+			waiting.removeIf(ticket -> ticket.getId().equals(choice.getId()));
 		}
-		throw new ConflictException("Outro atendente chamou a mesma senha agora. Tente de novo");
+		throw new ConflictException("Não há senhas aguardando para este guichê");
 	}
 
 	/** Chama de novo (a TV toca o aviso outra vez): só para a senha que ainda está sendo chamada. */
