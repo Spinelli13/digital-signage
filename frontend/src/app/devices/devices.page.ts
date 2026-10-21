@@ -5,6 +5,7 @@ import { forkJoin } from 'rxjs';
 
 import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
+import { TPipe, tr } from '../core/i18n';
 import { hasFilters } from '../core/device-filters';
 import { deviceState, timeAgo } from '../core/format';
 import {
@@ -30,14 +31,14 @@ type LocationChoice = string;
 
 @Component({
   selector: 'app-devices',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, TPipe],
   template: `
     <div class="head">
-      <div><h1>Dispositivos</h1><p>Gerencie todas as telas e Players conectados.</p></div>
+      <div><h1>{{ 'Dispositivos' | t }}</h1><p>{{ 'Gerencie todas as telas e Players conectados.' | t }}</p></div>
       @if (auth.can('admin')) {
         <div class="head-actions">
-          <button class="secondary" (click)="updateAll()" title="Pede a todas as TVs que verifiquem agora se há versão nova do Player">⬆ Atualizar todas as TVs</button>
-          <button class="primary" (click)="openActivate()">+ Adicionar dispositivo</button>
+          <button class="secondary" (click)="updateAll()" [title]="'Pede a todas as TVs que verifiquem agora se há versão nova do Player' | t">{{ '⬆ Atualizar todas as TVs' | t }}</button>
+          <button class="primary" (click)="openActivate()">{{ '+ Adicionar dispositivo' | t }}</button>
         </div>
       }
     </div>
@@ -50,84 +51,84 @@ type LocationChoice = string;
       <input
         type="search"
         class="search"
-        aria-label="Buscar TV"
-        placeholder="Buscar por nome ou local…"
+        [attr.aria-label]="'Buscar TV' | t"
+        [placeholder]="'Buscar por nome ou local…' | t"
         [ngModel]="filters().q ?? ''"
         (ngModelChange)="onSearch($event)"
       />
-      <select aria-label="Situação" [ngModel]="filters().connection ?? ''" (ngModelChange)="setConnection($event)">
-        <option value="">Todas as situações</option>
-        <option value="ONLINE">Online</option>
-        <option value="OFFLINE">Offline</option>
-        <option value="NEVER">Nunca conectou</option>
-        <option value="PENDING">Aguardando ativação</option>
-        <option value="DISABLED">Desativado</option>
+      <select [attr.aria-label]="'Situação' | t" [ngModel]="filters().connection ?? ''" (ngModelChange)="setConnection($event)">
+        <option value="">{{ 'Todas as situações' | t }}</option>
+        <option value="ONLINE">{{ 'Online' | t }}</option>
+        <option value="OFFLINE">{{ 'Offline' | t }}</option>
+        <option value="NEVER">{{ 'Nunca conectou' | t }}</option>
+        <option value="PENDING">{{ 'Aguardando ativação' | t }}</option>
+        <option value="DISABLED">{{ 'Desativado' | t }}</option>
       </select>
-      <select aria-label="Local" [ngModel]="locationFilterValue()" (ngModelChange)="setLocationFilter($event)">
-        <option value="">Todos os locais</option>
-        <option value="none">Sem local</option>
+      <select [attr.aria-label]="'Local' | t" [ngModel]="locationFilterValue()" (ngModelChange)="setLocationFilter($event)">
+        <option value="">{{ 'Todos os locais' | t }}</option>
+        <option value="none">{{ 'Sem local' | t }}</option>
         @for (location of locations(); track location.id) {
           <option [value]="location.id">{{ location.name }}</option>
         }
       </select>
-      <select aria-label="Grupo" [ngModel]="groupFilterValue()" (ngModelChange)="setGroupFilter($event)">
-        <option value="">Todos os grupos</option>
+      <select [attr.aria-label]="'Grupo' | t" [ngModel]="groupFilterValue()" (ngModelChange)="setGroupFilter($event)">
+        <option value="">{{ 'Todos os grupos' | t }}</option>
         @for (group of groups(); track group.id) {
           <option [value]="group.id">{{ group.name }}</option>
         }
       </select>
       @if (filtersActive()) {
-        <button class="secondary small" (click)="clearFilters()">Limpar filtros</button>
+        <button class="secondary small" (click)="clearFilters()">{{ 'Limpar filtros' | t }}</button>
       }
-      <span class="count">{{ devices().length }} TV(s)</span>
+      <span class="count">{{ '{n} TV(s)' | t: { n: devices().length } }}</span>
     </div>
 
     @if (selectedCount() > 0 && auth.can('content')) {
-      <div class="bulk" role="region" aria-label="Ações nas TVs selecionadas">
-        <b>{{ selectedCount() }} selecionada(s)</b>
-        <select aria-label="Playlist das selecionadas" (change)="onBulkPlaylist($event)">
-          <option value="">Escolher playlist…</option>
-          <option value="none">Nenhuma playlist</option>
+      <div class="bulk" role="region" [attr.aria-label]="'Ações nas TVs selecionadas' | t">
+        <b>{{ '{n} selecionada(s)' | t: { n: selectedCount() } }}</b>
+        <select [attr.aria-label]="'Playlist das selecionadas' | t" (change)="onBulkPlaylist($event)">
+          <option value="">{{ 'Escolher playlist…' | t }}</option>
+          <option value="none">{{ 'Nenhuma playlist' | t }}</option>
           @for (playlist of playlists(); track playlist.id) {
             <option [value]="playlist.id">{{ playlist.name }}</option>
           }
         </select>
         @if (layouts().length > 0) {
-          <select aria-label="Layout das selecionadas" (change)="onBulkLayout($event)">
-            <option value="">Aplicar layout…</option>
-            <option value="none">Tela cheia</option>
+          <select [attr.aria-label]="'Layout das selecionadas' | t" (change)="onBulkLayout($event)">
+            <option value="">{{ 'Aplicar layout…' | t }}</option>
+            <option value="none">{{ 'Tela cheia' | t }}</option>
             @for (layout of layouts(); track layout.id) {
               <option [value]="layout.id">{{ layout.name }}</option>
             }
           </select>
         }
         @if (auth.can('admin')) {
-          <button class="secondary small" (click)="bulkSimple('DISABLE')">Desativar</button>
-          <button class="secondary small" (click)="bulkSimple('ENABLE')">Reativar</button>
-          <button class="secondary small" (click)="bulkSimple('CHECK_UPDATE')">Atualizar app</button>
-          <select aria-label="Mover as selecionadas para um local" (change)="onBulkLocation($event)">
-            <option value="">Mover para local…</option>
-            <option value="none">Sem local</option>
+          <button class="secondary small" (click)="bulkSimple('DISABLE')">{{ 'Desativar' | t }}</button>
+          <button class="secondary small" (click)="bulkSimple('ENABLE')">{{ 'Reativar' | t }}</button>
+          <button class="secondary small" (click)="bulkSimple('CHECK_UPDATE')">{{ 'Atualizar app' | t }}</button>
+          <select [attr.aria-label]="'Mover as selecionadas para um local' | t" (change)="onBulkLocation($event)">
+            <option value="">{{ 'Mover para local…' | t }}</option>
+            <option value="none">{{ 'Sem local' | t }}</option>
             @for (location of locations(); track location.id) {
               <option [value]="location.id">{{ location.name }}</option>
             }
           </select>
           @if (groups().length > 0) {
-            <select aria-label="Adicionar as selecionadas a um grupo" (change)="onBulkGroup($event, true)">
-              <option value="">Adicionar ao grupo…</option>
+            <select [attr.aria-label]="'Adicionar as selecionadas a um grupo' | t" (change)="onBulkGroup($event, true)">
+              <option value="">{{ 'Adicionar ao grupo…' | t }}</option>
               @for (group of groups(); track group.id) {
                 <option [value]="group.id">{{ group.name }}</option>
               }
             </select>
-            <select aria-label="Tirar as selecionadas de um grupo" (change)="onBulkGroup($event, false)">
-              <option value="">Tirar do grupo…</option>
+            <select [attr.aria-label]="'Tirar as selecionadas de um grupo' | t" (change)="onBulkGroup($event, false)">
+              <option value="">{{ 'Tirar do grupo…' | t }}</option>
               @for (group of groups(); track group.id) {
                 <option [value]="group.id">{{ group.name }}</option>
               }
             </select>
           }
         }
-        <button class="secondary small" (click)="clearSelection()">Limpar seleção</button>
+        <button class="secondary small" (click)="clearSelection()">{{ 'Limpar seleção' | t }}</button>
       </div>
     }
 
@@ -135,75 +136,77 @@ type LocationChoice = string;
       @if (devices().length === 0) {
         <div class="empty">
           @if (filtersActive()) {
-            Nenhuma TV com esses filtros.
+            {{ 'Nenhuma TV com esses filtros.' | t }}
           } @else if (loaded()) {
-            Nenhum dispositivo ainda. Abra o app Player na TV: ele mostra um código de 6 caracteres.
-            Clique em <b>Adicionar dispositivo</b> e digite esse código.
+            {{ 'Nenhum dispositivo ainda. Abra o app Player na TV: ele mostra um código de 6 caracteres.' | t }}
+            {{ 'Clique em' | t }} <b>{{ 'Adicionar dispositivo' | t }}</b> {{ 'e digite esse código.' | t }}
           } @else {
-            Carregando…
+            {{ 'Carregando…' | t }}
           }
         </div>
       } @else {
-        <table>
+        <table class="stack">
           <tr>
             <th class="check-col">
-              <input type="checkbox" aria-label="Selecionar todas as TVs da lista" [checked]="allSelected()" (change)="toggleAll()" />
+              <input type="checkbox" [attr.aria-label]="'Selecionar todas as TVs da lista' | t" [checked]="allSelected()" (change)="toggleAll()" />
             </th>
-            <th>Dispositivo</th><th>Status</th><th>Último contato</th><th>Playlist</th><th></th>
+            <th>{{ 'Dispositivo' | t }}</th><th>{{ 'Status' | t }}</th><th>{{ 'Último contato' | t }}</th><th>{{ 'Playlist' | t }}</th><th></th>
           </tr>
           @for (device of devices(); track device.id) {
             <tr [class.selected]="isSelected(device.id)">
               <td class="check-col">
-                <input type="checkbox" [attr.aria-label]="'Selecionar ' + device.name" [checked]="isSelected(device.id)" (change)="toggle(device.id)" />
+                <input type="checkbox" [attr.aria-label]="'Selecionar {name}' | t: { name: device.name }" [checked]="isSelected(device.id)" (change)="toggle(device.id)" />
               </td>
-              <td>
-                <b>{{ device.name }}</b><br /><small>{{ device.location || 'Sem local' }}</small>
+              <td class="first">
+                <b>{{ device.name }}</b><br /><small>{{ device.location || ('Sem local' | t) }}</small>
                 @for (group of groupsOf(device); track group.id) {
                   <span class="chip">{{ group.name }}</span>
                 }
                 @if (device.layoutName) {
-                  <span class="chip layout" title="Layout da tela desta TV">🧩 {{ device.layoutName }}</span>
+                  <span class="chip layout" [title]="'Layout da tela desta TV' | t">🧩 {{ device.layoutName }}</span>
                 }
               </td>
-              <td><span class="dot" [class]="state(device).tone"></span>{{ state(device).label }}</td>
-              <td>{{ ago(device.lastSeenAt) }}<br /><small>{{ device.playerVersion ? 'v' + device.playerVersion : '' }}</small>
+              <td [attr.data-label]="'Status' | t"><span class="st"><span class="dot" [class]="state(device).tone"></span>{{ state(device).label }}</span></td>
+              <td [attr.data-label]="'Último contato' | t"><span>{{ ago(device.lastSeenAt) }}<br /><small>{{ device.playerVersion ? 'v' + device.playerVersion : '' }}</small>
                 @if (outdated(device)) {
-                  <br /><small class="stale" title="Há uma versão mais nova do Player; ele se atualiza sozinho (alguém precisa confirmar na TV).">⬆ desatualizado (última: v{{ latest()?.versionName }})</small>
-                }</td>
-              <td>
+                  <br /><small class="stale" [title]="'Há uma versão mais nova do Player; ele se atualiza sozinho (alguém precisa confirmar na TV).' | t">{{ '⬆ desatualizado (última: v{version})' | t: { version: latest()?.versionName } }}</small>
+                }</span></td>
+              <td [attr.data-label]="'Playlist' | t">
                 @if (device.status === 'ACTIVE') {
-                  <select [ngModel]="device.currentPlaylistId" [disabled]="!auth.can('content')" (ngModelChange)="assignPlaylist(device, $event)">
-                    <option [ngValue]="null">Nenhuma playlist</option>
-                    @for (playlist of playlists(); track playlist.id) {
-                      <option [ngValue]="playlist.id">{{ playlist.name }}</option>
+                  <span class="plist">
+                    <select [ngModel]="device.currentPlaylistId" [disabled]="!auth.can('content')" (ngModelChange)="assignPlaylist(device, $event)">
+                      <option [ngValue]="null">{{ 'Nenhuma playlist' | t }}</option>
+                      @for (playlist of playlists(); track playlist.id) {
+                        <option [ngValue]="playlist.id">{{ playlist.name }}</option>
+                      }
+                    </select>
+                    @if (device.campaignName) {
+                      <br /><small class="campaign" [title]="'Uma campanha vale agora para esta TV e tem prioridade sobre a playlist dela.' | t">{{ '📣 Agora: campanha {name}' | t: { name: device.campaignName } }}</small>
                     }
-                  </select>
-                  @if (device.campaignName) {
-                    <br /><small class="campaign" title="Uma campanha vale agora para esta TV e tem prioridade sobre a playlist dela.">📣 Agora: campanha {{ device.campaignName }}</small>
-                  }
-                  @if (device.currentMediaName) {
-                    <br /><small class="onscreen" title="A mídia que o Player disse estar exibindo no último contato.">▶ Na tela: {{ device.currentMediaName }}</small>
-                  }
-                  @if (syncing(device)) {
-                    <br /><small>sincronizando…</small>
-                  }
+                    @if (device.currentMediaName) {
+                      <br /><small class="onscreen" [title]="'A mídia que o Player disse estar exibindo no último contato.' | t">{{ '▶ Na tela: {name}' | t: { name: device.currentMediaName } }}</small>
+                    }
+                    @if (syncing(device)) {
+                      <br /><small>{{ 'sincronizando…' | t }}</small>
+                    }
+                  </span>
                 } @else {
                   <span class="muted">—</span>
                 }
               </td>
               <td class="row-actions">
-                <a class="secondary small btn" [routerLink]="['/dispositivos', device.id, 'historico']" title="Quando conectou, caiu, mudou de conteúdo e o que o Player relatou">Histórico</a>
+                <a class="secondary small btn" [routerLink]="['/dispositivos', device.id, 'historico']" [title]="'Quando conectou, caiu, mudou de conteúdo e o que o Player relatou' | t">{{ 'Histórico' | t }}</a>
                 @if (auth.can('content')) {
-                  <button class="secondary small" (click)="openEdit(device)">Editar</button>
+                  <button class="secondary small" (click)="openEdit(device)">{{ 'Editar' | t }}</button>
                 }
                 @if (auth.can('admin')) {
                   @if (device.status === 'ACTIVE') {
-                    <button class="secondary small" (click)="checkUpdate(device)" title="Pede que esta TV verifique agora se há versão nova do Player">Atualizar app</button>
-                    <button class="secondary small" (click)="setStatus(device, 'disabled')">Desativar</button>
+                    <button class="secondary small" (click)="checkUpdate(device)" [title]="'Pede que esta TV verifique agora se há versão nova do Player' | t">{{ 'Atualizar app' | t }}</button>
+                    <button class="secondary small" (click)="setStatus(device, 'disabled')">{{ 'Desativar' | t }}</button>
                   } @else if (device.status === 'DISABLED') {
-                    <button class="secondary small" (click)="setStatus(device, 'active')">Reativar</button>
+                    <button class="secondary small" (click)="setStatus(device, 'active')">{{ 'Reativar' | t }}</button>
                   }
-                  <button class="danger small" (click)="remove(device)">Excluir</button>
+                  <button class="danger small" (click)="remove(device)">{{ 'Excluir' | t }}</button>
                 }
               </td>
             </tr>
@@ -216,44 +219,44 @@ type LocationChoice = string;
       <div class="modal" (click)="closeModal()">
         <form class="modal-box" (click)="$event.stopPropagation()" (ngSubmit)="submitModal()">
           @if (modal() === 'activate') {
-            <h2>Adicionar dispositivo</h2>
-            <p class="label">Vincule um novo Player usando o código exibido na TV.</p>
+            <h2>{{ 'Adicionar dispositivo' | t }}</h2>
+            <p class="label">{{ 'Vincule um novo Player usando o código exibido na TV.' | t }}</p>
             <div class="field">
-              <label for="code">Código de ativação</label>
-              <input id="code" name="code" class="mono" maxlength="6" placeholder="Ex.: 8F32A9" required
+              <label for="code">{{ 'Código de ativação' | t }}</label>
+              <input id="code" name="code" class="mono" maxlength="6" [placeholder]="'Ex.: 8F32A9' | t" required
                 [ngModel]="code()" (ngModelChange)="code.set($event.toUpperCase())" />
             </div>
           } @else {
-            <h2>Editar dispositivo</h2>
+            <h2>{{ 'Editar dispositivo' | t }}</h2>
           }
           @if (auth.can('admin')) {
           <div class="field">
-            <label for="name">Nome do dispositivo</label>
-            <input id="name" name="name" placeholder="Ex.: TV Recepção" required
+            <label for="name">{{ 'Nome do dispositivo' | t }}</label>
+            <input id="name" name="name" [placeholder]="'Ex.: TV Recepção' | t" required
               [ngModel]="name()" (ngModelChange)="name.set($event)" />
           </div>
           <div class="field">
-            <label for="location">Local</label>
+            <label for="location">{{ 'Local' | t }}</label>
             <select id="location" name="location" [ngModel]="locationChoice()" (ngModelChange)="locationChoice.set($event)">
-              <option value="">Sem local</option>
+              <option value="">{{ 'Sem local' | t }}</option>
               @for (location of locations(); track location.id) {
                 <option [value]="location.id">{{ location.name }}</option>
               }
-              <option value="new">+ Novo local…</option>
+              <option value="new">{{ '+ Novo local…' | t }}</option>
             </select>
             @if (locationChoice() === 'new') {
-              <input id="new-location" name="newLocation" class="below" placeholder="Nome do novo local (ex.: Loja Centro)"
+              <input id="new-location" name="newLocation" class="below" [placeholder]="'Nome do novo local (ex.: Loja Centro)' | t"
                 [ngModel]="newLocation()" (ngModelChange)="newLocation.set($event)" />
             }
           </div>
           } @else {
-            <p class="label">{{ name() }} — como Editor, você escolhe o layout da tela. Nome, local e grupos são do Administrador.</p>
+            <p class="label">{{ '{name} — como Editor, você escolhe o layout da tela. Nome, local e grupos são do Administrador.' | t: { name: name() } }}</p>
           }
           @if (modal() === 'edit' && layouts().length > 0) {
             <div class="field">
-              <label for="layout">Layout da tela</label>
+              <label for="layout">{{ 'Layout da tela' | t }}</label>
               <select id="layout" name="layout" [ngModel]="layoutChoice()" (ngModelChange)="layoutChoice.set($event)">
-                <option value="">Tela cheia (um conteúdo só)</option>
+                <option value="">{{ 'Tela cheia (um conteúdo só)' | t }}</option>
                 @for (layout of layouts(); track layout.id) {
                   <option [value]="layout.id">{{ layout.name }}</option>
                 }
@@ -262,7 +265,7 @@ type LocationChoice = string;
           }
           @if (groups().length > 0 && auth.can('admin')) {
             <div class="field">
-              <label>Grupos</label>
+              <label>{{ 'Grupos' | t }}</label>
               <div class="chips">
                 @for (group of groups(); track group.id) {
                   <label class="check">
@@ -274,9 +277,9 @@ type LocationChoice = string;
             </div>
           }
           <div class="actions">
-            <button type="button" class="secondary" (click)="closeModal()">Cancelar</button>
+            <button type="button" class="secondary" (click)="closeModal()">{{ 'Cancelar' | t }}</button>
             <button type="submit" class="primary" [disabled]="busy()">
-              {{ modal() === 'activate' ? 'Ativar dispositivo' : 'Salvar' }}
+              {{ (modal() === 'activate' ? 'Ativar dispositivo' : 'Salvar') | t }}
             </button>
           </div>
         </form>
@@ -288,23 +291,35 @@ type LocationChoice = string;
     .row-actions button, .row-actions .btn { margin-left: 6px; }
     select { min-width: 170px; }
     .stale { color: var(--orange); font-weight: 600; }
-    .campaign { color: var(--blue); font-weight: 600; }
+    .campaign { color: var(--link); font-weight: 600; }
     .onscreen { color: var(--muted); }
     .btn { display: inline-block; margin-left: 6px; border: 1px solid var(--line); border-radius: 10px; font-weight: 600; color: var(--text); }
-    .btn:hover { background: var(--blue2); }
+    .btn:hover { background: var(--primary-soft); }
     .head-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; padding: 14px; }
     .filters .search { flex: 1 1 220px; min-width: 180px; width: auto; }
     .filters select { min-width: 150px; width: auto; }
     .count { color: var(--muted); font-size: 13px; margin-left: auto; }
-    .bulk { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; background: #eef3ff; border: 1px solid #c9d8ff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
+    .bulk { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; background: var(--primary-soft); border: 1px solid var(--primary-line); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
     .bulk select { min-width: 140px; width: auto; }
     .check-col { width: 34px; }
-    tr.selected { background: #f3f7ff; }
-    .chip.layout { background: #e8f7f0; color: #0f6b46; }
-    .chip { display: inline-block; background: #eef1f7; color: #44506a; border-radius: 999px; padding: 1px 9px; font-size: 12px; margin: 4px 4px 0 0; }
+    tr.selected { background: var(--primary-soft); }
+    .chip.layout { background: var(--ok-bg); color: var(--ok-fg); }
+    .chip { display: inline-block; background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; font-size: 12px; margin: 4px 4px 0 0; }
     .chips { display: flex; gap: 6px 14px; flex-wrap: wrap; }
     .below { margin-top: 8px; }
+    @media (max-width: 720px) {
+      .filters { flex-direction: column; align-items: stretch; }
+      .filters .search, .filters select { width: 100%; min-width: 0; flex: none; }
+      .count { margin-left: 0; }
+      .bulk { flex-direction: column; align-items: stretch; }
+      .bulk select { width: 100%; }
+      .plist select { min-width: 0; width: 100%; }
+      table.stack td .plist { display: block; width: 100%; text-align: right; }
+      table.stack tr.selected { border-color: var(--primary); }
+      table.stack td.first { padding-right: 36px; }
+      table.stack td .btn { margin-left: 0; }
+    }
   `,
 })
 export class DevicesPage implements OnInit {
@@ -503,7 +518,7 @@ export class DevicesPage implements OnInit {
   }
 
   bulkSimple(action: 'DISABLE' | 'ENABLE' | 'CHECK_UPDATE'): void {
-    if (action === 'DISABLE' && !confirm(`Desativar ${this.selectedCount()} TV(s)? Elas param de exibir até serem reativadas.`)) {
+    if (action === 'DISABLE' && !confirm(tr('Desativar {n} TV(s)? Elas param de exibir até serem reativadas.', { n: this.selectedCount() }))) {
       return;
     }
     this.runBulk({ action });
@@ -532,32 +547,33 @@ export class DevicesPage implements OnInit {
 
   private bulkMessage(action: BulkAction, affected: number, selected: number): string {
     if (affected === 0) {
-      return 'Nenhuma das TVs selecionadas estava no estado certo para esta ação.';
+      return tr('Nenhuma das TVs selecionadas estava no estado certo para esta ação.');
     }
-    const partial = affected < selected ? ` (${selected - affected} já estavam no estado pedido ou não se aplicam)` : '';
+    const partial =
+      affected < selected ? ' ' + tr('({n} já estavam no estado pedido ou não se aplicam)', { n: selected - affected }) : '';
     switch (action) {
       case 'ASSIGN_PLAYLIST':
-        return `Playlist aplicada a ${affected} TV(s). Elas atualizam em até 1 minuto.`;
+        return tr('Playlist aplicada a {n} TV(s). Elas atualizam em até 1 minuto.', { n: affected });
       case 'REMOVE_PLAYLIST':
-        return `Playlist removida de ${affected} TV(s).`;
+        return tr('Playlist removida de {n} TV(s).', { n: affected });
       case 'ENABLE':
-        return `${affected} TV(s) reativada(s)${partial}.`;
+        return tr('{n} TV(s) reativada(s){partial}.', { n: affected, partial });
       case 'DISABLE':
-        return `${affected} TV(s) desativada(s)${partial}.`;
+        return tr('{n} TV(s) desativada(s){partial}.', { n: affected, partial });
       case 'CHECK_UPDATE':
-        return `Pedido enviado a ${affected} TV(s)${partial}. Se houver versão nova, alguém precisa confirmar em cada TV.`;
+        return tr('Pedido enviado a {n} TV(s){partial}. Se houver versão nova, alguém precisa confirmar em cada TV.', { n: affected, partial });
       case 'SET_LOCATION':
-        return `${affected} TV(s) movida(s) de local.`;
+        return tr('{n} TV(s) movida(s) de local.', { n: affected });
       case 'CLEAR_LOCATION':
-        return `${affected} TV(s) agora sem local.`;
+        return tr('{n} TV(s) agora sem local.', { n: affected });
       case 'ADD_TO_GROUP':
-        return `${affected} TV(s) adicionada(s) ao grupo.`;
+        return tr('{n} TV(s) adicionada(s) ao grupo.', { n: affected });
       case 'REMOVE_FROM_GROUP':
-        return `${affected} TV(s) retirada(s) do grupo.`;
+        return tr('{n} TV(s) retirada(s) do grupo.', { n: affected });
       case 'ASSIGN_LAYOUT':
-        return `Layout aplicado a ${affected} TV(s). Elas atualizam em até 1 minuto.`;
+        return tr('Layout aplicado a {n} TV(s). Elas atualizam em até 1 minuto.', { n: affected });
       case 'REMOVE_LAYOUT':
-        return `${affected} TV(s) voltaram para a tela cheia.`;
+        return tr('{n} TV(s) voltaram para a tela cheia.', { n: affected });
     }
   }
 
@@ -667,7 +683,10 @@ export class DevicesPage implements OnInit {
 
   checkUpdate(device: Device): void {
     this.api.requestUpdateCheck(device.id).subscribe({
-      next: () => this.notice.show(`Pedido enviado a "${device.name}". Ela verifica em até 30 segundos; se houver versão nova, alguém precisa confirmar na TV.`),
+      next: () =>
+        this.notice.show(
+          tr('Pedido enviado a "{name}". Ela verifica em até 30 segundos; se houver versão nova, alguém precisa confirmar na TV.', { name: device.name }),
+        ),
       error: () => undefined,
     });
   }
@@ -677,15 +696,17 @@ export class DevicesPage implements OnInit {
       next: ({ requested }) =>
         this.notice.show(
           requested === 0
-            ? 'Nenhuma TV ativa para avisar.'
-            : `Pedido enviado a ${requested} TV(s). Elas verificam em até 30 segundos; se houver versão nova, alguém precisa confirmar em cada TV.`,
+            ? tr('Nenhuma TV ativa para avisar.')
+            : tr('Pedido enviado a {n} TV(s). Elas verificam em até 30 segundos; se houver versão nova, alguém precisa confirmar em cada TV.', {
+                n: requested,
+              }),
         ),
       error: () => undefined,
     });
   }
 
   remove(device: Device): void {
-    if (!confirm(`Excluir "${device.name}"? A TV volta a pedir um novo código de ativação.`)) {
+    if (!confirm(tr('Excluir "{name}"? A TV volta a pedir um novo código de ativação.', { name: device.name }))) {
       return;
     }
     this.api.deleteDevice(device.id).subscribe({

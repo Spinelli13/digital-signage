@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,6 +5,7 @@ import { Router } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
 import { PlatformPlan, TenantStatus, TenantSummary } from '../core/models';
+import { FDatePipe, TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
 import {
   dateInput,
@@ -13,7 +13,8 @@ import {
   formatLimit,
   formatMoney,
   parseMoney,
-  TENANT_STATUS_LABELS,
+  planText,
+  tenantStatusLabel,
   TENANT_STATUS_TONES,
 } from '../core/saas';
 
@@ -21,14 +22,14 @@ const STATUSES: TenantStatus[] = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'C
 
 @Component({
   selector: 'app-platform-clients',
-  imports: [DatePipe, FormsModule],
+  imports: [FDatePipe, FormsModule, TPipe],
   template: `
     <div class="head">
       <div>
-        <h1>Clientes</h1>
-        <p>As empresas que usam a plataforma. "Entrar" abre o painel do cliente para você dar suporte.</p>
+        <h1>{{ 'Clientes' | t }}</h1>
+        <p>{{ 'As empresas que usam a plataforma. "Entrar" abre o painel do cliente para você dar suporte.' | t }}</p>
       </div>
-      <button class="primary" (click)="openNew()">+ Novo cliente</button>
+      <button class="primary" (click)="openNew()">{{ '+ Novo cliente' | t }}</button>
     </div>
 
     @if (notice.text(); as text) {
@@ -37,39 +38,39 @@ const STATUSES: TenantStatus[] = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'C
 
     <div class="card">
       @if (items().length === 0) {
-        <div class="empty">{{ loaded() ? 'Nenhum cliente ainda. Cadastre o primeiro.' : 'Carregando…' }}</div>
+        <div class="empty">{{ (loaded() ? 'Nenhum cliente ainda. Cadastre o primeiro.' : 'Carregando…') | t }}</div>
       } @else {
-        <table>
-          <tr><th>Cliente</th><th>Plano</th><th>Situação</th><th>Uso</th><th>Próximo vencimento</th><th></th></tr>
+        <table class="stack">
+          <tr><th>{{ 'Cliente' | t }}</th><th>{{ 'Plano' | t }}</th><th>{{ 'Situação' | t }}</th><th>{{ 'Uso' | t }}</th><th>{{ 'Próximo vencimento' | t }}</th><th></th></tr>
           @for (tenant of items(); track tenant.id) {
             <tr>
-              <td>
+              <td class="first">
                 <b>{{ tenant.name }}</b>
                 @if (tenant.billingEmail) {
                   <br /><small>{{ tenant.billingEmail }}</small>
                 }
               </td>
-              <td>{{ tenant.plan.name }}<br /><small>{{ money(tenant.plan.priceCents) }}</small></td>
-              <td><span class="dot" [class]="tone(tenant.status)"></span>{{ label(tenant.status) }}</td>
-              <td>
+              <td [attr.data-label]="'Plano' | t"><span>{{ planName(tenant.plan.name) }}<br /><small>{{ money(tenant.plan.priceCents) }}</small></span></td>
+              <td [attr.data-label]="'Situação' | t"><span class="st"><span class="dot" [class]="tone(tenant.status)"></span>{{ label(tenant.status) }}</span></td>
+              <td [attr.data-label]="'Uso' | t">
                 <small>
-                  {{ tenant.usage.devices }}/{{ limit(tenant.plan.maxDevices) }} TVs<br />
-                  {{ tenant.usage.users }}/{{ limit(tenant.plan.maxUsers) }} usuários
+                  {{ tenant.usage.devices }}/{{ limit(tenant.plan.maxDevices) }} {{ 'TVs' | t }}<br />
+                  {{ tenant.usage.users }}/{{ limit(tenant.plan.maxUsers) }} {{ 'usuários' | t }}
                 </small>
               </td>
-              <td>
+              <td [attr.data-label]="'Próximo vencimento' | t">
                 @if (tenant.status === 'TRIAL' && tenant.trialEndsAt) {
-                  teste até {{ tenant.trialEndsAt | date: 'dd/MM/yyyy' }}
+                  {{ 'teste até' | t }} {{ tenant.trialEndsAt | fdate }}
                 } @else if (tenant.currentPeriodEnd) {
-                  {{ tenant.currentPeriodEnd | date: 'dd/MM/yyyy' }}
+                  {{ tenant.currentPeriodEnd | fdate }}
                 } @else {
                   <span class="muted">—</span>
                 }
               </td>
               <td class="row-actions">
-                <button class="secondary small" (click)="enter(tenant)">Entrar</button>
-                <button class="secondary small" (click)="openInvoice(tenant)">Nova fatura</button>
-                <button class="secondary small" (click)="openEdit(tenant)">Editar</button>
+                <button class="secondary small" (click)="enter(tenant)">{{ 'Entrar' | t }}</button>
+                <button class="secondary small" (click)="openInvoice(tenant)">{{ 'Nova fatura' | t }}</button>
+                <button class="secondary small" (click)="openEdit(tenant)">{{ 'Editar' | t }}</button>
               </td>
             </tr>
           }
@@ -80,67 +81,67 @@ const STATUSES: TenantStatus[] = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'C
     @if (modal() === 'new' || modal() === 'edit') {
       <div class="modal" (click)="closeModal()">
         <form class="modal-box" (click)="$event.stopPropagation()" (ngSubmit)="submit()">
-          <h2>{{ modal() === 'new' ? 'Novo cliente' : 'Editar cliente' }}</h2>
+          <h2>{{ (modal() === 'new' ? 'Novo cliente' : 'Editar cliente') | t }}</h2>
           <div class="field">
-            <label for="c-name">Nome da empresa</label>
+            <label for="c-name">{{ 'Nome da empresa' | t }}</label>
             <input id="c-name" name="name" required [ngModel]="name()" (ngModelChange)="name.set($event)" />
           </div>
           <div class="field">
-            <label for="c-plan">Plano</label>
+            <label for="c-plan">{{ 'Plano' | t }}</label>
             <select id="c-plan" name="plan" [ngModel]="planId()" (ngModelChange)="planId.set(+$event)">
               @for (plan of planOptions(); track plan.id) {
-                <option [value]="plan.id">{{ plan.name }} — {{ money(plan.priceCents) }}</option>
+                <option [value]="plan.id">{{ planName(plan.name) }} — {{ money(plan.priceCents) }}</option>
               }
             </select>
           </div>
           @if (modal() === 'new') {
-            <h3 class="sub">Administrador do cliente</h3>
+            <h3 class="sub">{{ 'Administrador do cliente' | t }}</h3>
             <div class="field">
-              <label for="c-admin-name">Nome</label>
+              <label for="c-admin-name">{{ 'Nome' | t }}</label>
               <input id="c-admin-name" name="adminName" required [ngModel]="adminName()" (ngModelChange)="adminName.set($event)" />
             </div>
             <div class="field">
-              <label for="c-admin-email">E-mail (é o login)</label>
+              <label for="c-admin-email">{{ 'E-mail (é o login)' | t }}</label>
               <input id="c-admin-email" name="adminEmail" type="email" required [ngModel]="adminEmail()" (ngModelChange)="adminEmail.set($event)" />
             </div>
             <div class="field">
-              <label for="c-admin-pass">Senha inicial</label>
+              <label for="c-admin-pass">{{ 'Senha inicial' | t }}</label>
               <input id="c-admin-pass" name="adminPassword" type="password" autocomplete="new-password" minlength="8" required
                 [ngModel]="adminPassword()" (ngModelChange)="adminPassword.set($event)" />
-              <small>Pelo menos 8 caracteres. Envie ao cliente, que pode trocá-la em "Minha conta".</small>
+              <small>{{ 'Pelo menos 8 caracteres. Envie ao cliente, que pode trocá-la em "Minha conta".' | t }}</small>
             </div>
           } @else {
             <div class="field">
-              <label for="c-status">Situação</label>
+              <label for="c-status">{{ 'Situação' | t }}</label>
               <select id="c-status" name="status" [ngModel]="status()" (ngModelChange)="status.set($event)">
                 @for (option of statuses; track option) {
                   <option [value]="option">{{ label(option) }}</option>
                 }
               </select>
-              <small>Suspenso bloqueia o painel (as TVs continuam); Encerrado também para as TVs.</small>
+              <small>{{ 'Suspenso bloqueia o painel (as TVs continuam); Encerrado também para as TVs.' | t }}</small>
             </div>
             <div class="two">
               <div class="field">
-                <label for="c-trial">Fim do teste</label>
+                <label for="c-trial">{{ 'Fim do teste' | t }}</label>
                 <input id="c-trial" name="trialEndsAt" type="date" [ngModel]="trialEndsAt()" (ngModelChange)="trialEndsAt.set($event)" />
               </div>
               <div class="field">
-                <label for="c-period">Pago até</label>
+                <label for="c-period">{{ 'Pago até' | t }}</label>
                 <input id="c-period" name="currentPeriodEnd" type="date" [ngModel]="periodEnd()" (ngModelChange)="periodEnd.set($event)" />
               </div>
             </div>
           }
           <div class="field">
-            <label for="c-email">E-mail para cobrança (opcional)</label>
+            <label for="c-email">{{ 'E-mail para cobrança (opcional)' | t }}</label>
             <input id="c-email" name="billingEmail" type="email" [ngModel]="billingEmail()" (ngModelChange)="billingEmail.set($event)" />
           </div>
           <div class="field">
-            <label for="c-doc">CPF/CNPJ (opcional)</label>
+            <label for="c-doc">{{ 'CPF/CNPJ (opcional)' | t }}</label>
             <input id="c-doc" name="document" [ngModel]="document()" (ngModelChange)="document.set($event)" />
           </div>
           <div class="actions">
-            <button type="button" class="secondary" (click)="closeModal()">Cancelar</button>
-            <button type="submit" class="primary" [disabled]="busy() || !canSubmit()">Salvar</button>
+            <button type="button" class="secondary" (click)="closeModal()">{{ 'Cancelar' | t }}</button>
+            <button type="submit" class="primary" [disabled]="busy() || !canSubmit()">{{ 'Salvar' | t }}</button>
           </div>
         </form>
       </div>
@@ -149,25 +150,25 @@ const STATUSES: TenantStatus[] = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'C
     @if (modal() === 'invoice') {
       <div class="modal" (click)="closeModal()">
         <form class="modal-box" (click)="$event.stopPropagation()" (ngSubmit)="submitInvoice()">
-          <h2>Nova fatura — {{ invoiceTenant?.name }}</h2>
-          <p class="label">Para cobranças avulsas. As mensalidades são geradas sozinhas.</p>
+          <h2>{{ 'Nova fatura' | t }} — {{ invoiceTenant?.name }}</h2>
+          <p class="label">{{ 'Para cobranças avulsas. As mensalidades são geradas sozinhas.' | t }}</p>
           <div class="field">
-            <label for="i-desc">Descrição</label>
+            <label for="i-desc">{{ 'Descrição' | t }}</label>
             <input id="i-desc" name="description" required [ngModel]="invoiceDescription()" (ngModelChange)="invoiceDescription.set($event)" />
           </div>
           <div class="two">
             <div class="field">
-              <label for="i-amount">Valor (R$)</label>
+              <label for="i-amount">{{ 'Valor (R$)' | t }}</label>
               <input id="i-amount" name="amount" inputmode="decimal" required placeholder="0,00" [ngModel]="invoiceAmount()" (ngModelChange)="invoiceAmount.set($event)" />
             </div>
             <div class="field">
-              <label for="i-due">Vencimento</label>
+              <label for="i-due">{{ 'Vencimento' | t }}</label>
               <input id="i-due" name="due" type="date" required [ngModel]="invoiceDue()" (ngModelChange)="invoiceDue.set($event)" />
             </div>
           </div>
           <div class="actions">
-            <button type="button" class="secondary" (click)="closeModal()">Cancelar</button>
-            <button type="submit" class="primary" [disabled]="busy() || !canSubmitInvoice()">Criar fatura</button>
+            <button type="button" class="secondary" (click)="closeModal()">{{ 'Cancelar' | t }}</button>
+            <button type="submit" class="primary" [disabled]="busy() || !canSubmitInvoice()">{{ 'Criar fatura' | t }}</button>
           </div>
         </form>
       </div>
@@ -243,8 +244,10 @@ export class PlatformClientsPage implements OnInit {
   }
 
   label(status: TenantStatus): string {
-    return TENANT_STATUS_LABELS[status];
+    return tenantStatusLabel(status);
   }
+
+  readonly planName = planText;
 
   tone(status: TenantStatus): string {
     return TENANT_STATUS_TONES[status];
@@ -327,7 +330,7 @@ export class PlatformClientsPage implements OnInit {
       next: (saved) => {
         this.busy.set(false);
         this.closeModal();
-        this.notice.show(editing ? `Cliente "${saved.name}" salvo.` : `Cliente "${saved.name}" cadastrado.`);
+        this.notice.show(editing ? tr('Cliente "{name}" salvo.', { name: saved.name }) : tr('Cliente "{name}" cadastrado.', { name: saved.name }));
         this.load();
       },
       // O aviso (ex.: "já existe um cliente com esse nome") aparece por cima da janela, que continua aberta.
@@ -348,7 +351,7 @@ export class PlatformClientsPage implements OnInit {
         next: (invoice) => {
           this.busy.set(false);
           this.closeModal();
-          this.notice.show(`Fatura ${invoice.number} criada para "${tenant.name}".`);
+          this.notice.show(tr('Fatura {number} criada para "{tenant}".', { number: invoice.number, tenant: tenant.name }));
         },
         error: () => this.busy.set(false),
       });

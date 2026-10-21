@@ -102,7 +102,7 @@ describe('drawQr', () => {
   it('keeps the code dark on a light card in every theme (phones need the contrast)', () => {
     for (const colors of Object.values(QR_THEMES)) {
       expect(colors.card).toBe('#ffffff');
-      expect(colors.modules).toBe('#111a2c');
+      expect(colors.modules).toBe('#0c1410');
     }
   });
 });

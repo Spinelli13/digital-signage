@@ -1,3 +1,4 @@
+import { tr, trServer } from '../core/i18n';
 import { Layout, LayoutRequest, LayoutTemplate } from '../core/models';
 
 export const MAX_ZONES = 6;
@@ -37,7 +38,7 @@ export function draftsFromTemplate(template: Pick<LayoutTemplate, 'zones'>): Zon
 
 /** Um layout novo, do zero: uma zona principal ocupando a tela toda. */
 export function blankDrafts(): ZoneDraft[] {
-  return [{ key: newKey(), name: 'Principal', x: 0, y: 0, width: 100, height: 100, main: true, playlistId: null }];
+  return [{ key: newKey(), name: tr('Principal'), x: 0, y: 0, width: 100, height: 100, main: true, playlistId: null }];
 }
 
 export function overlaps(a: ZoneDraft, b: ZoneDraft): boolean {
@@ -50,43 +51,43 @@ export function overlaps(a: ZoneDraft, b: ZoneDraft): boolean {
  */
 export function validateZones(zones: ZoneDraft[]): string | null {
   if (zones.length === 0) {
-    return 'O layout precisa de pelo menos uma zona';
+    return tr('O layout precisa de pelo menos uma zona');
   }
   if (zones.length > MAX_ZONES) {
-    return `O layout pode ter no máximo ${MAX_ZONES} zonas`;
+    return tr('O layout pode ter no máximo {n} zonas', { n: MAX_ZONES });
   }
   if (zones.filter((zone) => zone.main).length !== 1) {
-    return 'Escolha exatamente uma zona principal (a que exibe a playlist da TV)';
+    return tr('Escolha exatamente uma zona principal (a que exibe a playlist da TV)');
   }
   for (const zone of zones) {
-    const label = `A zona "${zone.name.trim() || '(sem nome)'}"`;
+    const label = tr('A zona "{name}"', { name: zone.name.trim() || tr('(sem nome)') });
     if (!zone.name.trim()) {
-      return 'Dê um nome a cada zona';
+      return tr('Dê um nome a cada zona');
     }
     const numbers = [zone.x, zone.y, zone.width, zone.height];
     if (numbers.some((value) => !Number.isFinite(value) || !Number.isInteger(value))) {
-      return `${label} precisa de números inteiros na posição e no tamanho`;
+      return tr('{label} precisa de números inteiros na posição e no tamanho', { label });
     }
     if (zone.x < 0 || zone.y < 0) {
-      return `${label} começa fora da tela`;
+      return tr('{label} começa fora da tela', { label });
     }
     if (zone.width < MIN_SIZE || zone.height < MIN_SIZE) {
-      return `${label} é pequena demais (mínimo ${MIN_SIZE}% de largura e de altura)`;
+      return tr('{label} é pequena demais (mínimo {min}% de largura e de altura)', { label, min: MIN_SIZE });
     }
     if (zone.x + zone.width > 100 || zone.y + zone.height > 100) {
-      return `${label} passa do limite da tela (100%)`;
+      return tr('{label} passa do limite da tela (100%)', { label });
     }
   }
   for (let i = 0; i < zones.length; i++) {
     for (let j = i + 1; j < zones.length; j++) {
       if (overlaps(zones[i], zones[j])) {
-        return `As zonas "${zones[i].name.trim()}" e "${zones[j].name.trim()}" se sobrepõem`;
+        return tr('As zonas "{a}" e "{b}" se sobrepõem', { a: zones[i].name.trim(), b: zones[j].name.trim() });
       }
     }
   }
   const names = zones.map((zone) => zone.name.trim().toLowerCase());
   if (new Set(names).size !== names.length) {
-    return 'Cada zona precisa de um nome diferente';
+    return tr('Cada zona precisa de um nome diferente');
   }
   return null;
 }
@@ -133,7 +134,7 @@ export function addZone(zones: ZoneDraft[]): ZoneDraft[] | null {
   for (const size of [25, 20, 15, 10]) {
     for (let y = 0; y + size <= 100; y += 5) {
       for (let x = 0; x + size <= 100; x += 5) {
-        const candidate: ZoneDraft = { key: newKey(), name: uniqueName(zones, 'Zona'), x, y, width: size, height: size, main: false, playlistId: null };
+        const candidate: ZoneDraft = { key: newKey(), name: uniqueName(zones, tr('Zona')), x, y, width: size, height: size, main: false, playlistId: null };
         if (!zones.some((zone) => overlaps(zone, candidate))) {
           return [...zones, candidate];
         }
@@ -154,7 +155,10 @@ function uniqueName(zones: ZoneDraft[], base: string): string {
 }
 
 /** Cores das zonas na pré-visualização (a principal é sempre a primeira cor). */
-export const ZONE_COLORS = ['#3563e9', '#19a66a', '#e89a32', '#9b59d0', '#e05263', '#17a2b8'];
+export const ZONE_COLORS = ['#238c60', '#8f9b96', '#e89a32', '#9b59d0', '#e05263', '#17a2b8'];
+
+/** Nome e descrição dos modelos vêm do servidor (em português): as conhecidas aparecem traduzidas. */
+export const templateText = (text: string): string => trServer(text);
 
 export function zoneColor(zones: Pick<ZoneDraft, 'main'>[], index: number): string {
   if (zones[index]?.main) {

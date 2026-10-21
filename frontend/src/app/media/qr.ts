@@ -1,6 +1,8 @@
 import qrcode from 'qrcode-generator';
 
-export type QrTheme = 'claro' | 'escuro' | 'azul';
+import { tr } from '../core/i18n';
+
+export type QrTheme = 'claro' | 'escuro' | 'verde';
 
 export interface QrThemeColors {
   label: string;
@@ -12,9 +14,9 @@ export interface QrThemeColors {
 
 /** Os três visuais do QR Code. O cartão do código é sempre claro com módulos escuros: leitores de celular exigem contraste. */
 export const QR_THEMES: Record<QrTheme, QrThemeColors> = {
-  claro: { label: 'Claro', background: '#ffffff', card: '#ffffff', modules: '#111a2c', text: '#111a2c' },
-  escuro: { label: 'Escuro', background: '#111a2c', card: '#ffffff', modules: '#111a2c', text: '#ffffff' },
-  azul: { label: 'Azul', background: '#3563e9', card: '#ffffff', modules: '#111a2c', text: '#ffffff' },
+  claro: { label: 'Claro', background: '#ffffff', card: '#ffffff', modules: '#0c1410', text: '#0c1410' },
+  escuro: { label: 'Escuro', background: '#0c1410', card: '#ffffff', modules: '#0c1410', text: '#ffffff' },
+  verde: { label: 'Verde', background: '#1a6a49', card: '#ffffff', modules: '#0c1410', text: '#ffffff' },
 };
 
 /** O QR Code como uma grade de módulos escuros/claros. */
@@ -26,14 +28,14 @@ export interface QrMatrix {
 /** Texto longo demais para o QR Code (o limite do tipo mais alto, com correção de erro média, é de uns 2.300 caracteres). */
 export class QrTooLongError extends Error {
   constructor() {
-    super('O texto é grande demais para um QR Code. Use um endereço mais curto.');
+    super(tr('O texto é grande demais para um QR Code. Use um endereço mais curto.'));
   }
 }
 
 export function buildMatrix(text: string): QrMatrix {
   const content = text.trim();
   if (!content) {
-    throw new Error('Informe o endereço ou o texto do QR Code');
+    throw new Error(tr('Informe o endereço ou o texto do QR Code'));
   }
   const code = qrcode(0, 'M'); // tipo automático, correção de erro média
   code.addData(content, 'Byte');
@@ -138,5 +140,5 @@ function fit(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): str
 /** Nome do arquivo na biblioteca: "QR Code - <título ou endereço>.png". */
 export function qrFileName(drawing: Pick<QrDrawing, 'text' | 'title'>): string {
   const base = (drawing.title.trim() || drawing.text.trim().replace(/^https?:\/\//i, '')).replace(/[\\/:*?"<>|]+/g, ' ').trim();
-  return `QR Code - ${base.slice(0, 60) || 'sem nome'}.png`;
+  return `QR Code - ${base.slice(0, 60) || tr('sem nome')}.png`;
 }

@@ -5,24 +5,25 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
 import { mediaTypeLabel } from '../core/format';
+import { TPipe, tr } from '../core/i18n';
 import { Media, Playlist, PlaylistItem } from '../core/models';
 import { MediaThumb } from '../media/media-thumb';
 import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, totalSeconds } from './playlist-editor';
 
 @Component({
   selector: 'app-playlist-editor',
-  imports: [FormsModule, RouterLink, MediaThumb],
+  imports: [FormsModule, RouterLink, MediaThumb, TPipe],
   template: `
     <div class="head">
       <div>
-        <h1>{{ isNew() ? 'Nova playlist' : 'Playlist: ' + savedName() }}</h1>
-        <p>Defina a ordem e a duração dos conteúdos. Ao publicar, as telas sincronizam sozinhas.</p>
+        <h1>{{ isNew() ? ('Nova playlist' | t) : (('Playlist:' | t) + ' ' + savedName()) }}</h1>
+        <p>{{ 'Defina a ordem e a duração dos conteúdos. Ao publicar, as telas sincronizam sozinhas.' | t }}</p>
       </div>
       <div class="top-actions">
-        <a class="secondary btn" routerLink="/playlists">Voltar</a>
+        <a class="secondary btn" routerLink="/playlists">{{ 'Voltar' | t }}</a>
         @if (auth.can('content')) {
           <button class="primary" (click)="save()" [disabled]="busy() || !canSave()">
-            {{ busy() ? 'Publicando…' : 'Publicar alterações' }}
+            {{ (busy() ? 'Publicando…' : 'Publicar alterações') | t }}
           </button>
         }
       </div>
@@ -35,17 +36,17 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
     <div class="layout">
       <div class="card">
         <div class="field">
-          <label for="pname">Nome</label>
-          <input id="pname" [ngModel]="name()" (ngModelChange)="name.set($event)" placeholder="Ex.: Loja Centro" />
+          <label for="pname">{{ 'Nome' | t }}</label>
+          <input id="pname" [ngModel]="name()" (ngModelChange)="name.set($event)" [placeholder]="'Ex.: Loja Centro' | t" />
         </div>
         <div class="field">
-          <label for="pdesc">Descrição</label>
-          <input id="pdesc" [ngModel]="description()" (ngModelChange)="description.set($event)" placeholder="Opcional" />
+          <label for="pdesc">{{ 'Descrição' | t }}</label>
+          <input id="pdesc" [ngModel]="description()" (ngModelChange)="description.set($event)" [placeholder]="'Opcional' | t" />
         </div>
 
-        <h3>Sequência de reprodução <small>· ciclo de {{ cycle() }}</small></h3>
+        <h3>{{ 'Sequência de reprodução' | t }} <small>· {{ 'ciclo de {time}' | t: { time: cycle() } }}</small></h3>
         @if (items().length === 0) {
-          <div class="empty">Adicione mídias da biblioteca ao lado.</div>
+          <div class="empty">{{ 'Adicione mídias da biblioteca ao lado.' | t }}</div>
         }
         @for (item of items(); track $index) {
           <div class="row">
@@ -55,25 +56,27 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
               <b>{{ item.mediaName }}</b>
               <small>{{ typeLabel(item.mediaType) }}</small>
             </div>
-            <label class="dur">
-              <input type="number" min="1" [ngModel]="item.durationSeconds" (ngModelChange)="changeDuration($index, $event)" />
-              <small>s</small>
-            </label>
-            <button class="secondary small" (click)="move($index, -1)" [disabled]="$first" title="Subir">↑</button>
-            <button class="secondary small" (click)="move($index, 1)" [disabled]="$last" title="Descer">↓</button>
-            <button class="danger small" (click)="remove($index)" title="Remover">✕</button>
+            <div class="ctrl">
+              <label class="dur">
+                <input type="number" min="1" [attr.aria-label]="'Duração (segundos)' | t" [ngModel]="item.durationSeconds" (ngModelChange)="changeDuration($index, $event)" />
+                <small>{{ 's' | t }}</small>
+              </label>
+              <button class="secondary small" (click)="move($index, -1)" [disabled]="$first" [title]="'Subir' | t">↑</button>
+              <button class="secondary small" (click)="move($index, 1)" [disabled]="$last" [title]="'Descer' | t">↓</button>
+              <button class="danger small" (click)="remove($index)" [title]="'Remover' | t">✕</button>
+            </div>
           </div>
         }
       </div>
 
       <div class="card">
-        <h3>Biblioteca</h3>
+        <h3>{{ 'Biblioteca' | t }}</h3>
         @if (library().length === 0) {
-          <div class="empty">Biblioteca vazia. <a routerLink="/biblioteca">Envie mídias</a> primeiro.</div>
+          <div class="empty">{{ 'Biblioteca vazia.' | t }} <a routerLink="/biblioteca">{{ 'Envie mídias' | t }}</a> {{ 'primeiro.' | t }}</div>
         }
         <div class="lib">
           @for (media of library(); track media.id) {
-            <button class="pick" (click)="add(media)" [title]="'Adicionar ' + media.name">
+            <button class="pick" (click)="add(media)" [title]="'Adicionar {name}' | t: { name: media.name }">
               <div class="thumb"><app-media-thumb [mediaId]="media.id" [type]="media.type" [name]="media.name" /></div>
               <small class="n">{{ media.name }}</small>
             </button>
@@ -84,21 +87,30 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
   `,
   styles: `
     .top-actions { display: flex; gap: 10px; align-items: center; }
-    .btn { display: inline-block; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line); background: #fff; color: var(--text); font-weight: 600; }
+    .btn { display: inline-block; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-weight: 600; text-align: center; }
     .layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 18px; align-items: start; }
     .row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
     .pos { width: 22px; text-align: center; color: var(--muted); font-weight: 700; }
-    .thumb { width: 64px; height: 44px; border-radius: 8px; overflow: hidden; flex: none; background: var(--blue2); }
+    .thumb { width: 64px; height: 44px; border-radius: 8px; overflow: hidden; flex: none; background: var(--primary-soft); }
     .info { flex: 1; display: flex; flex-direction: column; min-width: 0; }
     .info b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ctrl { display: flex; align-items: center; gap: 8px; }
     .dur { display: flex; align-items: center; gap: 4px; }
     .dur input { width: 70px; padding: 6px 8px; }
     .lib { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
-    .pick { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 6px; text-align: left; }
-    .pick:hover { border-color: var(--blue); background: var(--blue2); }
+    .pick { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 6px; text-align: left; }
+    .pick:hover { border-color: var(--primary); background: var(--primary-soft); }
     .pick .thumb { width: 100%; height: 62px; }
     .pick .n { display: block; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+    @media (max-width: 720px) {
+      .top-actions { width: 100%; }
+      .top-actions > * { flex: 1; }
+      .row { flex-wrap: wrap; }
+      .info { flex: 1 1 calc(100% - 130px); }
+      .ctrl { width: 100%; justify-content: flex-end; padding-left: 32px; }
+      .dur input { width: 80px; }
+    }
   `,
 })
 export class PlaylistEditorPage implements OnInit {
@@ -166,7 +178,7 @@ export class PlaylistEditorPage implements OnInit {
         this.busy.set(false);
         const wasNew = currentId === null;
         this.apply(playlist);
-        this.notice.set(`Publicado — versão ${playlist.configVersion}. As telas vinculadas sincronizam em instantes.`);
+        this.notice.set(tr('Publicado — versão {version}. As telas vinculadas sincronizam em instantes.', { version: playlist.configVersion }));
         if (wasNew) {
           void this.router.navigate(['/playlists', playlist.id], { replaceUrl: true });
         }

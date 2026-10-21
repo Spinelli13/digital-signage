@@ -4,7 +4,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { ApiService } from '../core/api.service';
 import { deviceState, formatDateTime, timeAgo } from '../core/format';
-import { EVENT_LABELS, EVENT_TYPES, LEVEL_LABELS } from '../core/monitoring-labels';
+import { TPipe, trServer } from '../core/i18n';
+import { EVENT_LABELS, EVENT_TYPES, eventLabel, levelLabel } from '../core/monitoring-labels';
 import { Device, DeviceEvent, EventLevel, EventType } from '../core/models';
 
 const PAGE_SIZE = 50;
@@ -13,37 +14,37 @@ const REFRESH_MS = 15_000;
 /** A história de uma TV: quando conectou, caiu, mudou de conteúdo, atualizou e o que o Player relatou. */
 @Component({
   selector: 'app-device-history',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, TPipe],
   template: `
     <div class="head">
       <div>
-        <p class="back"><a routerLink="/dispositivos">← Dispositivos</a></p>
-        <h1>Histórico{{ device() ? ' — ' + device()!.name : '' }}</h1>
+        <p class="back"><a routerLink="/dispositivos">← {{ 'Dispositivos' | t }}</a></p>
+        <h1>{{ 'Histórico' | t }}{{ device() ? ' — ' + device()!.name : '' }}</h1>
         @if (device(); as tv) {
           <p>
             <span class="dot" [class]="state(tv).tone"></span>{{ state(tv).label }}
-            · último contato {{ ago(tv.lastSeenAt) }}{{ tv.playerVersion ? ' · Player v' + tv.playerVersion : '' }}
+            · {{ 'último contato' | t }} {{ ago(tv.lastSeenAt) }}{{ tv.playerVersion ? ' · Player v' + tv.playerVersion : '' }}
             @if (tv.currentMediaName) {
-              · na tela: {{ tv.currentMediaName }}
+              · {{ 'na tela:' | t }} {{ tv.currentMediaName }}
             }
           </p>
         }
       </div>
-      <button class="secondary" (click)="reload()">↻ Atualizar</button>
+      <button class="secondary" (click)="reload()">{{ '↻ Atualizar' | t }}</button>
     </div>
 
     <div class="card filters">
-      <select aria-label="Tipo de evento" [ngModel]="type()" (ngModelChange)="setType($event)">
-        <option value="">Todos os tipos</option>
+      <select [attr.aria-label]="'Tipo de evento' | t" [ngModel]="type()" (ngModelChange)="setType($event)">
+        <option value="">{{ 'Todos os tipos' | t }}</option>
         @for (kind of types; track kind) {
-          <option [value]="kind">{{ labels[kind].icon }} {{ labels[kind].label }}</option>
+          <option [value]="kind">{{ labels[kind].icon }} {{ eventText(kind) }}</option>
         }
       </select>
-      <select aria-label="Nível" [ngModel]="level()" (ngModelChange)="setLevel($event)">
-        <option value="">Todos os níveis</option>
-        <option value="ERROR">Só erros</option>
-        <option value="WARN">Só avisos</option>
-        <option value="INFO">Só informações</option>
+      <select [attr.aria-label]="'Nível' | t" [ngModel]="level()" (ngModelChange)="setLevel($event)">
+        <option value="">{{ 'Todos os níveis' | t }}</option>
+        <option value="ERROR">{{ 'Só erros' | t }}</option>
+        <option value="WARN">{{ 'Só avisos' | t }}</option>
+        <option value="INFO">{{ 'Só informações' | t }}</option>
       </select>
     </div>
 
@@ -51,11 +52,11 @@ const REFRESH_MS = 15_000;
       @if (events().length === 0) {
         <div class="empty">
           @if (!loaded()) {
-            Carregando…
+            {{ 'Carregando…' | t }}
           } @else if (type() || level()) {
-            Nenhum evento com esses filtros.
+            {{ 'Nenhum evento com esses filtros.' | t }}
           } @else {
-            Ainda não há nada no histórico desta TV.
+            {{ 'Ainda não há nada no histórico desta TV.' | t }}
           }
         </div>
       } @else {
@@ -65,19 +66,19 @@ const REFRESH_MS = 15_000;
               <span class="icon" aria-hidden="true">{{ labels[event.type].icon }}</span>
               <div class="body">
                 <div>
-                  <b>{{ labels[event.type].label }}</b>
+                  <b>{{ eventText(event.type) }}</b>
                   @if (event.level !== 'INFO') {
-                    <span class="badge" [class]="'badge-' + event.level.toLowerCase()">{{ levels[event.level] }}</span>
+                    <span class="badge" [class]="'badge-' + event.level.toLowerCase()">{{ levelText(event.level) }}</span>
                   }
                 </div>
-                <div>{{ event.message }}</div>
+                <div>{{ messageOf(event.message) }}</div>
               </div>
               <time class="when" [attr.datetime]="event.occurredAt" [title]="ago(event.occurredAt)">{{ when(event.occurredAt) }}</time>
             </li>
           }
         </ol>
         @if (hasMore()) {
-          <div class="more"><button class="secondary" (click)="loadMore()" [disabled]="loadingMore()">{{ loadingMore() ? 'Carregando…' : 'Carregar mais' }}</button></div>
+          <div class="more"><button class="secondary" (click)="loadMore()" [disabled]="loadingMore()">{{ (loadingMore() ? 'Carregando…' : 'Carregar mais') | t }}</button></div>
         }
       }
     </div>
@@ -91,14 +92,17 @@ const REFRESH_MS = 15_000;
     .timeline li:last-child { border-bottom: 0; }
     .icon { font-size: 20px; text-align: center; }
     .when { color: var(--muted); font-size: 13px; white-space: nowrap; }
-    .lv-error .body > div:last-child { color: #a8283a; }
+    .body { min-width: 0; word-break: break-word; }
+    .lv-error .body > div:last-child { color: var(--err-fg); }
     .badge { display: inline-block; margin-left: 8px; font-size: 12px; border-radius: 999px; padding: 1px 9px; font-weight: 600; }
-    .badge-warn { background: #fff4e0; color: #9a5d0c; }
-    .badge-error { background: #fdf0f2; color: #a8283a; }
+    .badge-warn { background: var(--warn-bg); color: var(--warn-fg); }
+    .badge-error { background: var(--err-bg); color: var(--err-fg); }
     .more { text-align: center; padding-top: 14px; }
     @media (max-width: 720px) {
       .timeline li { grid-template-columns: 28px 1fr; }
-      .when { grid-column: 2; }
+      .when { grid-column: 2; white-space: normal; }
+      .filters { flex-direction: column; }
+      .filters select { width: 100%; min-width: 0; }
     }
   `,
 })
@@ -117,7 +121,10 @@ export class DeviceHistoryPage implements OnInit {
 
   readonly types = EVENT_TYPES;
   readonly labels = EVENT_LABELS;
-  readonly levels = LEVEL_LABELS;
+  readonly eventText = eventLabel;
+  readonly levelText = levelLabel;
+  /** Mensagens que o servidor registrou (em português); as conhecidas aparecem traduzidas. */
+  readonly messageOf = (message: string) => trServer(message);
   readonly state = deviceState;
   readonly ago = (iso: string | null) => timeAgo(iso);
   readonly when = (iso: string | null) => formatDateTime(iso);

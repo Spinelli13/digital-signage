@@ -7,6 +7,7 @@ import { AuthService } from '../core/auth.service';
 import { ConfigService } from '../core/config.service';
 import { Me, Role } from '../core/models';
 import { meFixture, tenantFixture } from '../testing/fixtures';
+import { resetLangForTests, setLang } from '../core/i18n';
 import { Shell } from './shell';
 
 const API = 'http://api.test/api/v1';
@@ -197,6 +198,93 @@ describe('Shell', () => {
 
     expect(auth.isLoggedIn()).toBe(false);
     expect(navigate).toHaveBeenCalledWith(['/login']);
+  });
+
+  describe('no celular', () => {
+    const drawer = (element: HTMLElement) => element.querySelector('aside.side') as HTMLElement;
+
+    it('o menu lateral começa fechado, abre pelo botão e fecha pela cortina', async () => {
+      const { element, component } = await renderShell(meFixture('ADMIN'));
+      expect(drawer(element).classList.contains('open')).toBe(false);
+      expect(element.querySelector('[data-testid="backdrop"]')).toBeNull();
+
+      (element.querySelector('[data-testid="menu-button"]') as HTMLButtonElement).click();
+      expect(component.menuOpen()).toBe(true);
+      const fixture = TestBed.createComponent(Shell);
+      backend.expectNone(`${API}/auth/me`);
+      fixture.destroy();
+    });
+
+    it('abre e fecha pelos botões e pela tecla Esc', async () => {
+      const { component } = await renderShell(meFixture('ADMIN'));
+
+      component.toggleMenu();
+      expect(component.menuOpen()).toBe(true);
+      component.closeMenu();
+      expect(component.menuOpen()).toBe(false);
+
+      component.toggleMenu();
+      component.onEscape();
+      expect(component.menuOpen()).toBe(false);
+    });
+
+    it('mostra a cortina com o menu aberto e a barra de atalhos na base', async () => {
+      const fixture = TestBed.createComponent(Shell);
+      backend.expectOne(`${API}/auth/me`).flush(meFixture('ADMIN'));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      await new Promise((resolve) => setTimeout(resolve));
+      fixture.componentInstance.toggleMenu();
+      fixture.detectChanges();
+      const element = fixture.nativeElement as HTMLElement;
+
+      expect(element.querySelector('[data-testid="backdrop"]')).not.toBeNull();
+      expect(drawer(element).classList.contains('open')).toBe(true);
+      const shortcuts = Array.from(element.querySelectorAll('nav.bottombar a, nav.bottombar button')).map((item) => item.textContent?.trim() ?? '');
+      expect(shortcuts.some((label) => label.includes('Dashboard'))).toBe(true);
+      expect(shortcuts.some((label) => label.includes('Dispositivos'))).toBe(true);
+      expect(shortcuts.some((label) => label.includes('Menu'))).toBe(true);
+    });
+
+    it('escondem os atalhos quando a assinatura está suspensa', async () => {
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+      const element = await render(meFixture('ADMIN', { tenant: tenantFixture({ status: 'SUSPENDED' }) }));
+
+      expect(element.querySelector('nav.bottombar')).toBeNull();
+    });
+  });
+
+  describe('idioma e tema', () => {
+    afterEach(() => resetLangForTests('pt'));
+
+    it('o menu muda de idioma na hora', async () => {
+      const fixture = TestBed.createComponent(Shell);
+      backend.expectOne(`${API}/auth/me`).flush(meFixture('ADMIN'));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const element = fixture.nativeElement as HTMLElement;
+      expect(links(element).join('|')).toContain('Dispositivos');
+
+      setLang('en');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const labels = links(element).join('|');
+      expect(labels).toContain('Devices');
+      expect(labels).toContain('Plan & billing');
+      expect(labels).not.toContain('Dispositivos');
+    });
+
+    it('a conta oferece tema e idioma ao lado da troca de senha', async () => {
+      const { component } = await renderShell(meFixture('ADMIN'));
+      component.openAccount();
+
+      const fixture = TestBed.createComponent(Shell);
+      backend.expectNone(`${API}/auth/me`);
+      fixture.destroy();
+      expect(component.accountOpen()).toBe(true);
+    });
   });
 
   it.each<[Role, boolean]>([

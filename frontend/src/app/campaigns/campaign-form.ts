@@ -1,3 +1,4 @@
+import { formatDate, tr } from '../core/i18n';
 import { Campaign, CampaignRequest, CampaignState, TargetType } from '../core/models';
 
 /** Estado do formulário de campanha (os campos como a pessoa os preenche). */
@@ -21,7 +22,9 @@ export interface CampaignForm {
 }
 
 export const ALL_DAYS: readonly number[] = [1, 2, 3, 4, 5, 6, 7];
+/** As chaves em português; use dayLabel() para o texto no idioma atual. */
 export const DAY_LABELS: Record<number, string> = { 1: 'Seg', 2: 'Ter', 3: 'Qua', 4: 'Qui', 5: 'Sex', 6: 'Sáb', 7: 'Dom' };
+export const dayLabel = (day: number): string => tr(DAY_LABELS[day]);
 
 export const TIMEZONES: { value: string; label: string }[] = [
   { value: 'America/Sao_Paulo', label: 'Brasília (São Paulo, Rio, Belo Horizonte…)' },
@@ -85,30 +88,30 @@ export function formFrom(campaign: Campaign): CampaignForm {
 /** Primeiro problema do formulário, em português, ou null se está tudo certo (o servidor confere de novo). */
 export function validateForm(form: CampaignForm): string | null {
   if (!form.name.trim()) {
-    return 'Dê um nome à campanha.';
+    return tr('Dê um nome à campanha.');
   }
   if (form.playlistId === null) {
-    return 'Escolha a playlist da campanha.';
+    return tr('Escolha a playlist da campanha.');
   }
   if (!Number.isInteger(form.priority) || form.priority < 0 || form.priority > 1000) {
-    return 'A prioridade precisa ser um número de 0 a 1000.';
+    return tr('A prioridade precisa ser um número de 0 a 1000.');
   }
   if (form.startDate && form.endDate && form.startDate > form.endDate) {
-    return 'A data de início não pode ser depois da data de fim.';
+    return tr('A data de início não pode ser depois da data de fim.');
   }
   if (!form.allDay) {
     if (!form.startTime || !form.endTime) {
-      return 'Informe o horário de início e o de fim (ou marque "o dia todo").';
+      return tr('Informe o horário de início e o de fim (ou marque "o dia todo").');
     }
     if (form.startTime === form.endTime) {
-      return 'O horário de início e o de fim não podem ser iguais.';
+      return tr('O horário de início e o de fim não podem ser iguais.');
     }
   }
   if (form.days.size === 0) {
-    return 'Marque pelo menos um dia da semana.';
+    return tr('Marque pelo menos um dia da semana.');
   }
   if (!form.allDevices && form.locationIds.size + form.groupIds.size + form.deviceIds.size === 0) {
-    return 'Escolha para quem é a campanha: todas as TVs ou pelo menos um local, grupo ou TV.';
+    return tr('Escolha para quem é a campanha: todas as TVs ou pelo menos um local, grupo ou TV.');
   }
   return null;
 }
@@ -142,20 +145,15 @@ export function describeDays(days: readonly number[]): string {
   const sorted = [...days].sort((a, b) => a - b);
   const key = sorted.join(',');
   if (key === ALL_DAYS.join(',')) {
-    return 'Todos os dias';
+    return tr('Todos os dias');
   }
   if (key === '1,2,3,4,5') {
-    return 'Seg a Sex';
+    return tr('Seg a Sex');
   }
   if (key === '6,7') {
-    return 'Fim de semana';
+    return tr('Fim de semana');
   }
-  return sorted.map((d) => DAY_LABELS[d]).join(', ');
-}
-
-function brDate(iso: string): string {
-  const [year, month, day] = iso.split('-');
-  return `${day}/${month}/${year}`;
+  return sorted.map((d) => dayLabel(d)).join(', ');
 }
 
 /** Uma frase com a agenda: "Seg a Sex, 18:00–23:00, de 01/11/2026 a 30/11/2026". */
@@ -164,16 +162,16 @@ export function describeSchedule(campaign: Pick<Campaign, 'daysOfWeek' | 'startT
   if (campaign.startTime || campaign.endTime) {
     const start = trimTime(campaign.startTime) || '00:00';
     const end = trimTime(campaign.endTime);
-    parts.push(end ? `${start}–${end}` : `a partir das ${start}`);
+    parts.push(end ? `${start}–${end}` : tr('a partir das {time}', { time: start }));
   } else {
-    parts.push('o dia todo');
+    parts.push(tr('o dia todo'));
   }
   if (campaign.startDate && campaign.endDate) {
-    parts.push(`de ${brDate(campaign.startDate)} a ${brDate(campaign.endDate)}`);
+    parts.push(tr('de {from} a {to}', { from: formatDate(campaign.startDate), to: formatDate(campaign.endDate) }));
   } else if (campaign.startDate) {
-    parts.push(`a partir de ${brDate(campaign.startDate)}`);
+    parts.push(tr('a partir de {date}', { date: formatDate(campaign.startDate) }));
   } else if (campaign.endDate) {
-    parts.push(`até ${brDate(campaign.endDate)}`);
+    parts.push(tr('até {date}', { date: formatDate(campaign.endDate) }));
   }
   return parts.join(', ');
 }
@@ -181,17 +179,17 @@ export function describeSchedule(campaign: Pick<Campaign, 'daysOfWeek' | 'startT
 /** "Em 3 locais, 1 grupo e 2 TVs" / "Todas as TVs". */
 export function describeTargets(targets: Campaign['targets']): string {
   if (targets.length === 0) {
-    return 'Sem alvo (não alcança nenhuma TV)';
+    return tr('Sem alvo (não alcança nenhuma TV)');
   }
   if (targets.some((t) => t.type === 'ALL')) {
-    return 'Todas as TVs';
+    return tr('Todas as TVs');
   }
   const count = (type: TargetType) => targets.filter((t) => t.type === type).length;
-  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+  const plural = (n: number, one: string, many: string) => tr(n === 1 ? one : many, { n });
   return [
-    count('LOCATION') ? plural(count('LOCATION'), 'local', 'locais') : '',
-    count('GROUP') ? plural(count('GROUP'), 'grupo', 'grupos') : '',
-    count('DEVICE') ? plural(count('DEVICE'), 'TV', 'TVs') : '',
+    count('LOCATION') ? plural(count('LOCATION'), '{n} local', '{n} locais') : '',
+    count('GROUP') ? plural(count('GROUP'), '{n} grupo', '{n} grupos') : '',
+    count('DEVICE') ? plural(count('DEVICE'), '{n} TV', '{n} TVs') : '',
   ]
     .filter(Boolean)
     .join(', ');
@@ -203,7 +201,7 @@ export interface StateBadge {
   hint: string;
 }
 
-const BADGES: Record<CampaignState, StateBadge> = {
+export const BADGES: Record<CampaignState, StateBadge> = {
   ACTIVE: { label: 'Ativa agora', tone: 'on', hint: 'Está valendo neste momento nas TVs alcançadas.' },
   WAITING: { label: 'Aguardando horário', tone: 'warn', hint: 'Está no período, mas hoje ainda não é o dia ou a hora dela.' },
   SCHEDULED: { label: 'Agendada', tone: 'warn', hint: 'O período ainda não começou.' },
@@ -212,5 +210,6 @@ const BADGES: Record<CampaignState, StateBadge> = {
 };
 
 export function stateBadge(state: CampaignState): StateBadge {
-  return BADGES[state];
+  const badge = BADGES[state];
+  return { label: tr(badge.label), tone: badge.tone, hint: tr(badge.hint) };
 }

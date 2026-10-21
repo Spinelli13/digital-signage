@@ -5,7 +5,8 @@ import { RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { FileSaver } from '../core/download';
 import { daysAgo, formatDateTime, formatPercent, humanSeconds, stateOfConnection } from '../core/format';
-import { EVENT_LABELS, EVENT_TYPES, LEVEL_LABELS } from '../core/monitoring-labels';
+import { FDatePipe, TPipe, tr, trServer } from '../core/i18n';
+import { EVENT_LABELS, EVENT_TYPES, eventLabel, levelLabel } from '../core/monitoring-labels';
 import {
   Device,
   DeviceGroup,
@@ -22,7 +23,7 @@ import {
 
 export type ReportTab = 'uptime' | 'plays' | 'inventory' | 'events';
 
-const TABS: { id: ReportTab; label: string }[] = [
+export const TABS: { id: ReportTab; label: string }[] = [
   { id: 'uptime', label: 'Disponibilidade' },
   { id: 'plays', label: 'Exibições' },
   { id: 'inventory', label: 'Inventário' },
@@ -31,73 +32,73 @@ const TABS: { id: ReportTab; label: string }[] = [
 
 @Component({
   selector: 'app-reports',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, TPipe, FDatePipe],
   template: `
     <div class="head">
       <div>
-        <h1>Relatórios</h1>
-        <p>Quanto tempo as TVs ficaram no ar, o que foi exibido e o que aconteceu. Cada relatório pode ser baixado em CSV para abrir no Excel.</p>
+        <h1>{{ 'Relatórios' | t }}</h1>
+        <p>{{ 'Quanto tempo as TVs ficaram no ar, o que foi exibido e o que aconteceu. Cada relatório pode ser baixado em CSV para abrir no Excel.' | t }}</p>
       </div>
-      <button class="secondary" (click)="downloadCsv()" [disabled]="downloading()">{{ downloading() ? 'Gerando…' : '⬇ Baixar CSV' }}</button>
+      <button class="secondary" (click)="downloadCsv()" [disabled]="downloading()">{{ (downloading() ? 'Gerando…' : '⬇ Baixar CSV') | t }}</button>
     </div>
 
     <div class="tabs" role="tablist">
       @for (item of tabs; track item.id) {
-        <button role="tab" [attr.aria-selected]="tab() === item.id" [class.on]="tab() === item.id" (click)="select(item.id)">{{ item.label }}</button>
+        <button role="tab" [attr.aria-selected]="tab() === item.id" [class.on]="tab() === item.id" (click)="select(item.id)">{{ item.label | t }}</button>
       }
     </div>
 
     @if (tab() !== 'inventory') {
       <div class="card filters">
         <div class="presets">
-          <button class="secondary small" (click)="preset(0)">Hoje</button>
-          <button class="secondary small" (click)="preset(6)">7 dias</button>
-          <button class="secondary small" (click)="preset(29)">30 dias</button>
+          <button class="secondary small" (click)="preset(0)">{{ 'Hoje' | t }}</button>
+          <button class="secondary small" (click)="preset(6)">{{ '7 dias' | t }}</button>
+          <button class="secondary small" (click)="preset(29)">{{ '30 dias' | t }}</button>
         </div>
-        <label>De <input type="date" aria-label="Data inicial" [ngModel]="from()" (ngModelChange)="setFrom($event)" /></label>
-        <label>até <input type="date" aria-label="Data final" [ngModel]="to()" (ngModelChange)="setTo($event)" /></label>
+        <label>{{ 'De' | t }} <input type="date" [attr.aria-label]="'Data inicial' | t" [ngModel]="from()" (ngModelChange)="setFrom($event)" /></label>
+        <label>{{ 'até' | t }} <input type="date" [attr.aria-label]="'Data final' | t" [ngModel]="to()" (ngModelChange)="setTo($event)" /></label>
 
         @if (tab() === 'uptime' || tab() === 'plays') {
-          <select aria-label="Local" [ngModel]="locationId()" (ngModelChange)="setLocation($event)">
-            <option [ngValue]="null">Todos os locais</option>
+          <select [attr.aria-label]="'Local' | t" [ngModel]="locationId()" (ngModelChange)="setLocation($event)">
+            <option [ngValue]="null">{{ 'Todos os locais' | t }}</option>
             @for (location of locations(); track location.id) {
               <option [ngValue]="location.id">{{ location.name }}</option>
             }
           </select>
         }
         @if (tab() === 'uptime') {
-          <select aria-label="Grupo" [ngModel]="groupId()" (ngModelChange)="setGroup($event)">
-            <option [ngValue]="null">Todos os grupos</option>
+          <select [attr.aria-label]="'Grupo' | t" [ngModel]="groupId()" (ngModelChange)="setGroup($event)">
+            <option [ngValue]="null">{{ 'Todos os grupos' | t }}</option>
             @for (group of groups(); track group.id) {
               <option [ngValue]="group.id">{{ group.name }}</option>
             }
           </select>
         }
         @if (tab() === 'plays') {
-          <select aria-label="Agrupar por" [ngModel]="groupBy()" (ngModelChange)="setGroupBy($event)">
-            <option value="media">Por mídia</option>
-            <option value="device">Por TV</option>
-            <option value="day">Por dia</option>
+          <select [attr.aria-label]="'Agrupar por' | t" [ngModel]="groupBy()" (ngModelChange)="setGroupBy($event)">
+            <option value="media">{{ 'Por mídia' | t }}</option>
+            <option value="device">{{ 'Por TV' | t }}</option>
+            <option value="day">{{ 'Por dia' | t }}</option>
           </select>
         }
         @if (tab() === 'events') {
-          <select aria-label="TV" [ngModel]="eventDevice()" (ngModelChange)="setEventDevice($event)">
-            <option [ngValue]="null">Todas as TVs</option>
+          <select [attr.aria-label]="'TV' | t" [ngModel]="eventDevice()" (ngModelChange)="setEventDevice($event)">
+            <option [ngValue]="null">{{ 'Todas as TVs' | t }}</option>
             @for (device of devices(); track device.id) {
               <option [ngValue]="device.id">{{ device.name }}</option>
             }
           </select>
-          <select aria-label="Tipo" [ngModel]="eventType()" (ngModelChange)="setEventType($event)">
-            <option value="">Todos os tipos</option>
+          <select [attr.aria-label]="'Tipo' | t" [ngModel]="eventType()" (ngModelChange)="setEventType($event)">
+            <option value="">{{ 'Todos os tipos' | t }}</option>
             @for (kind of eventTypes; track kind) {
-              <option [value]="kind">{{ eventLabels[kind].label }}</option>
+              <option [value]="kind">{{ eventText(kind) }}</option>
             }
           </select>
-          <select aria-label="Nível" [ngModel]="eventLevel()" (ngModelChange)="setEventLevel($event)">
-            <option value="">Todos os níveis</option>
-            <option value="ERROR">Só erros</option>
-            <option value="WARN">Só avisos</option>
-            <option value="INFO">Só informações</option>
+          <select [attr.aria-label]="'Nível' | t" [ngModel]="eventLevel()" (ngModelChange)="setEventLevel($event)">
+            <option value="">{{ 'Todos os níveis' | t }}</option>
+            <option value="ERROR">{{ 'Só erros' | t }}</option>
+            <option value="WARN">{{ 'Só avisos' | t }}</option>
+            <option value="INFO">{{ 'Só informações' | t }}</option>
           </select>
         }
       </div>
@@ -108,115 +109,119 @@ const TABS: { id: ReportTab; label: string }[] = [
         @case ('uptime') {
           @if (uptime(); as report) {
             <div class="summary">
-              <div><span class="label">Disponibilidade da frota</span><div class="big">{{ percent(report.fleetUptimePercent) }}</div></div>
-              <div><span class="label">Período</span><div>{{ report.from }} a {{ report.to }}</div><small>fuso {{ report.timezone }}</small></div>
+              <div><span class="label">{{ 'Disponibilidade da frota' | t }}</span><div class="big">{{ percent(report.fleetUptimePercent) }}</div></div>
+              <div><span class="label">{{ 'Período' | t }}</span><div>{{ report.from | fdate }} {{ 'a' | t }} {{ report.to | fdate }}</div><small>{{ 'fuso' | t }} {{ report.timezone }}</small></div>
             </div>
             @if (report.devices.length === 0) {
-              <div class="empty">Nenhuma TV neste filtro.</div>
+              <div class="empty">{{ 'Nenhuma TV neste filtro.' | t }}</div>
             } @else {
-              <table>
-                <tr><th>TV</th><th>Local</th><th>Disponibilidade</th><th>Online</th><th>Offline</th><th>Quedas</th><th></th></tr>
+              <table class="stack">
+                <tr><th>{{ 'TV' | t }}</th><th>{{ 'Local' | t }}</th><th>{{ 'Disponibilidade' | t }}</th><th>{{ 'Online' | t }}</th><th>{{ 'Offline' | t }}</th><th>{{ 'Quedas' | t }}</th><th></th></tr>
                 @for (row of report.devices; track row.deviceId) {
                   <tr>
-                    <td><b>{{ row.name }}</b></td>
-                    <td>{{ row.location || '—' }}</td>
-                    <td>
-                      @if (row.uptimePercent === null) {
-                        <span class="muted" title="A TV ainda não tinha se conectado neste período.">sem dados</span>
-                      } @else {
-                        <div class="meter" [title]="percent(row.uptimePercent)"><span [style.width.%]="row.uptimePercent" [class.low]="row.uptimePercent < 95"></span></div>
-                        {{ percent(row.uptimePercent) }}
-                      }
+                    <td class="first"><b>{{ row.name }}</b></td>
+                    <td [attr.data-label]="'Local' | t">{{ row.location || '—' }}</td>
+                    <td [attr.data-label]="'Disponibilidade' | t">
+                      <span>
+                        @if (row.uptimePercent === null) {
+                          <span class="muted" [title]="'A TV ainda não tinha se conectado neste período.' | t">{{ 'sem dados' | t }}</span>
+                        } @else {
+                          <span class="meter" [title]="percent(row.uptimePercent)"><span [style.width.%]="row.uptimePercent" [class.low]="row.uptimePercent < 95"></span></span>
+                          {{ percent(row.uptimePercent) }}
+                        }
+                      </span>
                     </td>
-                    <td>{{ human(row.onlineSeconds) }}</td>
-                    <td>{{ human(row.offlineSeconds) }}</td>
-                    <td>{{ row.incidents }}</td>
-                    <td class="row-actions"><a [routerLink]="['/dispositivos', row.deviceId, 'historico']">Histórico</a></td>
+                    <td [attr.data-label]="'Online' | t">{{ human(row.onlineSeconds) }}</td>
+                    <td [attr.data-label]="'Offline' | t">{{ human(row.offlineSeconds) }}</td>
+                    <td [attr.data-label]="'Quedas' | t">{{ row.incidents }}</td>
+                    <td class="row-actions"><a [routerLink]="['/dispositivos', row.deviceId, 'historico']">{{ 'Histórico' | t }}</a></td>
                   </tr>
                 }
               </table>
             }
           } @else {
-            <div class="empty">Carregando…</div>
+            <div class="empty">{{ 'Carregando…' | t }}</div>
           }
         }
         @case ('plays') {
           @if (plays(); as report) {
             <div class="summary">
-              <div><span class="label">Exibições no período</span><div class="big">{{ report.totalPlays }}</div></div>
-              <div><span class="label">Tempo total na tela</span><div class="big">{{ human(report.totalSeconds) }}</div></div>
+              <div><span class="label">{{ 'Exibições no período' | t }}</span><div class="big">{{ report.totalPlays }}</div></div>
+              <div><span class="label">{{ 'Tempo total na tela' | t }}</span><div class="big">{{ human(report.totalSeconds) }}</div></div>
             </div>
             @if (report.rows.length === 0) {
-              <div class="empty">Nenhuma exibição registrada neste período. As contagens vêm do Player (versão 0.5 ou mais nova) a cada contato com o servidor.</div>
+              <div class="empty">{{ 'Nenhuma exibição registrada neste período. As contagens vêm do Player (versão 0.5 ou mais nova) a cada contato com o servidor.' | t }}</div>
             } @else {
-              <table>
-                <tr><th>{{ playsColumn() }}</th><th>Exibições</th><th>Tempo na tela</th><th>TVs</th></tr>
+              <table class="stack">
+                <tr><th>{{ playsColumn() }}</th><th>{{ 'Exibições' | t }}</th><th>{{ 'Tempo na tela' | t }}</th><th>{{ 'TVs' | t }}</th></tr>
                 @for (row of report.rows; track $index) {
                   <tr>
-                    <td><b>{{ row.day ?? row.label }}</b></td>
-                    <td>{{ row.plays }}</td>
-                    <td>{{ human(row.seconds) }}</td>
-                    <td>{{ row.devices }}</td>
+                    <td class="first"><b>{{ row.day ?? row.label }}</b></td>
+                    <td [attr.data-label]="'Exibições' | t">{{ row.plays }}</td>
+                    <td [attr.data-label]="'Tempo na tela' | t">{{ human(row.seconds) }}</td>
+                    <td [attr.data-label]="'TVs' | t">{{ row.devices }}</td>
                   </tr>
                 }
               </table>
             }
           } @else {
-            <div class="empty">Carregando…</div>
+            <div class="empty">{{ 'Carregando…' | t }}</div>
           }
         }
         @case ('inventory') {
           @if (inventory(); as rows) {
             @if (rows.length === 0) {
-              <div class="empty">Nenhuma TV cadastrada ainda.</div>
+              <div class="empty">{{ 'Nenhuma TV cadastrada ainda.' | t }}</div>
             } @else {
-              <table>
-                <tr><th>TV</th><th>Local / grupos</th><th>Situação</th><th>Player</th><th>Exibindo</th></tr>
+              <table class="stack">
+                <tr><th>{{ 'TV' | t }}</th><th>{{ 'Local / grupos' | t }}</th><th>{{ 'Situação' | t }}</th><th>{{ 'Player' | t }}</th><th>{{ 'Exibindo' | t }}</th></tr>
                 @for (row of rows; track row.id) {
                   <tr>
-                    <td><b>{{ row.name }}</b><br /><small>ativada {{ when(row.activatedAt) }}</small></td>
-                    <td>{{ row.location || 'Sem local' }}@if (row.groups.length > 0) {<br /><small>{{ row.groups.join(', ') }}</small>}</td>
-                    <td><span class="dot" [class]="stateOf(row.connection).tone"></span>{{ stateOf(row.connection).label }}<br /><small>contato {{ when(row.lastSeenAt) }}</small></td>
-                    <td>{{ row.playerVersion ? 'v' + row.playerVersion : '—' }}</td>
-                    <td>
-                      {{ row.playlist || 'Sem playlist' }}
-                      @if (row.campaign) {
-                        <br /><small>📣 campanha {{ row.campaign }}</small>
-                      }
-                      @if (row.currentMedia) {
-                        <br /><small>▶ {{ row.currentMedia }}</small>
-                      }
+                    <td class="first"><b>{{ row.name }}</b><br /><small>{{ 'ativada' | t }} {{ when(row.activatedAt) }}</small></td>
+                    <td [attr.data-label]="'Local / grupos' | t"><span>{{ row.location || ('Sem local' | t) }}@if (row.groups.length > 0) {<br /><small>{{ row.groups.join(', ') }}</small>}</span></td>
+                    <td [attr.data-label]="'Situação' | t"><span class="st"><span class="dot" [class]="stateOf(row.connection).tone"></span>{{ stateOf(row.connection).label }}<br /><small>{{ 'contato' | t }} {{ when(row.lastSeenAt) }}</small></span></td>
+                    <td [attr.data-label]="'Player' | t">{{ row.playerVersion ? 'v' + row.playerVersion : '—' }}</td>
+                    <td [attr.data-label]="'Exibindo' | t">
+                      <span>
+                        {{ row.playlist || ('Sem playlist' | t) }}
+                        @if (row.campaign) {
+                          <br /><small>{{ '📣 campanha {name}' | t: { name: row.campaign } }}</small>
+                        }
+                        @if (row.currentMedia) {
+                          <br /><small>▶ {{ row.currentMedia }}</small>
+                        }
+                      </span>
                     </td>
                   </tr>
                 }
               </table>
             }
           } @else {
-            <div class="empty">Carregando…</div>
+            <div class="empty">{{ 'Carregando…' | t }}</div>
           }
         }
         @case ('events') {
           @if (events(); as rows) {
             @if (rows.length === 0) {
-              <div class="empty">Nenhum evento neste período e filtro.</div>
+              <div class="empty">{{ 'Nenhum evento neste período e filtro.' | t }}</div>
             } @else {
-              <table>
-                <tr><th>Quando</th><th>TV</th><th>Tipo</th><th>O que aconteceu</th></tr>
+              <table class="stack">
+                <tr><th>{{ 'Quando' | t }}</th><th>{{ 'TV' | t }}</th><th>{{ 'Tipo' | t }}</th><th>{{ 'O que aconteceu' | t }}</th></tr>
                 @for (row of rows; track row.id) {
                   <tr>
-                    <td class="nowrap">{{ when(row.occurredAt) }}</td>
-                    <td>{{ row.deviceName || '—' }}</td>
-                    <td class="nowrap">{{ eventLabels[row.type].icon }} {{ eventLabels[row.type].label }}@if (row.level !== 'INFO') { <small>({{ levels[row.level] }})</small> }</td>
-                    <td [class.bad]="row.level === 'ERROR'">{{ row.message }}</td>
+                    <td class="nowrap first">{{ when(row.occurredAt) }}</td>
+                    <td [attr.data-label]="'TV' | t">{{ row.deviceName || '—' }}</td>
+                    <td class="nowrap" [attr.data-label]="'Tipo' | t"><span>{{ eventLabels[row.type].icon }} {{ eventText(row.type) }}@if (row.level !== 'INFO') { <small>({{ levelText(row.level) }})</small> }</span></td>
+                    <td [class.bad]="row.level === 'ERROR'" [attr.data-label]="'O que aconteceu' | t">{{ messageOf(row.message) }}</td>
                   </tr>
                 }
               </table>
               @if (rows.length >= 500) {
-                <p class="label">Mostrando os 500 mais recentes. Baixe o CSV para ver até 20.000 linhas ou reduza o período.</p>
+                <p class="label">{{ 'Mostrando os 500 mais recentes. Baixe o CSV para ver até 20.000 linhas ou reduza o período.' | t }}</p>
               }
             }
           } @else {
-            <div class="empty">Carregando…</div>
+            <div class="empty">{{ 'Carregando…' | t }}</div>
           }
         }
       }
@@ -225,7 +230,7 @@ const TABS: { id: ReportTab; label: string }[] = [
   styles: `
     .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
     .tabs button { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 9px 16px; font-weight: 600; color: var(--muted); }
-    .tabs button.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .tabs button.on { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
     .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; padding: 14px; }
     .filters label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 14px; }
     .filters input[type='date'], .filters select { width: auto; min-width: 150px; }
@@ -237,7 +242,17 @@ const TABS: { id: ReportTab; label: string }[] = [
     .meter span.low { background: var(--orange); }
     .row-actions { text-align: right; }
     .nowrap { white-space: nowrap; }
-    .bad { color: #a8283a; }
+    .bad { color: var(--err-fg); }
+    @media (max-width: 720px) {
+      .tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+      .tabs button { flex: none; min-height: 44px; }
+      .filters { flex-direction: column; align-items: stretch; }
+      .filters label { display: flex; }
+      .filters input[type='date'], .filters select { width: 100%; min-width: 0; }
+      .presets { justify-content: space-between; }
+      .presets button { flex: 1; }
+      .summary { gap: 18px; }
+    }
   `,
 })
 export class ReportsPage implements OnInit {
@@ -265,11 +280,14 @@ export class ReportsPage implements OnInit {
   readonly events = signal<EventRow[] | null>(null);
   readonly downloading = signal(false);
 
-  readonly playsColumn = computed(() => ({ media: 'Mídia', device: 'TV', day: 'Dia' })[this.groupBy()]);
+  readonly playsColumn = computed(() => tr({ media: 'Mídia', device: 'TV', day: 'Dia' }[this.groupBy()]));
 
   readonly eventTypes = EVENT_TYPES;
   readonly eventLabels = EVENT_LABELS;
-  readonly levels = LEVEL_LABELS;
+  readonly eventText = eventLabel;
+  readonly levelText = levelLabel;
+  /** Mensagens que o servidor registrou (em português); as conhecidas aparecem traduzidas. */
+  readonly messageOf = (message: string) => trServer(message);
   readonly stateOf = stateOfConnection;
   readonly human = humanSeconds;
   readonly percent = formatPercent;

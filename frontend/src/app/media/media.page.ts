@@ -7,6 +7,7 @@ import { AuthService } from '../core/auth.service';
 import { ErrorService } from '../core/error.service';
 import { formatBytes, mediaTypeLabel } from '../core/format';
 import { Media } from '../core/models';
+import { TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
 import { MediaThumb } from './media-thumb';
 import { QR_THEMES, QR_IMAGE_SIZE, QrTheme, drawQr, qrFileName } from './qr';
@@ -17,16 +18,16 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
 
 @Component({
   selector: 'app-media',
-  imports: [MediaThumb, FormsModule],
+  imports: [MediaThumb, FormsModule, TPipe],
   template: `
     <div class="head">
-      <div><h1>Biblioteca de Mídia</h1><p>Imagens (JPG, PNG, WEBP), vídeos (MP4), páginas da web e QR Codes disponíveis para as playlists.</p></div>
+      <div><h1>{{ 'Biblioteca de Mídia' | t }}</h1><p>{{ 'Imagens (JPG, PNG, WEBP), vídeos (MP4), páginas da web e QR Codes disponíveis para as playlists.' | t }}</p></div>
       @if (auth.can('content')) {
         <div class="head-actions">
-          <button class="secondary" (click)="openWeb()">🌐 Página web</button>
-          <button class="secondary" (click)="openQr()">▦ QR Code</button>
+          <button class="secondary" (click)="openWeb()">🌐 {{ 'Página web' | t }}</button>
+          <button class="secondary" (click)="openQr()">▦ {{ 'QR Code' | t }}</button>
           <label class="primary upload">
-            + Enviar mídia
+            {{ '+ Enviar mídia' | t }}
             <input type="file" multiple [accept]="accepted" (change)="onFiles($event)" [disabled]="uploading()" hidden />
           </label>
         </div>
@@ -39,13 +40,13 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
 
     @if (uploading()) {
       <div class="card progress">
-        Enviando <b>{{ currentFile() }}</b>… {{ progress() }}%
+        {{ 'Enviando' | t }} <b>{{ currentFile() }}</b>… {{ progress() }}%
         <div class="bar"><div class="fill" [style.width.%]="progress()"></div></div>
       </div>
     }
 
     @if (items().length === 0 && !uploading()) {
-      <div class="card empty">Nenhuma mídia ainda. Envie sua primeira imagem ou vídeo.</div>
+      <div class="card empty">{{ 'Nenhuma mídia ainda. Envie sua primeira imagem ou vídeo.' | t }}</div>
     } @else {
       <div class="grid">
         @for (media of items(); track media.id) {
@@ -56,14 +57,14 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
               <small>
                 {{ typeLabel(media.type) }}
                 @if (media.type !== 'WEB') { · {{ size(media.fileSize) }} }
-                @if (media.durationSeconds) { · {{ media.durationSeconds }}s }
+                @if (media.durationSeconds) { · {{ '{n}s' | t: { n: media.durationSeconds } }} }
               </small>
               @if (media.type === 'WEB') {
                 <small class="url" [title]="media.url">{{ media.url }}</small>
               }
             </div>
             @if (auth.can('content')) {
-              <button class="danger small" (click)="remove(media)">Excluir</button>
+              <button class="danger small" (click)="remove(media)">{{ 'Excluir' | t }}</button>
             }
           </div>
         }
@@ -73,23 +74,23 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
     @if (modal() === 'web') {
       <div class="modal" (click)="closeModal()">
         <form class="modal-box" (click)="$event.stopPropagation()" (ngSubmit)="saveWeb()">
-          <h2>Página da web</h2>
-          <p class="label">A TV abre a página e a exibe pelo tempo escolhido (um painel de vendas, o cardápio online, a previsão do tempo…). Precisa de internet na TV e o endereço precisa ser <b>https://</b>. A página não fica guardada na TV.</p>
+          <h2>{{ 'Página da web' | t }}</h2>
+          <p class="label">{{ 'A TV abre a página e a exibe pelo tempo escolhido (um painel de vendas, o cardápio online, a previsão do tempo…). Precisa de internet na TV e o endereço precisa ser' | t }} <b>https://</b>. {{ 'A página não fica guardada na TV.' | t }}</p>
           <div class="field">
-            <label for="web-url">Endereço da página</label>
+            <label for="web-url">{{ 'Endereço da página' | t }}</label>
             <input id="web-url" name="url" type="url" placeholder="https://…" required autocomplete="off" [ngModel]="webUrl()" (ngModelChange)="webUrl.set($event)" />
           </div>
           <div class="field">
-            <label for="web-name">Nome (opcional)</label>
-            <input id="web-name" name="name" placeholder="Ex.: Painel de vendas" [ngModel]="webName()" (ngModelChange)="webName.set($event)" />
+            <label for="web-name">{{ 'Nome (opcional)' | t }}</label>
+            <input id="web-name" name="name" [placeholder]="'Ex.: Painel de vendas' | t" [ngModel]="webName()" (ngModelChange)="webName.set($event)" />
           </div>
           <div class="field">
-            <label for="web-seconds">Tempo na tela (segundos)</label>
+            <label for="web-seconds">{{ 'Tempo na tela (segundos)' | t }}</label>
             <input id="web-seconds" name="seconds" type="number" min="5" max="3600" [ngModel]="webSeconds()" (ngModelChange)="webSeconds.set($event)" />
           </div>
           <div class="actions">
-            <button type="button" class="secondary" (click)="closeModal()">Cancelar</button>
-            <button type="submit" class="primary" [disabled]="busy() || !webUrl().trim()">Adicionar</button>
+            <button type="button" class="secondary" (click)="closeModal()">{{ 'Cancelar' | t }}</button>
+            <button type="submit" class="primary" [disabled]="busy() || !webUrl().trim()">{{ 'Adicionar' | t }}</button>
           </div>
         </form>
       </div>
@@ -98,41 +99,41 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
     @if (modal() === 'qr') {
       <div class="modal" (click)="closeModal()">
         <form class="modal-box qr" (click)="$event.stopPropagation()" (ngSubmit)="saveQr()">
-          <h2>QR Code</h2>
-          <p class="label">Gera uma imagem com o QR Code (um endereço, um Wi‑Fi, um cardápio…) e a guarda na biblioteca, pronta para entrar numa playlist.</p>
+          <h2>{{ 'QR Code' | t }}</h2>
+          <p class="label">{{ 'Gera uma imagem com o QR Code (um endereço, um Wi‑Fi, um cardápio…) e a guarda na biblioteca, pronta para entrar numa playlist.' | t }}</p>
           <div class="qr-layout">
             <div>
               <div class="field">
-                <label for="qr-text">Endereço ou texto</label>
+                <label for="qr-text">{{ 'Endereço ou texto' | t }}</label>
                 <input id="qr-text" name="text" placeholder="https://…" required autocomplete="off" [ngModel]="qrText()" (ngModelChange)="qrText.set($event)" />
               </div>
               <div class="field">
-                <label for="qr-title">Título (opcional)</label>
-                <input id="qr-title" name="title" placeholder="Ex.: Cardápio digital" [ngModel]="qrTitle()" (ngModelChange)="qrTitle.set($event)" />
+                <label for="qr-title">{{ 'Título (opcional)' | t }}</label>
+                <input id="qr-title" name="title" [placeholder]="'Ex.: Cardápio digital' | t" [ngModel]="qrTitle()" (ngModelChange)="qrTitle.set($event)" />
               </div>
               <div class="field">
-                <label for="qr-caption">Legenda (opcional)</label>
+                <label for="qr-caption">{{ 'Legenda (opcional)' | t }}</label>
                 <input id="qr-caption" name="caption" [ngModel]="qrCaption()" (ngModelChange)="qrCaption.set($event)" />
               </div>
               <div class="field">
-                <label for="qr-theme">Cores</label>
+                <label for="qr-theme">{{ 'Cores' | t }}</label>
                 <select id="qr-theme" name="theme" [ngModel]="qrTheme()" (ngModelChange)="qrTheme.set($event)">
                   @for (theme of themes; track theme[0]) {
-                    <option [value]="theme[0]">{{ theme[1].label }}</option>
+                    <option [value]="theme[0]">{{ theme[1].label | t }}</option>
                   }
                 </select>
               </div>
             </div>
             <div class="preview">
-              <canvas #qrCanvas [width]="imageSize" [height]="imageSize" aria-label="Pré-visualização do QR Code"></canvas>
+              <canvas #qrCanvas [width]="imageSize" [height]="imageSize" [attr.aria-label]="'Pré-visualização do QR Code' | t"></canvas>
               @if (qrProblem(); as text) {
                 <div class="error" role="alert">{{ text }}</div>
               }
             </div>
           </div>
           <div class="actions">
-            <button type="button" class="secondary" (click)="closeModal()">Cancelar</button>
-            <button type="submit" class="primary" [disabled]="busy() || !qrText().trim() || !!qrProblem()">Salvar na biblioteca</button>
+            <button type="button" class="secondary" (click)="closeModal()">{{ 'Cancelar' | t }}</button>
+            <button type="submit" class="primary" [disabled]="busy() || !qrText().trim() || !!qrProblem()">{{ 'Salvar na biblioteca' | t }}</button>
           </div>
         </form>
       </div>
@@ -142,10 +143,10 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
     .upload { cursor: pointer; display: inline-block; }
     .head-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .progress { margin-bottom: 16px; }
-    .bar { height: 8px; background: var(--blue2); border-radius: 8px; margin-top: 10px; overflow: hidden; }
-    .fill { height: 100%; background: var(--blue); transition: width 0.2s; }
+    .bar { height: 8px; background: var(--primary-soft); border-radius: 8px; margin-top: 10px; overflow: hidden; }
+    .fill { height: 100%; background: var(--primary); transition: width 0.2s; }
     .item { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
-    .thumb { height: 120px; background: var(--blue2); }
+    .thumb { height: 120px; background: var(--primary-soft); }
     .meta { padding: 10px 12px 4px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
     .name, .url { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .item button { margin: 8px 12px 12px; }
@@ -153,7 +154,12 @@ export const DEFAULT_QR_CAPTION = 'Aponte a câmera do celular';
     .qr-layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; align-items: start; }
     .preview canvas { width: 100%; height: auto; aspect-ratio: 1; border: 1px solid var(--line); border-radius: 10px; background: #fff; display: block; }
     .preview .error { margin-top: 10px; }
-    @media (max-width: 720px) { .qr-layout { grid-template-columns: 1fr; } }
+    @media (max-width: 720px) {
+      .qr-layout { grid-template-columns: 1fr; }
+      .upload { width: 100%; text-align: center; padding: 12px 16px; }
+      .head-actions { display: grid; grid-template-columns: 1fr 1fr; }
+      .head-actions .upload { grid-column: 1 / -1; }
+    }
   `,
 })
 export class MediaPage implements OnInit {
@@ -222,7 +228,7 @@ export class MediaPage implements OnInit {
         next: (media) => {
           this.busy.set(false);
           this.closeModal();
-          this.notice.show(`Página "${media.name}" adicionada à biblioteca. Coloque-a numa playlist para exibi-la.`);
+          this.notice.show(tr('Página "{name}" adicionada à biblioteca. Coloque-a numa playlist para exibi-la.', { name: media.name }));
           this.load();
         },
         // O motivo (ex.: "precisa começar com https://") aparece no aviso de erro; a janela continua aberta.
@@ -235,7 +241,7 @@ export class MediaPage implements OnInit {
   openQr(): void {
     this.qrText.set('');
     this.qrTitle.set('');
-    this.qrCaption.set(DEFAULT_QR_CAPTION);
+    this.qrCaption.set(tr(DEFAULT_QR_CAPTION));
     this.qrTheme.set('escuro');
     this.qrProblem.set(null);
     this.modal.set('qr');
@@ -251,7 +257,7 @@ export class MediaPage implements OnInit {
     canvas.toBlob((blob) => {
       if (!blob) {
         this.busy.set(false);
-        this.errors.show('Não foi possível gerar a imagem do QR Code neste navegador.');
+        this.errors.show(tr('Não foi possível gerar a imagem do QR Code neste navegador.'));
         return;
       }
       const file = new File([blob], qrFileName(drawing), { type: 'image/png' });
@@ -260,7 +266,9 @@ export class MediaPage implements OnInit {
           if (event.type === HttpEventType.Response) {
             this.busy.set(false);
             this.closeModal();
-            this.notice.show(`QR Code "${file.name.replace(/\.png$/, '')}" salvo na biblioteca. Coloque-o numa playlist para exibi-lo.`);
+            this.notice.show(
+              tr('QR Code "{name}" salvo na biblioteca. Coloque-o numa playlist para exibi-lo.', { name: file.name.replace(/\.png$/, '') }),
+            );
             this.load();
           }
         },
@@ -283,7 +291,7 @@ export class MediaPage implements OnInit {
       drawQr(ctx, drawing);
       this.qrProblem.set(null);
     } catch (error) {
-      this.qrProblem.set(error instanceof Error ? error.message : 'Não foi possível gerar o QR Code.');
+      this.qrProblem.set(error instanceof Error ? error.message : tr('Não foi possível gerar o QR Code.'));
     }
   }
 
@@ -309,7 +317,7 @@ export class MediaPage implements OnInit {
         await this.upload(file, duration);
       } catch {
         // O motivo já foi mostrado pelo interceptor; aqui dizemos qual arquivo falhou e o que aconteceu com a fila.
-        this.errors.show(`Não foi possível enviar "${file.name}". Os arquivos seguintes da fila não foram enviados.`);
+        this.errors.show(tr('Não foi possível enviar "{name}". Os arquivos seguintes da fila não foram enviados.', { name: file.name }));
         break;
       }
     }
@@ -318,7 +326,7 @@ export class MediaPage implements OnInit {
   }
 
   remove(media: Media): void {
-    if (!confirm(`Excluir "${media.name}"?`)) {
+    if (!confirm(tr('Excluir "{name}"?', { name: media.name }))) {
       return;
     }
     this.api.deleteMedia(media.id).subscribe({

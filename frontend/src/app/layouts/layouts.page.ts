@@ -6,6 +6,7 @@ import { forkJoin } from 'rxjs';
 import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
 import { Layout, LayoutTemplate, Playlist } from '../core/models';
+import { TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
 import {
   ZoneDraft,
@@ -15,6 +16,7 @@ import {
   draftsFromTemplate,
   removeZone,
   setMain,
+  templateText,
   toLayoutRequest,
   validateZones,
   zoneColor,
@@ -23,15 +25,15 @@ import {
 /** Layouts: como a tela da TV é dividida em zonas, cada uma com a sua lista de mídias. */
 @Component({
   selector: 'app-layouts',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, TPipe],
   template: `
     <div class="head">
       <div>
-        <h1>Layouts</h1>
-        <p>Divida a tela da TV em zonas: o conteúdo principal e, por exemplo, uma faixa lateral com avisos ou um QR Code. Sem layout, a TV exibe um conteúdo só, em tela cheia.</p>
+        <h1>{{ 'Layouts' | t }}</h1>
+        <p>{{ 'Divida a tela da TV em zonas: o conteúdo principal e, por exemplo, uma faixa lateral com avisos ou um QR Code. Sem layout, a TV exibe um conteúdo só, em tela cheia.' | t }}</p>
       </div>
       @if (auth.can('content')) {
-        <button class="primary" (click)="openNew()">+ Novo layout</button>
+        <button class="primary" (click)="openNew()">{{ '+ Novo layout' | t }}</button>
       }
     </div>
 
@@ -42,9 +44,9 @@ import {
     @if (layouts().length === 0) {
       <div class="card empty">
         @if (loaded()) {
-          Nenhum layout ainda. Clique em <b>Novo layout</b> e escolha um modelo pronto (por exemplo, principal + faixa lateral).
+          {{ 'Nenhum layout ainda. Clique em' | t }} <b>{{ 'Novo layout' | t }}</b> {{ 'e escolha um modelo pronto (por exemplo, principal + faixa lateral).' | t }}
         } @else {
-          Carregando…
+          {{ 'Carregando…' | t }}
         }
       </div>
     } @else {
@@ -64,18 +66,18 @@ import {
                 <small>{{ layout.description }}</small>
               }
               <small>
-                {{ layout.zones.length }} zona(s) ·
+                {{ '{n} zona(s) ·' | t: { n: layout.zones.length } }}
                 @if (layout.deviceCount > 0) {
-                  <a routerLink="/dispositivos">{{ layout.deviceCount }} TV(s)</a>
+                  <a routerLink="/dispositivos">{{ '{n} TV(s)' | t: { n: layout.deviceCount } }}</a>
                 } @else {
-                  nenhuma TV usa
+                  {{ 'nenhuma TV usa' | t }}
                 }
               </small>
             </div>
             <div class="buttons">
               @if (auth.can('content')) {
-                <button class="secondary small" (click)="openEdit(layout)">Editar</button>
-                <button class="danger small" (click)="remove(layout)">Excluir</button>
+                <button class="secondary small" (click)="openEdit(layout)">{{ 'Editar' | t }}</button>
+                <button class="danger small" (click)="remove(layout)">{{ 'Excluir' | t }}</button>
               }
             </div>
           </div>
@@ -86,8 +88,8 @@ import {
     @if (modal() === 'new') {
       <div class="modal" (click)="closeModal()">
         <form class="modal-box wide" (click)="$event.stopPropagation()" (ngSubmit)="createFromTemplate()">
-          <h2>Novo layout</h2>
-          <p class="label">Escolha um modelo para começar. Depois você ajusta as zonas como quiser.</p>
+          <h2>{{ 'Novo layout' | t }}</h2>
+          <p class="label">{{ 'Escolha um modelo para começar. Depois você ajusta as zonas como quiser.' | t }}</p>
           <div class="templates">
             @for (template of templates(); track template.id) {
               <button type="button" class="template" [class.picked]="pickedTemplate()?.id === template.id" (click)="pick(template)">
@@ -96,19 +98,19 @@ import {
                     <div class="zone" [style.left.%]="zone.x" [style.top.%]="zone.y" [style.width.%]="zone.width" [style.height.%]="zone.height" [style.background]="color(template.zones, i)"></div>
                   }
                 </div>
-                <b>{{ template.name }}</b>
-                <small>{{ template.description }}</small>
+                <b>{{ templateText(template.name) }}</b>
+                <small>{{ templateText(template.description) }}</small>
               </button>
             }
           </div>
           <div class="field">
-            <label for="layout-new-name">Nome do layout</label>
-            <input id="layout-new-name" name="name" placeholder="Ex.: Loja com faixa de avisos" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+            <label for="layout-new-name">{{ 'Nome do layout' | t }}</label>
+            <input id="layout-new-name" name="name" [placeholder]="'Ex.: Loja com faixa de avisos' | t" [ngModel]="name()" (ngModelChange)="name.set($event)" />
           </div>
           <div class="actions">
-            <button type="button" class="secondary" (click)="closeModal()">Cancelar</button>
-            <button type="button" class="secondary" (click)="openBlank()">Começar do zero</button>
-            <button type="submit" class="primary" [disabled]="busy() || !pickedTemplate()">Criar e ajustar</button>
+            <button type="button" class="secondary" (click)="closeModal()">{{ 'Cancelar' | t }}</button>
+            <button type="button" class="secondary" (click)="openBlank()">{{ 'Começar do zero' | t }}</button>
+            <button type="submit" class="primary" [disabled]="busy() || !pickedTemplate()">{{ 'Criar e ajustar' | t }}</button>
           </div>
         </form>
       </div>
@@ -117,19 +119,19 @@ import {
     @if (modal() === 'edit') {
       <div class="modal" (click)="closeModal()">
         <form class="modal-box wide" (click)="$event.stopPropagation()" (ngSubmit)="save()">
-          <h2>{{ editing() ? 'Editar layout' : 'Novo layout' }}</h2>
+          <h2>{{ (editing() ? 'Editar layout' : 'Novo layout') | t }}</h2>
           <div class="two">
             <div class="field">
-              <label for="layout-name">Nome</label>
+              <label for="layout-name">{{ 'Nome' | t }}</label>
               <input id="layout-name" name="name" required [ngModel]="name()" (ngModelChange)="name.set($event)" />
             </div>
             <div class="field">
-              <label for="layout-desc">Descrição (opcional)</label>
+              <label for="layout-desc">{{ 'Descrição (opcional)' | t }}</label>
               <input id="layout-desc" name="description" [ngModel]="description()" (ngModelChange)="description.set($event)" />
             </div>
           </div>
 
-          <div class="screen big" aria-label="Pré-visualização do layout">
+          <div class="screen big" [attr.aria-label]="'Pré-visualização do layout' | t">
             @for (zone of zones(); track zone.key; let i = $index) {
               <div class="zone" [style.left.%]="zone.x" [style.top.%]="zone.y" [style.width.%]="zone.width" [style.height.%]="zone.height" [style.background]="color(zones(), i)">
                 <span>{{ zone.main ? '★ ' : '' }}{{ zone.name }}</span>
@@ -137,42 +139,42 @@ import {
             }
           </div>
 
-          <table class="zones">
-            <tr><th>Zona</th><th>X %</th><th>Y %</th><th>Largura %</th><th>Altura %</th><th>Principal</th><th>Playlist</th><th></th></tr>
+          <table class="zones stack">
+            <tr><th>{{ 'Zona' | t }}</th><th>X %</th><th>Y %</th><th>{{ 'Largura %' | t }}</th><th>{{ 'Altura %' | t }}</th><th>{{ 'Principal' | t }}</th><th>{{ 'Playlist' | t }}</th><th></th></tr>
             @for (zone of zones(); track zone.key; let i = $index) {
               <tr>
-                <td><span class="swatch" [style.background]="color(zones(), i)"></span><input class="name-input" [attr.aria-label]="'Nome da zona ' + (i + 1)" [name]="'zname' + zone.key" [ngModel]="zone.name" (ngModelChange)="change(zone.key, 'name', $event)" /></td>
-                <td><input type="number" class="num" min="0" max="95" [attr.aria-label]="'X da zona ' + (i + 1)" [name]="'zx' + zone.key" [ngModel]="zone.x" (ngModelChange)="change(zone.key, 'x', $event)" /></td>
-                <td><input type="number" class="num" min="0" max="95" [attr.aria-label]="'Y da zona ' + (i + 1)" [name]="'zy' + zone.key" [ngModel]="zone.y" (ngModelChange)="change(zone.key, 'y', $event)" /></td>
-                <td><input type="number" class="num" min="5" max="100" [attr.aria-label]="'Largura da zona ' + (i + 1)" [name]="'zw' + zone.key" [ngModel]="zone.width" (ngModelChange)="change(zone.key, 'width', $event)" /></td>
-                <td><input type="number" class="num" min="5" max="100" [attr.aria-label]="'Altura da zona ' + (i + 1)" [name]="'zh' + zone.key" [ngModel]="zone.height" (ngModelChange)="change(zone.key, 'height', $event)" /></td>
-                <td class="center"><input type="radio" name="main" [attr.aria-label]="'Zona principal: ' + zone.name" [checked]="zone.main" (change)="makeMain(zone.key)" /></td>
-                <td>
+                <td class="first"><span class="swatch" [style.background]="color(zones(), i)"></span><input class="name-input" [attr.aria-label]="'Nome da zona {n}' | t: { n: i + 1 }" [name]="'zname' + zone.key" [ngModel]="zone.name" (ngModelChange)="change(zone.key, 'name', $event)" /></td>
+                <td data-label="X %"><input type="number" class="num" min="0" max="95" [attr.aria-label]="'X da zona {n}' | t: { n: i + 1 }" [name]="'zx' + zone.key" [ngModel]="zone.x" (ngModelChange)="change(zone.key, 'x', $event)" /></td>
+                <td data-label="Y %"><input type="number" class="num" min="0" max="95" [attr.aria-label]="'Y da zona {n}' | t: { n: i + 1 }" [name]="'zy' + zone.key" [ngModel]="zone.y" (ngModelChange)="change(zone.key, 'y', $event)" /></td>
+                <td [attr.data-label]="'Largura %' | t"><input type="number" class="num" min="5" max="100" [attr.aria-label]="'Largura da zona {n}' | t: { n: i + 1 }" [name]="'zw' + zone.key" [ngModel]="zone.width" (ngModelChange)="change(zone.key, 'width', $event)" /></td>
+                <td [attr.data-label]="'Altura %' | t"><input type="number" class="num" min="5" max="100" [attr.aria-label]="'Altura da zona {n}' | t: { n: i + 1 }" [name]="'zh' + zone.key" [ngModel]="zone.height" (ngModelChange)="change(zone.key, 'height', $event)" /></td>
+                <td class="center" [attr.data-label]="'Principal' | t"><input type="radio" name="main" [attr.aria-label]="'Zona principal: {name}' | t: { name: zone.name }" [checked]="zone.main" (change)="makeMain(zone.key)" /></td>
+                <td [attr.data-label]="'Playlist' | t">
                   @if (zone.main) {
-                    <span class="muted">a da TV (e das campanhas)</span>
+                    <span class="muted">{{ 'a da TV (e das campanhas)' | t }}</span>
                   } @else {
-                    <select [attr.aria-label]="'Playlist da zona ' + (i + 1)" [name]="'zp' + zone.key" [ngModel]="zone.playlistId" (ngModelChange)="change(zone.key, 'playlistId', $event)">
-                      <option [ngValue]="null">Sem conteúdo</option>
+                    <select [attr.aria-label]="'Playlist da zona {n}' | t: { n: i + 1 }" [name]="'zp' + zone.key" [ngModel]="zone.playlistId" (ngModelChange)="change(zone.key, 'playlistId', $event)">
+                      <option [ngValue]="null">{{ 'Sem conteúdo' | t }}</option>
                       @for (playlist of playlists(); track playlist.id) {
                         <option [ngValue]="playlist.id">{{ playlist.name }}</option>
                       }
                     </select>
                   }
                 </td>
-                <td><button type="button" class="danger small" [disabled]="zones().length <= 1" (click)="dropZone(zone.key)" [attr.aria-label]="'Remover a zona ' + (i + 1)">✕</button></td>
+                <td class="row-actions"><button type="button" class="danger small" [disabled]="zones().length <= 1" (click)="dropZone(zone.key)" [attr.aria-label]="'Remover a zona {n}' | t: { n: i + 1 }">✕</button></td>
               </tr>
             }
           </table>
-          <button type="button" class="secondary small" (click)="newZone()">+ Adicionar zona</button>
+          <button type="button" class="secondary small" (click)="newZone()">{{ '+ Adicionar zona' | t }}</button>
 
           @if (problem(); as text) {
             <div class="error" role="alert">{{ text }}</div>
           }
-          <p class="label">Posição e tamanho em % da tela, a partir do canto superior esquerdo. A zona <b>principal</b> exibe a playlist escolhida para a TV (e as campanhas); as outras exibem a playlist fixa do layout.</p>
+          <p class="label">{{ 'Posição e tamanho em % da tela, a partir do canto superior esquerdo. A zona' | t }} <b>{{ 'principal' | t }}</b> {{ 'exibe a playlist escolhida para a TV (e as campanhas); as outras exibem a playlist fixa do layout.' | t }}</p>
 
           <div class="actions">
-            <button type="button" class="secondary" (click)="closeModal()">Cancelar</button>
-            <button type="submit" class="primary" [disabled]="busy() || !!problem() || !name().trim()">Salvar</button>
+            <button type="button" class="secondary" (click)="closeModal()">{{ 'Cancelar' | t }}</button>
+            <button type="submit" class="primary" [disabled]="busy() || !!problem() || !name().trim()">{{ 'Salvar' | t }}</button>
           </div>
         </form>
       </div>
@@ -181,7 +183,7 @@ import {
   styles: `
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
     .item { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-    .screen { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #0b1020; border: 2px solid #1d2742; border-radius: 8px; overflow: hidden; }
+    .screen { position: relative; width: 100%; aspect-ratio: 16 / 9; background: var(--screen); border: 2px solid var(--line); border-radius: 8px; overflow: hidden; }
     .screen.big { max-width: 560px; margin: 4px auto 16px; }
     .small-screen { margin-bottom: 8px; }
     .zone { position: absolute; border: 1px solid #fff; box-sizing: border-box; display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -191,9 +193,9 @@ import {
     .modal-box.wide { max-width: 860px; }
     .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
     .templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin: 12px 0; }
-    .template { text-align: left; background: #fff; border: 2px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 2px; color: var(--text); }
-    .template:hover { border-color: var(--blue); }
-    .template.picked { border-color: var(--blue); background: var(--blue2); }
+    .template { text-align: left; background: var(--panel); border: 2px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 2px; color: var(--text); }
+    .template:hover { border-color: var(--primary); }
+    .template.picked { border-color: var(--primary); background: var(--primary-soft); }
     table.zones { margin-bottom: 10px; }
     table.zones td { padding: 6px 4px; }
     .name-input { width: 130px; }
@@ -201,7 +203,14 @@ import {
     .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
     .center { text-align: center; }
     select { min-width: 150px; }
-    @media (max-width: 720px) { .two { grid-template-columns: 1fr; } }
+    @media (max-width: 720px) {
+      .two { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; }
+      .name-input { width: calc(100% - 20px); }
+      .num { width: 90px; }
+      select { min-width: 0; }
+      .templates { grid-template-columns: repeat(2, 1fr); }
+    }
   `,
 })
 export class LayoutsPage implements OnInit {
@@ -225,6 +234,7 @@ export class LayoutsPage implements OnInit {
 
   readonly problem = computed(() => validateZones(this.zones()));
   readonly color = zoneColor;
+  readonly templateText = templateText;
 
   ngOnInit(): void {
     this.destroyRef.onDestroy(() => this.notice.dispose());
@@ -259,7 +269,7 @@ export class LayoutsPage implements OnInit {
     this.api.createLayoutFromTemplate(template.id, this.name().trim()).subscribe({
       next: (layout) => {
         this.busy.set(false);
-        this.notice.show(`Layout "${layout.name}" criado. Ajuste as zonas se quiser.`);
+        this.notice.show(tr('Layout "{name}" criado. Ajuste as zonas se quiser.', { name: layout.name }));
         this.load();
         this.openEdit(layout);
       },
@@ -319,7 +329,7 @@ export class LayoutsPage implements OnInit {
   newZone(): void {
     const next = addZone(this.zones());
     if (next === null) {
-      this.notice.show('Não há espaço livre para outra zona (ou o limite de 6 zonas foi atingido). Reduza uma zona primeiro.');
+      this.notice.show(tr('Não há espaço livre para outra zona (ou o limite de 6 zonas foi atingido). Reduza uma zona primeiro.'));
       return;
     }
     this.zones.set(next);
@@ -339,8 +349,8 @@ export class LayoutsPage implements OnInit {
         this.closeModal();
         this.notice.show(
           saved.deviceCount > 0
-            ? `Layout "${saved.name}" salvo. As ${saved.deviceCount} TV(s) que o usam atualizam em até 1 minuto.`
-            : `Layout "${saved.name}" salvo.`,
+            ? tr('Layout "{name}" salvo. As {n} TV(s) que o usam atualizam em até 1 minuto.', { name: saved.name, n: saved.deviceCount })
+            : tr('Layout "{name}" salvo.', { name: saved.name }),
         );
         this.load();
       },
@@ -350,15 +360,20 @@ export class LayoutsPage implements OnInit {
 
   remove(layout: Layout): void {
     if (layout.deviceCount > 0) {
-      this.notice.show(`O layout "${layout.name}" está em uso por ${layout.deviceCount} TV(s). Escolha outro layout (ou tela cheia) para elas antes de excluir.`);
+      this.notice.show(
+        tr('O layout "{name}" está em uso por {n} TV(s). Escolha outro layout (ou tela cheia) para elas antes de excluir.', {
+          name: layout.name,
+          n: layout.deviceCount,
+        }),
+      );
       return;
     }
-    if (!confirm(`Excluir o layout "${layout.name}"?`)) {
+    if (!confirm(tr('Excluir o layout "{name}"?', { name: layout.name }))) {
       return;
     }
     this.api.deleteLayout(layout.id).subscribe({
       next: () => {
-        this.notice.show(`Layout "${layout.name}" excluído.`);
+        this.notice.show(tr('Layout "{name}" excluído.', { name: layout.name }));
         this.load();
       },
       error: () => undefined,

@@ -1,10 +1,10 @@
-import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
 import { BillingInfo, PlanOption } from '../core/models';
+import { TPipe, formatDate, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
 import {
   daysUntil,
@@ -12,19 +12,20 @@ import {
   formatMoney,
   formatStorage,
   INVOICE_STATUS_LABELS,
-  TENANT_STATUS_LABELS,
+  planText,
+  tenantStatusLabel,
   TENANT_STATUS_TONES,
   usageRows,
 } from '../core/saas';
 
 @Component({
   selector: 'app-billing',
-  imports: [DatePipe, FormsModule],
+  imports: [FormsModule, TPipe],
   template: `
     <div class="head">
       <div>
-        <h1>Plano e cobrança</h1>
-        <p>O plano contratado, o quanto você já usa, as faturas e como pagar.</p>
+        <h1>{{ 'Plano e cobrança' | t }}</h1>
+        <p>{{ 'O plano contratado, o quanto você já usa, as faturas e como pagar.' | t }}</p>
       </div>
     </div>
 
@@ -40,16 +41,16 @@ import {
       <div class="card plan">
         <div class="plan-top">
           <div>
-            <small>Seu plano</small>
-            <h2>{{ billing.tenant.plan.name }}</h2>
+            <small>{{ 'Seu plano' | t }}</small>
+            <h2>{{ planName(billing.tenant.plan.name) }}</h2>
             <span class="price">{{ price(billing.tenant.plan.priceCents, billing.tenant.plan.currency) }}</span>
           </div>
           <div class="status">
             <span class="dot" [class]="tone()"></span><b>{{ statusLabel() }}</b>
             @if (billing.tenant.status === 'TRIAL' && billing.tenant.trialEndsAt) {
-              <br /><small>Teste até {{ billing.tenant.trialEndsAt | date: 'dd/MM/yyyy' }} ({{ trialDays() }} dia(s))</small>
+              <br /><small>{{ 'Teste até {date} ({n} dia(s))' | t: { date: date(billing.tenant.trialEndsAt), n: trialDays() } }}</small>
             } @else if (billing.tenant.currentPeriodEnd) {
-              <br /><small>Pago até {{ billing.tenant.currentPeriodEnd | date: 'dd/MM/yyyy' }}</small>
+              <br /><small>{{ 'Pago até {date}' | t: { date: date(billing.tenant.currentPeriodEnd) } }}</small>
             }
           </div>
         </div>
@@ -66,23 +67,25 @@ import {
       </div>
 
       <div class="card section">
-        <h3>Faturas</h3>
+        <h3>{{ 'Faturas' | t }}</h3>
         @if (billing.invoices.length === 0) {
-          <div class="empty">Nenhuma fatura ainda. A primeira é gerada perto do fim do período de teste.</div>
+          <div class="empty">{{ 'Nenhuma fatura ainda. A primeira é gerada perto do fim do período de teste.' | t }}</div>
         } @else {
-          <table>
-            <tr><th>Número</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Situação</th></tr>
+          <table class="stack">
+            <tr><th>{{ 'Número' | t }}</th><th>{{ 'Descrição' | t }}</th><th>{{ 'Vencimento' | t }}</th><th>{{ 'Valor' | t }}</th><th>{{ 'Situação' | t }}</th></tr>
             @for (invoice of billing.invoices; track invoice.id) {
               <tr>
-                <td class="mono">{{ invoice.number }}</td>
-                <td>{{ invoice.description }}</td>
-                <td>{{ invoice.dueDate | date: 'dd/MM/yyyy' }}</td>
-                <td>{{ price(invoice.amountCents, invoice.currency) }}</td>
-                <td>
-                  <span class="dot" [class]="invoiceTone(invoice.status, invoice.overdue)"></span>{{ invoice.overdue ? 'Vencida' : invoiceLabel(invoice.status) }}
-                  @if (invoice.paidAt) {
-                    <br /><small>em {{ invoice.paidAt | date: 'dd/MM/yyyy' }}</small>
-                  }
+                <td class="mono first">{{ invoice.number }}</td>
+                <td [attr.data-label]="'Descrição' | t">{{ invoice.description }}</td>
+                <td [attr.data-label]="'Vencimento' | t">{{ date(invoice.dueDate) }}</td>
+                <td [attr.data-label]="'Valor' | t">{{ price(invoice.amountCents, invoice.currency) }}</td>
+                <td [attr.data-label]="'Situação' | t">
+                  <span>
+                    <span class="dot" [class]="invoiceTone(invoice.status, invoice.overdue)"></span>{{ (invoice.overdue ? 'Vencida' : invoiceLabel(invoice.status)) | t }}
+                    @if (invoice.paidAt) {
+                      <br /><small>{{ 'em {date}' | t: { date: date(invoice.paidAt) } }}</small>
+                    }
+                  </span>
                 </td>
               </tr>
             }
@@ -91,39 +94,39 @@ import {
       </div>
 
       <div class="card section">
-        <h3>Como pagar</h3>
+        <h3>{{ 'Como pagar' | t }}</h3>
         @if (billing.paymentInstructions) {
           <p class="instructions">{{ billing.paymentInstructions }}</p>
         } @else {
-          <p class="muted">A operação ainda não cadastrou as instruções de pagamento. Fale com o suporte.</p>
+          <p class="muted">{{ 'A operação ainda não cadastrou as instruções de pagamento. Fale com o suporte.' | t }}</p>
         }
         <p class="muted">
-          Depois de pagar, o pagamento é registrado pela {{ billing.companyName }} e a fatura passa a "Paga" (o painel atualiza sozinho).
+          {{ 'Depois de pagar, o pagamento é registrado pela {company} e a fatura passa a "Paga" (o painel atualiza sozinho).' | t: { company: billing.companyName } }}
           @if (billing.supportEmail) {
-            Dúvidas: <a [href]="'mailto:' + billing.supportEmail">{{ billing.supportEmail }}</a>.
+            {{ 'Dúvidas:' | t }} <a [href]="'mailto:' + billing.supportEmail">{{ billing.supportEmail }}</a>.
           }
         </p>
       </div>
 
       <div class="card section">
-        <h3>Planos disponíveis</h3>
+        <h3>{{ 'Planos disponíveis' | t }}</h3>
         <div class="plans">
           @for (plan of billing.plans; track plan.id) {
             <div class="plan-card" [class.current]="plan.id === billing.tenant.plan.id">
-              <b>{{ plan.name }}</b>
-              <span class="price">{{ price(plan.priceCents, plan.currency) }}<small> /mês</small></span>
+              <b>{{ planName(plan.name) }}</b>
+              <span class="price">{{ price(plan.priceCents, plan.currency) }}<small> {{ '/mês' | t }}</small></span>
               @if (plan.description) {
-                <small>{{ plan.description }}</small>
+                <small>{{ planName(plan.description) }}</small>
               }
               <ul>
-                <li>TVs: {{ limitText(plan.maxDevices) }}</li>
-                <li>Espaço de mídias: {{ storageText(plan) }}</li>
-                <li>Usuários: {{ limitText(plan.maxUsers) }}</li>
+                <li>{{ 'TVs' | t }}: {{ limitText(plan.maxDevices) }}</li>
+                <li>{{ 'Espaço de mídias' | t }}: {{ storageText(plan) }}</li>
+                <li>{{ 'Usuários' | t }}: {{ limitText(plan.maxUsers) }}</li>
               </ul>
               @if (plan.id === billing.tenant.plan.id) {
-                <small class="current-tag">Seu plano</small>
+                <small class="current-tag">{{ 'Seu plano' | t }}</small>
               } @else if (billing.supportEmail) {
-                <a class="secondary small" [href]="changeLink(plan, billing)">Pedir este plano</a>
+                <a class="secondary small" [href]="changeLink(plan, billing)">{{ 'Pedir este plano' | t }}</a>
               }
             </div>
           }
@@ -131,25 +134,25 @@ import {
       </div>
 
       <div class="card section">
-        <h3>Dados da conta</h3>
+        <h3>{{ 'Dados da conta' | t }}</h3>
         <form (ngSubmit)="saveProfile()">
           <div class="field">
-            <label for="b-name">Nome do cliente</label>
+            <label for="b-name">{{ 'Nome do cliente' | t }}</label>
             <input id="b-name" name="name" required [ngModel]="name()" (ngModelChange)="name.set($event)" />
           </div>
           <div class="field">
-            <label for="b-email">E-mail para cobrança</label>
+            <label for="b-email">{{ 'E-mail para cobrança' | t }}</label>
             <input id="b-email" name="billingEmail" type="email" [ngModel]="billingEmail()" (ngModelChange)="billingEmail.set($event)" />
           </div>
           <div class="field">
-            <label for="b-doc">CPF/CNPJ (opcional)</label>
+            <label for="b-doc">{{ 'CPF/CNPJ (opcional)' | t }}</label>
             <input id="b-doc" name="document" [ngModel]="document()" (ngModelChange)="document.set($event)" />
           </div>
-          <button type="submit" class="primary" [disabled]="busy() || !name().trim()">Salvar</button>
+          <button type="submit" class="primary" [disabled]="busy() || !name().trim()">{{ 'Salvar' | t }}</button>
         </form>
       </div>
     } @else {
-      <div class="card"><div class="empty">Carregando…</div></div>
+      <div class="card"><div class="empty">{{ 'Carregando…' | t }}</div></div>
     }
   `,
   styles: `
@@ -194,7 +197,7 @@ export class BillingPage implements OnInit {
 
   readonly statusLabel = computed(() => {
     const billing = this.info();
-    return billing ? TENANT_STATUS_LABELS[billing.tenant.status] : '';
+    return billing ? tenantStatusLabel(billing.tenant.status) : '';
   });
 
   readonly tone = computed(() => {
@@ -211,10 +214,10 @@ export class BillingPage implements OnInit {
   readonly blockedText = computed(() => {
     const status = this.info()?.tenant.status;
     if (status === 'SUSPENDED') {
-      return 'A assinatura está suspensa por falta de pagamento: o painel fica bloqueado (menos esta página), mas as TVs continuam exibindo. Pague a fatura em aberto para liberar.';
+      return tr('A assinatura está suspensa por falta de pagamento: o painel fica bloqueado (menos esta página), mas as TVs continuam exibindo. Pague a fatura em aberto para liberar.');
     }
     if (status === 'CANCELED') {
-      return 'A assinatura foi encerrada: o painel e as TVs deixaram de funcionar. Fale com o suporte para reativar.';
+      return tr('A assinatura foi encerrada: o painel e as TVs deixaram de funcionar. Fale com o suporte para reativar.');
     }
     return null;
   });
@@ -228,9 +231,13 @@ export class BillingPage implements OnInit {
     return formatMoney(cents, currency);
   }
 
+  /** A chave em português; a tela traduz com o pipe. */
   invoiceLabel(status: 'OPEN' | 'PAID' | 'VOID'): string {
     return INVOICE_STATUS_LABELS[status];
   }
+
+  readonly planName = planText;
+  readonly date = (value: string | null) => formatDate(value);
 
   invoiceTone(status: 'OPEN' | 'PAID' | 'VOID', overdue: boolean): string {
     if (status === 'PAID') {
@@ -244,12 +251,18 @@ export class BillingPage implements OnInit {
   }
 
   storageText(plan: PlanOption): string {
-    return plan.maxStorageMb === null ? 'ilimitado' : formatStorage(plan.maxStorageMb * 1024 * 1024);
+    return plan.maxStorageMb === null ? tr('ilimitado') : formatStorage(plan.maxStorageMb * 1024 * 1024);
   }
 
   changeLink(plan: PlanOption, billing: BillingInfo): string {
-    const subject = encodeURIComponent(`Troca de plano — ${billing.tenant.name}`);
-    const body = encodeURIComponent(`Olá! Quero mudar o plano de ${billing.tenant.name} de "${billing.tenant.plan.name}" para "${plan.name}".`);
+    const subject = encodeURIComponent(tr('Troca de plano — {tenant}', { tenant: billing.tenant.name }));
+    const body = encodeURIComponent(
+      tr('Olá! Quero mudar o plano de {tenant} de "{from}" para "{to}".', {
+        tenant: billing.tenant.name,
+        from: planText(billing.tenant.plan.name),
+        to: planText(plan.name),
+      }),
+    );
     return `mailto:${billing.supportEmail}?subject=${subject}&body=${body}`;
   }
 
@@ -263,7 +276,7 @@ export class BillingPage implements OnInit {
       .subscribe({
         next: () => {
           this.busy.set(false);
-          this.notice.show('Dados da conta salvos.');
+          this.notice.show(tr('Dados da conta salvos.'));
           this.load();
           void this.auth.loadMe();
         },

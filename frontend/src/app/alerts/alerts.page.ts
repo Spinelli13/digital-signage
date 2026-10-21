@@ -5,7 +5,8 @@ import { RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
 import { formatDateTime, timeAgo } from '../core/format';
-import { ALERT_LABELS } from '../core/monitoring-labels';
+import { TPipe, tr, trServer } from '../core/i18n';
+import { alertLabel } from '../core/monitoring-labels';
 import { Alert, MonitoringSettings, MonitoringSettingsRequest, WebhookTestResult } from '../core/models';
 import { Notice } from '../core/notice';
 
@@ -13,12 +14,12 @@ const REFRESH_MS = 15_000;
 
 @Component({
   selector: 'app-alerts',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, TPipe],
   template: `
     <div class="head">
       <div>
-        <h1>Alertas</h1>
-        <p>O painel avisa quando uma TV some, nunca se conecta ou o Player não para de dar erro. Os avisos também podem ir para o seu Slack, Discord ou outro sistema.</p>
+        <h1>{{ 'Alertas' | t }}</h1>
+        <p>{{ 'O painel avisa quando uma TV some, nunca se conecta ou o Player não para de dar erro. Os avisos também podem ir para o seu Slack, Discord ou outro sistema.' | t }}</p>
       </div>
     </div>
 
@@ -28,44 +29,46 @@ const REFRESH_MS = 15_000;
 
     <div class="card">
       <div class="bar">
-        <h3>Alertas</h3>
+        <h3>{{ 'Alertas' | t }}</h3>
         <label class="check">
-          <input type="checkbox" [ngModel]="onlyOpen()" (ngModelChange)="setOnlyOpen($event)" /> Só os abertos
+          <input type="checkbox" [ngModel]="onlyOpen()" (ngModelChange)="setOnlyOpen($event)" /> {{ 'Só os abertos' | t }}
         </label>
       </div>
       @if (alerts().length === 0) {
         <div class="empty">
           @if (!loaded()) {
-            Carregando…
+            {{ 'Carregando…' | t }}
           } @else if (onlyOpen()) {
-            Nenhum alerta aberto. Tudo certo por aqui. 🎉
+            {{ 'Nenhum alerta aberto. Tudo certo por aqui.' | t }} 🎉
           } @else {
-            Nenhum alerta até agora.
+            {{ 'Nenhum alerta até agora.' | t }}
           }
         </div>
       } @else {
-        <table>
-          <tr><th></th><th>O que aconteceu</th><th>Desde</th><th>Situação</th><th></th></tr>
+        <table class="stack">
+          <tr><th></th><th>{{ 'O que aconteceu' | t }}</th><th>{{ 'Desde' | t }}</th><th>{{ 'Situação' | t }}</th><th></th></tr>
           @for (alert of alerts(); track alert.id) {
             <tr [class.resolved]="!alert.open">
-              <td><span class="dot" [class]="alert.open ? 'off' : 'on'"></span></td>
-              <td>
+              <td class="dot-col"><span class="dot" [class]="alert.open ? 'off' : 'on'"></span></td>
+              <td class="first">
                 <b>{{ label(alert) }}</b><br />
-                <small>{{ alert.message }}</small>
+                <small>{{ messageOf(alert.message) }}</small>
               </td>
-              <td [title]="when(alert.openedAt)">{{ ago(alert.openedAt) }}</td>
-              <td>
-                @if (alert.open) {
-                  <b class="bad">Aberto</b>
-                } @else {
-                  Resolvido {{ ago(alert.resolvedAt) }}
-                }
-                @if (settings()?.webhookConfigured) {
-                  <br /><small>{{ alert.notified ? 'Webhook avisado' : 'Webhook: aguardando' }}</small>
-                }
+              <td [attr.data-label]="'Desde' | t" [title]="when(alert.openedAt)">{{ ago(alert.openedAt) }}</td>
+              <td [attr.data-label]="'Situação' | t">
+                <span>
+                  @if (alert.open) {
+                    <b class="bad">{{ 'Aberto' | t }}</b>
+                  } @else {
+                    {{ 'Resolvido' | t }} {{ ago(alert.resolvedAt) }}
+                  }
+                  @if (settings()?.webhookConfigured) {
+                    <br /><small>{{ (alert.notified ? 'Webhook avisado' : 'Webhook: aguardando') | t }}</small>
+                  }
+                </span>
               </td>
               <td class="row-actions">
-                <a class="secondary small btn" [routerLink]="['/dispositivos', alert.deviceId, 'historico']">Ver histórico</a>
+                <a class="secondary small btn" [routerLink]="['/dispositivos', alert.deviceId, 'historico']">{{ 'Ver histórico' | t }}</a>
               </td>
             </tr>
           }
@@ -75,53 +78,53 @@ const REFRESH_MS = 15_000;
 
     @if (auth.can('admin')) {
     <div class="card settings">
-      <h3>Quando avisar</h3>
+      <h3>{{ 'Quando avisar' | t }}</h3>
       <div class="fields">
         <div class="field">
-          <label for="offline">TV sem contato há mais de (minutos)</label>
+          <label for="offline">{{ 'TV sem contato há mais de (minutos)' | t }}</label>
           <input id="offline" type="number" min="2" max="1440" [ngModel]="offlineAfterMinutes()" (ngModelChange)="offlineAfterMinutes.set($event)" />
         </div>
         <div class="field">
-          <label for="never">TV ativada que nunca se conectou, após (horas)</label>
+          <label for="never">{{ 'TV ativada que nunca se conectou, após (horas)' | t }}</label>
           <input id="never" type="number" min="1" max="720" [ngModel]="neverConnectedAfterHours()" (ngModelChange)="neverConnectedAfterHours.set($event)" />
         </div>
         <div class="field">
-          <label for="errors">Erros do Player em 10 minutos para avisar</label>
+          <label for="errors">{{ 'Erros do Player em 10 minutos para avisar' | t }}</label>
           <input id="errors" type="number" min="1" max="100" [ngModel]="errorBurstCount()" (ngModelChange)="errorBurstCount.set($event)" />
         </div>
         <div class="field">
-          <label for="retention">Guardar o histórico por (dias)</label>
+          <label for="retention">{{ 'Guardar o histórico por (dias)' | t }}</label>
           <input id="retention" type="number" min="7" max="730" [ngModel]="eventsRetentionDays()" (ngModelChange)="eventsRetentionDays.set($event)" />
         </div>
       </div>
 
-      <h3 class="sub">Aviso externo (webhook)</h3>
+      <h3 class="sub">{{ 'Aviso externo (webhook)' | t }}</h3>
       <p class="label">
-        Cole o endereço de um webhook do Slack, Discord, Teams ou Zapier: cada alerta vira uma mensagem por lá.
-        Por segurança só aceitamos endereços <b>https://</b> públicos, e o endereço completo nunca é exibido de volta.
+        {{ 'Cole o endereço de um webhook do Slack, Discord, Teams ou Zapier: cada alerta vira uma mensagem por lá.' | t }}
+        {{ 'Por segurança só aceitamos endereços' | t }} <b>https://</b> {{ 'públicos, e o endereço completo nunca é exibido de volta.' | t }}
       </p>
       <div class="field">
-        <label for="webhook">Endereço do webhook</label>
+        <label for="webhook">{{ 'Endereço do webhook' | t }}</label>
         <input id="webhook" type="url" autocomplete="off" spellcheck="false"
-          [placeholder]="settings()?.webhookConfigured ? 'Configurado: ' + settings()?.webhookHint + ' — digite um novo para trocar' : 'https://hooks.slack.com/services/…'"
+          [placeholder]="webhookPlaceholder()"
           [ngModel]="webhookUrl()" (ngModelChange)="webhookUrl.set($event)" />
       </div>
       <label class="check">
-        <input type="checkbox" [ngModel]="notifyOnResolve()" (ngModelChange)="notifyOnResolve.set($event)" /> Avisar também quando o problema for resolvido
+        <input type="checkbox" [ngModel]="notifyOnResolve()" (ngModelChange)="notifyOnResolve.set($event)" /> {{ 'Avisar também quando o problema for resolvido' | t }}
       </label>
 
       @if (testResult(); as result) {
         <div [class]="result.ok ? 'success' : 'error'" role="status">
-          {{ result.ok ? 'Mensagem de teste enviada. Confira no seu canal.' : 'O teste falhou: ' + (result.error ?? 'sem detalhes') }}
+          {{ testMessage(result) }}
         </div>
       }
 
       <div class="actions">
         @if (settings()?.webhookConfigured) {
-          <button class="danger" (click)="removeWebhook()" [disabled]="saving()">Remover webhook</button>
-          <button class="secondary" (click)="test()" [disabled]="saving() || testing()">{{ testing() ? 'Enviando…' : 'Enviar teste' }}</button>
+          <button class="danger" (click)="removeWebhook()" [disabled]="saving()">{{ 'Remover webhook' | t }}</button>
+          <button class="secondary" (click)="test()" [disabled]="saving() || testing()">{{ (testing() ? 'Enviando…' : 'Enviar teste') | t }}</button>
         }
-        <button class="primary" (click)="save()" [disabled]="saving()">{{ saving() ? 'Salvando…' : 'Salvar configurações' }}</button>
+        <button class="primary" (click)="save()" [disabled]="saving()">{{ (saving() ? 'Salvando…' : 'Salvar configurações') | t }}</button>
       </div>
     </div>
     }
@@ -133,6 +136,11 @@ const REFRESH_MS = 15_000;
     .bad { color: var(--red); }
     tr.resolved td { color: var(--muted); }
     .row-actions { text-align: right; white-space: nowrap; }
+    @media (max-width: 720px) {
+      table.stack td.dot-col { position: absolute; top: 12px; right: 12px; border: 0; padding: 0; width: auto; }
+      table.stack td.dot-col::before { content: none; }
+      table.stack td.first { padding-right: 28px; }
+    }
     .settings { margin-top: 18px; }
     /* rótulos de uma e de duas linhas: os campos alinham pela base, não pelo topo */
     .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 18px; align-items: end; }
@@ -161,7 +169,22 @@ export class AlertsPage implements OnInit {
   readonly testing = signal(false);
   readonly testResult = signal<WebhookTestResult | null>(null);
 
-  readonly label = (alert: Alert) => ALERT_LABELS[alert.type] + (alert.deviceName ? ` — ${alert.deviceName}` : '');
+  readonly label = (alert: Alert) => alertLabel(alert.type) + (alert.deviceName ? ` — ${alert.deviceName}` : '');
+  /** Texto gerado pelo servidor (em português); as mensagens conhecidas aparecem traduzidas. */
+  readonly messageOf = (message: string) => trServer(message);
+
+  webhookPlaceholder(): string {
+    const settings = this.settings();
+    return settings?.webhookConfigured
+      ? tr('Configurado: {hint} — digite um novo para trocar', { hint: settings.webhookHint })
+      : 'https://hooks.slack.com/services/…';
+  }
+
+  testMessage(result: WebhookTestResult): string {
+    return result.ok
+      ? tr('Mensagem de teste enviada. Confira no seu canal.')
+      : tr('O teste falhou: {reason}', { reason: result.error ? trServer(result.error) : tr('sem detalhes') });
+  }
   readonly ago = (iso: string | null) => timeAgo(iso);
   readonly when = (iso: string | null) => formatDateTime(iso);
 
@@ -190,14 +213,14 @@ export class AlertsPage implements OnInit {
     if (typed) {
       body.webhookUrl = typed;
     }
-    this.send(body, typed ? 'Configurações salvas. O webhook foi atualizado.' : 'Configurações salvas.');
+    this.send(body, typed ? tr('Configurações salvas. O webhook foi atualizado.') : tr('Configurações salvas.'));
   }
 
   removeWebhook(): void {
-    if (!confirm('Remover o webhook? Os alertas continuam aparecendo aqui, mas deixam de ser enviados para fora.')) {
+    if (!confirm(tr('Remover o webhook? Os alertas continuam aparecendo aqui, mas deixam de ser enviados para fora.'))) {
       return;
     }
-    this.send({ webhookUrl: '' }, 'Webhook removido.');
+    this.send({ webhookUrl: '' }, tr('Webhook removido.'));
   }
 
   test(): void {
@@ -231,7 +254,7 @@ export class AlertsPage implements OnInit {
   private settingsBody(): MonitoringSettingsRequest | null {
     const numbers = [this.offlineAfterMinutes(), this.neverConnectedAfterHours(), this.errorBurstCount(), this.eventsRetentionDays()];
     if (numbers.some((value) => value === null || !Number.isInteger(value))) {
-      this.notice.show('Preencha os quatro limites com números inteiros.');
+      this.notice.show(tr('Preencha os quatro limites com números inteiros.'));
       return null;
     }
     return {

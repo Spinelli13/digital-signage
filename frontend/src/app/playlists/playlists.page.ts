@@ -3,36 +3,37 @@ import { RouterLink } from '@angular/router';
 
 import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
+import { TPipe, tr } from '../core/i18n';
 import { Playlist } from '../core/models';
 import { formatDuration, totalSeconds } from './playlist-editor';
 
 @Component({
   selector: 'app-playlists',
-  imports: [RouterLink],
+  imports: [RouterLink, TPipe],
   template: `
     <div class="head">
-      <div><h1>Playlists</h1><p>Defina a ordem e a duração dos conteúdos exibidos nas telas.</p></div>
+      <div><h1>{{ 'Playlists' | t }}</h1><p>{{ 'Defina a ordem e a duração dos conteúdos exibidos nas telas.' | t }}</p></div>
       @if (auth.can('content')) {
-        <a class="primary btn" routerLink="/playlists/nova">+ Nova playlist</a>
+        <a class="primary btn" routerLink="/playlists/nova">{{ '+ Nova playlist' | t }}</a>
       }
     </div>
 
     <div class="card">
       @if (items().length === 0) {
-        <div class="empty">Nenhuma playlist ainda. Crie uma e adicione mídias da biblioteca.</div>
+        <div class="empty">{{ 'Nenhuma playlist ainda. Crie uma e adicione mídias da biblioteca.' | t }}</div>
       } @else {
-        <table>
-          <tr><th>Playlist</th><th>Itens</th><th>Duração do ciclo</th><th>Versão</th><th></th></tr>
+        <table class="stack">
+          <tr><th>{{ 'Playlist' | t }}</th><th>{{ 'Itens' | t }}</th><th>{{ 'Duração do ciclo' | t }}</th><th>{{ 'Versão' | t }}</th><th></th></tr>
           @for (playlist of items(); track playlist.id) {
             <tr>
-              <td><a [routerLink]="['/playlists', playlist.id]"><b>{{ playlist.name }}</b></a><br /><small>{{ playlist.description }}</small></td>
-              <td>{{ playlist.items.length }}</td>
-              <td>{{ duration(playlist) }}</td>
-              <td>v{{ playlist.configVersion }}</td>
+              <td class="first"><a [routerLink]="['/playlists', playlist.id]"><b>{{ playlist.name }}</b></a><br /><small>{{ playlist.description }}</small></td>
+              <td [attr.data-label]="'Itens' | t">{{ playlist.items.length }}</td>
+              <td [attr.data-label]="'Duração do ciclo' | t">{{ duration(playlist) }}</td>
+              <td [attr.data-label]="'Versão' | t">{{ 'v' + playlist.configVersion }}</td>
               <td class="row-actions">
-                <a class="secondary small btn" [routerLink]="['/playlists', playlist.id]">{{ auth.can('content') ? 'Editar' : 'Ver' }}</a>
+                <a class="secondary small btn" [routerLink]="['/playlists', playlist.id]">{{ (auth.can('content') ? 'Editar' : 'Ver') | t }}</a>
                 @if (auth.can('content')) {
-                  <button class="danger small" (click)="remove(playlist)">Excluir</button>
+                  <button class="danger small" (click)="remove(playlist)">{{ 'Excluir' | t }}</button>
                 }
               </td>
             </tr>
@@ -42,7 +43,7 @@ import { formatDuration, totalSeconds } from './playlist-editor';
     </div>
   `,
   styles: `
-    .btn { display: inline-block; color: #fff; }
+    .btn { display: inline-block; color: var(--on-primary); text-align: center; }
     a.secondary.btn { color: var(--text); }
     .row-actions { white-space: nowrap; text-align: right; }
     .row-actions > * { margin-left: 6px; }
@@ -63,7 +64,7 @@ export class PlaylistsPage implements OnInit {
   }
 
   remove(playlist: Playlist): void {
-    if (!confirm(`Excluir a playlist "${playlist.name}"? Dispositivos que a usam ficam sem playlist.`)) {
+    if (!confirm(tr('Excluir a playlist "{name}"? Dispositivos que a usam ficam sem playlist.', { name: playlist.name }))) {
       return;
     }
     this.api.deletePlaylist(playlist.id).subscribe({

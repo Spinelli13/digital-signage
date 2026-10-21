@@ -2,16 +2,17 @@ import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '../core/api.service';
+import { TPipe, tr } from '../core/i18n';
 import { Notice } from '../core/notice';
 
 @Component({
   selector: 'app-platform-settings',
-  imports: [FormsModule],
+  imports: [FormsModule, TPipe],
   template: `
     <div class="head">
       <div>
-        <h1>Configurações da plataforma</h1>
-        <p>O texto de pagamento que os clientes veem e as regras da cobrança automática.</p>
+        <h1>{{ 'Configurações da plataforma' | t }}</h1>
+        <p>{{ 'O texto de pagamento que os clientes veem e as regras da cobrança automática.' | t }}</p>
       </div>
     </div>
 
@@ -20,41 +21,41 @@ import { Notice } from '../core/notice';
     }
 
     <form class="card" (ngSubmit)="save()">
-      <h3>Empresa e pagamento</h3>
+      <h3>{{ 'Empresa e pagamento' | t }}</h3>
       <div class="field">
-        <label for="s-company">Nome da empresa</label>
+        <label for="s-company">{{ 'Nome da empresa' | t }}</label>
         <input id="s-company" name="companyName" required [ngModel]="companyName()" (ngModelChange)="companyName.set($event)" />
       </div>
       <div class="field">
-        <label for="s-support">E-mail de suporte</label>
+        <label for="s-support">{{ 'E-mail de suporte' | t }}</label>
         <input id="s-support" name="supportEmail" type="email" [ngModel]="supportEmail()" (ngModelChange)="supportEmail.set($event)" />
       </div>
       <div class="field">
-        <label for="s-pay">Como pagar (aparece em "Plano e cobrança" de cada cliente)</label>
+        <label for="s-pay">{{ 'Como pagar (aparece em "Plano e cobrança" de cada cliente)' | t }}</label>
         <textarea id="s-pay" name="paymentInstructions" rows="5"
-          placeholder="Ex.: PIX: chave 00.000.000/0001-00 (Minha Empresa). Envie o comprovante para o e-mail de suporte."
+          [placeholder]="'Ex.: PIX: chave 00.000.000/0001-00 (Minha Empresa). Envie o comprovante para o e-mail de suporte.' | t"
           [ngModel]="paymentInstructions()" (ngModelChange)="paymentInstructions.set($event)"></textarea>
       </div>
 
-      <h3 class="sub">Cobrança automática</h3>
+      <h3 class="sub">{{ 'Cobrança automática' | t }}</h3>
       <div class="three">
         <div class="field">
-          <label for="s-trial">Dias de teste</label>
+          <label for="s-trial">{{ 'Dias de teste' | t }}</label>
           <input id="s-trial" name="trialDays" type="number" min="0" max="90" [ngModel]="trialDays()" (ngModelChange)="trialDays.set(+$event)" />
-          <small>Para clientes novos.</small>
+          <small>{{ 'Para clientes novos.' | t }}</small>
         </div>
         <div class="field">
-          <label for="s-grace">Dias de tolerância</label>
+          <label for="s-grace">{{ 'Dias de tolerância' | t }}</label>
           <input id="s-grace" name="graceDays" type="number" min="0" max="60" [ngModel]="graceDays()" (ngModelChange)="graceDays.set(+$event)" />
-          <small>Depois do vencimento o cliente fica "em atraso"; passada a tolerância, é suspenso.</small>
+          <small>{{ 'Depois do vencimento o cliente fica "em atraso"; passada a tolerância, é suspenso.' | t }}</small>
         </div>
         <div class="field">
-          <label for="s-lead">Antecedência da fatura</label>
+          <label for="s-lead">{{ 'Antecedência da fatura' | t }}</label>
           <input id="s-lead" name="invoiceLeadDays" type="number" min="0" max="30" [ngModel]="invoiceLeadDays()" (ngModelChange)="invoiceLeadDays.set(+$event)" />
-          <small>Dias antes do fim do período em que a fatura é gerada.</small>
+          <small>{{ 'Dias antes do fim do período em que a fatura é gerada.' | t }}</small>
         </div>
       </div>
-      <button type="submit" class="primary" [disabled]="busy() || !companyName().trim()">Salvar</button>
+      <button type="submit" class="primary" [disabled]="busy() || !companyName().trim()">{{ 'Salvar' | t }}</button>
     </form>
   `,
   styles: `
@@ -107,7 +108,7 @@ export class PlatformSettingsPage implements OnInit {
       .subscribe({
         next: () => {
           this.busy.set(false);
-          this.notice.show('Configurações salvas.');
+          this.notice.show(tr('Configurações salvas.'));
         },
         error: () => this.busy.set(false),
       });

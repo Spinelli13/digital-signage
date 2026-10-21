@@ -3,25 +3,26 @@ import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
+import { TPipe, tr } from '../core/i18n';
 import { Role, TeamMember } from '../core/models';
 import { Notice } from '../core/notice';
-import { formatLimit, ROLE_HELP, ROLE_LABELS, TEAM_ROLES } from '../core/saas';
+import { formatLimit, roleHelp, roleLabel, TEAM_ROLES } from '../core/saas';
 
 @Component({
   selector: 'app-team',
-  imports: [FormsModule],
+  imports: [FormsModule, TPipe],
   template: `
     <div class="head">
       <div>
-        <h1>Equipe</h1>
+        <h1>{{ 'Equipe' | t }}</h1>
         <p>
-          Quem acessa o painel deste cliente e o que cada pessoa pode fazer.
+          {{ 'Quem acessa o painel deste cliente e o que cada pessoa pode fazer.' | t }}
           @if (auth.me(); as me) {
-            Usuários ativos: <b>{{ me.tenant.usage.users }} de {{ limit() }}</b>.
+            {{ 'Usuários ativos:' | t }} <b>{{ '{used} de {limit}' | t: { used: me.tenant.usage.users, limit: limit() } }}</b>.
           }
         </p>
       </div>
-      <button class="primary" (click)="openNew()">+ Novo usuário</button>
+      <button class="primary" (click)="openNew()">{{ '+ Novo usuário' | t }}</button>
     </div>
 
     @if (notice.text(); as text) {
@@ -30,26 +31,26 @@ import { formatLimit, ROLE_HELP, ROLE_LABELS, TEAM_ROLES } from '../core/saas';
 
     <div class="card">
       @if (items().length === 0) {
-        <div class="empty">{{ loaded() ? 'Nenhum usuário.' : 'Carregando…' }}</div>
+        <div class="empty">{{ (loaded() ? 'Nenhum usuário.' : 'Carregando…') | t }}</div>
       } @else {
-        <table>
-          <tr><th>Nome</th><th>Papel</th><th>Situação</th><th></th></tr>
+        <table class="stack">
+          <tr><th>{{ 'Nome' | t }}</th><th>{{ 'Papel' | t }}</th><th>{{ 'Situação' | t }}</th><th></th></tr>
           @for (member of items(); track member.id) {
             <tr>
-              <td>
+              <td class="first">
                 <b>{{ member.name }}</b>
                 @if (isMe(member)) {
-                  <small> (você)</small>
+                  <small> {{ '(você)' | t }}</small>
                 }
                 <br /><small>{{ member.email }}</small>
               </td>
-              <td>{{ roleLabel(member.role) }}</td>
-              <td>
-                <span class="dot" [class]="member.active ? 'on' : 'off'"></span>{{ member.active ? 'Ativo' : 'Desativado' }}
+              <td [attr.data-label]="'Papel' | t">{{ roleText(member.role) }}</td>
+              <td [attr.data-label]="'Situação' | t">
+                <span class="st"><span class="dot" [class]="member.active ? 'on' : 'off'"></span>{{ (member.active ? 'Ativo' : 'Desativado') | t }}</span>
               </td>
               <td class="row-actions">
-                <button class="secondary small" (click)="openEdit(member)">Editar</button>
-                <button class="danger small" [disabled]="isMe(member)" (click)="remove(member)">Excluir</button>
+                <button class="secondary small" (click)="openEdit(member)">{{ 'Editar' | t }}</button>
+                <button class="danger small" [disabled]="isMe(member)" (click)="remove(member)">{{ 'Excluir' | t }}</button>
               </td>
             </tr>
           }
@@ -58,52 +59,52 @@ import { formatLimit, ROLE_HELP, ROLE_LABELS, TEAM_ROLES } from '../core/saas';
     </div>
 
     <div class="card roles">
-      <h3>O que cada papel pode</h3>
+      <h3>{{ 'O que cada papel pode' | t }}</h3>
       @for (role of roles; track role) {
-        <p><b>{{ roleLabel(role) }}</b> — {{ roleHelp(role) }}</p>
+        <p><b>{{ roleText(role) }}</b> — {{ helpText(role) }}</p>
       }
     </div>
 
     @if (modal() !== null) {
       <div class="modal" (click)="closeModal()">
         <form class="modal-box" (click)="$event.stopPropagation()" (ngSubmit)="submit()">
-          <h2>{{ modal() === 'new' ? 'Novo usuário' : 'Editar usuário' }}</h2>
+          <h2>{{ (modal() === 'new' ? 'Novo usuário' : 'Editar usuário') | t }}</h2>
           <div class="field">
-            <label for="tm-name">Nome</label>
+            <label for="tm-name">{{ 'Nome' | t }}</label>
             <input id="tm-name" name="name" required [ngModel]="name()" (ngModelChange)="name.set($event)" />
           </div>
           <div class="field">
-            <label for="tm-email">E-mail (é o login)</label>
+            <label for="tm-email">{{ 'E-mail (é o login)' | t }}</label>
             <input id="tm-email" name="email" type="email" required [disabled]="modal() === 'edit'"
               [ngModel]="email()" (ngModelChange)="email.set($event)" />
           </div>
           <div class="field">
-            <label for="tm-role">Papel</label>
+            <label for="tm-role">{{ 'Papel' | t }}</label>
             <select id="tm-role" name="role" [ngModel]="role()" (ngModelChange)="role.set($event)">
               @for (option of roles; track option) {
-                <option [value]="option">{{ roleLabel(option) }}</option>
+                <option [value]="option">{{ roleText(option) }}</option>
               }
             </select>
-            <small>{{ roleHelp(role()) }}</small>
+            <small>{{ helpText(role()) }}</small>
           </div>
           <div class="field">
-            <label for="tm-pass">{{ modal() === 'new' ? 'Senha inicial' : 'Nova senha (deixe em branco para manter)' }}</label>
+            <label for="tm-pass">{{ (modal() === 'new' ? 'Senha inicial' : 'Nova senha (deixe em branco para manter)') | t }}</label>
             <input id="tm-pass" name="password" type="password" autocomplete="new-password" minlength="8"
               [ngModel]="password()" (ngModelChange)="password.set($event)" />
-            <small>Pelo menos 8 caracteres. A pessoa pode trocá-la em "Minha conta".</small>
+            <small>{{ 'Pelo menos 8 caracteres. A pessoa pode trocá-la em "Minha conta".' | t }}</small>
           </div>
           @if (modal() === 'edit') {
             <div class="field">
               <label class="check">
                 <input type="checkbox" name="active" [disabled]="editingSelf()"
                   [ngModel]="active()" (ngModelChange)="active.set($event)" />
-                Pode entrar no painel
+                {{ 'Pode entrar no painel' | t }}
               </label>
             </div>
           }
           <div class="actions">
-            <button type="button" class="secondary" (click)="closeModal()">Cancelar</button>
-            <button type="submit" class="primary" [disabled]="busy() || !canSubmit()">Salvar</button>
+            <button type="button" class="secondary" (click)="closeModal()">{{ 'Cancelar' | t }}</button>
+            <button type="submit" class="primary" [disabled]="busy() || !canSubmit()">{{ 'Salvar' | t }}</button>
           </div>
         </form>
       </div>
@@ -157,12 +158,12 @@ export class TeamPage implements OnInit {
     this.load();
   }
 
-  roleLabel(role: Role): string {
-    return ROLE_LABELS[role];
+  roleText(role: Role): string {
+    return roleLabel(role);
   }
 
-  roleHelp(role: Role): string {
-    return ROLE_HELP[role];
+  helpText(role: Role): string {
+    return roleHelp(role);
   }
 
   isMe(member: TeamMember): boolean {
@@ -216,7 +217,7 @@ export class TeamPage implements OnInit {
       next: (saved) => {
         this.busy.set(false);
         this.closeModal();
-        this.notice.show(editing ? `Usuário "${saved.name}" salvo.` : `Usuário "${saved.name}" adicionado.`);
+        this.notice.show(editing ? tr('Usuário "{name}" salvo.', { name: saved.name }) : tr('Usuário "{name}" adicionado.', { name: saved.name }));
         this.load();
         if (editing && this.isMe(editing)) {
           void this.auth.loadMe();
@@ -228,12 +229,12 @@ export class TeamPage implements OnInit {
   }
 
   remove(member: TeamMember): void {
-    if (!confirm(`Excluir o usuário "${member.name}" (${member.email})? Ele perde o acesso ao painel na hora.`)) {
+    if (!confirm(tr('Excluir o usuário "{name}" ({email})? Ele perde o acesso ao painel na hora.', { name: member.name, email: member.email }))) {
       return;
     }
     this.api.deleteTeamMember(member.id).subscribe({
       next: () => {
-        this.notice.show(`Usuário "${member.name}" excluído.`);
+        this.notice.show(tr('Usuário "{name}" excluído.', { name: member.name }));
         this.load();
         void this.auth.loadMe();
       },

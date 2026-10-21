@@ -1,15 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Digital Signage">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#4a7bf5"/>
-      <stop offset="1" stop-color="#2447c9"/>
+      <stop offset="0" stop-color="#1f7a54"/>
+      <stop offset="1" stop-color="#0b2e20"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4f6f5"/>
+      <stop offset="1" stop-color="#c4ccc8"/>
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="14" fill="url(#bg)"/>
-  <!-- tela (sólida: mantém contraste mesmo em 16 px) -->
-  <rect x="8" y="11" width="48" height="33" rx="7" fill="#fff"/>
+  <!-- tela prata (sólida: mantém contraste mesmo em 16 px) -->
+  <rect x="8" y="11" width="48" height="33" rx="7" fill="url(#screen)"/>
   <!-- play -->
-  <path d="M26.5 19.5 L26.5 35.5 L41.5 27.5 Z" fill="#2d55d9" stroke="#2d55d9" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M26.5 19.5 L26.5 35.5 L41.5 27.5 Z" fill="#14583b" stroke="#14583b" stroke-width="2.4" stroke-linejoin="round"/>
   <!-- suporte -->
-  <path d="M32 44 V51 M20 51.5 H44" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M32 44 V51 M20 51.5 H44" fill="none" stroke="#c4ccc8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

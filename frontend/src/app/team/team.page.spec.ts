@@ -187,7 +187,7 @@ describe('TeamPage', () => {
   });
 
   it('explains each role', () => {
-    expect(page.roleLabel('EDITOR')).toBe('Editor');
-    expect(page.roleHelp('VIEWER')).toContain('Só consulta');
+    expect(page.roleText('EDITOR')).toBe('Editor');
+    expect(page.helpText('VIEWER')).toContain('Só consulta');
   });
 });

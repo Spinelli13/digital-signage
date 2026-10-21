@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
+import { currentLocale, formatDateTimeLocal, tr, trServer } from './i18n';
 import { Connection, Device, MediaType } from './models';
 
 export interface DeviceState {
@@ -21,7 +22,7 @@ export function connectionOf(device: Device): Connection {
   return device.lastSeenAt ? 'OFFLINE' : 'NEVER';
 }
 
-const STATES: Record<Connection, DeviceState> = {
+export const STATES: Record<Connection, DeviceState> = {
   ONLINE: { label: 'Online', tone: 'on' },
   OFFLINE: { label: 'Offline', tone: 'off' },
   NEVER: { label: 'Nunca conectou', tone: 'warn' },
@@ -29,17 +30,19 @@ const STATES: Record<Connection, DeviceState> = {
   DISABLED: { label: 'Desativado', tone: 'off' },
 };
 
+/** O rótulo vem no idioma atual (as chaves de STATES são o texto em português). */
 export function stateOfConnection(connection: Connection): DeviceState {
-  return STATES[connection];
+  const state = STATES[connection];
+  return { label: tr(state.label), tone: state.tone };
 }
 
 export function deviceState(device: Device): DeviceState {
-  return STATES[connectionOf(device)];
+  return stateOfConnection(connectionOf(device));
 }
 
 /** True quando o dispositivo precisa de atenção do administrador (offline, pendente ou nunca conectado). */
 export function needsAttention(device: Device): boolean {
-  const state = deviceState(device);
+  const state = STATES[connectionOf(device)];
   return state.tone !== 'on' && device.status !== 'DISABLED';
 }
 
@@ -49,17 +52,17 @@ export function timeAgo(iso: string | null, now: number = Date.now()): string {
   }
   const seconds = Math.max(0, Math.round((now - new Date(iso).getTime()) / 1000));
   if (seconds < 60) {
-    return 'agora';
+    return tr('agora');
   }
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) {
-    return `${minutes} min atrás`;
+    return tr('{n} min atrás', { n: minutes });
   }
   const hours = Math.floor(minutes / 60);
   if (hours < 24) {
-    return `${hours} h atrás`;
+    return tr('{n} h atrás', { n: hours });
   }
-  return `${Math.floor(hours / 24)} d atrás`;
+  return tr('{n} d atrás', { n: Math.floor(hours / 24) });
 }
 
 export function formatBytes(bytes: number): string {
@@ -79,35 +82,26 @@ export function formatBytes(bytes: number): string {
 export function errorMessage(error: unknown, fallback = 'Algo deu errado. Tente novamente.'): string {
   if (error instanceof HttpErrorResponse) {
     if (error.status === 0) {
-      return 'Não foi possível conectar ao servidor.';
+      return tr('Não foi possível conectar ao servidor.');
     }
     const body = error.error as { error?: string } | null;
     if (body && typeof body.error === 'string') {
-      return body.error;
+      return trServer(body.error);
     }
   }
-  return fallback;
+  return tr(fallback);
 }
 
-/** "05/11/2026 09:00", no fuso do navegador. */
+/** "05/11/2026 09:00" (português) ou "11/05/2026, 09:00 AM" (inglês), no fuso do navegador. */
 export function formatDateTime(iso: string | null): string {
-  if (!iso) {
-    return '—';
-  }
-  return new Date(iso).toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatDateTimeLocal(iso);
 }
 
 /** "5 min", "2 h 10 min", "3 d 4 h" — a mesma escrita do servidor nos alertas e no CSV. */
 export function humanSeconds(totalSeconds: number): string {
   const minutes = Math.max(0, Math.floor(totalSeconds / 60));
   if (minutes < 1) {
-    return totalSeconds > 0 ? 'menos de 1 min' : '0 min';
+    return totalSeconds > 0 ? tr('menos de 1 min') : '0 min';
   }
   if (minutes < 60) {
     return `${minutes} min`;
@@ -120,9 +114,9 @@ export function humanSeconds(totalSeconds: number): string {
   return hours % 24 === 0 ? `${days} d` : `${days} d ${hours % 24} h`;
 }
 
-/** "99,5%"; sem dados ainda, um traço (nunca "0%", que pareceria uma TV sempre fora do ar). */
+/** "99,5%" (português) ou "99.5%" (inglês); sem dados ainda, um traço (nunca "0%", que pareceria uma TV sempre fora do ar). */
 export function formatPercent(value: number | null): string {
-  return value === null ? '—' : `${value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+  return value === null ? '—' : `${value.toLocaleString(currentLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
 }
 
 /** AAAA-MM-DD do dia local de {@code date} (toISOString usaria UTC e viraria o dia à noite). */
@@ -138,8 +132,8 @@ export function daysAgo(count: number, now: Date = new Date()): string {
   return isoDate(day);
 }
 
-const MEDIA_TYPE_LABELS: Record<MediaType, string> = { IMAGE: 'Imagem', VIDEO: 'Vídeo', WEB: 'Página web' };
+export const MEDIA_TYPE_LABELS: Record<MediaType, string> = { IMAGE: 'Imagem', VIDEO: 'Vídeo', WEB: 'Página web' };
 
 export function mediaTypeLabel(type: MediaType): string {
-  return MEDIA_TYPE_LABELS[type] ?? 'Mídia';
+  return tr(MEDIA_TYPE_LABELS[type] ?? 'Mídia');
 }

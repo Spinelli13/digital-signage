@@ -4,8 +4,23 @@
   <meta charset="utf-8">
   <title>Digital Signage</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#3563e9">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1a6a49">
+  <meta name="color-scheme" content="light dark">
+  <!-- Aplica o tema e o idioma escolhidos ANTES do Angular carregar: sem piscar branco no modo escuro. -->
+  <script>
+    (function () {
+      try {
+        var mode = localStorage.getItem('signage.theme');
+        var dark = mode === 'dark' || ((mode !== 'light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        var lang = localStorage.getItem('signage.lang');
+        document.documentElement.lang = lang === 'en' ? 'en' : 'pt-BR';
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', dark ? '#050807' : '#1a6a49');
+      } catch (e) {}
+    })();
+  </script>
   <!-- .ico para navegadores antigos; o SVG (sizes="any") é preferido pelos modernos e fica nítido em qualquer tamanho. -->
   <link rel="icon" href="favicon.ico" sizes="48x48">
   <link rel="icon" href="favicon.svg" sizes="any" type="image/svg+xml">

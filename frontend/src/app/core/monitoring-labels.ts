@@ -1,3 +1,4 @@
+import { tr } from './i18n';
 import { AlertType, EventLevel, EventType } from './models';
 
 export interface EventLabel {
@@ -27,4 +28,9 @@ export const ALERT_LABELS: Record<AlertType, string> = {
   OFFLINE: 'TV sem contato',
   NEVER_CONNECTED: 'TV nunca conectou',
   PLAYER_ERRORS: 'Erros no Player',
-};
+};
+
+/** O texto no idioma atual (as tabelas acima guardam as chaves em português). */
+export const eventLabel = (type: EventType): string => tr(EVENT_LABELS[type].label);
+export const levelLabel = (level: EventLevel): string => tr(LEVEL_LABELS[level]);
+export const alertLabel = (type: AlertType): string => tr(ALERT_LABELS[type]);
