@@ -507,3 +507,10 @@ Pedido: olhar de UX/UI sênior + tech lead de frontend, pesquisar e criar um lay
 ### Não feito
 - Conversão no servidor ou em segundo plano (a página precisa ficar aberta); cancelar a conversão no meio; cortar o vídeo para caber nos 50 MB; transcodificar vídeos que já estão na biblioteca.
 - Converter **imagens** grandes (HEIC do iPhone é recusado como antes; JPG/PNG/WEBP seguem como estão).
+
+
+## 2026-10-21 (parte 20) — Análise de integrações (item 8 do pedido)
+
+- Escrito `docs/INTEGRACOES.md`: o que já funciona como integração (API, webhook de alertas, widgets de dados, CSV de preços, comprovação, página web e QR Code), os critérios de decisão (sem custo fixo novo, sem pedir senha de terceiros, Player offline-first, mesma barreira contra SSRF) e a **ordem recomendada**: chaves de API por cliente, preços por planilha publicada na web e por endpoint, agenda ICS, webhooks assinados e com formatos de Slack/Teams/Telegram, comprovação assinada por TV, disparo de conteúdo por evento (junto da fila de atendimento), SSO e cobrança automática (Pix).
+- Também lista o que **não** construir agora (redes sociais, iFood, plugins, câmeras, Smart TV nativa) e as perguntas que são do dono (perfil do primeiro cliente pagante, ERP/PDV em comum, nota fiscal e gateway de pagamento).
+- **Nada foi construído** deste documento: só a análise. Preços, limites e termos de terceiros estão marcados "a confirmar".
