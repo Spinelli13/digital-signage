@@ -28,6 +28,7 @@ import com.digitalsignage.backend.device.OfflinePlanService;
 import com.digitalsignage.backend.device.PlayerConfigResponse;
 import com.digitalsignage.backend.device.PlayerConfigService;
 import com.digitalsignage.backend.monitoring.MonitoringService;
+import com.digitalsignage.backend.screenalert.ScreenAlertService;
 import com.digitalsignage.backend.security.DeviceLookup;
 import com.digitalsignage.backend.security.TokenHasher;
 import com.digitalsignage.backend.tenant.TenantContext;
@@ -53,6 +54,7 @@ public class PlayerController {
 	private final DeviceLookup deviceLookup;
 	private final PanelUrl panelUrl;
 	private final DeviceDiagnosticService diagnostics;
+	private final ScreenAlertService screenAlerts;
 	private final Clock clock;
 	private final SecureRandom random = new SecureRandom();
 
@@ -65,6 +67,7 @@ public class PlayerController {
 			DeviceLookup deviceLookup,
 			PanelUrl panelUrl,
 			DeviceDiagnosticService diagnostics,
+			ScreenAlertService screenAlerts,
 			Clock clock) {
 		this.deviceRepository = deviceRepository;
 		this.playerConfigService = playerConfigService;
@@ -74,6 +77,7 @@ public class PlayerController {
 		this.deviceLookup = deviceLookup;
 		this.panelUrl = panelUrl;
 		this.diagnostics = diagnostics;
+		this.screenAlerts = screenAlerts;
 		this.clock = clock;
 	}
 
@@ -139,7 +143,8 @@ public class PlayerController {
 		long updateCheckToken = device.getUpdateRequestedAt() == null ? 0 : device.getUpdateRequestedAt().toEpochMilli();
 		return new PlayerHeartbeatResponse(desired.playlistId(), desired.configVersion(), now, updateCheckToken, desired.campaignId(),
 				offlinePlanService.versionFor(device, enabled),
-				device.getDiagnosticRequestedAt() == null ? 0 : device.getDiagnosticRequestedAt().toEpochMilli());
+				device.getDiagnosticRequestedAt() == null ? 0 : device.getDiagnosticRequestedAt().toEpochMilli(),
+				screenAlerts.forDevice(device, now));
 	}
 
 	private PlayerStatusResponse registerNew(String tokenHash, String playerVersion) {
