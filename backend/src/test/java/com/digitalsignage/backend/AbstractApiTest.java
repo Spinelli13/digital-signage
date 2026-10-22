@@ -107,7 +107,7 @@ public abstract class AbstractApiTest {
 		jdbc.update("DELETE FROM users WHERE role = 'PLATFORM_ADMIN' AND email <> 'admin@digitalsignage.local'");
 		jdbc.update("DELETE FROM tenants WHERE id > 2");
 		jdbc.update("UPDATE tenants SET plan_id = (SELECT id FROM plans WHERE code = 'interno'), status = 'ACTIVE', current_period_end = NULL, trial_ends_at = NULL WHERE id = 2");
-		jdbc.update("DELETE FROM plans WHERE code NOT IN ('interno', 'gratis', 'basico', 'profissional')");
+		jdbc.update("DELETE FROM plans WHERE code NOT IN ('interno', 'gratis', 'basico', 'profissional', 'start', 'pro', 'business', 'rede', 'comodato-basico', 'comodato-completo', 'comodato-premium')");
 	}
 
 	/** Chama um serviço direto (sem passar pelo filtro de login) "como" o cliente indicado. */
