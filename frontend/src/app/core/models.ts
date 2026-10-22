@@ -70,6 +70,12 @@ export interface PlaylistItem {
   mediaType: MediaType;
   position: number;
   durationSeconds: number;
+  /** Validade do item (sem campanha): primeiro e último dia (inclusive), e os dias da semana (1 = segunda a 7 = domingo). Tudo ausente = vale sempre. */
+  validFrom?: string | null;
+  validUntil?: string | null;
+  days?: number[] | null;
+  /** O servidor diz se vale hoje (no fuso de São Paulo). */
+  validToday?: boolean;
 }
 
 export interface Playlist {
@@ -85,7 +91,7 @@ export interface Playlist {
 export interface PlaylistRequest {
   name: string;
   description: string | null;
-  items: { mediaId: number; durationSeconds: number }[];
+  items: { mediaId: number; durationSeconds: number; validFrom?: string | null; validUntil?: string | null; days?: number[] | null }[];
 }
 
 /** Uma versão do aplicativo da TV, como publicada no site de downloads (releases.json). */

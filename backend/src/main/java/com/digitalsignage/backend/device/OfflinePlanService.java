@@ -28,6 +28,7 @@ import com.digitalsignage.backend.campaign.CampaignService;
 import com.digitalsignage.backend.layout.Layout;
 import com.digitalsignage.backend.layout.LayoutRepository;
 import com.digitalsignage.backend.layout.LayoutZone;
+import com.digitalsignage.backend.playlist.ItemValidity;
 import com.digitalsignage.backend.playlist.Playlist;
 import com.digitalsignage.backend.playlist.PlaylistRepository;
 
@@ -138,7 +139,7 @@ public class OfflinePlanService {
 		Map<Long, Playlist> loaded = playlistRepository.findAllById(used).stream().collect(Collectors.toMap(Playlist::getId, p -> p));
 		List<OfflinePlan.PlanPlaylist> playlists = used.stream()
 				.filter(loaded::containsKey)
-				.map(id -> new OfflinePlan.PlanPlaylist(id, PlayerConfigService.itemsOf(loaded.get(id))))
+				.map(id -> new OfflinePlan.PlanPlaylist(id, PlayerConfigService.itemsOf(loaded.get(id), ItemValidity.today(clock))))
 				.toList();
 
 		return new OfflinePlan(versionFor(device, enabled), start.toEpochMilli(), until, segments, playlists);
@@ -212,7 +213,8 @@ public class OfflinePlanService {
 		}
 		ids.remove(null);
 		Map<Long, Long> versions = new HashMap<>();
-		playlistRepository.findAllById(ids).forEach(playlist -> versions.put(playlist.getId(), playlist.getConfigVersion()));
+		java.time.LocalDate today = ItemValidity.today(clock);
+		playlistRepository.findAllById(ids).forEach(playlist -> versions.put(playlist.getId(), playlist.contentVersion(today)));
 		return versions;
 	}
 

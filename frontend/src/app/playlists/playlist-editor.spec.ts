@@ -1,5 +1,21 @@
 import { Media, PlaylistItem } from '../core/models';
-import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, totalSeconds } from './playlist-editor';
+import {
+  addMedia,
+  clearValidity,
+  describeValidity,
+  formatDuration,
+  hasValidity,
+  isValidOn,
+  moveItem,
+  removeAt,
+  saoPauloToday,
+  setDuration,
+  setValidity,
+  toRequest,
+  toggleDay,
+  totalSeconds,
+  validityProblem,
+} from './playlist-editor';
 
 const image = (id: number, name = `img${id}`): Media => ({
   id,
@@ -78,5 +94,92 @@ describe('playlist editor', () => {
         { mediaId: 2, durationSeconds: 25 },
       ],
     });
+  });
+});
+
+describe('validade por item (datas e dias da semana)', () => {
+  const base = (): PlaylistItem[] => build(image(1), image(2));
+
+  it('sends no validity fields for an item without rules, keeping the old body', () => {
+    expect(toRequest('X', '', base()).items).toEqual([
+      { mediaId: 1, durationSeconds: 10 },
+      { mediaId: 2, durationSeconds: 10 },
+    ]);
+  });
+
+  it('sends only the rules that were chosen, with the days sorted', () => {
+    let items = setValidity(base(), 0, { validFrom: '2026-11-01', days: [5, 2] });
+    items = setValidity(items, 1, { validUntil: '2026-12-31' });
+
+    expect(toRequest('X', '', items).items).toEqual([
+      { mediaId: 1, durationSeconds: 10, validFrom: '2026-11-01', days: [2, 5] },
+      { mediaId: 2, durationSeconds: 10, validUntil: '2026-12-31' },
+    ]);
+  });
+
+  it('treats all seven days (or none) and empty dates as no restriction', () => {
+    const items = setValidity(base(), 0, { validFrom: '', validUntil: '', days: [1, 2, 3, 4, 5, 6, 7] });
+
+    expect(hasValidity(items[0])).toBe(false);
+    expect(items[0].days).toBeNull();
+    expect(items[0].validFrom).toBeNull();
+    expect(setValidity(base(), 0, { days: [] })[0].days).toBeNull();
+    expect(describeValidity(items[0])).toBe('Sempre');
+  });
+
+  it('starting from every day, ticking a day off keeps the others, and the last tick falls back to every day', () => {
+    let items = toggleDay(base(), 0, 3); // desmarca a quarta: sobram 6 dias
+    expect(items[0].days).toEqual([1, 2, 4, 5, 6, 7]);
+    items = toggleDay(items, 0, 3); // marca de novo: volta aos 7 = sem restrição
+    expect(items[0].days).toBeNull();
+
+    items = setValidity(base(), 0, { days: [2] });
+    items = toggleDay(items, 0, 2); // tira o único dia: não pode ficar sem nenhum
+    expect(items[0].days).toBeNull();
+    expect(hasValidity(items[0])).toBe(false);
+  });
+
+  it('clears all the rules of an item and leaves the other items alone', () => {
+    let items = setValidity(base(), 0, { validFrom: '2026-11-01', days: [2] });
+    items = setValidity(items, 1, { validUntil: '2026-12-31' });
+
+    items = clearValidity(items, 0);
+
+    expect(hasValidity(items[0])).toBe(false);
+    expect(hasValidity(items[1])).toBe(true);
+  });
+
+  it('knows whether an item is valid on a day, with inclusive dates and Monday = 1 to Sunday = 7', () => {
+    const item = setValidity(base(), 0, { validFrom: '2026-11-05', validUntil: '2026-11-06' })[0];
+    expect(isValidOn(item, '2026-11-04')).toBe(false);
+    expect(isValidOn(item, '2026-11-05')).toBe(true);
+    expect(isValidOn(item, '2026-11-06')).toBe(true);
+    expect(isValidOn(item, '2026-11-07')).toBe(false);
+
+    const tuesdays = setValidity(base(), 0, { days: [2] })[0];
+    expect(isValidOn(tuesdays, '2026-11-03')).toBe(true); // terça
+    expect(isValidOn(tuesdays, '2026-11-04')).toBe(false);
+    const sundays = setValidity(base(), 0, { days: [7] })[0];
+    expect(isValidOn(sundays, '2026-11-08')).toBe(true); // domingo
+    expect(isValidOn(sundays, '2026-11-02')).toBe(false); // segunda
+  });
+
+  it('counts today in São Paulo, not in UTC', () => {
+    expect(saoPauloToday(new Date('2026-11-04T02:59:59Z'))).toBe('2026-11-03');
+    expect(saoPauloToday(new Date('2026-11-04T03:00:00Z'))).toBe('2026-11-04');
+  });
+
+  it('describes the rules in words', () => {
+    expect(describeValidity(setValidity(base(), 0, { days: [2] })[0])).toBe('Ter');
+    expect(describeValidity(setValidity(base(), 0, { days: [1, 2, 3, 4, 5] })[0])).toBe('Seg a Sex');
+    expect(describeValidity(setValidity(base(), 0, { validUntil: '2026-12-31' })[0])).toContain('até');
+    expect(describeValidity(setValidity(base(), 0, { validFrom: '2026-11-01', validUntil: '2026-11-30', days: [6, 7] })[0])).toMatch(/^Fim de semana · de /);
+  });
+
+  it('refuses a start day after the end day', () => {
+    const items = setValidity(base(), 0, { validFrom: '2026-12-31', validUntil: '2026-12-01' });
+
+    expect(validityProblem(items[0])).toContain('início');
+    expect(validityProblem(setValidity(base(), 0, { validFrom: '2026-12-01', validUntil: '2026-12-01' })[0])).toBeNull();
   });
 });

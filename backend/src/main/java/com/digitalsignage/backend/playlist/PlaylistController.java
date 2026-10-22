@@ -1,5 +1,6 @@
 package com.digitalsignage.backend.playlist;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -34,12 +35,15 @@ public class PlaylistController {
 	private final MediaRepository mediaRepository;
 	private final CampaignRepository campaignRepository;
 	private final LayoutRepository layoutRepository;
+	private final Clock clock;
 
 	public PlaylistController(
 			PlaylistRepository playlistRepository,
 			MediaRepository mediaRepository,
 			CampaignRepository campaignRepository,
-			LayoutRepository layoutRepository) {
+			LayoutRepository layoutRepository,
+			Clock clock) {
+		this.clock = clock;
 		this.playlistRepository = playlistRepository;
 		this.mediaRepository = mediaRepository;
 		this.campaignRepository = campaignRepository;
@@ -49,7 +53,8 @@ public class PlaylistController {
 	@GetMapping
 	@Transactional(readOnly = true)
 	public List<PlaylistResponse> list() {
-		return playlistRepository.findAll().stream().map(PlaylistResponse::from).toList();
+		java.time.LocalDate today = ItemValidity.today(clock);
+		return playlistRepository.findAll().stream().map(playlist -> PlaylistResponse.from(playlist, today)).toList();
 	}
 
 	@PostMapping
@@ -60,13 +65,13 @@ public class PlaylistController {
 		if (request.items() != null) {
 			playlist.replaceItems(buildItems(request.items()));
 		}
-		return PlaylistResponse.from(playlistRepository.save(playlist));
+		return PlaylistResponse.from(playlistRepository.save(playlist), ItemValidity.today(clock));
 	}
 
 	@GetMapping("/{id}")
 	@Transactional(readOnly = true)
 	public PlaylistResponse get(@PathVariable Long id) {
-		return PlaylistResponse.from(findOrThrow(id));
+		return PlaylistResponse.from(findOrThrow(id), ItemValidity.today(clock));
 	}
 
 	@PutMapping("/{id}")
@@ -78,7 +83,7 @@ public class PlaylistController {
 		if (request.items() != null) {
 			playlist.replaceItems(buildItems(request.items()));
 		}
-		return PlaylistResponse.from(playlistRepository.save(playlist));
+		return PlaylistResponse.from(playlistRepository.save(playlist), ItemValidity.today(clock));
 	}
 
 	@DeleteMapping("/{id}")
@@ -110,7 +115,10 @@ public class PlaylistController {
 					.orElseThrow(() -> new NoSuchElementException("Mídia não encontrada: " + request.mediaId()));
 
 			int duration = resolveDuration(request, media);
-			items.add(new PlaylistItem(media, position++, duration));
+			if (request.validFrom() != null && request.validUntil() != null && request.validFrom().isAfter(request.validUntil())) {
+				throw new IllegalArgumentException("A data de início da validade de \"" + media.getName() + "\" não pode ser depois da data de fim");
+			}
+			items.add(new PlaylistItem(media, position++, duration, request.validFrom(), request.validUntil(), ItemValidity.formatDays(request.days())));
 		}
 
 		return items;

@@ -1,11 +1,14 @@
 package com.digitalsignage.backend.playlist;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import org.hibernate.annotations.TenantId;
+
+import com.digitalsignage.backend.device.ConfigVersions;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -109,6 +112,32 @@ public class Playlist {
 
 	public long getConfigVersion() {
 		return configVersion;
+	}
+
+	/** Algum item tem validade (datas ou dias)? Se não, a playlist é a de sempre e nada depende do dia. */
+	public boolean hasValidityRules() {
+		return items.stream().anyMatch(PlaylistItem::hasRules);
+	}
+
+	/** Os itens que valem neste dia, na ordem da playlist (os sem regra valem sempre). */
+	public List<PlaylistItem> itemsValidOn(LocalDate day) {
+		return items.stream().filter(item -> item.isValidOn(day)).toList();
+	}
+
+	/**
+	 * A versão do que a TV deve exibir neste dia: a versão da playlist e, só quando algum item tem validade, uma marca de quais
+	 * itens valem hoje. Muda sozinha na virada do dia em que um item entra ou sai do ar, e a TV baixa a configuração de novo. Sem
+	 * nenhuma validade é exatamente {@link #getConfigVersion()}: nenhuma playlist existente é reconfigurada por causa disto.
+	 */
+	public long contentVersion(LocalDate day) {
+		if (!hasValidityRules()) {
+			return configVersion;
+		}
+		long hash = 1_099_511_628_211L;
+		for (PlaylistItem item : items) {
+			hash = 31 * hash + (item.isValidOn(day) ? item.getPosition() + 1 : 0);
+		}
+		return ConfigVersions.withVisibility(configVersion, hash == 0 ? 1 : hash);
 	}
 
 	public List<PlaylistItem> getItems() {
