@@ -2,7 +2,7 @@
 
 Para cada item: **o que mudou**, **como testar** (no painel, em `https://signage-painel.pages.dev`) e **o que fica com você**. Cada item foi um pedido de alteração (PR) no GitHub, com testes, CI verde e descrição; as migrações do banco são reversíveis (o comando de desfazer está no cabeçalho de cada arquivo `V24` a `V31`) e **nenhuma apagou dado**.
 
-**Importante sobre o app da TV (Player):** os itens marcados com 📺 estão prontos e testados no código, mas só chegam às TVs com uma **versão nova do Player**, que **não foi publicada**: a TV pede um OK na tela ao instalar. Diga "pode publicar" quando quiser. A etapa 3 (anunciantes e cotas, cobrança automática, 2FA e auditoria, player web, contas de agência) não foi iniciada.
+**Importante sobre o app da TV (Player):** os itens marcados com 📺 estão prontos e testados no código, mas só chegam às TVs com a **versão nova do Player (0.14.87)**, que **foi publicada em 22/10/2026**: a TV acha a versão em até 30 minutos e o Android pede um **OK na tela de cada TV** ao instalar. Até alguém apertar esse OK, a TV segue no Player antigo. Não foi testado em TV física, só em emulador de Android TV. A etapa 3 (anunciantes e cotas, cobrança automática, 2FA e auditoria, player web, contas de agência) não foi iniciada.
 
 ---
 
@@ -24,7 +24,7 @@ Para cada item: **o que mudou**, **como testar** (no painel, em `https://signage
 
 ### 1.4 Pareamento por QR Code 📺
 - **O que mudou:** a TV nova mostra um QR Code além do código de 6 letras; no celular, a página `/parear/<código>` ativa a TV (pede login de Administrador; a equipe da plataforma escolhe o cliente).
-- **Como testar:** abra `/parear/<código>` com o código mostrado numa TV nova (o QR na tela só vem com o Player novo).
+- **Como testar:** abra `/parear/<código>` com o código mostrado numa TV nova (o QR na tela só aparece depois que a TV instalar o Player 0.14.87).
 
 ### 1.5 Diagnóstico da TV 📺
 - **O que mudou:** o painel pede um relatório da TV (internet, servidor, espaço, última sincronização, permissões) e o mostra no histórico; na TV, OK no controle abre o diagnóstico (V25).
@@ -74,7 +74,7 @@ Para cada item: **o que mudou**, **como testar** (no painel, em `https://signage
 ---
 
 ## O que depende de você, em ordem
-1. **Publicar o Player novo** (itens 📺).
+1. **Apertar OK em cada TV** para instalar o Player 0.14.87 (itens 📺; já publicado).
 2. **Provedor de e-mail** (2.2).
 3. **Infraestrutura paga e backup** (1.1).
 4. **CNPJ, razão social, encarregado e portais de notícias** (1.2).
