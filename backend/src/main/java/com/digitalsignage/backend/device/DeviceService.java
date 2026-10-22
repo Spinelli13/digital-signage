@@ -188,6 +188,20 @@ public class DeviceService {
 		}
 	}
 
+	/** O que o painel mostra ao abrir o QR Code: a TV que espera o código e a versão do Player dela. */
+	public record PairingInfo(String code, String playerVersion, java.time.Instant waitingSince) {
+	}
+
+	/** Confere o código antes de pedir o nome e o local: vale só para uma TV que ainda está na reserva. */
+	public PairingInfo pairingInfo(String rawCode) {
+		String code = rawCode == null ? "" : rawCode.trim().toUpperCase();
+		return jdbc.query(
+				"SELECT activation_code, player_version, created_at FROM devices WHERE activation_code = ? AND status = 'PENDING' AND tenant_id = ?",
+				(rs, i) -> new PairingInfo(rs.getString("activation_code"), rs.getString("player_version"), rs.getTimestamp("created_at").toInstant()),
+				code, TenantContext.POOL_ID).stream().findFirst()
+				.orElseThrow(() -> new NoSuchElementException("Código de ativação inválido ou expirado"));
+	}
+
 	/**
 	 * Vincula a TV que está exibindo o código: o administrador digita o código no painel, dá um nome (e, se quiser,
 	 * local e grupos) e a TV passa a receber configuração na próxima consulta.

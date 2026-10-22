@@ -22,6 +22,7 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', loadComponent: () => import('./dashboard/dashboard.page').then((m) => m.DashboardPage) },
       { path: 'dispositivos', loadComponent: () => import('./devices/devices.page').then((m) => m.DevicesPage) },
+      { path: 'parear/:code', loadComponent: () => import('./devices/pairing.page').then((m) => m.PairingPage) },
       {
         path: 'dispositivos/:id/historico',
         loadComponent: () => import('./devices/device-history.page').then((m) => m.DeviceHistoryPage),

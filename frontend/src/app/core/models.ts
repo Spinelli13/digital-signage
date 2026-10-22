@@ -109,6 +109,13 @@ export interface DeviceUpdateRequest {
   orientation?: ScreenOrientation;
 }
 
+/** O que o painel sabe de uma TV que espera o pareamento (a que o QR Code identifica). */
+export interface PairingInfo {
+  code: string;
+  playerVersion: string | null;
+  waitingSince: string;
+}
+
 export interface ActivateRequest {
   activationCode: string;
   name: string;

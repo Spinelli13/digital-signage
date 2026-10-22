@@ -2,7 +2,8 @@ name: Monitor de disponibilidade
 
 # A cada 10 minutos pergunta ao servidor se ele está de pé. Se não responder (3 tentativas), o fluxo FALHA e o GitHub manda
 # e-mail para quem alterou por último o horário deste arquivo (o dono, depois do merge). Custo zero.
-# Bônus: como o servidor do plano gratuito do Render dorme depois de 15 min sem uso, esta consulta o mantém acordado.
+# Atenção: o GitHub atrasa os fluxos agendados (na prática, às vezes por horas), então esta consulta NÃO garante manter o servidor
+# do plano gratuito acordado: quem garante isso é o plano Starter. Serve de alarme e de registro.
 #
 # O endereço vem da variável do repositório HEALTH_URL (Settings → Secrets and variables → Actions → Variables); sem ela vale
 # o padrão abaixo. Depois do plano pago do Render (que não dorme) este fluxo continua útil como alarme.

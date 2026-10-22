@@ -10,6 +10,8 @@
     <string name="error_body">Verifique a internet da TV. Vou tentar de novo automaticamente.\nPressione OK no controle para alterar o endereço do servidor.</string>
 
     <string name="activation_title">Código de ativação</string>
+    <string name="activation_body_qr">Aponte a câmera do celular para o QR Code e escolha o cliente e o local. Ou, no painel, abra Dispositivos → Adicionar dispositivo e digite este código.</string>
+    <string name="pairing_qr_description">QR Code para parear esta TV pelo celular</string>
     <string name="activation_body">No painel, abra Dispositivos → Adicionar dispositivo e digite este código.</string>
 
     <string name="disabled_title">Dispositivo desativado</string>

@@ -15,10 +15,11 @@ import { PROOF } from './proof';
 import { REDESIGN } from './redesign';
 import { SERVER } from './server';
 import { WIDGETS } from './widgets';
+import { PAIRING } from './pairing';
 import { SERVER_DATA } from './server-data';
 
 /** Todas as seções do inglês. A chave é sempre o texto em português; veja ../i18n.ts. */
-const SECTIONS: Record<string, string>[] = [PRIVACY, CORE, HOME, OPS, CONTENT, ACCOUNT, REDESIGN, PROOF, WIDGETS, PRICES, LAYOUTS, ORIENTATION, ATTENDANCE, ATTENDANCE_REMOTE, PLANS, PROMOTIONS, SERVER, SERVER_DATA];
+const SECTIONS: Record<string, string>[] = [PAIRING, PRIVACY, CORE, HOME, OPS, CONTENT, ACCOUNT, REDESIGN, PROOF, WIDGETS, PRICES, LAYOUTS, ORIENTATION, ATTENDANCE, ATTENDANCE_REMOTE, PLANS, PROMOTIONS, SERVER, SERVER_DATA];
 
 /** Chaves repetidas em seções diferentes com traduções diferentes (um teste exige que esta lista fique vazia). */
 export const DICTIONARY_CONFLICTS: string[] = [];

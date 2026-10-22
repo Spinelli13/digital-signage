@@ -95,7 +95,7 @@ Para restaurar mídias: `rclone copy DST:bucket/media SRC:media`. Depois de rest
 
 Dois alarmes, ambos sem custo:
 
-1. **GitHub (`.github/workflows/uptime.yml`, já pronto):** a cada 10 min consulta `/api/v1/health` (3 tentativas); se falhar, o GitHub manda e-mail para o dono do repositório. Efeito colateral bom: mantém o servidor gratuito acordado até o Starter.
+1. **GitHub (`.github/workflows/uptime.yml`, já pronto):** a cada 10 min consulta `/api/v1/health` (3 tentativas); se falhar, o GitHub manda e-mail para o dono do repositório. O GitHub atrasa os fluxos agendados (medido na primeira noite: uma execução em cerca de cinco horas), então ele serve de alarme e de registro, mas **não** mantém o servidor gratuito acordado; quem garante que não dorme é o plano Starter (ou o UptimeRobot abaixo, que consulta a cada 5 min e também o mantém acordado).
 2. **UptimeRobot (você cria, 3 min):** uptimerobot.com → criar conta com o seu e-mail → *Add New Monitor* → tipo **HTTP(s)** → nome "Vyzzu servidor" → URL `https://signage-backend-1l0l.onrender.com/api/v1/health` → intervalo **5 min** → em *Alert contacts* marcar o seu e-mail (e o app no celular, se quiser) → Create. Repita para o painel (`https://signage-painel.pages.dev`). O plano gratuito comporta isso.
 
 ## 7. Critérios de aceite

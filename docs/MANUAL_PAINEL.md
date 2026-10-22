@@ -231,7 +231,18 @@ Em **Playlists** você vê todas, com o número de itens, a duração do ciclo e
 
 ### 5.1 Ativar uma TV nova
 
-1. Instale o Player na TV (veja o **Manual de instalação**). Ao abrir, ela mostra um **código de 6 letras e números**.
+**Pelo QR Code (o jeito mais rápido, sem digitar):**
+
+1. Instale o Player na TV (veja o **Manual de instalação**). Ao abrir, ela mostra um **QR Code** e, ao lado, o **código de 6 letras e números**.
+2. Com o celular, aponte a câmera para o QR Code e abra o endereço. Entre no painel, se pedir (você volta direto à tela de pareamento).
+3. Se você é da equipe da plataforma, escolha o **cliente** da TV.
+4. Escolha o **local** (o nome da TV já vem sugerido, por exemplo "Loja Centro - TV 2") e toque em **Ativar TV**. Menos de um minuto, sem digitar nada.
+
+Só o **Administrador** do cliente pode parear TVs. Se o QR Code mostrar "Código inválido ou expirado", a TV gerou um código novo: escaneie o QR Code que está na tela agora.
+
+**Pelo código (alternativa, no computador):**
+
+1. A TV mostra o **código de 6 letras e números**.
 2. No painel, abra **Dispositivos** e clique em **Adicionar dispositivo**.
 3. Digite o **código** e dê um **nome** (ex.: "TV Recepção").
 4. Escolha o **Local** na lista. Se ainda não existe, escolha **+ Novo local…** na lista e digite o nome (ele é criado na hora). Se a TV não tem local, deixe **Sem local**.

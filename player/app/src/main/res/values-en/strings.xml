@@ -11,6 +11,8 @@
     <string name="error_body">Check the TV\'s internet. I will try again automatically.\nPress OK on the remote to change the server address.</string>
 
     <string name="activation_title">Activation code</string>
+    <string name="activation_body_qr">Point your phone camera at the QR Code and choose the client and location. Or, in the panel, open Devices → Add device and type this code.</string>
+    <string name="pairing_qr_description">QR Code to pair this TV with your phone</string>
     <string name="activation_body">In the panel, open Devices → Add device and type this code.</string>
 
     <string name="disabled_title">Device disabled</string>

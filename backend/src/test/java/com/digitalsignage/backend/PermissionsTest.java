@@ -84,6 +84,7 @@ class PermissionsTest extends AbstractApiTest {
 				new Case(HttpMethod.PUT, "/alerts/settings", "{}", false, false),
 				new Case(HttpMethod.POST, "/alerts/settings/test", null, false, false),
 				new Case(HttpMethod.POST, "/devices/activate", "{\"activationCode\":\"ABCDEF\",\"name\":\"x\"}", false, false),
+				new Case(HttpMethod.GET, "/devices/pairing/ABCDEF", null, false, false), // conferir o código do QR Code: quem pode ativar
 				new Case(HttpMethod.DELETE, "/devices/999", null, false, false),
 				new Case(HttpMethod.POST, "/devices/update-check", null, false, false),
 				new Case(HttpMethod.GET, "/users", null, false, false),
