@@ -52,6 +52,10 @@ async function flushFound(backend: HttpTestingController, fixture: { whenStable(
 }
 
 describe('PairingPage (QR Code da TV)', () => {
+  // o painel guarda o cliente em que a equipe da plataforma está atuando no navegador: cada teste começa limpo
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
+
   it('confirms the code from the QR Code and suggests a name, so an Administrator pairs without typing', async () => {
     const { page, fixture, auth, backend } = setup();
     auth.me.set(meFixture('ADMIN'));
@@ -127,7 +131,6 @@ describe('PairingPage (QR Code da TV)', () => {
 
   it('lets a platform operator pick the client first and then acts as that client', async () => {
     const { page, fixture, auth, backend } = setup();
-    localStorage.removeItem('signage.acting');
     auth.me.set(meFixture('PLATFORM_ADMIN'));
     fixture.detectChanges();
     await settle(fixture);
@@ -149,6 +152,5 @@ describe('PairingPage (QR Code da TV)', () => {
     await settle(fixture);
 
     expect(page.step()).toBe('ready');
-    localStorage.removeItem('signage.acting');
   });
 });
