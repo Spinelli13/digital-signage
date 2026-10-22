@@ -55,8 +55,8 @@ public final class PromotionModels {
 	public record PublicCoupon(String code, String status, String promotionName, String promotionDescription, Instant expiresAt, Instant redeemedAt, String token) {
 	}
 
-	/** {@code consent}: a pessoa concordou com o aviso de privacidade (obrigatório para o nome ser guardado). */
-	public record ClaimRequest(@Size(max = 60) String customerName, Boolean consent) {
+	/** {@code consent}: a pessoa concordou com o aviso de privacidade (obrigatório para o nome ser guardado). {@code origin}: de que QR Code veio (opcional). */
+	public record ClaimRequest(@Size(max = 60) String customerName, Boolean consent, @Size(max = 40) String origin) {
 	}
 
 }

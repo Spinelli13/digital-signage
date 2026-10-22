@@ -32,6 +32,7 @@ export const routes: Routes = [
       },
       { path: 'alertas', loadComponent: () => import('./alerts/alerts.page').then((m) => m.AlertsPage) },
       { path: 'relatorios', loadComponent: () => import('./reports/reports.page').then((m) => m.ReportsPage) },
+      { path: 'resultados', loadComponent: () => import('./results/results.page').then((m) => m.ResultsPage) },
       { path: 'campanhas', canActivate: [featureGuard('CAMPAIGNS')], loadComponent: () => import('./campaigns/campaigns.page').then((m) => m.CampaignsPage) },
       { path: 'layouts', canActivate: [featureGuard('LAYOUTS')], loadComponent: () => import('./layouts/layouts.page').then((m) => m.LayoutsPage) },
       { path: 'cupons', canActivate: [featureGuard('COUPONS')], loadComponent: () => import('./promotions/promotions.page').then((m) => m.PromotionsPage) },

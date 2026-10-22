@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,16 +28,17 @@ public class PublicPromotionController {
 		this.service = service;
 	}
 
+	/** {@code o}: de onde veio o QR Code ("tv-12", "balcao"); cada abertura da página conta como um escaneamento (sem repetir o mesmo aparelho por alguns minutos). */
 	@GetMapping("/promotions/{token}")
-	public PublicPromotion promotion(@PathVariable String token) {
-		return service.promotion(token);
+	public PublicPromotion promotion(@PathVariable String token, @RequestParam(name = "o", required = false) String origin, HttpServletRequest http) {
+		return service.promotion(token, origin, http.getHeader("X-Client-Id"), network(http));
 	}
 
 	@PostMapping("/promotions/{token}/coupons")
 	@ResponseStatus(HttpStatus.CREATED)
 	public PublicCoupon claim(@PathVariable String token, @Valid @RequestBody(required = false) ClaimRequest request, HttpServletRequest http) {
 		return service.claim(token, request == null ? null : request.customerName(), request != null && Boolean.TRUE.equals(request.consent()), network(http),
-				http.getHeader("X-Client-Id"));
+				http.getHeader("X-Client-Id"), request == null ? null : request.origin());
 	}
 
 	@GetMapping("/coupons/{token}")

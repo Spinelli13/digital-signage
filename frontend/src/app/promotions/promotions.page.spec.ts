@@ -106,9 +106,25 @@ describe('PromotionsPage', () => {
   it('edits a promotion and builds the address of the QR Code from its secret', () => {
     const first = page.items()[0];
     page.openEdit(first);
+    // as TVs vêm uma vez, para o QR Code por TV
+    backend.expectOne((r) => r.url === `${API}/devices`).flush([
+      { id: 12, name: 'TV Entrada', status: 'ACTIVE' },
+      { id: 13, name: 'TV nova', status: 'PENDING' },
+    ]);
+    expect(page.devices().map((d) => d.name)).toEqual(['TV Entrada']);
     expect(page.name()).toBe('10% na primeira compra');
     expect(page.maxClaims()).toBe(50);
     expect(page.publicLink()).toBe(`${location.origin}/cupom/${'a'.repeat(32)}`);
+
+    // um QR Code por TV: o endereço leva a origem; um lugar livre vira uma etiqueta limpa
+    page.originChoice.set('tv-12');
+    expect(page.publicLink()).toBe(`${location.origin}/cupom/${'a'.repeat(32)}?o=tv-12`);
+    page.originChoice.set('custom');
+    page.customOrigin.set('Balcão da Frente!');
+    expect(page.publicLink()).toBe(`${location.origin}/cupom/${'a'.repeat(32)}?o=balcao-da-frente`);
+    page.customOrigin.set('!!!');
+    expect(page.publicLink()).toBe(`${location.origin}/cupom/${'a'.repeat(32)}`);
+    page.originChoice.set('');
     page.maxClaims.set(80);
 
     page.submit();

@@ -112,6 +112,11 @@ export class PromoClaimPage implements OnInit {
     return this.route.snapshot.paramMap.get('token') ?? '';
   }
 
+  /** De que QR Code a pessoa veio (?o=tv-12): vai junto para os Resultados contarem por TV. */
+  private get origin(): string | null {
+    return this.route.snapshot.queryParamMap.get('o');
+  }
+
   private started = false;
 
   ngOnInit(): void {
@@ -125,7 +130,7 @@ export class PromoClaimPage implements OnInit {
       void this.router.navigate(['/meu-cupom', existing], { replaceUrl: true });
       return;
     }
-    this.api.publicPromotion(this.token).subscribe({
+    this.api.publicPromotion(this.token, this.origin, deviceId()).subscribe({
       next: (promotion) => this.promotion.set(promotion),
       error: (error) => this.problem.set(reasonOf(error)),
     });
@@ -134,7 +139,7 @@ export class PromoClaimPage implements OnInit {
   claim(): void {
     this.busy.set(true);
     this.problem.set(null);
-    this.api.claimPublicCoupon(this.token, this.customerName().trim() || null, deviceId(), this.hasName() && this.consent()).subscribe({
+    this.api.claimPublicCoupon(this.token, this.customerName().trim() || null, deviceId(), this.hasName() && this.consent(), this.origin).subscribe({
       next: (coupon) => {
         this.busy.set(false);
         remember(this.token, coupon.token);
