@@ -59,6 +59,17 @@ class JsonTest {
     }
 
     @Test
+    fun `parses the address the pairing QR Code leads to, and works without it (older server)`() {
+        val with = Json.parseStatus("""{"deviceId":2,"status":"PENDING","activationCode":"K7M2QX","deviceName":"x","pairingUrl":"https://painel.test/parear/K7M2QX"}""")
+        val without = Json.parseStatus("""{"deviceId":2,"status":"PENDING","activationCode":"K7M2QX","deviceName":"x","pairingUrl":null}""")
+        val legacy = Json.parseStatus("""{"deviceId":2,"status":"PENDING","activationCode":"K7M2QX","deviceName":"x"}""")
+
+        assertEquals("https://painel.test/parear/K7M2QX", with.pairingUrl)
+        assertNull(without.pairingUrl)
+        assertNull(legacy.pairingUrl)
+    }
+
+    @Test
     fun `parses the heartbeat answer`() {
         val desired = Json.parseDesired("""{"playlistId":4,"configVersion":9,"serverTime":"2026-10-19T12:00:00Z"}""")
 

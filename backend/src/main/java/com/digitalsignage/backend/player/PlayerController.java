@@ -50,6 +50,7 @@ public class PlayerController {
 	private final OfflinePlanService offlinePlanService;
 	private final MonitoringService monitoringService;
 	private final DeviceLookup deviceLookup;
+	private final PanelUrl panelUrl;
 	private final Clock clock;
 	private final SecureRandom random = new SecureRandom();
 
@@ -60,6 +61,7 @@ public class PlayerController {
 			OfflinePlanService offlinePlanService,
 			MonitoringService monitoringService,
 			DeviceLookup deviceLookup,
+			PanelUrl panelUrl,
 			Clock clock) {
 		this.deviceRepository = deviceRepository;
 		this.playerConfigService = playerConfigService;
@@ -67,6 +69,7 @@ public class PlayerController {
 		this.offlinePlanService = offlinePlanService;
 		this.monitoringService = monitoringService;
 		this.deviceLookup = deviceLookup;
+		this.panelUrl = panelUrl;
 		this.clock = clock;
 	}
 
@@ -80,7 +83,7 @@ public class PlayerController {
 		var known = deviceLookup.byTokenHash(tokenHash);
 		if (known.isPresent()) {
 			return TenantContext.callAs(known.get().tenantId(), () -> deviceRepository.findById(known.get().id())
-					.map(PlayerStatusResponse::from)
+					.map(device -> PlayerStatusResponse.from(device, panelUrl))
 					.orElseThrow(() -> new NoSuchElementException("Dispositivo não encontrado: " + known.get().id())));
 		}
 		return TenantContext.callAs(TenantContext.POOL_ID, () -> registerNew(tokenHash, request.playerVersion()));
@@ -88,7 +91,7 @@ public class PlayerController {
 
 	@GetMapping("/status")
 	public PlayerStatusResponse status(@AuthenticationPrincipal Long deviceId) {
-		return PlayerStatusResponse.from(findOrThrow(deviceId));
+		return PlayerStatusResponse.from(findOrThrow(deviceId), panelUrl);
 	}
 
 	@GetMapping("/config")
@@ -135,7 +138,7 @@ public class PlayerController {
 		}
 
 		Device device = Device.selfRegistered(generateUniqueCode(), tokenHash, playerVersion);
-		return PlayerStatusResponse.from(deviceRepository.save(device));
+		return PlayerStatusResponse.from(deviceRepository.save(device), panelUrl);
 	}
 
 	private String generateUniqueCode() {

@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../core/auth.service';
 import { BRAND } from '../core/brand';
@@ -111,17 +111,24 @@ export class LoginPage {
   protected readonly brand = BRAND;
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   readonly email = signal('');
   readonly password = signal('');
   readonly busy = signal(false);
   readonly visible = signal(false);
 
+  /** Para onde voltar depois de entrar: só caminhos de dentro do painel (nunca um endereço de outro site). */
+  private returnUrl(): string {
+    const wanted = this.route.snapshot.queryParamMap.get('returnUrl') ?? '';
+    return wanted.startsWith('/') && !wanted.startsWith('//') && !wanted.startsWith('/login') ? wanted : '/dashboard';
+  }
+
   async submit(): Promise<void> {
     this.busy.set(true);
     try {
       await this.auth.login(this.email().trim(), this.password());
-      await this.router.navigate(['/dashboard']);
+      await this.router.navigateByUrl(this.returnUrl());
     } catch {
       // A mensagem (ex.: e-mail ou senha inválidos) é exibida pelo interceptor de erros.
     } finally {

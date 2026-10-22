@@ -75,6 +75,8 @@ public class SecurityConfig {
 						.requestMatchers("/api/v1/privacy/**").hasRole("ADMIN")
 						// Montar widgets (busca de cidades, pré-visualização dos dados): quem edita conteúdo.
 						.requestMatchers("/api/v1/widgets/**").hasRole("EDITOR")
+						// Conferir o código de pareamento de uma TV (o QR Code da TV leva a ele): só quem pode ativar TVs.
+						.requestMatchers(HttpMethod.GET, "/api/v1/devices/pairing/*").hasRole("ADMIN")
 						// Consultar: qualquer papel.
 						.requestMatchers(HttpMethod.GET, "/api/v1/**").hasRole("VIEWER")
 						// Gravar conteúdo (mídias, playlists, campanhas, layouts) e escolher o que cada TV exibe: o EDITOR.

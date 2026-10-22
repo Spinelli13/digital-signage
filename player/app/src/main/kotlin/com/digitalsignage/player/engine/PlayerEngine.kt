@@ -33,7 +33,7 @@ sealed interface EngineState {
     data object ConnectionError : EngineState
 
     /** Mostrar o código na TV para o administrador digitar no painel. */
-    data class WaitingActivation(val code: String) : EngineState
+    data class WaitingActivation(val code: String, val pairingUrl: String? = null) : EngineState
 
     data object Disabled : EngineState
 
@@ -181,7 +181,7 @@ class PlayerEngine(
 
                 status.isPending -> {
                     sync.reset()
-                    mutableState.value = EngineState.WaitingActivation(status.activationCode.orEmpty())
+                    mutableState.value = EngineState.WaitingActivation(status.activationCode.orEmpty(), status.pairingUrl)
                     delay(timing.activationPollMs)
                     status = api.status(token())
                 }

@@ -99,6 +99,11 @@ public class DeviceController {
 	 * Vincula o dispositivo que está exibindo o código na TV: o administrador digita o código no painel,
 	 * dá um nome ao dispositivo e a TV passa a receber configuração na próxima consulta.
 	 */
+	@GetMapping("/pairing/{code}")
+	public DeviceService.PairingInfo pairing(@PathVariable String code) {
+		return deviceService.pairingInfo(code);
+	}
+
 	@PostMapping("/activate")
 	@Transactional
 	public DeviceResponse activate(@Valid @RequestBody ActivateDeviceRequest request) {

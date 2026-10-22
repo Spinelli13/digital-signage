@@ -24,6 +24,16 @@ describe('authGuard', () => {
     expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/login');
   });
 
+  it('remembers where an anonymous user was going, so the login brings them back (the TV QR Code opens a page inside the panel)', () => {
+    const result = TestBed.runInInjectionContext(() =>
+      authGuard({} as ActivatedRouteSnapshot, { url: '/parear/ABC234' } as RouterStateSnapshot),
+    );
+
+    expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/login?returnUrl=%2Fparear%2FABC234');
+    const home = TestBed.runInInjectionContext(() => authGuard({} as ActivatedRouteSnapshot, { url: '/dashboard' } as RouterStateSnapshot));
+    expect(TestBed.inject(Router).serializeUrl(home as UrlTree)).toBe('/login');
+  });
+
   it('lets logged-in users through', () => {
     localStorage.setItem('signage.token', 'jwt');
     TestBed.resetTestingModule();

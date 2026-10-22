@@ -320,6 +320,17 @@ class PlayerEngineTest {
     }
 
     @Test
+    fun `the waiting screen carries the address the pairing QR Code leads to`() = runTest {
+        api.registerResponse = { pending("K7M2QX", "https://painel.test/parear/K7M2QX") }
+        api.statusResponse = { pending("K7M2QX", "https://painel.test/parear/K7M2QX") }
+        val (engine, _) = build(InMemoryStore())
+
+        startEngine(engine)
+
+        assertEquals(EngineState.WaitingActivation("K7M2QX", "https://painel.test/parear/K7M2QX"), engine.state.value)
+    }
+
+    @Test
     fun `a disabled device stops playing and drops its content`() = runTest {
         val a = itemFor(1, imgA)
         val store = InMemoryStore(configOf(5, 1, a))

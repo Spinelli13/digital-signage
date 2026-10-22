@@ -13,6 +13,8 @@ data class PlayerStatus(
     val status: String,
     val activationCode: String?,
     val deviceName: String?,
+    /** O endereço do painel que o QR Code de pareamento leva (só enquanto a TV espera ser ativada). */
+    val pairingUrl: String? = null,
 ) {
     val isActive get() = status == "ACTIVE"
     val isPending get() = status == "PENDING"
@@ -178,6 +180,7 @@ object Json {
             status = json.getString("status"),
             activationCode = json.optStringOrNull("activationCode"),
             deviceName = json.optStringOrNull("deviceName"),
+            pairingUrl = json.optStringOrNull("pairingUrl"),
         )
     }
 
