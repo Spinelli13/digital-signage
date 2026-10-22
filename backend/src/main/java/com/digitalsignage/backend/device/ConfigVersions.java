@@ -28,6 +28,18 @@ public final class ConfigVersions {
 		return mixed == 0 ? 1 : mixed;
 	}
 
+	/**
+	 * Faz entrar na versão da playlist a marca de quais itens valem hoje (validade por item). Sem marca (nenhum item com validade) a
+	 * versão fica exatamente como sempre foi: nenhuma TV existente baixa de novo por causa disto.
+	 */
+	public static long withVisibility(long version, long visibilityKey) {
+		if (visibilityKey == 0 || version == 0) {
+			return version;
+		}
+		long mixed = ((31 * (version + 11) + visibilityKey) * 1_000_003L + 29) & MASK_53_BITS;
+		return mixed == 0 ? 1 : mixed;
+	}
+
 	/** playlistId + versão de uma zona que não é a principal (playlistId 0 = zona sem playlist). */
 	public record ZoneVersion(long playlistId, long version) {
 	}

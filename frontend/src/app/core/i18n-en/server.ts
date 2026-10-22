@@ -15,6 +15,8 @@ export const SERVER: Record<string, string> = {
   'O provedor de e-mail recusou o envio': 'The email provider refused to send',
   'Informe no máximo 3 e-mails para os avisos': 'Enter at most 3 emails for the notices',
   'E-mail inválido: {address}': 'Invalid email: {address}',
+  'A data de início da validade de "{name}" não pode ser depois da data de fim': 'The validity start date of "{name}" cannot be after the end date',
+  'Os dias da semana vão de 1 (segunda) a 7 (domingo)': 'The days of the week go from 1 (Monday) to 7 (Sunday)',
   'Escreva a mensagem do aviso': 'Write the notice message',
   'A mensagem do aviso pode ter no máximo {n} caracteres': 'The notice message can have at most {n} characters',
   'O título do aviso pode ter no máximo {n} caracteres': 'The notice title can have at most {n} characters',

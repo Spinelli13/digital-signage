@@ -221,6 +221,18 @@ Cada variação tem dias da semana (vazio = todos), horário (vazio = o dia todo
 
 > **Importante:** as mudanças só valem para as TVs depois de **Publicar alterações**. Em até 1 minuto elas baixam a novidade e passam a exibi-la.
 
+#### 4.1.1 Validade por item: quando cada mídia aparece
+
+Cada item tem, abaixo dele, **Quando exibir: Sempre**. Clique para escolher:
+
+- **Começa em** e **Termina em:** o primeiro e o último dia em que o item vale (os dois dias valem). Deixe um deles em branco para não ter limite daquele lado.
+- **Dias da semana:** desmarque os dias em que o item **não** deve aparecer (por exemplo, deixe só **Ter** para a "promoção de terça").
+- **Voltar a valer sempre** limpa tudo.
+
+Fora da validade, o item **simplesmente não vai para a TV** naquele dia, sem precisar de campanha. Na virada do dia (meia-noite de Brasília) a TV percebe a mudança em até 30 segundos e baixa o conteúdo atualizado sozinha. O item fora da validade aparece com o selo **Fora da validade hoje**, e se **nenhum** item da playlist vale hoje o editor avisa que a TV vai mostrar a tela de espera.
+
+> **Limites:** a validade é por dia (não por hora; para horários use **Campanhas**) e conta no horário de Brasília. Uma TV **sem internet** continua com o conteúdo da última vez que sincronizou: um item que vence durante a queda só sai quando a TV voltar. Funciona em todas as versões do Player (a decisão é do servidor).
+
 ### 4.2 Lista de playlists
 
 Em **Playlists** você vê todas, com o número de itens, a duração do ciclo e a **versão** (sobe a cada publicação). Use **Editar** para alterar e, no menu **⋮**, **Excluir** para apagar. Se você excluir uma playlist que está em uso, as TVs que a usavam ficam **sem playlist**.

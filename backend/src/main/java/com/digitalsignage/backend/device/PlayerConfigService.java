@@ -1,5 +1,7 @@
 package com.digitalsignage.backend.device;
 
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,6 +19,7 @@ import com.digitalsignage.backend.layout.Layout;
 import com.digitalsignage.backend.layout.LayoutRepository;
 import com.digitalsignage.backend.layout.LayoutZone;
 import com.digitalsignage.backend.media.Media;
+import com.digitalsignage.backend.playlist.ItemValidity;
 import com.digitalsignage.backend.playlist.Playlist;
 import com.digitalsignage.backend.playlist.PlaylistItem;
 import com.digitalsignage.backend.playlist.PlaylistRepository;
@@ -32,11 +35,13 @@ public class PlayerConfigService {
 	private final PlaylistRepository playlistRepository;
 	private final LayoutRepository layoutRepository;
 	private final CampaignService campaignService;
+	private final Clock clock;
 
-	public PlayerConfigService(PlaylistRepository playlistRepository, LayoutRepository layoutRepository, CampaignService campaignService) {
+	public PlayerConfigService(PlaylistRepository playlistRepository, LayoutRepository layoutRepository, CampaignService campaignService, Clock clock) {
 		this.playlistRepository = playlistRepository;
 		this.layoutRepository = layoutRepository;
 		this.campaignService = campaignService;
+		this.clock = clock;
 	}
 
 	@Transactional(readOnly = true)
@@ -52,6 +57,8 @@ public class PlayerConfigService {
 	}
 
 	private PlayerConfigResponse build(Device device, CampaignService.Effective effective) {
+		// A validade por item (datas e dias da semana) é decidida aqui, no dia de hoje: item fora da validade nem vai para a TV.
+		LocalDate today = ItemValidity.today(clock);
 		Layout layout = device.getLayoutId() == null ? null : layoutRepository.findById(device.getLayoutId()).orElse(null);
 		Long mainPlaylistId = effective.playlistId();
 		Playlist main = mainPlaylistId == null ? null : playlistRepository.findById(mainPlaylistId)
@@ -60,28 +67,28 @@ public class PlayerConfigService {
 		if (layout == null) {
 			return main == null
 					? new PlayerConfigResponse(device.getId(), null, 0, List.of())
-					: new PlayerConfigResponse(device.getId(), main.getId(), ConfigVersions.withOrientation(main.getConfigVersion(), device.getOrientation()), itemsOf(main));
+					: new PlayerConfigResponse(device.getId(), main.getId(), ConfigVersions.withOrientation(main.contentVersion(today), device.getOrientation()), itemsOf(main, today));
 		}
 
 		Map<Long, Long> versions = new HashMap<>();
-		List<PlayerConfigZone> zones = zonesOf(layout.getZones(), main, versions);
+		List<PlayerConfigZone> zones = zonesOf(layout.getZones(), main, versions, today);
 		// A versão para TV em pé (se o layout tiver) viaja junto: a TV escolhe pela forma da tela dela.
-		List<PlayerConfigZone> portraitZones = zonesOf(layout.getPortraitZones(), main, versions);
+		List<PlayerConfigZone> portraitZones = zonesOf(layout.getPortraitZones(), main, versions, today);
 		List<PlayerConfigMediaItem> mainItems = zones.stream().filter(PlayerConfigZone::main).findFirst()
 				.map(PlayerConfigZone::items).orElse(List.of());
 		return new PlayerConfigResponse(device.getId(), main == null ? null : main.getId(),
 				versionFor(mainPlaylistId, layout, versions, device.getOrientation()), mainItems, zones, portraitZones);
 	}
 
-	private List<PlayerConfigZone> zonesOf(List<LayoutZone> layoutZones, Playlist main, Map<Long, Long> versions) {
+	private List<PlayerConfigZone> zonesOf(List<LayoutZone> layoutZones, Playlist main, Map<Long, Long> versions, LocalDate today) {
 		List<PlayerConfigZone> zones = new ArrayList<>();
 		for (LayoutZone zone : layoutZones) {
 			Playlist playlist = zone.isMain() ? main : playlistOf(zone.getPlaylistId());
 			if (playlist != null) {
-				versions.put(playlist.getId(), playlist.getConfigVersion());
+				versions.put(playlist.getId(), playlist.contentVersion(today));
 			}
 			zones.add(new PlayerConfigZone(zone.getId(), zone.getName(), zone.getX(), zone.getY(), zone.getWidth(), zone.getHeight(),
-					zone.isMain(), playlist == null ? null : playlist.getId(), playlist == null ? List.of() : itemsOf(playlist), zone.getFit()));
+					zone.isMain(), playlist == null ? null : playlist.getId(), playlist == null ? List.of() : itemsOf(playlist, today), zone.getFit()));
 		}
 		return zones;
 	}
@@ -103,8 +110,9 @@ public class PlayerConfigService {
 			}
 		});
 		layouts.values().forEach(layout -> allZones(layout).stream().map(LayoutZone::getPlaylistId).filter(Objects::nonNull).forEach(playlistIds::add));
+		LocalDate today = ItemValidity.today(clock);
 		Map<Long, Long> versions = playlistRepository.findAllById(playlistIds.stream().distinct().toList()).stream()
-				.collect(Collectors.toMap(Playlist::getId, Playlist::getConfigVersion));
+				.collect(Collectors.toMap(Playlist::getId, playlist -> playlist.contentVersion(today)));
 
 		Map<Long, Long> result = new HashMap<>();
 		for (Device device : devices) {
@@ -148,8 +156,9 @@ public class PlayerConfigService {
 		return playlistId == null ? null : playlistRepository.findById(playlistId).orElse(null);
 	}
 
-	static List<PlayerConfigMediaItem> itemsOf(Playlist playlist) {
-		return playlist.getItems().stream().map(PlayerConfigService::itemOf).toList();
+	/** Os itens que a TV deve exibir no dia {@code today}: os fora da validade (datas ou dias da semana) não vão. */
+	static List<PlayerConfigMediaItem> itemsOf(Playlist playlist, LocalDate today) {
+		return playlist.itemsValidOn(today).stream().map(PlayerConfigService::itemOf).toList();
 	}
 
 	private static PlayerConfigMediaItem itemOf(PlaylistItem item) {

@@ -1,6 +1,8 @@
 package com.digitalsignage.backend.playlist;
 
+import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.LocalDate;
 
 import com.digitalsignage.backend.media.Media;
 
@@ -37,6 +39,17 @@ public class PlaylistItem {
 	@Column(name = "duration_seconds", nullable = false)
 	private int durationSeconds;
 
+	/** Primeiro e último dia em que o item vale (inclusive); nulo = sem limite daquele lado. */
+	@Column(name = "valid_from")
+	private LocalDate validFrom;
+
+	@Column(name = "valid_until")
+	private LocalDate validUntil;
+
+	/** Dias da semana em que vale, "1,3,5" (1 = segunda); nulo = todos. */
+	@Column(name = "days_of_week")
+	private String daysOfWeek;
+
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
 
@@ -47,6 +60,29 @@ public class PlaylistItem {
 		this.media = media;
 		this.position = position;
 		this.durationSeconds = durationSeconds;
+	}
+
+	public PlaylistItem(Media media, int position, int durationSeconds, LocalDate validFrom, LocalDate validUntil, String daysOfWeek) {
+		this(media, position, durationSeconds);
+		this.validFrom = validFrom;
+		this.validUntil = validUntil;
+		this.daysOfWeek = daysOfWeek;
+	}
+
+	/** O item tem alguma regra de validade (datas ou dias)? Sem regra vale sempre, como todo item sempre valeu. */
+	public boolean hasRules() {
+		return validFrom != null || validUntil != null || daysOfWeek != null;
+	}
+
+	/** Vale neste dia? As datas são inclusivas e os dias da semana são os de {@code day}. */
+	public boolean isValidOn(LocalDate day) {
+		if (validFrom != null && day.isBefore(validFrom)) {
+			return false;
+		}
+		if (validUntil != null && day.isAfter(validUntil)) {
+			return false;
+		}
+		return daysOfWeek == null || ItemValidity.parseDays(daysOfWeek).contains(DayOfWeek.from(day));
 	}
 
 	@PrePersist
@@ -82,4 +118,16 @@ public class PlaylistItem {
 		return createdAt;
 	}
 
+
+	public LocalDate getValidFrom() {
+		return validFrom;
+	}
+
+	public LocalDate getValidUntil() {
+		return validUntil;
+	}
+
+	public String getDaysOfWeek() {
+		return daysOfWeek;
+	}
 }

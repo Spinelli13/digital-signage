@@ -11,7 +11,25 @@ import { MediaThumb } from '../media/media-thumb';
 import { IconComponent } from '../shared/icon';
 import { IconName } from '../shared/icons';
 import { EmptyStateComponent, PageHeaderComponent, PillComponent } from '../shared/ui';
-import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, totalSeconds } from './playlist-editor';
+import { ALL_DAYS, dayLabel } from '../campaigns/campaign-form';
+import {
+  ValidityPatch,
+  addMedia,
+  clearValidity,
+  describeValidity,
+  formatDuration,
+  hasValidity,
+  isValidOn,
+  moveItem,
+  removeAt,
+  saoPauloToday,
+  setDuration,
+  setValidity,
+  toRequest,
+  toggleDay,
+  totalSeconds,
+  validityProblem,
+} from './playlist-editor';
 
 @Component({
   selector: 'app-playlist-editor',
@@ -50,7 +68,14 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
         @if (items().length === 0) {
           <app-empty-state [compact]="true" icon="image-plus" [title]="'Esta playlist está vazia' | t" [text]="'Adicione mídias da biblioteca ao lado.' | t" />
         }
+        @if (nothingValidToday()) {
+          <div class="warn-box" role="status" data-testid="nothing-today">
+            <app-icon name="triangle-alert" [size]="18" />
+            <span>{{ 'Nenhum item desta playlist vale hoje: a TV mostra a tela de espera até algum item voltar a valer.' | t }}</span>
+          </div>
+        }
         @for (item of items(); track $index) {
+          <div class="item">
           <div class="row">
             <span class="pos">{{ $index + 1 }}</span>
             <div class="thumb"><app-media-thumb [mediaId]="item.mediaId" [type]="item.mediaType" [name]="item.mediaName" /></div>
@@ -67,6 +92,44 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
               <button type="button" class="icon-btn bordered" (click)="move($index, 1)" [disabled]="$last" [title]="'Descer' | t" [attr.aria-label]="'Descer' | t"><app-icon name="arrow-down" [size]="17" /></button>
               <button type="button" class="icon-btn bordered danger-ghost" (click)="remove($index)" [title]="'Remover' | t" [attr.aria-label]="'Remover' | t"><app-icon name="trash" [size]="17" /></button>
             </div>
+          </div>
+          <div class="when">
+            <button type="button" class="when-btn" [class.on]="hasRule(item)" [attr.aria-expanded]="openRule() === $index" (click)="toggleRule($index)">
+              <app-icon name="calendar-clock" [size]="14" />{{ 'Quando exibir' | t }}: <b>{{ validityText(item) }}</b>
+            </button>
+            @if (hasRule(item) && !validToday(item)) {
+              <app-pill tone="warn" icon="clock">{{ 'Fora da validade hoje' | t }}</app-pill>
+            }
+          </div>
+          @if (openRule() === $index) {
+            <div class="rule" data-testid="rule-editor">
+              <div class="dates">
+                <div class="field">
+                  <label [for]="'from-' + $index">{{ 'Começa em' | t }}</label>
+                  <input [id]="'from-' + $index" type="date" [ngModel]="item.validFrom ?? ''" (ngModelChange)="changeRule($index, { validFrom: $event || null })" />
+                </div>
+                <div class="field">
+                  <label [for]="'until-' + $index">{{ 'Termina em' | t }}</label>
+                  <input [id]="'until-' + $index" type="date" [ngModel]="item.validUntil ?? ''" (ngModelChange)="changeRule($index, { validUntil: $event || null })" />
+                </div>
+              </div>
+              <fieldset class="days">
+                <legend>{{ 'Dias da semana' | t }}</legend>
+                @for (day of allDays; track day) {
+                  <label class="day" [class.on]="dayOn(item, day)">
+                    <input type="checkbox" [checked]="dayOn(item, day)" (change)="flipDay($index, day)" />{{ dayText(day) }}
+                  </label>
+                }
+              </fieldset>
+              @if (problemOf(item); as problem) {
+                <small class="problem" role="alert">{{ problem }}</small>
+              }
+              <small class="hint">{{ 'Deixe em branco para valer sempre. Os dias contam no horário de Brasília e a TV troca na virada do dia, em até 30 segundos.' | t }}</small>
+              <div class="rule-actions">
+                <button type="button" class="secondary small" (click)="clearRule($index)" [disabled]="!hasRule(item)">{{ 'Voltar a valer sempre' | t }}</button>
+              </div>
+            </div>
+          }
           </div>
         }
       </div>
@@ -97,6 +160,27 @@ import { addMedia, formatDuration, moveItem, removeAt, setDuration, toRequest, t
     .sec app-icon { color: var(--primary); }
     :host-context(:root[data-theme='dark']) .sec app-icon { color: var(--link); }
     .sec app-pill { margin-left: auto; }
+    .item { border-bottom: 1px solid var(--line); }
+    .item .row { border-bottom: 0; }
+    .when { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 0 0 8px 36px; }
+    .when-btn { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; min-height: 30px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); color: var(--muted); font-size: 12.5px; }
+    .when-btn b { color: var(--text-2); font-weight: 600; }
+    .when-btn.on { background: var(--primary-soft); border-color: var(--primary-line); color: var(--primary); }
+    :host-context(:root[data-theme='dark']) .when-btn.on { color: var(--link); }
+    .rule { margin: 0 0 12px 36px; padding: 12px 14px; border-radius: var(--r); border: 1px solid var(--line); background: var(--panel-2); }
+    .dates { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0 14px; }
+    fieldset.days { border: 0; margin: 4px 0 10px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+    fieldset.days legend { padding: 0 0 6px; font-weight: 600; font-size: 13px; color: var(--text-2); }
+    .day { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; font-weight: 600; font-size: 13px; }
+    .day input { position: absolute; opacity: 0; pointer-events: none; }
+    .day:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .day.on { background: var(--primary-soft); border-color: var(--primary-line); color: var(--primary); }
+    :host-context(:root[data-theme='dark']) .day.on { color: var(--link); }
+    .hint { display: block; color: var(--muted); margin-bottom: 8px; }
+    .problem { display: block; color: var(--err-fg); margin-bottom: 8px; font-weight: 600; }
+    .rule-actions { display: flex; justify-content: flex-end; }
+    .warn-box { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding: 11px 14px; border-radius: var(--r); background: var(--warn-bg); color: var(--warn-fg); border: 1px solid var(--warn-line); }
+    .warn-box app-icon { flex: none; margin-top: 1px; }
     .kind { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); }
     .danger-ghost { color: var(--err-fg); }
     .danger-ghost:hover { background: var(--err-bg); }
@@ -147,7 +231,14 @@ export class PlaylistEditorPage implements OnInit {
   private readonly playlistId = signal<number | null>(null);
 
   readonly isNew = computed(() => this.playlistId() === null);
-  readonly canSave = computed(() => this.name().trim().length > 0);
+  readonly canSave = computed(() => this.name().trim().length > 0 && this.items().every((item) => validityProblem(item) === null));
+  readonly allDays = ALL_DAYS;
+  readonly dayText = dayLabel;
+  /** Qual item está com a validade aberta para editar (nenhum = todos fechados). */
+  readonly openRule = signal<number | null>(null);
+  private readonly today = signal(saoPauloToday());
+  /** Há itens, mas nenhum vale hoje (a TV ficaria na tela de espera): vale avisar antes de publicar. */
+  readonly nothingValidToday = computed(() => this.items().length > 0 && this.items().every((item) => !isValidOn(item, this.today())));
   readonly cycle = computed(() => formatDuration(totalSeconds(this.items())));
 
   ngOnInit(): void {
@@ -172,6 +263,7 @@ export class PlaylistEditorPage implements OnInit {
 
   remove(index: number): void {
     this.items.update((items) => removeAt(items, index));
+    this.openRule.set(null);
   }
 
   move(index: number, delta: -1 | 1): void {
@@ -180,6 +272,35 @@ export class PlaylistEditorPage implements OnInit {
 
   changeDuration(index: number, seconds: number): void {
     this.items.update((items) => setDuration(items, index, Number(seconds)));
+  }
+
+  hasRule = hasValidity;
+  validityText = describeValidity;
+  problemOf = validityProblem;
+
+  validToday(item: PlaylistItem): boolean {
+    return isValidOn(item, this.today());
+  }
+
+  /** O dia da semana está marcado? Sem restrição, todos estão. */
+  dayOn(item: PlaylistItem, day: number): boolean {
+    return !item.days || item.days.length === 0 || item.days.includes(day);
+  }
+
+  toggleRule(index: number): void {
+    this.openRule.update((open) => (open === index ? null : index));
+  }
+
+  changeRule(index: number, patch: ValidityPatch): void {
+    this.items.update((items) => setValidity(items, index, patch));
+  }
+
+  flipDay(index: number, day: number): void {
+    this.items.update((items) => toggleDay(items, index, day));
+  }
+
+  clearRule(index: number): void {
+    this.items.update((items) => clearValidity(items, index));
   }
 
   save(): void {
@@ -209,5 +330,7 @@ export class PlaylistEditorPage implements OnInit {
     this.name.set(playlist.name);
     this.description.set(playlist.description ?? '');
     this.items.set(playlist.items);
+    this.openRule.set(null);
+    this.today.set(saoPauloToday());
   }
 }
