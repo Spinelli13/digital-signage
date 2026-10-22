@@ -416,6 +416,53 @@ export interface ScreenAlertRequest {
   durationMinutes?: number;
 }
 
+/** Modelos prontos por segmento: o catálogo, o que a pessoa confere e o que foi criado. */
+export interface TemplateField {
+  key: string;
+  label: string;
+  defaultValue: string;
+  maxLength: number;
+}
+
+export interface TemplateInfo {
+  id: string;
+  name: string;
+  /** O nome do ícone do painel. */
+  icon: string;
+  description: string;
+  fields: TemplateField[];
+  includes: string[];
+  hasPrices: boolean;
+}
+
+export interface TemplateCatalog {
+  /** O que o plano do cliente deixa o modelo criar. */
+  available: { widgets: boolean; prices: boolean; layouts: boolean };
+  templates: TemplateInfo[];
+}
+
+export interface TemplateCreated {
+  id: number;
+  name: string;
+}
+
+export interface TemplateResult {
+  templateId: string;
+  layout: TemplateCreated | null;
+  playlists: TemplateCreated[];
+  widgets: TemplateCreated[];
+  priceList: TemplateCreated | null;
+  /** O que ficou de fora e por quê (em português, vindo do servidor). */
+  notes: string[];
+  devices: number;
+}
+
+export interface TemplateApplyRequest {
+  fields?: Record<string, string>;
+  city?: { name: string; latitude: number; longitude: number; timezone: string };
+  deviceIds?: number[];
+}
+
 /** "Resultados": o que o conteúdo e os QR Codes renderam no período (só números, sem dado de pessoa). */
 export interface ResultsDay {
   day: string;

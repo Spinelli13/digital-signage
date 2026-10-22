@@ -20,7 +20,7 @@ const MIN_PASSWORD = 8;
   template: `
     <div class="prefs-corner"><app-preferences /></div>
     <main class="page">
-      <div class="head"><img src="favicon.svg" alt="" width="44" height="44" /><app-wordmark /></div>
+      <div class="brand-row"><img src="favicon.svg" alt="" width="44" height="44" /><app-wordmark /></div>
 
       @if (!done()) {
         <form class="card" (ngSubmit)="submit()">
@@ -58,8 +58,8 @@ const MIN_PASSWORD = 8;
     :host { display: block; min-height: 100vh; background: var(--bg); color: var(--text); position: relative; }
     .prefs-corner { position: absolute; top: calc(14px + env(safe-area-inset-top)); right: 14px; }
     .page { max-width: 440px; margin: 0 auto; padding: calc(72px + env(safe-area-inset-top)) 16px 40px; display: flex; flex-direction: column; gap: 20px; }
-    .head { display: flex; align-items: center; gap: 12px; font-size: 28px; }
-    .head img { border-radius: 12px; }
+    .brand-row { display: flex; align-items: center; gap: 12px; font-size: 28px; }
+    .brand-row img { border-radius: 12px; }
     h1 { margin: 0 0 6px; font-size: 26px; }
     .lead { color: var(--muted); margin: 0 0 22px; }
     .problem { display: block; margin-bottom: 12px; }

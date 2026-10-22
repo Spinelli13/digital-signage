@@ -31,6 +31,8 @@ const ICONS = [
   'monitor-play', 'monitor-off', 'monitor-check', 'monitor-x', 'monitor-dot', 'film', 'clapperboard', 'app-window',
   'activity', 'trending-up', 'hard-drive', 'package', 'server', 'zap', 'sparkles', 'star', 'house', 'smartphone',
   'folder-open', 'gauge', 'timer', 'eye-off', 'plug-zap', 'layout-grid', 'list-checks', 'trending-down', 'cloud-upload', 'image-off', 'list', 'cloud-sun', 'newspaper', 'badge-dollar-sign', 'puzzle',
+  // modelos prontos por segmento
+  'scissors', 'utensils', 'stethoscope', 'dumbbell', 'shopping-bag',
 ];
 
 const missing = ICONS.filter((name) => !nodes[name]);
