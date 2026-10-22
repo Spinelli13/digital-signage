@@ -170,6 +170,7 @@ import { EmptyStateComponent, PageHeaderComponent, PillComponent } from '../shar
     </section>
   `,
   styles: `
+    .card { margin-bottom: 18px; }
     .sec { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
     .sec.sub { margin-top: 22px; }
     .sec app-icon { color: var(--primary); }
