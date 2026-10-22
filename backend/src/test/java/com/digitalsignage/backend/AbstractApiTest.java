@@ -92,7 +92,7 @@ public abstract class AbstractApiTest {
 		clock.reset();
 		widgetHttp.reset();
 		widgetData.clearCache();
-		jdbc.update("UPDATE monitoring_settings SET offline_after_minutes = 10, never_connected_after_hours = 24, error_burst_count = 5, webhook_url = NULL, notify_on_resolve = TRUE, events_retention_days = 90, play_log_retention_days = 14");
+		jdbc.update("UPDATE monitoring_settings SET offline_after_minutes = 10, never_connected_after_hours = 24, error_burst_count = 5, webhook_url = NULL, notify_on_resolve = TRUE, events_retention_days = 90, play_log_retention_days = 7");
 		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media, locations, device_groups, campaigns, device_events, alerts, media_plays, layouts, price_lists, tickets, service_counters, service_queues, promotion_coupons, promotions, privacy_requests, privacy_settings RESTART IDENTITY CASCADE");
 		jdbc.update("UPDATE platform_settings SET legal_name = NULL, legal_document = NULL, privacy_contact_name = NULL, privacy_contact_email = NULL");
 		// Clientes, usuários e planos criados pelos testes (o cliente 1 = reserva e o 2 = original, com o administrador, ficam).

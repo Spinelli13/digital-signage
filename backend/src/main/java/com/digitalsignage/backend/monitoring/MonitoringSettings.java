@@ -47,7 +47,7 @@ public class MonitoringSettings {
 
 	/** Quanto tempo o detalhe de cada exibição (comprovação) fica guardado; o resumo diário fica um ano. */
 	@Column(name = "play_log_retention_days", nullable = false)
-	private int playLogRetentionDays = 14;
+	private int playLogRetentionDays = 7;
 
 	@Column(name = "updated_at", nullable = false)
 	private Instant updatedAt;

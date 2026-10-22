@@ -38,7 +38,7 @@ Consequência: o Vyzzu precisa de um **contrato de tratamento de dados com cada 
 | E-mail de quem deu baixa no cupom | Equipe do cliente | `promotion_coupons.redeemed_by` | Auditoria da baixa | Legítimo interesse | Enquanto o cupom existir | Administrador e Editor do cliente |
 | Endereço IP | Quem abre páginas públicas | **Só na memória do servidor** (limite de pedidos por hora) | Segurança contra abuso | Legítimo interesse | Janela de 1 hora; **não é gravado no banco** | Ninguém |
 | Empresa, plano, faturas, e-mail de suporte | Cliente (empresa) | `tenants`, `invoices`, `platform_settings` | Cobrança e suporte | Contrato; obrigação legal | Prazo fiscal e contábil | Operação da plataforma |
-| Histórico das TVs, alertas, exibições | (não identificam pessoas) | `device_events`, `alerts`, `play_logs`, `media_plays` | Operação e comprovação | — | 90 dias (7–730); detalhe de exibição 14 dias (7–365); resumo diário 1 ano | Cliente |
+| Histórico das TVs, alertas, exibições | (não identificam pessoas) | `device_events`, `alerts`, `play_logs`, `media_plays` | Operação e comprovação | — | 90 dias (7–730); detalhe de exibição 7 dias por padrão (7–365); resumo por dia e por mídia 1 ano; resumo diário 1 ano | Cliente |
 | Arquivos enviados (imagens, vídeos) | Quem aparece neles (a cargo do cliente) | Armazenamento de arquivos (Supabase) | Exibir nas TVs | A cargo do cliente | Até o cliente apagar | Cliente |
 
 **Armazenamento no navegador:** `localStorage` só para o que o serviço precisa (sessão do painel, tema, idioma, código do aparelho `smartplay.client`, senha/cupom já pegos). Sem cookies de publicidade nem rastreadores; por isso não há faixa de cookies.

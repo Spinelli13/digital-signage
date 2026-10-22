@@ -522,7 +522,7 @@ Para anunciantes e contratos: a aba **Comprovação** mostra cada exibição, um
 
 - **Relógio da TV errado:** o horário vem do relógio da TV; se ele estiver desajustado em mais de 2 segundos, o servidor corrige o início usando a hora dele e a linha mostra "relógio corrigido". A duração não muda (é medida por um cronômetro, não pelo relógio).
 - **TV sem internet:** os registros ficam guardados na TV (até 20.000, em arquivo que sobrevive a queda de energia e a reinício) e seguem quando a internet voltar. Se passar do limite, os mais antigos são descartados e isso aparece no histórico da TV.
-- **Quanto tempo fica guardado:** o detalhe linha a linha fica **14 dias** (ajustável de 7 a 365 em **Alertas > Guardar cada exibição por (dias)**, porque o banco gratuito é pequeno). Abaixo da tabela, o **resumo por dia** (exibições, tempo na tela e o último hash de cada dia) fica **um ano**.
+- **Quanto tempo fica guardado:** o detalhe linha a linha fica **7 dias** em clientes novos (ajustável de 7 a 365 em **Alertas > Guardar cada exibição por (dias)**; clientes anteriores mantêm o prazo que já tinham). Abaixo da tabela, o **resumo por dia** (exibições, tempo na tela e o último hash de cada dia) fica **um ano**.
 - **Exige o Vyzzu 0.9 ou mais novo na TV.** TVs com versão anterior continuam aparecendo em **Exibições** (contagem), mas não em **Comprovação**.
 
 ---

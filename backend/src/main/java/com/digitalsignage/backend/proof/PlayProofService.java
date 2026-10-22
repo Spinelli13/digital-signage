@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,10 +55,18 @@ public class PlayProofService {
 	public record DailyRow(long deviceId, String deviceName, LocalDate day, long plays, long completed, long totalMs, long firstSeq, long lastSeq, String lastHash) {
 	}
 
+	/** O resumo de um dia por TV, mídia e campanha (guardado por um ano, mesmo depois do detalhe ser apagado). */
+	public record MediaDailyRow(
+			long deviceId, String deviceName, LocalDate day, Long mediaId, String mediaName, String mediaType, Long campaignId, String campaignName,
+			long plays, long completed, long totalMs) {
+	}
+
 	public record DeviceCheck(
 			long deviceId, String deviceName, long records, long firstSeq, long lastSeq, long missing, long brokenLinks,
 			long hashMismatches, long flaggedAtIngest, String digest, String status) {
 	}
+
+	private static final HexFormat HEX = HexFormat.of();
 
 	private final JdbcTemplate jdbc;
 	private final MonitoringService monitoring;
@@ -79,7 +88,7 @@ public class PlayProofService {
 		long applied = Math.abs(offset) <= CLOCK_TOLERANCE_MS ? 0 : Math.max(-30L * 86_400_000, Math.min(30L * 86_400_000, offset));
 
 		List<Entry> ordered = entries.stream().sorted(java.util.Comparator.comparingLong(Entry::seq)).toList();
-		Map<String, Object> last = jdbc.queryForList("SELECT seq, hash FROM play_logs WHERE device_id = ? ORDER BY seq DESC LIMIT 1", deviceId)
+		Map<String, Object> last = jdbc.queryForList("SELECT seq, encode(hash, 'hex') AS hash FROM play_logs WHERE device_id = ? ORDER BY seq DESC LIMIT 1", deviceId)
 				.stream().findFirst().orElse(null);
 		long lastSeq = last == null ? 0 : ((Number) last.get("seq")).longValue();
 		String lastHash = last == null ? null : (String) last.get("hash");
@@ -91,6 +100,7 @@ public class PlayProofService {
 		ZoneId zone = monitoring.reportZone();
 		Map<LocalDate, long[]> daily = new LinkedHashMap<>(); // dia -> [exibições, completas, ms, primeiro seq, último seq]
 		Map<LocalDate, String> dailyHash = new LinkedHashMap<>();
+		Map<String, MediaDay> byMedia = new LinkedHashMap<>(); // dia + mídia + campanha -> o resumo daquele dia
 
 		for (Entry entry : ordered) {
 			if (!valid(entry)) {
@@ -113,8 +123,8 @@ public class PlayProofService {
 					ON CONFLICT (device_id, seq) DO NOTHING
 					""", tenantId, deviceId, entry.seq(), entry.mediaId(), trim(entry.mediaName(), 255), entry.mediaType(), entry.playlistId(),
 					entry.campaignId(), trim(entry.campaignName(), 150), trim(entry.zoneName(), 100), Timestamp.from(startedAt), entry.startedAtMs(),
-					applied, entry.durationMs(), entry.plannedMs(), entry.completed(), entry.prevHash(), entry.hash(), hashValid, continuous,
-					Timestamp.from(now));
+						applied, entry.durationMs(), entry.plannedMs(), entry.completed(), HEX.parseHex(entry.prevHash()), HEX.parseHex(entry.hash()),
+						hashValid, continuous, Timestamp.from(now));
 			if (inserted == 0) {
 				duplicates++;
 				continue;
@@ -134,6 +144,8 @@ public class PlayProofService {
 				sum[4] = entry.seq();
 				dailyHash.put(day, entry.hash());
 			}
+			byMedia.computeIfAbsent(day + "|" + (entry.mediaId() == null ? 0 : entry.mediaId()) + "|" + (entry.campaignId() == null ? 0 : entry.campaignId()),
+					key -> new MediaDay(day, entry)).add(entry);
 		}
 
 		daily.forEach((day, sum) -> jdbc.update("""
@@ -146,7 +158,44 @@ public class PlayProofService {
 				    last_hash = CASE WHEN EXCLUDED.last_seq >= play_log_daily.last_seq THEN EXCLUDED.last_hash ELSE play_log_daily.last_hash END
 				""", tenantId, deviceId, Date.valueOf(day), sum[0], sum[1], sum[2], sum[3], sum[4], dailyHash.get(day)));
 
+		byMedia.values().forEach(media -> jdbc.update("""
+				INSERT INTO play_log_daily_media (tenant_id, device_id, day, media_id, campaign_id, media_name, media_type, campaign_name, plays, completed, total_ms)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+				ON CONFLICT (device_id, day, media_id, campaign_id) DO UPDATE SET plays = play_log_daily_media.plays + EXCLUDED.plays,
+				    completed = play_log_daily_media.completed + EXCLUDED.completed, total_ms = play_log_daily_media.total_ms + EXCLUDED.total_ms,
+				    media_name = EXCLUDED.media_name, media_type = EXCLUDED.media_type, campaign_name = EXCLUDED.campaign_name
+				""", tenantId, deviceId, Date.valueOf(media.day), media.mediaId, media.campaignId, trim(media.mediaName, 255), media.mediaType,
+				trim(media.campaignName, 150), media.plays, media.completed, media.totalMs));
+
 		return new IngestResult(highest, stored, duplicates, rejected);
+	}
+
+	/** O que um lote trouxe de uma mídia (e campanha) num dia; o nome é o do registro mais recente. */
+	private static final class MediaDay {
+		private final LocalDate day;
+		private final long mediaId;
+		private final long campaignId;
+		private String mediaName;
+		private String mediaType;
+		private String campaignName;
+		private long plays;
+		private long completed;
+		private long totalMs;
+
+		MediaDay(LocalDate day, Entry first) {
+			this.day = day;
+			this.mediaId = first.mediaId() == null ? 0 : first.mediaId();
+			this.campaignId = first.campaignId() == null ? 0 : first.campaignId();
+		}
+
+		void add(Entry entry) {
+			plays++;
+			completed += entry.completed() ? 1 : 0;
+			totalMs += entry.durationMs();
+			mediaName = entry.mediaName();
+			mediaType = entry.mediaType();
+			campaignName = entry.campaignName();
+		}
 	}
 
 	private static boolean valid(Entry e) {
@@ -178,12 +227,12 @@ public class PlayProofService {
 		String where = where(filter, args);
 		args.add(limit);
 		args.add(offset);
-		return jdbc.query("SELECT p.*, d.name AS device_name FROM play_logs p JOIN devices d ON d.id = p.device_id WHERE " + where
+		return jdbc.query("SELECT p.*, encode(p.hash, 'hex') AS hash_hex, d.name AS device_name FROM play_logs p JOIN devices d ON d.id = p.device_id WHERE " + where
 				+ " ORDER BY p.started_at DESC, p.id DESC LIMIT ? OFFSET ?", (rs, i) -> new ProofRow(
 						rs.getLong("id"), rs.getLong("device_id"), rs.getString("device_name"), rs.getLong("seq"), (Long) rs.getObject("media_id"),
 						rs.getString("media_name"), rs.getString("media_type"), rs.getString("zone_name"), (Long) rs.getObject("playlist_id"),
 						(Long) rs.getObject("campaign_id"), rs.getString("campaign_name"), rs.getTimestamp("started_at").toInstant(),
-						rs.getLong("duration_ms"), (Long) rs.getObject("planned_ms"), rs.getBoolean("completed"), rs.getString("hash"),
+						rs.getLong("duration_ms"), (Long) rs.getObject("planned_ms"), rs.getBoolean("completed"), rs.getString("hash_hex"),
 						rs.getBoolean("hash_valid"), rs.getBoolean("continuous"), rs.getLong("clock_offset_ms")), args.toArray());
 	}
 
@@ -201,6 +250,23 @@ public class PlayProofService {
 				args.toArray());
 	}
 
+	/** O resumo por mídia e campanha de cada dia (guardado por um ano). */
+	public List<MediaDailyRow> dailyByMedia(LocalDate from, LocalDate to, Long deviceId) {
+		List<Object> args = new ArrayList<>(List.of(TenantContext.current(), Date.valueOf(from), Date.valueOf(to)));
+		String device = "";
+		if (deviceId != null) {
+			device = " AND k.device_id = ?";
+			args.add(deviceId);
+		}
+		return jdbc.query("SELECT k.*, d.name AS device_name FROM play_log_daily_media k JOIN devices d ON d.id = k.device_id "
+				+ "WHERE k.tenant_id = ? AND k.day BETWEEN ? AND ?" + device + " ORDER BY k.day DESC, d.name, k.media_name, k.campaign_name",
+				(rs, i) -> new MediaDailyRow(rs.getLong("device_id"), rs.getString("device_name"), rs.getDate("day").toLocalDate(),
+						rs.getLong("media_id") == 0 ? null : rs.getLong("media_id"), rs.getString("media_name"), rs.getString("media_type"),
+						rs.getLong("campaign_id") == 0 ? null : rs.getLong("campaign_id"), rs.getString("campaign_name"), rs.getLong("plays"),
+						rs.getLong("completed"), rs.getLong("total_ms")),
+				args.toArray());
+	}
+
 	/**
 	 * Confere a corrente do período, TV por TV: recalcula cada hash a partir dos campos guardados (pega registro alterado
 	 * depois), confere se cada registro aponta para o hash do anterior e se nenhum número de ordem sumiu. O "resumo" é o
@@ -211,12 +277,12 @@ public class PlayProofService {
 		String where = where(filter, args);
 		args.add(MAX_VERIFY_ROWS);
 		Map<Long, Check> checks = new LinkedHashMap<>();
-		jdbc.query("SELECT p.*, d.name AS device_name FROM play_logs p JOIN devices d ON d.id = p.device_id WHERE " + where
-				+ " ORDER BY p.device_id, p.seq LIMIT ?", rs -> {
+		jdbc.query("SELECT p.*, encode(p.prev_hash, 'hex') AS prev_hash_hex, encode(p.hash, 'hex') AS hash_hex, d.name AS device_name FROM play_logs p "
+				+ "JOIN devices d ON d.id = p.device_id WHERE " + where + " ORDER BY p.device_id, p.seq LIMIT ?", rs -> {
 					long deviceId = rs.getLong("device_id");
 					Check check = checks.computeIfAbsent(deviceId, id -> new Check(deviceId, rs_name(rs)));
-					check.add(rs.getLong("seq"), rs.getString("prev_hash"), rs.getString("hash"), rs.getBoolean("hash_valid"), rs.getBoolean("continuous"),
-							PlayProofHash.compute(rs.getString("prev_hash"), rs.getLong("seq"), deviceId, (Long) rs.getObject("media_id"),
+					check.add(rs.getLong("seq"), rs.getString("prev_hash_hex"), rs.getString("hash_hex"), rs.getBoolean("hash_valid"), rs.getBoolean("continuous"),
+								PlayProofHash.compute(rs.getString("prev_hash_hex"), rs.getLong("seq"), deviceId, (Long) rs.getObject("media_id"),
 									rs.getString("media_name"), rs.getString("media_type"), (Long) rs.getObject("playlist_id"), (Long) rs.getObject("campaign_id"),
 									rs.getString("zone_name"), rs.getLong("device_started_ms"), rs.getLong("duration_ms"), (Long) rs.getObject("planned_ms"),
 									rs.getBoolean("completed")));
@@ -308,8 +374,9 @@ public class PlayProofService {
 		long tenantId = TenantContext.current();
 		int removed = jdbc.update("DELETE FROM play_logs WHERE tenant_id = ? AND started_at < ?", tenantId,
 				Timestamp.from(now.minus(java.time.Duration.ofDays(retentionDays))));
-		jdbc.update("DELETE FROM play_log_daily WHERE tenant_id = ? AND day < ?", tenantId,
-				Date.valueOf(now.atZone(monitoring.reportZone()).toLocalDate().minusDays(DAILY_KEEP_DAYS)));
+		Date oldestDay = Date.valueOf(now.atZone(monitoring.reportZone()).toLocalDate().minusDays(DAILY_KEEP_DAYS));
+		jdbc.update("DELETE FROM play_log_daily WHERE tenant_id = ? AND day < ?", tenantId, oldestDay);
+		jdbc.update("DELETE FROM play_log_daily_media WHERE tenant_id = ? AND day < ?", tenantId, oldestDay);
 		return removed;
 	}
 

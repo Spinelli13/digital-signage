@@ -113,7 +113,7 @@ class PlayProofTest extends AbstractApiTest {
 	}
 
 	private String lastHash(Tv tv) {
-		return jdbc.queryForObject("SELECT hash FROM play_logs WHERE device_id = ? ORDER BY seq DESC LIMIT 1", String.class, tv.id());
+		return jdbc.queryForObject("SELECT encode(hash, 'hex') FROM play_logs WHERE device_id = ? ORDER BY seq DESC LIMIT 1", String.class, tv.id());
 	}
 
 	// ---------- recebimento ----------
@@ -380,8 +380,62 @@ class PlayProofTest extends AbstractApiTest {
 	}
 
 	@Test
+	void everyHashIsStoredAs32BytesAndComesBackAsTheSameText() throws Exception {
+		clock.freeze(NOW);
+		Tv a = tv("TV A");
+		send(a, NOW_MS, chain(a, PlayProofHash.GENESIS, sample(1, 2))).andExpect(status().isOk());
+
+		assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM play_logs WHERE octet_length(hash) = 32 AND octet_length(prev_hash) = 32", Integer.class));
+		String csv = mvc.perform(asAdmin(get("/api/v1/reports/proof?from=2026-11-05&to=2026-11-05&format=csv"))).andReturn().getResponse().getContentAsString();
+		assertTrue(csv.contains(lastHash(a)), "o relatório mostra o hash em texto, igual ao que o Player mandou");
+		mvc.perform(asAdmin(get("/api/v1/reports/proof/verify?from=2026-11-05&to=2026-11-05"))).andExpect(jsonPath("$.ok").value(true));
+	}
+
+	@Test
+	void theDailySummaryByMediaCountsEachMediaAndCampaignAndSurvivesThePurge() throws Exception {
+		clock.freeze(NOW);
+		Tv a = tv("TV A");
+		List<Play> plays = new ArrayList<>(sample(1, 3)); // mídia 1 ("Promoção"): seq 1 e 3; mídia 2 ("Cardápio"): seq 2
+		plays.add(new Play(4, 1L, "Promoção", NOW_MS + 40_000L, 10_000, 10_000L, false, 9L, "Principal")); // a mesma mídia, agora numa campanha
+		send(a, NOW_MS, chain(a, PlayProofHash.GENESIS, plays)).andExpect(status().isOk());
+		send(a, NOW_MS, chain(a, lastHash(a), List.of(Play.of(5, 2, "Cardápio", NOW_MS + 50_000L, 7_000)))).andExpect(status().isOk());
+
+		mvc.perform(asAdmin(get("/api/v1/reports/proof/daily-media?from=2026-11-05&to=2026-11-05")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(3)))
+				.andExpect(jsonPath("$[?(@.mediaName == 'Promoção' && @.campaignId == null)].plays").value(2))
+				.andExpect(jsonPath("$[?(@.mediaName == 'Promoção' && @.campaignId == 9)].plays").value(1))
+				.andExpect(jsonPath("$[?(@.mediaName == 'Promoção' && @.campaignId == 9)].completed").value(0))
+				.andExpect(jsonPath("$[?(@.mediaName == 'Cardápio')].plays").value(2))
+				.andExpect(jsonPath("$[?(@.mediaName == 'Cardápio')].totalMs").value(10_001 + 7_000));
+
+		// sem o detalhe, o resumo por mídia continua lá
+		inTenant(DEFAULT_TENANT, () -> proof.purge(Instant.parse(NOW).plusSeconds(15 * 86_400L), 14));
+		assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM play_logs", Integer.class));
+		mvc.perform(asAdmin(get("/api/v1/reports/proof/daily-media?from=2026-11-05&to=2026-11-05"))).andExpect(jsonPath("$", hasSize(3)));
+
+		String csv = mvc.perform(asAdmin(get("/api/v1/reports/proof/daily-media?from=2026-11-05&to=2026-11-05&format=csv")))
+				.andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith("text/csv")).andReturn().getResponse().getContentAsString();
+		assertTrue(csv.startsWith("\uFEFFDia;TV;Mídia;Tipo;Campanha;Exibições;Completas;Tempo no ar (s)"), csv);
+		assertTrue(csv.contains("2026-11-05;TV A;Cardápio;IMAGE;;2;2;17"), csv);
+	}
+
+	@Test
+	void aTvResendingTheSameBatchDoesNotCountTwiceInTheMediaSummary() throws Exception {
+		clock.freeze(NOW);
+		Tv a = tv("TV A");
+		List<Map<String, Object>> batch = chain(a, PlayProofHash.GENESIS, sample(1, 3));
+		send(a, NOW_MS, batch).andExpect(status().isOk());
+		send(a, NOW_MS, batch).andExpect(status().isOk());
+
+		mvc.perform(asAdmin(get("/api/v1/reports/proof/daily-media?from=2026-11-05&to=2026-11-05")))
+				.andExpect(jsonPath("$[?(@.mediaName == 'Promoção')].plays").value(2))
+				.andExpect(jsonPath("$[?(@.mediaName == 'Cardápio')].plays").value(1));
+	}
+
+	@Test
 	void theRetentionIsASettingWithLimits() throws Exception {
-		mvc.perform(asAdmin(get("/api/v1/alerts/settings"))).andExpect(jsonPath("$.playLogRetentionDays").value(14));
+		mvc.perform(asAdmin(get("/api/v1/alerts/settings"))).andExpect(jsonPath("$.playLogRetentionDays").value(7)); // novo cliente: 7 dias (era 14)
 		mvc.perform(asAdmin(put("/api/v1/alerts/settings").contentType(MediaType.APPLICATION_JSON)
 				.content(json.writeValueAsString(Map.of("playLogRetentionDays", 30)))))
 				.andExpect(status().isOk()).andExpect(jsonPath("$.playLogRetentionDays").value(30));
