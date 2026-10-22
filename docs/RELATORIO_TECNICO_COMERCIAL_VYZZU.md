@@ -1,6 +1,6 @@
 # Vyzzu: relatório técnico-comercial para análise de precificação e viabilidade
 
-Data do levantamento: 22/10/2026. Versão do Player em campo: 0.14.69. Levantamento **somente leitura**: consultas `SELECT` no Supabase de produção, leitura da configuração do serviço no Render e leitura do código-fonte. Nada foi alterado em produção, nem no código, nem nos dados. O relatório não traz senhas, chaves, tokens nem dados pessoais.
+Data do levantamento: 22/10/2026. Versão do Player em campo: 0.14.69; **a 0.14.87 foi publicada em 22/10/2026 depois do levantamento** e ainda não foi instalada em nenhuma TV. Levantamento **somente leitura**: consultas `SELECT` no Supabase de produção, leitura da configuração do serviço no Render e leitura do código-fonte. Nada foi alterado em produção, nem no código, nem nos dados. O relatório não traz senhas, chaves, tokens nem dados pessoais.
 
 **Legenda:** ✅ pronto e funcionando · 🟡 parcial ou com limitações · ❌ não existe · "não verificado" = não consegui confirmar com o que tenho acesso.
 **Fontes citadas entre colchetes:** `[SQL]` consulta no banco de produção (Supabase) · `[Render]` configuração do serviço no Render · `[Código]` arquivo do repositório · `[Manual]` manuais/documentos do projeto · `[Estimativa]` cálculo meu a partir de dados medidos, com as premissas escritas.
@@ -11,7 +11,7 @@ Data do levantamento: 22/10/2026. Versão do Player em campo: 0.14.69. Levantame
 
 ## ATUALIZAÇÃO: ETAPAS 1 E 2 (situação em 22/10/2026, fim da noite)
 
-As 13 entregas das Etapas 1 e 2 foram feitas, cada uma num pedido de alteração próprio (PR #1 a #13), com testes e CI verde, e estão **no ar em produção** (servidor e painel). Só o que depende de uma **versão nova do app da TV (Player)** está pronto no código e testado (inclusive no emulador de Android TV), mas **não foi publicado**: a atualização do app pede um OK em cada TV, então a decisão de publicar é sua. A etapa 3 (anunciantes e cotas, cobrança automática, 2FA e auditoria, player web, contas de agência) **não foi iniciada**, como combinado.
+As 13 entregas das Etapas 1 e 2 foram feitas, cada uma num pedido de alteração próprio (PR #1 a #13), com testes e CI verde, e estão **no ar em produção** (servidor e painel). Só o que depende de uma **versão nova do app da TV (Player)** está pronto e testado (inclusive no emulador de Android TV), e a versão **0.14.87 foi publicada em 22/10/2026**: a atualização do app pede um OK em cada TV, então o recurso só aparece em cada TV depois desse OK. Nada foi testado em TV física. A etapa 3 (anunciantes e cotas, cobrança automática, 2FA e auditoria, player web, contas de agência) **não foi iniciada**, como combinado.
 
 **Legenda desta seção:** ✅ pronto e funcionando agora · 🟡 pronto no código mas falta uma ação sua ou o Player novo · ❌ não existe.
 
@@ -22,19 +22,19 @@ As 13 entregas das Etapas 1 e 2 foram feitas, cada uma num pedido de alteração
 | **1.1** Infraestrutura (plano, backup, monitor) | 🟡 | Plano de migração para Supabase Pro + Render Starter na mesma região (`docs/MIGRACAO_PRODUCAO.md`); scripts de backup e de restauração, testados no CI (copia, restaura e confere); rotina diária de backup e alarme de disponibilidade prontos | **Você:** contratar os planos (tem custo), criar as chaves do backup e um monitor externo. **Enquanto isso o backup ainda NÃO roda** e o servidor grátis continua dormindo |
 | **1.2** Licenças e conformidade | 🟡 | Clima trocado para a fonte MET Norway (uso comercial permitido, com a atribuição); política de privacidade, termos, aviso com concordância, prazos por cliente e pedidos de titulares (LGPD) no ar; termos de cada fonte em `docs/FONTES_DE_DADOS.md` | **Você:** razão social/CNPJ e encarregado de dados; escolher quais portais de notícias ficam ligados (3 opções no documento); revisão da política por um advogado |
 | **1.3** Registro de exibição menor | ✅ | Registro compactado e resumo diário por mídia, guardado um ano (V24); contas de capacidade em `docs/CAPACIDADE_BANCO.md` | |
-| **1.4** Pareamento por QR Code | 🟡 | Servidor e painel (`/parear/<código>`) no ar | O **QR na tela da TV** só aparece com o Player novo |
-| **1.5** Diagnóstico da TV | 🟡 | Painel (pedir e ler o diagnóstico) e servidor no ar (V25) | A **tela de diagnóstico e o envio** pela TV exigem o Player novo |
-| **1.6** Inventário básico | 🟡 | Número de série, data de instalação e nota de comodato no painel, e relatório de inventário (V26) | **Modelo, versão do Android e memória** automáticos exigem o Player novo |
+| **1.4** Pareamento por QR Code | 🟡 | Servidor e painel (`/parear/<código>`) no ar | O **QR na tela da TV** só aparece depois que a TV instalar o Player 0.14.87 (publicado; falta o OK na TV) |
+| **1.5** Diagnóstico da TV | 🟡 | Painel (pedir e ler o diagnóstico) e servidor no ar (V25) | A **tela de diagnóstico e o envio** pela TV exigem o Player 0.14.87 (publicado; falta o OK na TV) |
+| **1.6** Inventário básico | 🟡 | Número de série, data de instalação e nota de comodato no painel, e relatório de inventário (V26) | **Modelo, versão do Android e memória** automáticos exigem o Player 0.14.87 (publicado; falta o OK na TV) |
 | **1.7** Primeiros passos | ✅ | Lista de passos no dashboard, com visto, atalho e que some ao concluir | |
 | **2.1** Planos | ✅ | 7 planos novos (Start, Pro, Business, Rede e os 3 de comodato) com preços, limites e recursos (V27, `docs/PLANOS_E_PRECOS.md`) | **TV extra a R$ 9: ❌ o modelo atual não comporta** (a fatura é o preço fixo do plano); a proposta de como fazer está no documento e aguarda seu OK. Desativar os planos antigos: você decide quando |
 | **2.2** E-mail do sistema | 🟡 | Recuperar senha, boas-vindas, aviso de fatura e aviso de TV offline por e-mail, tudo pronto e no ar (V28); envio pela API do Brevo ou do Resend (o plano grátis do Render **bloqueia SMTP**) | **Você:** escolher o provedor e criar a conta (5 passos em `docs/EMAIL.md`; o Brevo não exige domínio próprio). **Nenhum e-mail sai antes disso** |
-| **2.3** Alertar agora | 🟡 | Painel e servidor no ar (V29): aviso em tela cheia, por cima de tudo, para uma TV, um grupo ou todas, com prazo e botão de encerrar. Testado no emulador de Android TV | Chega às TVs só com o **Player novo**. A TV percebe em até 30 s |
+| **2.3** Alertar agora | 🟡 | Painel e servidor no ar (V29): aviso em tela cheia, por cima de tudo, para uma TV, um grupo ou todas, com prazo e botão de encerrar. Testado no emulador de Android TV | Chega a cada TV só depois que ela instalar o Player **0.14.87** (publicado; falta o OK na TV). Instalado, a TV percebe o aviso em até 30 s |
 | **2.4** Validade por item da playlist | ✅ | Datas de início e fim e dias da semana por item, sem campanha (V30); decidido no servidor, então **funciona em todas as versões do Player**, inclusive as instaladas hoje | Limite: uma TV sem internet só vê a virada do dia quando reconectar |
 | **2.5** Resultados do QR e dos cupons | ✅ | Tela **Resultados**: "o conteúdo rodou X vezes, Y cupons foram usados", por dia, por TV (QR Code por TV), por promoção, taxa de uso e CSV (V31) | "Escaneado" = abertura da página da promoção (não prova que pegou o cupom) |
 | **2.6** Modelos por segmento | ✅ barbearia · 🟡 demais | **Modelos prontos**: barbearia, restaurante, clínica, academia e loja criam avisos, relógio, clima, tabela de preços, playlists e layout com os textos da pessoa | Os textos e preços de exemplo são genéricos e precisam de conferência; **só a barbearia** foi desenhada com mais cuidado, e ainda **sem validação com um cliente real** |
 
 ### O que depende de você, em ordem de impacto
-1. **Dizer "pode publicar" o Player novo** (QR de pareamento na TV, diagnóstico, inventário automático e "Alertar agora"). A TV pede OK ao instalar.
+1. **Apertar OK em cada TV** para instalar o Player 0.14.87 (QR de pareamento na TV, diagnóstico, inventário automático e "Alertar agora"); já está publicado.
 2. **Escolher o provedor de e-mail** (docs/EMAIL.md): sem isso, recuperar senha, boas-vindas, fatura e aviso por e-mail **não saem**.
 3. **Infraestrutura paga e backup** (docs/MIGRACAO_PRODUCAO.md): hoje o banco **não tem backup nosso** e o servidor dorme.
 4. **CNPJ, razão social e encarregado**, e **a decisão dos portais de notícias** (conformidade).
@@ -141,7 +141,7 @@ Papéis dentro da empresa: **Visualizador** (só olha), **Editor** (conteúdo e 
 | Status online/offline/nunca conectou, último sinal, versão do app, o que está tocando agora | ✅ | [SQL] `devices.last_seen_at`, `player_version` |
 | Ações em várias TVs ao mesmo tempo (aplicar playlist/layout, mover de local, ativar/desativar, atualizar app) | ✅ | `BulkAction` |
 | Histórico por TV (ativada, offline, playlist trocada, erros do Player) | ✅ | `device_events` |
-| Inventário do equipamento (modelo, número de série, data de instalação, contrato) | 🟡 **[atualizado 22/10]** | Série, data de instalação e nota de comodato no painel e no relatório de inventário (V26). Modelo, Android e memória chegam sozinhos **só com o Player novo** (não publicado). Contrato com vigência e valor ainda não existe |
+| Inventário do equipamento (modelo, número de série, data de instalação, contrato) | 🟡 **[atualizado 22/10]** | Série, data de instalação e nota de comodato no painel e no relatório de inventário (V26). Modelo, Android e memória chegam sozinhos **só com o Player novo** (0.14.87, publicado em 22/10; falta o OK em cada TV). Contrato com vigência e valor ainda não existe |
 
 ### 2.4 Upload de mídia
 | Item | Status | Observação |
@@ -441,7 +441,7 @@ Conclusão: **a banda de mídia só pesa quando há muitos vídeos grandes troca
 | 5 | Anunciantes, pacotes e relatório em PDF | ❌ Etapa 3 |
 | 6 | Controle de fatia do loop | ❌ Etapa 3 |
 | 7 | Cadastro self-service | ❌ Etapa 3 |
-| 8 | Operação de comodato (inventário, diagnóstico remoto) | 🟡 Inventário e diagnóstico prontos; parte depende do Player novo; captura de tela e reinício remoto não existem |
+| 8 | Operação de comodato (inventário, diagnóstico remoto) | 🟡 Inventário e diagnóstico prontos; parte depende de a TV instalar o Player 0.14.87 (já publicado); captura de tela e reinício remoto não existem |
 | 9 | Matriz de aparelhos testados | ❌ Não feito (depende de hardware) |
 | 10 | Moderação e medição de banda | ❌ Não feito |
 
