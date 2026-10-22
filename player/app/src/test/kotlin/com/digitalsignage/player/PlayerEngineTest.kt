@@ -177,6 +177,30 @@ class PlayerEngineTest {
     }
 
     @Test
+    fun `passes a panel request for a diagnostic to the app, and tells never from long ago`() = runTest {
+        val a = itemFor(1, imgA)
+        downloader.files[a.url] = imgA
+        val tokens = mutableListOf<Long>()
+        api.registerResponse = { active() }
+        api.heartbeatResponse = { Desired(5, 1, diagnosticToken = 888) }
+        api.configResponse = { configOf(5, 1, a) }
+        val cache = MediaCache(File(folder.root, "media"))
+        val store = InMemoryStore()
+        val engine = PlayerEngine(
+            api, ConfigSync(api, downloader, cache, store), store, token = { "tok" }, playerVersion = "0.2.0",
+            timing = timing, onDiagnosticRequested = { tokens += it },
+        )
+        assertEquals(null, engine.secondsSinceContact()) // o servidor ainda não respondeu nesta abertura
+
+        startEngine(engine)
+        advanceTimeBy(30_001)
+        runCurrent()
+
+        assertEquals(listOf(888L, 888L), tokens.take(2))
+        assertEquals(true, engine.secondsSinceContact() != null)
+    }
+
+    @Test
     fun `does not call the update callback when no check was requested`() = runTest {
         val a = itemFor(1, imgA)
         downloader.files[a.url] = imgA

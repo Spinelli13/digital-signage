@@ -37,6 +37,9 @@ interface PlayerApi {
     /** Os dados mais recentes de um widget (clima, notícias, cotações): o JSON como o servidor mandou. */
     suspend fun widgetData(token: String, url: String): String = throw IOException("Este servidor não entrega dados de widgets")
 
+    /** Entrega o relatório de diagnóstico da TV (texto curto para o suporte e quantos itens estão com problema). */
+    suspend fun sendDiagnostics(token: String, report: String, issues: Int) {}
+
     /** Entrega registros de exibição; devolve até que número de ordem o servidor já tem. */
     suspend fun sendPlays(token: String, deviceTimeMs: Long, records: List<PlayRecord>): Long = records.maxOfOrNull { it.seq } ?: 0
 }
@@ -76,6 +79,10 @@ class HttpPlayerApi(
     }
 
     override suspend fun widgetData(token: String, url: String): String = send(get(url, token))
+
+    override suspend fun sendDiagnostics(token: String, report: String, issues: Int) {
+        send(post("/api/v1/player/diagnostics", JSONObject().put("report", report).put("issues", issues), token))
+    }
 
     override suspend fun sendPlays(token: String, deviceTimeMs: Long, records: List<PlayRecord>): Long {
         val entries = org.json.JSONArray().also { array -> records.forEach { array.put(PlayLog.toJson(it)) } }

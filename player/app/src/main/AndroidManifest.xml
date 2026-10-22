@@ -3,6 +3,8 @@
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Só para o diagnóstico saber se há internet de verdade (nunca altera a rede). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Android 10+ só deixa o app abrir sozinho após o boot se tiver "exibir sobre outros apps".
          O usuário concede uma vez (ver player/README.md). -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />

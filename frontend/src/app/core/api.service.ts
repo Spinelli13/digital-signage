@@ -8,6 +8,7 @@ import { filtersToParams } from './device-filters';
 import {
   ActivateRequest,
   PairingInfo,
+  DeviceDiagnostic,
   Alert,
   BulkRequest,
   Campaign,
@@ -124,6 +125,16 @@ export class ApiService {
   // dispositivos
   devices(filters: DeviceFilters = {}): Observable<Device[]> {
     return this.http.get<Device[]>(this.url('/devices'), { params: filtersToParams(filters) });
+  }
+
+  /** O último relatório de diagnóstico da TV. */
+  deviceDiagnostic(id: number): Observable<DeviceDiagnostic> {
+    return this.http.get<DeviceDiagnostic>(this.url(`/devices/${id}/diagnostic`));
+  }
+
+  /** Pede que a TV mande o diagnóstico agora (ela responde no próximo contato, em até 30 segundos). */
+  requestDeviceDiagnostic(id: number): Observable<DeviceDiagnostic> {
+    return this.http.post<DeviceDiagnostic>(this.url(`/devices/${id}/diagnostic-request`), {});
   }
 
   /** Confere o código que o QR Code da TV trouxe (404 se não existe, expirou ou já foi pareado). */

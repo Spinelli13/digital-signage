@@ -109,6 +109,14 @@ export interface DeviceUpdateRequest {
   orientation?: ScreenOrientation;
 }
 
+/** O último relatório de diagnóstico que a TV mandou (nulos se nunca mandou) e quando o painel pediu o próximo. */
+export interface DeviceDiagnostic {
+  report: string | null;
+  issues: number;
+  receivedAt: string | null;
+  requestedAt: string | null;
+}
+
 /** O que o painel sabe de uma TV que espera o pareamento (a que o QR Code identifica). */
 export interface PairingInfo {
   code: string;

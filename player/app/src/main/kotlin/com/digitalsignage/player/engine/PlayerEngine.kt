@@ -71,6 +71,8 @@ class PlayerEngine(
     private val onError: (String) -> Unit = {},
     /** Chamado a cada heartbeat que traz um pedido de verificação de atualização (valor do pedido). */
     private val onUpdateCheckRequested: (Long) -> Unit = {},
+    /** Chamado a cada heartbeat que traz um pedido de diagnóstico (valor do pedido). */
+    private val onDiagnosticRequested: (Long) -> Unit = {},
     /** O que o Player conta ao servidor a cada heartbeat (ocorrências, mídia na tela, exibições). */
     private val telemetry: Telemetry = Telemetry.shared,
     /** O diário de exibição (comprovação): entregue ao servidor depois de cada heartbeat. */
@@ -89,6 +91,9 @@ class PlayerEngine(
     private var lastContactAt = 0L
     private var offline = false
 
+    /** O servidor já respondeu alguma vez desde que o Player abriu? (o diagnóstico diferencia "nunca" de "faz tempo") */
+    @Volatile private var everContacted = false
+
     /** A tela mostra o que a agenda guardada mandou (não o que o servidor confirmou): ao reconectar, o servidor tem a palavra final. */
     private var showsLocalPlan = false
     private var lastPlanKey: Pair<Long?, Long?>? = null
@@ -96,6 +101,9 @@ class PlayerEngine(
     /** A configuração mudou desde a última atualização dos dados dos widgets: buscar já, sem esperar o intervalo. */
     private var widgetsDirty = true
     private var lastWidgetRefresh = 0L
+
+    /** Há quantos segundos o servidor respondeu pela última vez; nulo se ainda não respondeu desde que o Player abriu. */
+    fun secondsSinceContact(): Long? = if (everContacted) (clock.uptime() - lastContactAt).coerceAtLeast(0) / 1000 else null
 
     suspend fun run() {
         coroutineScope {
@@ -214,6 +222,7 @@ class PlayerEngine(
             telemetry.acknowledge(report)
             noteContact(desired.serverTimeMs)
             if (desired.updateCheckToken > 0) onUpdateCheckRequested(desired.updateCheckToken)
+            if (desired.diagnosticToken > 0) onDiagnosticRequested(desired.diagnosticToken)
             uploadPlays()
 
             // A sincronização roda à parte para o heartbeat continuar mesmo durante downloads longos.
@@ -311,6 +320,7 @@ class PlayerEngine(
 
     /** O servidor respondeu: acerta o relógio confiável e, se a TV estava sem contato, registra a volta. */
     private fun noteContact(serverTimeMs: Long) {
+        everContacted = true
         clock.sync(serverTimeMs)
         if (offline) {
             offline = false
