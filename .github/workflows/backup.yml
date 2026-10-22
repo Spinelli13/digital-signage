@@ -58,6 +58,8 @@ jobs:
         run: |
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo apt-get install -y postgresql-client-17
+          # o runner já traz o cliente 16 no caminho; o pg_dump 16 recusa falar com um servidor 17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
 
       - name: Copia o banco (criptografada)
         if: env.HAS_DB == 'true'
