@@ -215,6 +215,7 @@ Faça nesta ordem e marque:
 - [ ] Altere a playlist no painel: a TV atualiza em até 1 minuto.
 - [ ] **Sem internet:** desligue o Wi‑Fi do roteador por 2 minutos. A TV deve **continuar exibindo**. Ao religar, volta a ficar Online.
 - [ ] **Reinício:** desligue a TV da tomada e ligue de novo. O Player deve **abrir sozinho** e voltar a exibir (precisa da permissão "Exibir sobre outros apps").
+- [ ] **Diagnóstico:** com o conteúdo no ar, aperte **OK** no controle (ou **Info/Menu**). Aparece o **Diagnóstico da TV** com a internet, o servidor, o espaço livre, a última sincronização, o que falta baixar e as permissões; linhas com **!!** são problema. **Enviar ao suporte** manda o relatório ao painel (aparece no Histórico da TV). Ele fecha sozinho em 90 segundos.
 
 ---
 

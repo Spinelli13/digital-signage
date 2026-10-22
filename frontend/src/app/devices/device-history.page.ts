@@ -1,12 +1,13 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { ApiService } from '../core/api.service';
+import { AuthService } from '../core/auth.service';
 import { connectionOf, deviceState, formatDateTime, timeAgo } from '../core/format';
 import { TPipe, trServer } from '../core/i18n';
 import { EVENT_LABELS, EVENT_TYPES, eventLabel, eventTone, levelLabel } from '../core/monitoring-labels';
-import { Device, DeviceEvent, EventLevel, EventType } from '../core/models';
+import { Device, DeviceDiagnostic, DeviceEvent, EventLevel, EventType } from '../core/models';
 import { SITUATION } from '../shared/connection';
 import { IconComponent } from '../shared/icon';
 import { EmptyStateComponent, PageHeaderComponent, PillComponent, SkeletonComponent } from '../shared/ui';
@@ -39,6 +40,32 @@ const REFRESH_MS = 15_000;
         }
       </div>
     }
+
+    <section class="card diag" data-testid="diagnostic">
+      <div class="diag-head">
+        <h2><app-icon name="life-buoy" [size]="18" />{{ 'Diagnóstico da TV' | t }}</h2>
+        @if (diagnostic(); as diag) {
+          @if (diag.receivedAt) {
+            <app-pill [tone]="diag.issues === 0 ? 'ok' : 'warn'" [icon]="diag.issues === 0 ? 'circle-check' : 'triangle-alert'">{{ (diag.issues === 0 ? 'Tudo certo' : '{n} item(ns) com problema') | t: { n: diag.issues } }}</app-pill>
+            <time class="when" [attr.datetime]="diag.receivedAt">{{ when(diag.receivedAt) }}</time>
+          }
+        }
+        <span class="grow"></span>
+        @if (diagnostic()?.report) {
+          <button class="secondary" (click)="copy()"><app-icon name="copy" [size]="16" />{{ (copied() ? 'Copiado!' : 'Copiar relatório') | t }}</button>
+        }
+        @if (auth.can('admin')) {
+          <button class="secondary" (click)="requestDiagnostic()" [disabled]="requesting() || waiting()"><app-icon name="refresh-cw" [size]="16" />{{ (waiting() ? 'Aguardando a TV…' : 'Pedir diagnóstico agora') | t }}</button>
+        }
+      </div>
+      @if (diagnostic()?.report; as report) {
+        <pre class="report" tabindex="0">{{ report }}</pre>
+      } @else if (waiting()) {
+        <p class="label">{{ 'Pedido enviado: a TV responde no próximo contato com o servidor (até 30 segundos).' | t }}</p>
+      } @else {
+        <p class="label">{{ 'A TV ainda não mandou nenhum relatório. Peça um diagnóstico, ou abra o diagnóstico na própria TV (botão OK do controle) e escolha Enviar ao suporte.' | t }}</p>
+      }
+    </section>
 
     <div class="card filters">
       <select [attr.aria-label]="'Tipo de evento' | t" [ngModel]="type()" (ngModelChange)="setType($event)">
@@ -92,6 +119,12 @@ const REFRESH_MS = 15_000;
     .back { margin: 0 0 10px; }
     .back a { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; text-decoration: none; }
     .facts { display: flex; gap: 8px; flex-wrap: wrap; margin: -8px 0 18px; }
+    .diag { margin-bottom: 14px; padding: 16px; }
+    .diag-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .diag-head h2 { margin: 0; display: inline-flex; align-items: center; gap: 8px; font-size: 17px; }
+    .diag .grow { flex: 1; }
+    .report { margin: 12px 0 0; padding: 12px 14px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; font-family: var(--mono, ui-monospace, monospace); font-size: 13px; line-height: 1.55; background: var(--panel-3); border: 1px solid var(--line); border-radius: var(--r); }
+    .diag .label { margin: 12px 0 0; color: var(--muted); }
     .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; padding: 14px; }
     .filters select { width: auto; min-width: 180px; }
     .timeline { list-style: none; margin: 0; padding: 0; }
@@ -119,10 +152,20 @@ const REFRESH_MS = 15_000;
 })
 export class DeviceHistoryPage implements OnInit {
   private readonly api = inject(ApiService);
+  protected readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly device = signal<Device | null>(null);
+  readonly diagnostic = signal<DeviceDiagnostic | null>(null);
+  readonly requesting = signal(false);
+  readonly copied = signal(false);
+
+  /** O painel pediu e a TV ainda não respondeu (o relatório que há é anterior ao pedido). */
+  readonly waiting = computed(() => {
+    const diag = this.diagnostic();
+    return !!diag?.requestedAt && (!diag.receivedAt || diag.requestedAt > diag.receivedAt);
+  });
   readonly events = signal<DeviceEvent[]>([]);
   readonly loaded = signal(false);
   readonly hasMore = signal(false);
@@ -147,14 +190,46 @@ export class DeviceHistoryPage implements OnInit {
   ngOnInit(): void {
     this.deviceId = Number(this.route.snapshot.paramMap.get('id'));
     this.api.device(this.deviceId).subscribe({ next: (device) => this.device.set(device), error: () => undefined });
+    this.loadDiagnostic();
     this.reload();
     // Só a primeira página se atualiza sozinha; quem já abriu páginas antigas não perde o lugar.
     const timer = setInterval(() => {
       if (this.events().length <= PAGE_SIZE) {
         this.reload();
       }
+      this.loadDiagnostic();
     }, REFRESH_MS);
     this.destroyRef.onDestroy(() => clearInterval(timer));
+  }
+
+  private loadDiagnostic(): void {
+    this.api.deviceDiagnostic(this.deviceId).subscribe({ next: (diag) => this.diagnostic.set(diag), error: () => undefined });
+  }
+
+  requestDiagnostic(): void {
+    this.requesting.set(true);
+    this.api.requestDeviceDiagnostic(this.deviceId).subscribe({
+      next: (diag) => {
+        this.diagnostic.set(diag);
+        this.requesting.set(false);
+      },
+      error: () => this.requesting.set(false),
+    });
+  }
+
+  /** Copia o relatório para colar no atendimento (e mostra "Copiado!" por um instante). */
+  async copy(): Promise<void> {
+    const report = this.diagnostic()?.report;
+    if (!report) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(report);
+      this.copied.set(true);
+      setTimeout(() => this.copied.set(false), 2500);
+    } catch {
+      // sem permissão para a área de transferência: o texto está na tela, dá para selecionar e copiar
+    }
   }
 
   setType(value: EventType | ''): void {

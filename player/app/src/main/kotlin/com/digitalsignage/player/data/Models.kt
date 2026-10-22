@@ -166,6 +166,8 @@ data class Desired(
     val planVersion: Long = 0,
     /** A hora do servidor neste contato (0 = servidor antigo): acerta o relógio confiável da TV. */
     val serverTimeMs: Long = 0,
+    /** Muda quando o painel pede o diagnóstico da TV (0 = nunca pediu): a TV manda um relatório novo. */
+    val diagnosticToken: Long = 0,
 )
 
 /** Config junto com o JSON original, que é o que fica persistido no aparelho. */
@@ -297,6 +299,7 @@ object Json {
             playlistId = if (json.isNull("playlistId")) null else json.getLong("playlistId"),
             configVersion = json.optLong("configVersion"),
             updateCheckToken = json.optLong("updateCheckToken", 0),
+            diagnosticToken = json.optLong("diagnosticToken", 0),
             campaignId = if (json.isNull("campaignId")) null else json.optLong("campaignId"),
             planVersion = json.optLong("planVersion", 0),
             serverTimeMs = parseServerTime(json.opt("serverTime")),

@@ -3,8 +3,10 @@ import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@a
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 
+import { AuthService } from '../core/auth.service';
 import { ConfigService } from '../core/config.service';
-import { Device, DeviceEvent } from '../core/models';
+import { Device, DeviceDiagnostic, DeviceEvent } from '../core/models';
+import { meFixture } from '../testing/fixtures';
 import { DeviceHistoryPage } from './device-history.page';
 
 const API = 'http://api.test/api/v1';
@@ -41,7 +43,7 @@ const event = (id: number, overrides: Partial<DeviceEvent> = {}): DeviceEvent =>
   ...overrides,
 });
 
-function setup() {
+function setup(role: 'ADMIN' | 'VIEWER' = 'ADMIN') {
   TestBed.configureTestingModule({
     providers: [
       provideHttpClient(),
@@ -51,6 +53,7 @@ function setup() {
     ],
   });
   TestBed.inject(ConfigService).apiBaseUrl = 'http://api.test';
+  TestBed.inject(AuthService).me.set(meFixture(role));
   const backend = TestBed.inject(HttpTestingController);
   const fixture = TestBed.createComponent(DeviceHistoryPage);
   return { page: fixture.componentInstance, backend, fixture };
@@ -65,8 +68,10 @@ function eventsRequest(backend: HttpTestingController, query: Record<string, str
   });
 }
 
-function start(events: DeviceEvent[] = [event(2), event(1)], render = false, device: Device = tv()) {
-  const ctx = setup();
+const NO_DIAGNOSTIC: DeviceDiagnostic = { report: null, issues: 0, receivedAt: null, requestedAt: null };
+
+function start(events: DeviceEvent[] = [event(2), event(1)], render = false, device: Device = tv(), diagnostic: DeviceDiagnostic = NO_DIAGNOSTIC, role: 'ADMIN' | 'VIEWER' = 'ADMIN') {
+  const ctx = setup(role);
   // Sem desenhar a tela chamamos o ngOnInit à mão; desenhando, é o primeiro detectChanges que o chama.
   if (render) {
     ctx.fixture.detectChanges();
@@ -74,6 +79,7 @@ function start(events: DeviceEvent[] = [event(2), event(1)], render = false, dev
     ctx.page.ngOnInit();
   }
   ctx.backend.expectOne(`${API}/devices/5`).flush(device);
+  ctx.backend.expectOne(`${API}/devices/5/diagnostic`).flush(diagnostic);
   eventsRequest(ctx.backend).flush(events);
   return ctx;
 }
@@ -190,4 +196,64 @@ describe('DeviceHistoryPage', () => {
     expect(page.events()).toHaveLength(3);
     backend.verify();
   });
+describe('DeviceHistoryPage — diagnóstico da TV', () => {
+  const REPORT = 'Vyzzu Player 0.14.70 | Android 11\nOK Internet: conectada\n!! Instalar apps (atualização): FALTA';
+
+  const text = (fixture: { detectChanges(): void; nativeElement: unknown }) => {
+    fixture.detectChanges();
+    return ((fixture.nativeElement as HTMLElement).textContent ?? '').replace(/\s+/g, ' ');
+  };
+
+  it('shows the last report, how many items have a problem, and lets an Administrator copy it', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    const { page, fixture, backend } = start([event(1)], true, tv(), { report: REPORT, issues: 1, receivedAt: '2026-11-05T12:00:00Z', requestedAt: null });
+    await fixture.whenStable();
+
+    expect(text(fixture)).toContain('1 item(ns) com problema');
+    expect((fixture.nativeElement as HTMLElement).querySelector('pre.report')?.textContent).toBe(REPORT);
+
+    await page.copy();
+    expect(writeText).toHaveBeenCalledWith(REPORT);
+    expect(page.copied()).toBe(true);
+    backend.verify();
+    vi.unstubAllGlobals();
+  });
+
+  it('says everything is fine when no item has a problem', async () => {
+    const { fixture } = start([event(1)], true, tv(), { report: REPORT, issues: 0, receivedAt: '2026-11-05T12:00:00Z', requestedAt: null });
+    await fixture.whenStable();
+
+    expect(text(fixture)).toContain('Tudo certo');
+  });
+
+  it('asks the TV for a diagnostic and waits for the answer', async () => {
+    const { page, fixture, backend } = start([event(1)], true);
+    await fixture.whenStable();
+    expect(text(fixture)).toContain('A TV ainda não mandou nenhum relatório');
+
+    page.requestDiagnostic();
+    backend.expectOne({ method: 'POST', url: `${API}/devices/5/diagnostic-request` }).flush({ report: null, issues: 0, receivedAt: null, requestedAt: '2026-11-05T12:05:00Z' });
+
+    expect(page.waiting()).toBe(true);
+    expect(text(fixture)).toContain('Pedido enviado');
+    expect(text(fixture)).toContain('Aguardando a TV');
+    backend.verify();
+  });
+
+  it('keeps showing the old report while the new one is awaited, and stops waiting when it arrives', () => {
+    const { page } = start([event(1)], false, tv(), { report: REPORT, issues: 0, receivedAt: '2026-11-05T12:00:00Z', requestedAt: '2026-11-05T12:05:00Z' });
+    expect(page.waiting()).toBe(true);
+
+    page.diagnostic.set({ report: REPORT, issues: 0, receivedAt: '2026-11-05T12:05:20Z', requestedAt: '2026-11-05T12:05:00Z' });
+    expect(page.waiting()).toBe(false);
+  });
+
+  it('does not offer the request button to someone who is not an Administrator', async () => {
+    const { fixture } = start([event(1)], true, tv(), NO_DIAGNOSTIC, 'VIEWER');
+    await fixture.whenStable();
+
+    expect(text(fixture)).not.toContain('Pedir diagnóstico agora');
+  });
+});
 });

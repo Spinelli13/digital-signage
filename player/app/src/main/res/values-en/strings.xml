@@ -21,6 +21,12 @@
     <string name="no_content_title">Waiting for content</string>
     <string name="no_content_body">This device is active but does not have a playlist yet. Choose one in the panel.</string>
 
+    <string name="diag_title">TV diagnostics</string>
+    <string name="diag_send">Send to support</string>
+    <string name="diag_close">Close</string>
+    <string name="diag_sent">Report sent to support.</string>
+    <string name="diag_failed">Could not send the report right now.</string>
+    <string name="server_dialog_diagnostics">Diagnostics</string>
     <string name="server_dialog_title">Server address</string>
     <string name="server_dialog_ok">Save</string>
     <string name="server_dialog_cancel">Cancel</string>

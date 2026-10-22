@@ -9,6 +9,8 @@ import android.view.WindowManager
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.ScrollView
+import android.widget.Toast
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -18,6 +20,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.ui.PlayerView
 import com.digitalsignage.player.cache.MediaCache
 import com.digitalsignage.player.data.HttpPlayerApi
+import com.digitalsignage.player.diagnostics.Diagnostics
+import com.digitalsignage.player.diagnostics.DiagnosticsCollector
+import com.digitalsignage.player.diagnostics.DiagnosticsReport
 import com.digitalsignage.player.data.ScreenOrientation
 import com.digitalsignage.player.data.Settings
 import com.digitalsignage.player.engine.EngineState
@@ -54,6 +59,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var settings: Settings
     private lateinit var engine: PlayerEngine
+    private lateinit var api: HttpPlayerApi
+    private lateinit var diagnostics: DiagnosticsCollector
     private lateinit var slideshow: Slideshow
     private var engineJob: Job? = null
 
@@ -109,7 +116,7 @@ class MainActivity : AppCompatActivity() {
             state = settings,
             onDropped = { reporter.report("O diário de exibição ficou cheio sem internet: $it registro(s) mais antigo(s) foram descartados.", 0) },
         )
-        val api = HttpPlayerApi(baseUrl = { settings.serverUrl })
+        api = HttpPlayerApi(baseUrl = { settings.serverUrl })
         // Widgets: o último dado de cada um fica no aparelho (clima, notícias e cotações continuam aparecendo sem internet).
         val widgetStore = WidgetStore(java.io.File(filesDir, "widgets"))
         val widgetHost = WidgetHost(AndroidWidgetAssets(applicationContext), widgetStore, clock)
@@ -121,19 +128,37 @@ class MainActivity : AppCompatActivity() {
             remember = { settings.lastUpdateToken = it },
             request = { updates.requestCheck() },
         )
+        val sync = ConfigSync(
+            api, api, cache, settings,
+            freeBytes = { filesDir.usableSpace },
+            clock = clock,
+            onNotice = { Telemetry.shared.event(Level.WARN, it) },
+        )
+        diagnostics = DiagnosticsCollector(
+            context = applicationContext,
+            versionName = BuildConfig.VERSION_NAME,
+            serverUrl = { settings.serverUrl },
+            cache = cache,
+            store = settings,
+            contactAgoSec = { engine.secondsSinceContact() },
+            lastSyncAtMs = { sync.lastSyncAtMs },
+            nowMs = { clock.now() },
+        )
+        // O painel pode pedir o diagnóstico sem ninguém estar na frente da TV: um relatório por pedido.
+        val diagnosticTrigger = UpdateRequestTrigger(
+            lastHandled = { settings.lastDiagnosticToken },
+            remember = { settings.lastDiagnosticToken = it },
+            request = { sendDiagnostics(Diagnostics.build(diagnostics.collect()), silent = true) },
+        )
         engine = PlayerEngine(
             api = api,
-            sync = ConfigSync(
-                api, api, cache, settings,
-                freeBytes = { filesDir.usableSpace },
-                clock = clock,
-                onNotice = { Telemetry.shared.event(Level.WARN, it) },
-            ),
+            sync = sync,
             store = settings,
             token = { settings.deviceToken },
             playerVersion = BuildConfig.VERSION_NAME,
             onError = { reporter.report(it) },
             onUpdateCheckRequested = updateTrigger::onHeartbeat,
+            onDiagnosticRequested = diagnosticTrigger::onHeartbeat,
             plays = playLog,
             clock = clock,
             widgets = WidgetRefresher(api, widgetStore),
@@ -240,6 +265,11 @@ class MainActivity : AppCompatActivity() {
             showServerDialog()
             return true
         }
+        // Com o conteúdo no ar, OK (ou INFO/MENU no controle) abre o diagnóstico para quem está instalando a TV.
+        if (select || keyCode == KeyEvent.KEYCODE_INFO || keyCode == KeyEvent.KEYCODE_MENU) {
+            showDiagnostics()
+            return true
+        }
         return super.onKeyDown(keyCode, event)
     }
 
@@ -337,7 +367,40 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             .setNegativeButton(R.string.server_dialog_cancel, null)
+            .setNeutralButton(R.string.server_dialog_diagnostics) { _, _ -> showDiagnostics() }
             .show()
+    }
+
+    /**
+     * O diagnóstico da TV: internet, servidor, espaço, última sincronização, o que falta baixar e as permissões. "Enviar ao suporte"
+     * manda o mesmo texto ao servidor (aparece no histórico da TV, no painel). Fecha sozinho: ninguém fica preso na tela.
+     */
+    private fun showDiagnostics() {
+        val report = Diagnostics.build(diagnostics.collect())
+        val text = TextView(this).apply {
+            this.text = report.text()
+            typeface = android.graphics.Typeface.MONOSPACE
+            textSize = 15f
+            setPadding(48, 24, 48, 0)
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.diag_title)
+            .setView(ScrollView(this).apply { addView(text) })
+            .setPositiveButton(R.string.diag_send) { _, _ -> sendDiagnostics(report, silent = false) }
+            .setNegativeButton(R.string.diag_close, null)
+            .show()
+        lifecycleScope.launch {
+            delay(DIAGNOSTICS_AUTO_CLOSE_MS)
+            if (dialog.isShowing) dialog.dismiss()
+        }
+    }
+
+    /** Manda o relatório ao servidor. [silent]: pedido pelo painel, sem avisar na tela da TV. */
+    private fun sendDiagnostics(report: DiagnosticsReport, silent: Boolean) {
+        lifecycleScope.launch(CoroutineExceptionHandler { _, _ -> }) {
+            val sent = runCatching { api.sendDiagnostics(settings.deviceToken, report.text(), report.issues) }.isSuccess
+            if (!silent) Toast.makeText(this@MainActivity, if (sent) R.string.diag_sent else R.string.diag_failed, Toast.LENGTH_LONG).show()
+        }
     }
 
     /**
@@ -377,3 +440,6 @@ class MainActivity : AppCompatActivity() {
     }
 
 }
+
+/** O diagnóstico na tela fecha sozinho depois deste tempo (ninguém fica preso numa TV sem controle). */
+private const val DIAGNOSTICS_AUTO_CLOSE_MS = 90_000L

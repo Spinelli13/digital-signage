@@ -40,6 +40,9 @@ class ConfigSync(
 ) {
 
     private var lastSyncAt = 0L
+
+    /** Quando a configuração foi sincronizada pela última vez (milissegundos; 0 = ainda não, desde que o Player abriu). */
+    val lastSyncAtMs: Long get() = lastSyncAt
     private var prefetchRetryAt = 0L
 
     /**

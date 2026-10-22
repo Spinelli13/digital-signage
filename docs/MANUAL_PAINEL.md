@@ -477,6 +477,8 @@ Use os filtros de **tipo** e **nível** (só erros, só avisos…) e **Carregar 
 
 Em **Dispositivos**, a linha da TV também mostra **"Na tela: …"** (com o ícone de play): a mídia que o Player disse estar exibindo no último contato.
 
+**Diagnóstico da TV.** No alto do Histórico há o cartão **Diagnóstico da TV**: o último relatório que a própria TV montou, num texto curto que serve ao suporte. Cada linha começa com **OK** ou **!!** (problema) e mostra: **internet**, se o **servidor** responde (e há quanto tempo), **espaço livre** e quanto conteúdo está guardado, a **última sincronização**, **o que falta baixar**, a versão do Player, o modelo, o Android e a memória, e as **permissões** (iniciar com a TV, sobrepor outros apps e instalar apps, que o Player precisa para voltar sozinho e se atualizar). O selo no alto diz **Tudo certo** ou quantos itens estão com problema. O botão **Copiar relatório** coloca o texto na área de transferência para colar no atendimento. O botão **Pedir diagnóstico agora** (Administrador) faz a TV mandar um relatório novo no próximo contato, em até 30 segundos, **sem ninguém precisar estar na frente dela**.
+
 ### 9.2 Alertas
 
 Abra **Alertas** no menu. O painel abre um alerta **sozinho** quando:

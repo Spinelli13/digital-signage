@@ -84,6 +84,10 @@ public class Device {
 	@Column(name = "update_requested_at")
 	private Instant updateRequestedAt;
 
+	/** Quando o painel pediu o relatório de diagnóstico; a TV percebe no próximo heartbeat. */
+	@Column(name = "diagnostic_requested_at")
+	private Instant diagnosticRequestedAt;
+
 	/** Último estado de conexão que o monitoramento já registrou como evento (para gravar só as transições). */
 	@Column(name = "recorded_connection")
 	private String recordedConnection;
@@ -141,6 +145,15 @@ public class Device {
 		this.lastSeenAt = now;
 		this.playerVersion = playerVersion;
 		this.configVersion = syncedConfigVersion;
+	}
+
+	/** Pede que a TV mande agora um relatório de diagnóstico. */
+	public void requestDiagnostic(Instant now) {
+		this.diagnosticRequestedAt = now;
+	}
+
+	public Instant getDiagnosticRequestedAt() {
+		return diagnosticRequestedAt;
 	}
 
 	/** Pede que a TV consulte agora o site de downloads por uma versão nova do Player. */

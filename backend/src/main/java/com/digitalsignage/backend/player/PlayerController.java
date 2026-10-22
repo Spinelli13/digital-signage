@@ -21,6 +21,7 @@ import com.digitalsignage.backend.campaign.Campaign;
 import com.digitalsignage.backend.campaign.CampaignService;
 import com.digitalsignage.backend.device.Device;
 import com.digitalsignage.backend.device.DeviceConnection;
+import com.digitalsignage.backend.device.DeviceDiagnosticService;
 import com.digitalsignage.backend.device.DeviceRepository;
 import com.digitalsignage.backend.device.DeviceStatus;
 import com.digitalsignage.backend.device.OfflinePlanService;
@@ -51,6 +52,7 @@ public class PlayerController {
 	private final MonitoringService monitoringService;
 	private final DeviceLookup deviceLookup;
 	private final PanelUrl panelUrl;
+	private final DeviceDiagnosticService diagnostics;
 	private final Clock clock;
 	private final SecureRandom random = new SecureRandom();
 
@@ -62,6 +64,7 @@ public class PlayerController {
 			MonitoringService monitoringService,
 			DeviceLookup deviceLookup,
 			PanelUrl panelUrl,
+			DeviceDiagnosticService diagnostics,
 			Clock clock) {
 		this.deviceRepository = deviceRepository;
 		this.playerConfigService = playerConfigService;
@@ -70,6 +73,7 @@ public class PlayerController {
 		this.monitoringService = monitoringService;
 		this.deviceLookup = deviceLookup;
 		this.panelUrl = panelUrl;
+		this.diagnostics = diagnostics;
 		this.clock = clock;
 	}
 
@@ -87,6 +91,14 @@ public class PlayerController {
 					.orElseThrow(() -> new NoSuchElementException("Dispositivo não encontrado: " + known.get().id())));
 		}
 		return TenantContext.callAs(TenantContext.POOL_ID, () -> registerNew(tokenHash, request.playerVersion()));
+	}
+
+	/** O relatório de diagnóstico que a TV montou (pedido pelo painel ou aberto por quem está na frente dela). */
+	@PostMapping("/diagnostics")
+	@Transactional
+	public void diagnostics(@AuthenticationPrincipal Long deviceId, @Valid @RequestBody PlayerDiagnosticRequest request) {
+		findOrThrow(deviceId);
+		diagnostics.save(deviceId, request.report().strip(), request.issues() == null ? 0 : request.issues(), clock.instant());
 	}
 
 	@GetMapping("/status")
@@ -125,7 +137,8 @@ public class PlayerController {
 		PlayerConfigResponse desired = playerConfigService.buildFor(device, effective);
 		long updateCheckToken = device.getUpdateRequestedAt() == null ? 0 : device.getUpdateRequestedAt().toEpochMilli();
 		return new PlayerHeartbeatResponse(desired.playlistId(), desired.configVersion(), now, updateCheckToken, desired.campaignId(),
-				offlinePlanService.versionFor(device, enabled));
+				offlinePlanService.versionFor(device, enabled),
+				device.getDiagnosticRequestedAt() == null ? 0 : device.getDiagnosticRequestedAt().toEpochMilli());
 	}
 
 	private PlayerStatusResponse registerNew(String tokenHash, String playerVersion) {

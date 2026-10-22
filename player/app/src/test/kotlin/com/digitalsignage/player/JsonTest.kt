@@ -122,6 +122,15 @@ class JsonTest {
     }
 
     @Test
+    fun `reads the diagnostic request token and treats its absence as none`() {
+        val asked = Json.parseDesired("""{"playlistId":4,"configVersion":9,"serverTime":"x","diagnosticToken":1789000000456}""")
+        assertEquals(1_789_000_000_456L, asked.diagnosticToken)
+
+        val old = Json.parseDesired("""{"playlistId":4,"configVersion":9,"serverTime":"x"}""")
+        assertEquals(0L, old.diagnosticToken)
+    }
+
+    @Test
     fun `reads the update check token and treats its absence as none`() {
         val asked = Json.parseDesired("""{"playlistId":4,"configVersion":9,"serverTime":"x","updateCheckToken":1789000000123}""")
         assertEquals(1_789_000_000_123L, asked.updateCheckToken)

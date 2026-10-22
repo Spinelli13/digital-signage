@@ -120,6 +120,13 @@ class Settings(context: Context) : ConfigStore, com.digitalsignage.player.proof.
             prefs.edit().putString(KEY_RESTART_REASON, value).commit()
         }
 
+    /** Último pedido de diagnóstico (vindo do painel) que este aparelho já tratou. */
+    var lastDiagnosticToken: Long
+        get() = prefs.getLong(KEY_DIAGNOSTIC_TOKEN, 0)
+        set(value) {
+            prefs.edit().putLong(KEY_DIAGNOSTIC_TOKEN, value).commit()
+        }
+
     /** Último pedido de verificação de atualização (vindo do painel) que este aparelho já tratou. */
     var lastUpdateToken: Long
         get() = prefs.getLong(KEY_UPDATE_TOKEN, 0)
@@ -166,6 +173,7 @@ class Settings(context: Context) : ConfigStore, com.digitalsignage.player.proof.
         const val KEY_UPDATE_WINDOW = "update_window"
         const val KEY_UPDATE_STATUS = "update_status"
         const val KEY_UPDATE_TOKEN = "update_token"
+        const val KEY_DIAGNOSTIC_TOKEN = "diagnostic_token"
         const val KEY_LAST_CRASH = "last_crash"
         const val KEY_CLOCK_OFFSET = "clock_offset_ms"
         const val KEY_PLAY_SEQ = "play_seq"
