@@ -40,7 +40,7 @@
 
   var STR = {
     'pt-BR': {
-      humidity: 'Umidade', wind: 'Vento', rain: 'chuva', updated: 'atualizado há', updatedAt: 'Atualizado às',
+      humidity: 'Umidade', wind: 'Vento', rain: 'chuva', noRain: 'sem chuva', updated: 'atualizado há', updatedAt: 'Atualizado às',
       noData: 'Sem dados no momento', noDataHint: 'Assim que a conexão voltar, o conteúdo aparece aqui.',
       noNews: 'Sem notícias no momento', next: 'A seguir', source: 'Fonte', ratesSource: 'Fonte: Banco Central Europeu', soldOut: 'Esgotado', noItems: 'Nenhum item na tabela', was: 'de',
       days: 'dias', hours: 'horas', minutes: 'min', seconds: 'seg', until: 'até', today: 'Hoje',
@@ -51,7 +51,7 @@
       wmo: { clear: 'Céu limpo', mostlyClear: 'Poucas nuvens', partly: 'Parcialmente nublado', cloudy: 'Nublado', fog: 'Neblina', drizzle: 'Garoa', rain: 'Chuva', snow: 'Neve', showers: 'Pancadas de chuva', snowShowers: 'Pancadas de neve', storm: 'Tempestade' }
     },
     'en': {
-      humidity: 'Humidity', wind: 'Wind', rain: 'rain', updated: 'updated', updatedAt: 'Updated at',
+      humidity: 'Humidity', wind: 'Wind', rain: 'rain', noRain: 'no rain', updated: 'updated', updatedAt: 'Updated at',
       noData: 'No data right now', noDataHint: 'As soon as the connection is back, the content shows up here.',
       noNews: 'No news right now', next: 'Up next', source: 'Source', ratesSource: 'Source: European Central Bank', soldOut: 'Sold out', noItems: 'No items in the table', was: 'was',
       days: 'days', hours: 'hours', minutes: 'min', seconds: 'sec', until: 'until', today: 'Today',
@@ -284,12 +284,16 @@
         var mm = el('div', 'mm', Math.round(day.max) + '°');
         mm.appendChild(el('i', null, Math.round(day.min) + '°'));
         card.appendChild(mm);
-        card.appendChild(el('div', 'rain', day.rainChance + '% ' + s.rain));
+        var rain = typeof day.rainMm === 'number'
+          ? (day.rainMm < 0.1 ? s.noRain : number(day.rainMm, day.rainMm < 10 ? 1 : 0) + ' mm')
+          : day.rainChance + '% ' + s.rain;
+        card.appendChild(el('div', 'rain', rain));
         days.appendChild(card);
       }
       box.appendChild(days);
     }
     root.appendChild(box);
+    if (data.credit) root.appendChild(el('div', 'credit', s.source + ': ' + data.credit));
     staleFooter(root, data);
   }
 

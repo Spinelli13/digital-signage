@@ -32,17 +32,42 @@ class WidgetTest extends AbstractApiTest {
 
 	private static final String NOON = "2026-11-05T15:00:00Z";
 
-	private static final String WEATHER = """
-			{"timezone":"America/Sao_Paulo","current":{"temperature_2m":22.5,"relative_humidity_2m":70,"weather_code":2,"is_day":1,"wind_speed_10m":12.3},
-			"daily":{"time":["2026-11-05","2026-11-06","2026-11-07","2026-11-08"],"weather_code":[2,61,80,3],
-			"temperature_2m_max":[27.1,25,24,26],"temperature_2m_min":[17,18,18.5,19],"precipitation_probability_max":[10,60,70,20]}}""";
+	/**
+	 * A previsão do MET Norway para Campinas (UTC-3), com "agora" às 15:00 UTC de 5/11: hora em hora só no começo e depois de 6
+	 * em 6 horas, como o MET entrega. Dia 6: 5,0 + 3,2 mm em 2 dos 4 blocos de 6 h; dia 7: pancadas; dia 8: céu limpo.
+	 */
+	private static final String WEATHER = metSeries(
+			metEntry("2026-11-05T15:00:00Z", 22.5, 70, 3.4, "partlycloudy_day", 0.0, true),
+			metEntry("2026-11-05T21:00:00Z", 27.1, 60, 2.0, "cloudy", 0.0, false),
+			metEntry("2026-11-06T00:00:00Z", 17.0, 80, 1.0, "cloudy", 0.0, false),
+			metEntry("2026-11-06T06:00:00Z", 18.0, 90, 1.0, "rain", 5.0, false),
+			metEntry("2026-11-06T12:00:00Z", 24.0, 75, 2.0, "rain", 3.2, false),
+			metEntry("2026-11-06T18:00:00Z", 25.0, 65, 2.0, "cloudy", 0.0, false),
+			metEntry("2026-11-07T00:00:00Z", 21.0, 70, 2.0, "cloudy", 0.0, false),
+			metEntry("2026-11-07T12:00:00Z", 24.0, 80, 2.0, "rainshowers_day", 10.0, false),
+			metEntry("2026-11-07T18:00:00Z", 26.0, 70, 2.0, "cloudy", 0.0, false),
+			metEntry("2026-11-08T12:00:00Z", 26.0, 50, 2.0, "clearsky_day", 0.0, false));
+
+	private static String metEntry(String time, double temperature, int humidity, double windMs, String symbol, double rain6h, boolean hourly) {
+		String oneHour = hourly ? ",\"next_1_hours\":{\"summary\":{\"symbol_code\":\"" + symbol + "\"},\"details\":{\"precipitation_amount\":0.0}}" : "";
+		return "{\"time\":\"" + time + "\",\"data\":{\"instant\":{\"details\":{\"air_temperature\":" + temperature
+				+ ",\"relative_humidity\":" + humidity + ",\"wind_speed\":" + windMs + ",\"cloud_area_fraction\":50.0}},"
+				+ "\"next_12_hours\":{\"summary\":{\"symbol_code\":\"" + symbol + "\"},\"details\":{}},"
+				+ "\"next_6_hours\":{\"summary\":{\"symbol_code\":\"" + symbol + "\"},\"details\":{\"precipitation_amount\":" + rain6h + "}}"
+				+ oneHour + "}}";
+	}
+
+	private static String metSeries(String... entries) {
+		return "{\"type\":\"Feature\",\"properties\":{\"meta\":{},\"timeseries\":[" + String.join(",", entries) + "]}}";
+	}
 
 	private static final String RATES = """
 			{"base":"BRL","rates":{"2026-11-03":{"USD":0.2,"EUR":0.18},"2026-11-04":{"USD":0.19,"EUR":0.18}}}""";
 
 	private static final String PLACES = """
-			{"results":[{"name":"Campinas","admin1":"São Paulo","country":"Brasil","latitude":-22.90556,"longitude":-47.06083,"timezone":"America/Sao_Paulo"},
-			{"name":"Campinorte","admin1":"Goiás","country":"Brasil","latitude":-14.31139,"longitude":-49.15,"timezone":"America/Sao_Paulo"}]}""";
+			[{"name":"Campinas","lat":"-22.9056391","lon":"-47.0608201","address":{"city":"Campinas","state":"São Paulo","country":"Brasil","country_code":"br","ISO3166-2-lvl4":"BR-SP"}},
+			{"name":"Campinorte","lat":"-14.3113","lon":"-49.15","address":{"state":"Goiás","country":"Brasil","country_code":"br","ISO3166-2-lvl4":"BR-GO"}},
+			{"name":"Sem posição","address":{"state":"Goiás"}}]""";
 
 	private static final String RSS = """
 			<?xml version="1.0" encoding="UTF-8"?>
@@ -266,7 +291,7 @@ class WidgetTest extends AbstractApiTest {
 	@Test
 	void weatherComesFromTheProviderAndIsKeptFor30MinutesForEveryTvInTheSameCity() throws Exception {
 		clock.freeze(NOON);
-		widgetHttp.on("api.open-meteo.com", WEATHER);
+		widgetHttp.on("api.met.no", WEATHER);
 		long id = widget("WEATHER", weatherSettings());
 		Tv tv = tvWith(id);
 
@@ -278,26 +303,36 @@ class WidgetTest extends AbstractApiTest {
 		assertEquals(22.5, data.get("current").get("temperature").asDouble(), 0.001);
 		assertEquals(2, data.get("current").get("code").asInt());
 		assertTrue(data.get("current").get("isDay").asBoolean());
+		assertEquals(12.2, data.get("current").get("windKmh").asDouble(), 0.001); // 3,4 m/s
+		assertEquals(70, data.get("current").get("humidity").asInt());
+		assertEquals("MET Norway", data.get("credit").asText()); // a licença (CC BY 4.0) pede a citação da fonte
+		assertEquals("America/Sao_Paulo", data.get("timezone").asText());
 		assertEquals(4, data.get("daily").size());
-		assertEquals(60, data.get("daily").get(1).get("rainChance").asInt());
+		assertEquals("2026-11-06", data.get("daily").get(1).get("date").asText());
+		assertEquals(63, data.get("daily").get(1).get("code").asInt());
+		assertEquals(50, data.get("daily").get(1).get("rainChance").asInt()); // metade do dia com chuva prevista
+		assertEquals(8.2, data.get("daily").get(1).get("rainMm").asDouble(), 0.001);
 		assertEquals(18.0, data.get("daily").get(1).get("min").asDouble(), 0.001);
+		assertEquals(25.0, data.get("daily").get(1).get("max").asDouble(), 0.001);
+		assertEquals(81, data.get("daily").get(2).get("code").asInt()); // pancadas
+		assertEquals(0, data.get("daily").get(3).get("code").asInt()); // céu limpo
 		assertEquals(clock.millis(), data.get("fetchedAtMs").asLong());
 
 		playerData(tv, id);
 		clock.freeze("2026-11-05T15:29:00Z");
 		playerData(tv, id);
-		assertEquals(1, widgetHttp.callsTo("api.open-meteo.com"));
-		assertTrue(widgetHttp.calls().get(0).contains("latitude=-22.91&longitude=-47.06"), widgetHttp.calls().get(0));
+		assertEquals(1, widgetHttp.callsTo("api.met.no"));
+		assertTrue(widgetHttp.calls().get(0).contains("lat=-22.91&lon=-47.06"), widgetHttp.calls().get(0));
 
 		clock.freeze("2026-11-05T15:31:00Z");
 		playerData(tv, id);
-		assertEquals(2, widgetHttp.callsTo("api.open-meteo.com"));
+		assertEquals(2, widgetHttp.callsTo("api.met.no"));
 	}
 
 	@Test
 	void whenTheProviderFailsTheLastAnswerIsKeptForADayThenThereIsNothingAndTheReasonSaysWhy() throws Exception {
 		clock.freeze(NOON);
-		widgetHttp.on("api.open-meteo.com", WEATHER);
+		widgetHttp.on("api.met.no", WEATHER);
 		long id = widget("WEATHER", weatherSettings());
 		Tv tv = tvWith(id);
 		JsonNode fresh = playerData(tv, id);
@@ -305,7 +340,7 @@ class WidgetTest extends AbstractApiTest {
 		widgetHttp.failEverything(true);
 		clock.freeze("2026-11-05T20:00:00Z"); // 5 h depois: o guardado vale
 		JsonNode stale = playerData(tv, id);
-		assertEquals(22.5, stale.get("data").get("current").get("temperature").asDouble(), 0.001);
+		assertEquals(27.1, stale.get("data").get("current").get("temperature").asDouble(), 0.001); // o "agora" anda com o relógio: a hora mais próxima da previsão guardada
 		assertEquals(fresh.get("data").get("fetchedAtMs").asLong(), stale.get("data").get("fetchedAtMs").asLong()); // a TV vê que é velho
 
 		clock.freeze("2026-11-06T16:00:00Z"); // mais de 24 h
@@ -315,9 +350,65 @@ class WidgetTest extends AbstractApiTest {
 	}
 
 	@Test
+	void weatherAsksTheProviderIfItChangedAndNeverAsksBeforeItsExpiresHeader() throws Exception {
+		clock.freeze(NOON);
+		widgetHttp.on("api.met.no", WEATHER, "Thu, 05 Nov 2026 14:50:00 GMT", "Thu, 05 Nov 2026 15:45:00 GMT");
+		long id = widget("WEATHER", weatherSettings());
+		Tv tv = tvWith(id);
+
+		playerData(tv, id);
+		clock.freeze("2026-11-05T15:31:00Z"); // passou dos 30 min nossos, mas o MET só renova às 15:45
+		playerData(tv, id);
+		assertEquals(1, widgetHttp.callsTo("api.met.no"));
+
+		clock.freeze("2026-11-05T15:46:00Z");
+		JsonNode again = playerData(tv, id);
+		assertEquals(2, widgetHttp.callsTo("api.met.no"));
+		assertEquals(null, widgetHttp.conditions().get(0)); // a primeira vez não tem o que perguntar
+		assertEquals("Thu, 05 Nov 2026 14:50:00 GMT", widgetHttp.conditions().get(1)); // a segunda pergunta se mudou desde então
+		assertEquals(22.5, again.get("data").get("current").get("temperature").asDouble(), 0.001); // 304: segue valendo o guardado
+		assertEquals(clock.millis(), again.get("data").get("fetchedAtMs").asLong());
+	}
+
+	@Test
+	void afterAFailureTheProviderIsLeftAloneForAWhileInsteadOfBeingHammered() throws Exception {
+		clock.freeze(NOON);
+		widgetHttp.failEverything(true);
+		long id = widget("WEATHER", weatherSettings());
+		Tv tv = tvWith(id);
+
+		assertTrue(playerData(tv, id).get("data").isNull());
+		clock.freeze("2026-11-05T15:03:00Z");
+		assertTrue(playerData(tv, id).get("data").isNull());
+		assertEquals(1, widgetHttp.callsTo("api.met.no"));
+
+		widgetHttp.failEverything(false);
+		widgetHttp.on("api.met.no", WEATHER);
+		clock.freeze("2026-11-05T15:06:00Z"); // 5 min depois tenta de novo
+		assertEquals(22.5, playerData(tv, id).get("data").get("current").get("temperature").asDouble(), 0.001);
+	}
+
+	@Test
+	void theTimezoneOfTheChosenCityDecidesWhereTheForecastDaysStartAndABadOneIsRefused() throws Exception {
+		clock.freeze("2026-11-06T01:30:00Z"); // 22:30 do dia 5 em Brasília, já 6/11 em Auckland
+		widgetHttp.on("api.met.no", WEATHER);
+		Map<String, Object> settings = new HashMap<>(weatherSettings());
+		settings.put("timezone", "Pacific/Auckland");
+		long id = widget("WEATHER", settings);
+
+		JsonNode data = playerData(tvWith(id), id).get("data");
+
+		assertEquals("Pacific/Auckland", data.get("timezone").asText());
+		assertEquals("2026-11-06", data.get("daily").get(0).get("date").asText());
+
+		settings.put("timezone", "Marte/Olympus");
+		createWidget("WEATHER", settings, null).andExpect(status().isBadRequest());
+	}
+
+	@Test
 	void aProviderWithGarbageIsAFailureNotACrash() throws Exception {
 		clock.freeze(NOON);
-		widgetHttp.on("api.open-meteo.com", "<html>manutenção</html>");
+		widgetHttp.on("api.met.no", "<html>manutenção</html>");
 		long id = widget("WEATHER", weatherSettings());
 
 		JsonNode body = playerData(tvWith(id), id);
@@ -358,6 +449,24 @@ class WidgetTest extends AbstractApiTest {
 		assertEquals("Segunda manchete com espaços", data.get("items").get(1).get("title").asText()); // sem HTML, sem espaços repetidos
 		assertEquals(java.time.Instant.parse("2026-11-05T14:30:00Z").toEpochMilli(), data.get("items").get(0).get("publishedAtMs").asLong());
 		assertTrue(data.get("items").get(2).get("publishedAtMs").isNull());
+	}
+
+	@Test
+	void theSenateAgencyFeedWithItsStylesheetDeclarationIsRead() throws Exception {
+		clock.freeze(NOON);
+		String feed = """
+				<?xml version="1.0" encoding="utf-8" ?>
+				<?xml-stylesheet type="text/xsl" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" href="/noticias/rss.xsl" ?>
+				<rss version="2.0"><channel><title>Senado Federal</title>
+				<item><title>Arquivistas do Senado ajudam a guardar a história</title><pubDate>Wed, 21 Oct 2026 14:30:00 -0300</pubDate></item>
+				</channel></rss>""";
+		widgetHttp.on("www12.senado.leg.br", 200, feed.getBytes(StandardCharsets.UTF_8), "text/xml;charset=utf-8");
+		long id = widget("NEWS", Map.of("source", "agenciasenado", "maxItems", 3));
+
+		JsonNode data = playerData(tvWith(id), id).get("data");
+
+		assertEquals("Agência Senado", data.get("source").asText()); // a citação da fonte que a política de uso do Senado pede
+		assertEquals("Arquivistas do Senado ajudam a guardar a história", data.get("items").get(0).get("title").asText());
 	}
 
 	@Test
@@ -423,17 +532,18 @@ class WidgetTest extends AbstractApiTest {
 	@Test
 	void thePanelSearchesCitiesAndPreviewsWithoutSaving() throws Exception {
 		clock.freeze(NOON);
-		widgetHttp.on("geocoding-api.open-meteo.com", PLACES);
-		widgetHttp.on("api.open-meteo.com/v1/forecast", WEATHER);
+		widgetHttp.on("nominatim.openstreetmap.org", PLACES);
+		widgetHttp.on("api.met.no", WEATHER);
 
 		mvc.perform(asAdmin(get("/api/v1/widgets/places?q=Campin"))).andExpect(status().isOk())
 				.andExpect(jsonPath("$[0].name").value("Campinas"))
 				.andExpect(jsonPath("$[0].region").value("São Paulo"))
-				.andExpect(jsonPath("$[0].latitude").value(-22.90556))
-				.andExpect(jsonPath("$.length()").value(2));
+				.andExpect(jsonPath("$[0].latitude").value(-22.9056391))
+				.andExpect(jsonPath("$[0].timezone").value("America/Sao_Paulo"))
+				.andExpect(jsonPath("$.length()").value(2)); // o resultado sem posição é descartado
 		mvc.perform(asAdmin(get("/api/v1/widgets/places?q=C"))).andExpect(jsonPath("$.length()").value(0)); // curto demais
 		mvc.perform(asAdmin(get("/api/v1/widgets/places?q=Campin"))).andExpect(status().isOk());
-		assertEquals(1, widgetHttp.callsTo("geocoding-api")); // a busca repetida vem do cache
+		assertEquals(1, widgetHttp.callsTo("nominatim")); // a busca repetida vem do cache
 
 		mvc.perform(asAdmin(post("/api/v1/widgets/preview").contentType(MediaType.APPLICATION_JSON)
 				.content(json.writeValueAsString(Map.of("kind", "WEATHER", "settings", weatherSettings())))))

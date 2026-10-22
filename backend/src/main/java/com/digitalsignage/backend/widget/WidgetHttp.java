@@ -9,7 +9,12 @@ import java.net.URI;
  */
 public interface WidgetHttp {
 
-	record Response(int status, byte[] body, String contentType) {
+	/** {@code lastModified} e {@code expires} são os cabeçalhos HTTP da resposta (nulos quando o provedor não os manda). */
+	record Response(int status, byte[] body, String contentType, String lastModified, String expires) {
+
+		public Response(int status, byte[] body, String contentType) {
+			this(status, body, contentType, null, null);
+		}
 	}
 
 	/**
@@ -17,5 +22,13 @@ public interface WidgetHttp {
 	 * destino (inclusive os de redirecionamentos) precisa ser público.
 	 */
 	Response get(URI uri, boolean publicOnly) throws IOException;
+
+	/**
+	 * GET condicional: com {@code ifModifiedSince} (o {@code Last-Modified} da resposta anterior) o provedor responde 304, sem
+	 * corpo, quando nada mudou. É o que o MET Norway pede de quem consulta a previsão com frequência.
+	 */
+	default Response get(URI uri, boolean publicOnly, String ifModifiedSince) throws IOException {
+		return get(uri, publicOnly);
+	}
 
 }

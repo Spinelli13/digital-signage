@@ -7,7 +7,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -39,6 +43,8 @@ public class WidgetDataService {
 	private static final Logger log = LoggerFactory.getLogger(WidgetDataService.class);
 
 	static final Duration WEATHER_TTL = Duration.ofMinutes(30);
+	/** Depois de uma falha o MET não é consultado de novo por este tempo (o provedor pede que ninguém insista). */
+	static final Duration WEATHER_RETRY = Duration.ofMinutes(5);
 	static final Duration NEWS_TTL = Duration.ofMinutes(15);
 	static final Duration RATES_TTL = Duration.ofMinutes(60);
 	static final Duration GEO_TTL = Duration.ofHours(24);
@@ -52,7 +58,15 @@ public class WidgetDataService {
 	public record Place(String name, String region, String country, double latitude, double longitude, String timezone) {
 	}
 
-	private record Cached(long fetchedAtMs, Object value) {
+	/**
+	 * Uma resposta guardada. {@code lastModified} e {@code refreshAtMs} só existem para o clima, que pergunta ao provedor se
+	 * mudou (GET condicional) e não consulta antes do {@code Expires} dele.
+	 */
+	private record Cached(long fetchedAtMs, Object value, String lastModified, long refreshAtMs) {
+
+		Cached(long fetchedAtMs, Object value) {
+			this(fetchedAtMs, value, null, 0);
+		}
 	}
 
 	private final WidgetHttp http;
@@ -61,6 +75,8 @@ public class WidgetDataService {
 	private final PriceBoardService prices;
 	private final QueueBoardService queueBoard;
 	private final Map<String, Cached> cache = new ConcurrentHashMap<>();
+	private final Object placeSearchLock = new Object();
+	private long lastPlaceSearchNanos;
 
 	public WidgetDataService(WidgetHttp http, ObjectMapper json, Clock clock, PriceBoardService prices, QueueBoardService queueBoard) {
 		this.http = http;
@@ -99,50 +115,90 @@ public class WidgetDataService {
 		}
 	}
 
-	// ---------- clima (Open-Meteo) ----------
+	// ---------- clima (MET Norway) e busca de cidades (Nominatim) ----------
 
 	private Map<String, Object> weather(Map<String, Object> settings) {
 		double latitude = ((Number) settings.get("latitude")).doubleValue();
 		double longitude = ((Number) settings.get("longitude")).doubleValue();
-		// duas casas decimais (~1 km): TVs da mesma cidade dividem a mesma consulta
+		// duas casas decimais (~1 km): TVs da mesma cidade dividem a mesma consulta (o MET aceita até quatro)
 		String lat = String.format(Locale.ROOT, "%.2f", latitude);
 		String lon = String.format(Locale.ROOT, "%.2f", longitude);
-		return cached("weather:" + lat + "," + lon, WEATHER_TTL, () -> {
-			URI uri = URI.create("https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon
-					+ "&current=temperature_2m,relative_humidity_2m,weather_code,is_day,wind_speed_10m"
-					+ "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"
-					+ "&timezone=auto&forecast_days=4");
-			JsonNode root = fetchJson(uri, false);
-			JsonNode current = root.path("current");
-			if (current.isMissingNode() || !current.has("temperature_2m")) {
-				throw new IOException("Resposta do clima sem temperatura");
-			}
-			Map<String, Object> now = new LinkedHashMap<>();
-			now.put("temperature", current.path("temperature_2m").asDouble());
-			now.put("code", current.path("weather_code").asInt());
-			now.put("isDay", current.path("is_day").asInt(1) == 1);
-			now.put("windKmh", current.path("wind_speed_10m").asDouble());
-			now.put("humidity", current.path("relative_humidity_2m").asInt());
-			JsonNode daily = root.path("daily");
-			List<Map<String, Object>> days = new ArrayList<>();
-			for (int i = 0; i < daily.path("time").size(); i++) {
-				Map<String, Object> day = new LinkedHashMap<>();
-				day.put("date", daily.path("time").path(i).asText());
-				day.put("code", daily.path("weather_code").path(i).asInt());
-				day.put("max", daily.path("temperature_2m_max").path(i).asDouble());
-				day.put("min", daily.path("temperature_2m_min").path(i).asDouble());
-				day.put("rainChance", daily.path("precipitation_probability_max").path(i).asInt());
-				days.add(day);
-			}
-			Map<String, Object> data = new LinkedHashMap<>();
-			data.put("current", now);
-			data.put("daily", days);
-			data.put("timezone", root.path("timezone").asText("auto"));
+		ZoneId zone = WeatherZones.of(settings.get("timezone"), latitude, longitude);
+		String key = "weather:" + lat + "," + lon;
+		URI uri = URI.create("https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=" + lat + "&lon=" + lon);
+		Cached forecast = forecast(key, uri, zone);
+		// a previsão guardada é a resposta do MET como veio; "agora" e os dias são calculados a cada pedido
+		try {
+			Map<String, Object> data = new LinkedHashMap<>(MetForecast.parse((JsonNode) forecast.value(), zone, clock.instant()));
+			data.put("fetchedAtMs", forecast.fetchedAtMs());
 			return data;
-		}, "o clima");
+		} catch (IOException e) {
+			throw new UnavailableException("Não foi possível buscar o clima agora");
+		}
 	}
 
-	/** Busca de cidade para o painel (Open-Meteo geocoding), guardada por um dia. */
+	/**
+	 * A previsão do MET, no ritmo que os termos de uso pedem: nada de consultar antes do {@code Expires} (e nunca em menos de
+	 * {@link #WEATHER_TTL}), e perguntar com {@code If-Modified-Since} para o MET responder 304 quando nada mudou.
+	 */
+	private Cached forecast(String key, URI uri, ZoneId zone) {
+		long now = clock.millis();
+		Cached hit = cache.get(key);
+		if (hit != null && now < hit.refreshAtMs()) {
+			if (hit.value() == null) {
+				throw new UnavailableException("Não foi possível buscar o clima agora"); // falhou há pouco: não insiste
+			}
+			return hit;
+		}
+		String lastModified = hit == null ? null : hit.lastModified();
+		try {
+			WidgetHttp.Response response = http.get(uri, false, lastModified);
+			Cached fresh;
+			if (response.status() == 304 && hit != null && hit.value() != null) {
+				fresh = new Cached(now, hit.value(), hit.lastModified(), refreshAt(now, response.expires()));
+			} else if (response.status() / 100 == 2) {
+				JsonNode root = json.readTree(response.body());
+				MetForecast.parse(root, zone, clock.instant()); // confere antes de guardar
+				fresh = new Cached(now, root, response.lastModified(), refreshAt(now, response.expires()));
+			} else {
+				throw new IOException("HTTP " + response.status());
+			}
+			if (cache.size() >= MAX_CACHE_ENTRIES) {
+				evictOld(now);
+			}
+			cache.put(key, fresh);
+			return fresh;
+		} catch (IOException | RuntimeException e) {
+			log.warn("Widget: falha ao buscar o clima ({}): {}", key, e.toString());
+			long retryAt = now + WEATHER_RETRY.toMillis();
+			if (hit != null && hit.value() != null && now - hit.fetchedAtMs() < STALE_LIMIT.toMillis()) {
+				Cached stale = new Cached(hit.fetchedAtMs(), hit.value(), hit.lastModified(), retryAt);
+				cache.put(key, stale);
+				return stale; // melhor o dado de ontem do que nenhum
+			}
+			cache.put(key, new Cached(now, null, null, retryAt));
+			throw new UnavailableException("Não foi possível buscar o clima agora");
+		}
+	}
+
+	/** O instante da próxima consulta: o maior entre o tempo mínimo nosso e o {@code Expires} do provedor (no máximo 2 h). */
+	private static long refreshAt(long now, String expires) {
+		long minimum = now + WEATHER_TTL.toMillis();
+		if (expires == null) {
+			return minimum;
+		}
+		try {
+			long expiresAt = ZonedDateTime.parse(expires, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant().toEpochMilli();
+			return Math.min(Math.max(minimum, expiresAt), now + Duration.ofHours(2).toMillis());
+		} catch (DateTimeParseException e) {
+			return minimum;
+		}
+	}
+
+	/**
+	 * Busca de cidade para o painel (Nominatim, do OpenStreetMap), guardada por um dia. A política do serviço público pede no
+	 * máximo uma consulta por segundo e identificação do aplicativo; aqui só o botão "Buscar" do painel chega até ele.
+	 */
 	@SuppressWarnings("unchecked")
 	public List<Place> searchPlaces(String query, String language) {
 		String text = query == null ? "" : query.strip();
@@ -151,17 +207,38 @@ public class WidgetDataService {
 		}
 		String lang = "en".equalsIgnoreCase(language) ? "en" : "pt";
 		Object found = cachedValue("geo:" + lang + ":" + text.toLowerCase(Locale.ROOT), GEO_TTL, () -> {
-			URI uri = URI.create("https://geocoding-api.open-meteo.com/v1/search?count=6&format=json&language=" + lang + "&name="
-					+ URLEncoder.encode(text, StandardCharsets.UTF_8));
-			JsonNode results = fetchJson(uri, false).path("results");
+			pauseBetweenPlaceSearches();
+			URI uri = URI.create("https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&featureType=settlement"
+					+ "&accept-language=" + lang + "&q=" + URLEncoder.encode(text, StandardCharsets.UTF_8));
 			List<Place> places = new ArrayList<>();
-			for (JsonNode place : results) {
-				places.add(new Place(place.path("name").asText(), place.path("admin1").asText(""), place.path("country").asText(""),
-						place.path("latitude").asDouble(), place.path("longitude").asDouble(), place.path("timezone").asText("")));
+			for (JsonNode place : fetchJson(uri, false)) {
+				JsonNode address = place.path("address");
+				double latitude = place.path("lat").asDouble(Double.NaN);
+				double longitude = place.path("lon").asDouble(Double.NaN);
+				String name = place.path("name").asText("");
+				if (name.isBlank() || Double.isNaN(latitude) || Double.isNaN(longitude)) {
+					continue;
+				}
+				places.add(new Place(name, address.path("state").asText(""), address.path("country").asText(""), latitude, longitude,
+						WeatherZones.forPlace(address.path("country_code").asText(""), address.path("ISO3166-2-lvl4").asText(null), latitude, longitude)));
 			}
 			return places;
 		}, "a busca de cidades");
 		return (List<Place>) found;
+	}
+
+	private void pauseBetweenPlaceSearches() {
+		synchronized (placeSearchLock) {
+			long wait = 1_100_000_000L - (System.nanoTime() - lastPlaceSearchNanos);
+			if (lastPlaceSearchNanos != 0 && wait > 0) {
+				try {
+					Thread.sleep(wait / 1_000_000L + 1);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+			}
+			lastPlaceSearchNanos = System.nanoTime();
+		}
 	}
 
 	// ---------- notícias (RSS) ----------

@@ -62,6 +62,9 @@ public final class WidgetSettings {
 					throw new IllegalArgumentException("Escolha a cidade da previsão do tempo");
 				}
 				out.put("days", (int) Math.round(number(in, "days", 0, 3, 3.0, null)));
+				if (!text(in, "timezone", 60, "").isBlank()) { // vem da busca de cidades; sem ele o servidor estima pela posição
+					out.put("timezone", zone(in, "timezone", "UTC"));
+				}
 			}
 			case NEWS -> {
 				String source = text(in, "source", 20, "g1").toLowerCase(java.util.Locale.ROOT);
