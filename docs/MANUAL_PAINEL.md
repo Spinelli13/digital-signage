@@ -239,6 +239,22 @@ Em **Playlists** você vê todas, com o número de itens, a duração do ciclo e
 
 ![Lista de playlists (captura real)](manual/img/painel-playlists.png)
 
+### 4.3 Modelos prontos por segmento
+
+Em **Modelos prontos** (menu Conteúdo, Editor e Administrador) você escolhe o tipo do seu negócio, **Barbearia**, **Restaurante**, **Clínica**, **Academia** ou **Loja**, e o Vyzzu monta de uma vez o conteúdo daquele segmento:
+
+1. Clique em **Usar este modelo** no seu segmento.
+2. **Confira os textos** (nome do negócio, promoção, horário de funcionamento, como agendar ou reservar). Já vêm com um texto de exemplo: troque pelo seu.
+3. Se quiser a **previsão do tempo**, busque e escolha a cidade (opcional).
+4. Se quiser, marque as **TVs** que já devem passar a exibir o modelo (opcional: marcar uma TV **troca** o que ela exibe agora). Sem marcar, nada muda nas TVs.
+5. Clique em **Criar o modelo**.
+
+O que é criado (tudo com o nome do seu negócio na frente): os **avisos** do segmento (boas-vindas, promoção, horário, contato), o **relógio**, a **previsão do tempo** (se você escolheu a cidade), uma **tabela de preços** de exemplo (barbearia, restaurante e academia) e as **playlists**. Com o recurso de **layouts** no plano, também um **layout** (conteúdo principal à esquerda e uma faixa à direita com relógio, clima e avisos fixos; em TV em pé a faixa vai para baixo). A tela final lista tudo com um link **Abrir** para cada item.
+
+- **Tudo é seu e editável:** os textos dos avisos em **Biblioteca** (editar o widget), os preços em **Preços** e a ordem em **Playlists**. Nada fica preso ao modelo, e usar o mesmo modelo de novo cria cópias (os nomes ganham "2", "3"...).
+- **Só o que o plano inclui:** sem layouts, tudo roda numa playlist só; sem tabelas de preços, a tabela não é criada. A tela avisa o que ficou de fora.
+- Para colocar numa TV depois: **Dispositivos → Editar** (playlist **Barbearia - Principal** e o **layout** criado) ou em massa, na barra violeta.
+
 ---
 
 ## 5. Dispositivos: as TVs

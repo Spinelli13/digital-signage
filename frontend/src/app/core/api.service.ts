@@ -48,6 +48,9 @@ import {
   MonitoringSettingsRequest,
   ScreenAlert,
   ResultsResponse,
+  TemplateApplyRequest,
+  TemplateCatalog,
+  TemplateResult,
   ScreenAlertRequest,
   PlatformOverview,
   Coupon,
@@ -584,6 +587,15 @@ export class ApiService {
       params: queryParams({ ...values, format: 'csv' }),
       responseType: 'blob',
     });
+  }
+
+  /** Modelos prontos por segmento (barbearia, restaurante...). */
+  templates(): Observable<TemplateCatalog> {
+    return this.http.get<TemplateCatalog>(this.url('/templates'));
+  }
+
+  applyTemplate(id: string, body: TemplateApplyRequest): Observable<TemplateResult> {
+    return this.http.post<TemplateResult>(this.url(`/templates/${id}/apply`), body);
   }
 
   /** "Resultados": exibições do conteúdo, QR Codes escaneados e cupons, por dia, TV e promoção. */

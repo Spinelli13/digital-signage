@@ -69,6 +69,9 @@ import { UserMenuComponent } from '../shared/user-menu';import { WordmarkCompone
           <div class="section">{{ 'Conteúdo' | t }}</div>
           <a routerLink="/biblioteca" routerLinkActive="active"><app-icon name="image" /><span>{{ 'Biblioteca' | t }}</span></a>
           <a routerLink="/playlists" routerLinkActive="active"><app-icon name="list-video" /><span>{{ 'Playlists' | t }}</span></a>
+          @if (auth.can('content') && auth.has('WIDGETS')) {
+            <a routerLink="/modelos" routerLinkActive="active"><app-icon name="sparkles" /><span>{{ 'Modelos prontos' | t }}</span></a>
+          }
           @if (auth.has('CAMPAIGNS')) {
             <a routerLink="/campanhas" routerLinkActive="active"><app-icon name="megaphone" /><span>{{ 'Campanhas' | t }}</span></a>
           }
