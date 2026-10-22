@@ -61,6 +61,7 @@ class PermissionsTest extends AbstractApiTest {
 		List<Case> cases = List.of(
 				// consultar: todos os papéis
 				new Case(HttpMethod.GET, "/devices", null, true, true),
+				new Case(HttpMethod.GET, "/devices/999/diagnostic", null, true, true),
 				new Case(HttpMethod.GET, "/media", null, true, true),
 				new Case(HttpMethod.GET, "/playlists", null, true, true),
 				new Case(HttpMethod.GET, "/campaigns", null, true, true),
@@ -84,7 +85,8 @@ class PermissionsTest extends AbstractApiTest {
 				new Case(HttpMethod.PUT, "/alerts/settings", "{}", false, false),
 				new Case(HttpMethod.POST, "/alerts/settings/test", null, false, false),
 				new Case(HttpMethod.POST, "/devices/activate", "{\"activationCode\":\"ABCDEF\",\"name\":\"x\"}", false, false),
-				new Case(HttpMethod.GET, "/devices/pairing/ABCDEF", null, false, false), // conferir o código do QR Code: quem pode ativar
+				new Case(HttpMethod.GET, "/devices/pairing/ABCDEF", null, false, false),
+				new Case(HttpMethod.POST, "/devices/999/diagnostic-request", null, false, false), // pedir o diagnóstico da TV: quem administra // conferir o código do QR Code: quem pode ativar
 				new Case(HttpMethod.DELETE, "/devices/999", null, false, false),
 				new Case(HttpMethod.POST, "/devices/update-check", null, false, false),
 				new Case(HttpMethod.GET, "/users", null, false, false),

@@ -32,6 +32,7 @@ public class DeviceController {
 	private final PlayerConfigService playerConfigService;
 	private final DeviceViews views;
 	private final MonitoringService monitoring;
+	private final DeviceDiagnosticService diagnostics;
 	private final Clock clock;
 
 	public DeviceController(
@@ -40,12 +41,14 @@ public class DeviceController {
 			PlayerConfigService playerConfigService,
 			DeviceViews views,
 			MonitoringService monitoring,
+			DeviceDiagnosticService diagnostics,
 			Clock clock) {
 		this.deviceRepository = deviceRepository;
 		this.deviceService = deviceService;
 		this.playerConfigService = playerConfigService;
 		this.views = views;
 		this.monitoring = monitoring;
+		this.diagnostics = diagnostics;
 		this.clock = clock;
 	}
 
@@ -151,6 +154,22 @@ public class DeviceController {
 		device.requestUpdateCheck();
 		monitoring.recordUpdateRequested(device, clock.instant());
 		return views.of(deviceRepository.save(device));
+	}
+
+	/** O último relatório de diagnóstico que a TV mandou, e quando o painel pediu o próximo. */
+	@GetMapping("/{id}/diagnostic")
+	@Transactional(readOnly = true)
+	public DeviceDiagnosticService.Diagnostic diagnostic(@PathVariable Long id) {
+		return diagnostics.find(findOrThrow(id));
+	}
+
+	/** Pede que a TV mande o diagnóstico agora (ela percebe no próximo heartbeat; ninguém precisa estar na frente dela). */
+	@PostMapping("/{id}/diagnostic-request")
+	@Transactional
+	public DeviceDiagnosticService.Diagnostic requestDiagnostic(@PathVariable Long id) {
+		Device device = findOrThrow(id);
+		device.requestDiagnostic(clock.instant());
+		return diagnostics.find(deviceRepository.save(device));
 	}
 
 	/** O mesmo pedido para todas as TVs ativas. Devolve quantas foram avisadas. */
