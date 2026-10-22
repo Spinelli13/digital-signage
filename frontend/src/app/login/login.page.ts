@@ -52,6 +52,7 @@ import { PreferencesBar } from '../shared/preferences';import { WordmarkComponen
             </button>
           </div>
         </div>
+        <p class="forgot"><a routerLink="/esqueci-a-senha">{{ 'Esqueci a senha' | t }}</a></p>
         <button class="primary submit" type="submit" [disabled]="busy()">
           {{ (busy() ? 'Entrando…' : 'Entrar') | t }}
           @if (!busy()) {
@@ -95,6 +96,9 @@ import { PreferencesBar } from '../shared/preferences';import { WordmarkComponen
     .reveal { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--muted); }
     .reveal:hover { background: var(--panel-3); color: var(--text); }
     .reveal[aria-pressed='true'] { color: var(--primary); }
+    .forgot { margin: -4px 0 14px; text-align: right; font-size: 13.5px; }
+    .forgot a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+    .forgot a:hover { color: var(--link); }
     .submit { width: 100%; height: 48px; margin-top: 8px; font-size: 15.5px; }
 
     @media (max-width: 900px) {

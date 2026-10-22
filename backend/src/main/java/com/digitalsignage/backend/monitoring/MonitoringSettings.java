@@ -39,6 +39,10 @@ public class MonitoringSettings {
 	@Column(name = "webhook_url")
 	private String webhookUrl;
 
+	/** Para onde vão os avisos de TV offline por e-mail (um ou mais endereços separados por vírgula); vazio = só o webhook. */
+	@Column(name = "alert_email")
+	private String alertEmail;
+
 	@Column(name = "notify_on_resolve", nullable = false)
 	private boolean notifyOnResolve = true;
 
@@ -84,6 +88,14 @@ public class MonitoringSettings {
 
 	public void setErrorBurstCount(int value) {
 		this.errorBurstCount = value;
+	}
+
+	public String getAlertEmail() {
+		return alertEmail;
+	}
+
+	public void setAlertEmail(String alertEmail) {
+		this.alertEmail = alertEmail;
 	}
 
 	public String getWebhookUrl() {

@@ -352,9 +352,13 @@ export interface MonitoringSettings {
   eventsRetentionDays: number;
   /** Quantos dias o detalhe de cada exibição (comprovação) fica guardado. */
   playLogRetentionDays: number;
+  /** Até 3 e-mails (separados por vírgula) que recebem os avisos de TV offline; nulo = nenhum. */
+  alertEmail: string | null;
+  /** O servidor já está configurado para enviar e-mail? Senão o endereço é salvo, mas nada sai. */
+  emailAvailable: boolean;
 }
 
-/** Campos ausentes não mudam. webhookUrl: vazio remove o webhook. */
+/** Campos ausentes não mudam. webhookUrl e alertEmail: vazio remove. */
 export interface MonitoringSettingsRequest {
   offlineAfterMinutes?: number;
   neverConnectedAfterHours?: number;
@@ -363,6 +367,7 @@ export interface MonitoringSettingsRequest {
   notifyOnResolve?: boolean;
   eventsRetentionDays?: number;
   playLogRetentionDays?: number;
+  alertEmail?: string;
 }
 
 export interface WebhookTestResult {

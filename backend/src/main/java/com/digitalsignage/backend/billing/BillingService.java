@@ -46,6 +46,7 @@ public class BillingService {
 	private final InvoiceRepository invoices;
 	private final PlatformSettingsRepository settingsRepository;
 	private final CouponService coupons;
+	private final InvoiceMailer invoiceMailer;
 	private final JdbcTemplate jdbc;
 	private final Clock clock;
 	private final ZoneId zone;
@@ -55,6 +56,7 @@ public class BillingService {
 			InvoiceRepository invoices,
 			PlatformSettingsRepository settingsRepository,
 			CouponService coupons,
+			InvoiceMailer invoiceMailer,
 			JdbcTemplate jdbc,
 			Clock clock,
 			@Value("${app.billing.timezone:America/Sao_Paulo}") String zone) {
@@ -62,6 +64,7 @@ public class BillingService {
 		this.invoices = invoices;
 		this.settingsRepository = settingsRepository;
 		this.coupons = coupons;
+		this.invoiceMailer = invoiceMailer;
 		this.jdbc = jdbc;
 		this.clock = clock;
 		this.zone = ZoneId.of(zone);
@@ -243,7 +246,9 @@ public class BillingService {
 	private Invoice create(Long tenantId, String description, Instant start, Instant end, int amountCents, String currency, LocalDate due) {
 		long sequence = jdbc.queryForObject("SELECT nextval('invoice_number_seq')", Long.class);
 		String number = String.format("%d-%06d", clock.instant().atZone(zone).getYear(), sequence);
-		return invoices.save(new Invoice(tenantId, number, description, start, end, amountCents, currency, due));
+		Invoice saved = invoices.save(new Invoice(tenantId, number, description, start, end, amountCents, currency, due));
+		invoiceMailer.issued(saved);
+		return saved;
 	}
 
 	private Invoice find(Long id) {

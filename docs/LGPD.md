@@ -52,6 +52,7 @@ Consequência: o Vyzzu precisa de um **contrato de tratamento de dados com cada 
 | Supabase | Banco de dados (PostgreSQL) e arquivos | `us-east-1` (EUA) |
 | Render | Servidor da aplicação (backend) | **Oregon (EUA)** (conferido na configuração do serviço em 22/10/2026; o `render.yaml` pede a Virgínia, mas o serviço em uso foi criado em Oregon) |
 | Cloudflare Pages | Painel (site estático) e site de downloads | Global (rede de distribuição) |
+| Provedor de e-mail (a definir: Brevo ou Resend, ver `docs/EMAIL.md`) | Entrega das mensagens do sistema (recuperar senha, boas-vindas, fatura, aviso de TV fora do ar). Recebe o endereço de destino e o texto da mensagem | A confirmar na escolha do provedor |
 
 A transferência para os EUA é necessária para executar o serviço contratado (LGPD, art. 33, IX, combinado com o art. 7º, V). As fontes públicas dos widgets (previsão do tempo, cotações, notícias) são consultadas pelo servidor sem enviar dado de pessoas.
 

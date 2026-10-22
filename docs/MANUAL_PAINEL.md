@@ -22,6 +22,8 @@ Como usar o **painel de administração** do Vyzzu no dia a dia: enviar imagens 
 1. Abra o endereço do painel no navegador.
 2. Digite o **seu e-mail** e a **sua senha** e clique em **Entrar**. Cada pessoa tem o próprio acesso (veja o capítulo 11).
 
+**Esqueceu a senha?** Clique em **Esqueci a senha** (abaixo do campo da senha), digite o e-mail da sua conta e abra o link que chegar na sua caixa de entrada (olhe o spam na primeira vez). O link vale **1 hora** e **só funciona uma vez**: nele você escolhe a senha nova (mínimo de 8 caracteres) e depois entra normalmente. Por segurança, a tela responde a mesma coisa exista ou não uma conta com aquele e-mail. Se o e-mail nunca chega, o envio de e-mail pode ainda não estar ativado no servidor: peça ao Administrador do seu cliente para definir uma senha nova em **Equipe** (veja 11.2).
+
 ![Tela de entrada do painel (captura real)](manual/img/painel-login.png)
 
 > **Na primeira vez do dia, o painel pode demorar até 1 minuto** para responder. O servidor gratuito "dorme" quando fica sem uso e leva um tempo para acordar. É normal, e **não afeta as TVs**: elas continuam exibindo o que já baixaram. Quando isso acontece, o painel mostra um **alerta amarelo "O servidor está acordando"** na parte de baixo da tela (já na tela de entrada) e o tira sozinho, com um aviso "Servidor pronto", assim que o servidor responde. Se passar de uns 3 minutos sem resposta, o alerta vira vermelho ("O servidor não respondeu") com o botão **Tentar de novo**: confira a sua internet.
@@ -495,6 +497,14 @@ O alerta **fecha sozinho** quando o problema acaba (a TV volta, faz o primeiro c
 
 Em **Quando avisar** você muda os três limites acima e por quanto tempo o painel **guarda o histórico** (padrão 90 dias; o que passa disso é apagado sozinho). **Ver histórico** leva direto à linha do tempo da TV.
 
+#### Receber os alertas por e-mail
+
+Em **Aviso por e-mail** digite o endereço que deve receber os avisos de TV fora do ar (até **3**, separados por vírgula) e clique em **Salvar configurações**. Cada alerta que abre vira um e-mail, e (se **Avisar também quando o problema for resolvido** estiver marcado) outro quando ele fecha. **Enviar e-mail de teste** manda um e-mail de verdade para o endereço já salvo, para você conferir que chega (olhe o spam na primeira vez).
+
+- Se aparecer o aviso amarelo **"O envio de e-mail ainda não foi ativado neste servidor"**, o endereço fica salvo, mas nada sai até o envio ser ativado (quem cuida do servidor faz isso uma vez; veja `docs/EMAIL.md`).
+- O e-mail e o webhook funcionam juntos: pode usar os dois, um deles ou nenhum.
+- Se o provedor de e-mail estiver fora do ar, o painel tenta de novo a cada minuto e **desiste depois de 1 hora** (o alerta continua na lista).
+
 #### Receber os alertas no Slack, Discord, Teams…
 
 Em **Aviso externo (webhook)** cole o endereço de um *webhook de entrada* do seu aplicativo de mensagens (no Slack: *Apps → Incoming Webhooks*; no Discord: *Editar canal → Integrações → Webhooks*). Cada alerta vira uma mensagem por lá, e (se você deixar marcado) também o aviso de que foi **resolvido**. Clique em **Enviar teste** para conferir que chega.
@@ -699,7 +709,7 @@ Em **Equipe** estão todas as pessoas do cliente, com o papel e a situação de 
 
 ![Tela Equipe: lista de usuários, papéis e a explicação do que cada papel pode (captura real)](manual/img/painel-equipe.png)
 
-- **Novo usuário:** informe o nome, o **e-mail** (é o login), o **papel** e uma **senha inicial** (mínimo de 8 caracteres). Combine com a pessoa e peça que a troque em **Minha conta**.
+- **Novo usuário:** informe o nome, o **e-mail** (é o login), o **papel** e uma **senha inicial** (mínimo de 8 caracteres). Combine com a pessoa e peça que a troque em **Minha conta**. Se o envio de e-mail estiver ativado, a pessoa também recebe um e-mail de boas-vindas com um link (vale 3 dias) para escolher a própria senha, e a senha inicial nem precisa ser combinada.
 - **Editar:** muda o nome e o papel, **desativa** o acesso (a pessoa deixa de entrar, mas o cadastro fica) ou define uma nova senha (útil quando alguém esquece a dela). Deixe a senha em branco para mantê-la.
 - **Excluir:** remove a pessoa. O acesso acaba na hora.
 - Você **não pode excluir nem desativar a si mesmo**, e o cliente **sempre mantém pelo menos um administrador ativo** (para tirar o papel do último, promova outra pessoa antes).

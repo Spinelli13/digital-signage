@@ -48,7 +48,10 @@ public class AlertController {
 			String webhookHint,
 			boolean notifyOnResolve,
 			int eventsRetentionDays,
-			int playLogRetentionDays) {
+			int playLogRetentionDays,
+			/** Os endereços que recebem os avisos por e-mail (vazio = nenhum) e se o envio de e-mail está configurado no servidor. */
+			String alertEmail,
+			boolean emailAvailable) {
 	}
 
 	/** Campos ausentes não mudam. {@code webhookUrl}: vazio ("") remove o webhook. */
@@ -59,7 +62,9 @@ public class AlertController {
 			String webhookUrl,
 			Boolean notifyOnResolve,
 			Integer eventsRetentionDays,
-			Integer playLogRetentionDays) {
+			Integer playLogRetentionDays,
+			/** Endereços separados por vírgula (no máximo 3); vazio remove. */
+			String alertEmail) {
 	}
 
 	public record TestResult(boolean ok, int status, String error) {
@@ -71,6 +76,7 @@ public class AlertController {
 	private final MonitoringSettingsRepository settingsRepository;
 	private final WebhookUrlPolicy policy;
 	private final WebhookNotifier webhook;
+	private final com.digitalsignage.backend.mail.EmailService email;
 	private final Clock clock;
 
 	public AlertController(
@@ -80,6 +86,7 @@ public class AlertController {
 			MonitoringSettingsRepository settingsRepository,
 			WebhookUrlPolicy policy,
 			WebhookNotifier webhook,
+			com.digitalsignage.backend.mail.EmailService email,
 			Clock clock) {
 		this.alerts = alerts;
 		this.devices = devices;
@@ -87,6 +94,7 @@ public class AlertController {
 		this.settingsRepository = settingsRepository;
 		this.policy = policy;
 		this.webhook = webhook;
+		this.email = email;
 		this.clock = clock;
 	}
 
@@ -142,8 +150,41 @@ public class AlertController {
 				settings.setWebhookUrl(request.webhookUrl().trim());
 			}
 		}
+		if (request.alertEmail() != null) {
+			settings.setAlertEmail(cleanAddresses(request.alertEmail()));
+		}
 		settingsRepository.save(settings);
 		return toResponse(settings);
+	}
+
+	/** Manda um e-mail de teste aos endereços configurados, para a pessoa conferir que chega. */
+	@PostMapping("/settings/test-email")
+	@Transactional(readOnly = true)
+	public TestResult testEmail() {
+		java.util.List<String> to = AlertNotifier.recipients(monitoring.settings());
+		if (to.isEmpty()) {
+			throw new IllegalArgumentException("Informe o e-mail dos avisos antes de testar");
+		}
+		if (!email.enabled()) {
+			throw new IllegalArgumentException("O envio de e-mail ainda não está configurado no servidor");
+		}
+		com.digitalsignage.backend.mail.EmailTemplates.Message message = com.digitalsignage.backend.mail.EmailTemplates.test("Vyzzu");
+		int sent = email.sendToAll(to, message.subject(), message.body());
+		return new TestResult(sent > 0, sent > 0 ? 200 : 0, sent > 0 ? null : "O provedor de e-mail recusou o envio");
+	}
+
+	/** Até 3 endereços válidos, separados por vírgula; vazio remove. */
+	private static String cleanAddresses(String text) {
+		java.util.List<String> addresses = java.util.Arrays.stream(text.split("[,;\\s]+")).map(String::strip).filter(a -> !a.isEmpty()).distinct().toList();
+		if (addresses.size() > 3) {
+			throw new IllegalArgumentException("Informe no máximo 3 e-mails para os avisos");
+		}
+		for (String address : addresses) {
+			if (!com.digitalsignage.backend.mail.EmailService.looksLikeAnAddress(address)) {
+				throw new IllegalArgumentException("E-mail inválido: " + address);
+			}
+		}
+		return addresses.isEmpty() ? null : String.join(", ", addresses);
 	}
 
 	/** Manda uma mensagem de teste ao webhook configurado, para a pessoa conferir que chega. */
@@ -167,7 +208,7 @@ public class AlertController {
 		return value;
 	}
 
-	private static SettingsResponse toResponse(MonitoringSettings settings) {
+	private SettingsResponse toResponse(MonitoringSettings settings) {
 		boolean configured = settings.getWebhookUrl() != null && !settings.getWebhookUrl().isBlank();
 		return new SettingsResponse(
 				settings.getOfflineAfterMinutes(),
@@ -177,7 +218,9 @@ public class AlertController {
 				configured ? WebhookUrlPolicy.hint(settings.getWebhookUrl()) : null,
 				settings.isNotifyOnResolve(),
 				settings.getEventsRetentionDays(),
-				settings.getPlayLogRetentionDays());
+				settings.getPlayLogRetentionDays(),
+				settings.getAlertEmail(),
+				email.enabled());
 	}
 
 	private static AlertResponse toResponse(Alert alert, Device device) {

@@ -56,6 +56,7 @@ export function privacySections(c: LegalContext): LegalSection[] {
           'Equipe do painel: nome, e-mail, papel (administrador, editor ou visualizador), situação da conta e a data de criação. A senha é guardada apenas em forma irreversível (hash); nem a nossa equipe a consegue ler.',
           'Quem pega uma senha de fila ou um cupom pelo celular: o nome, que é opcional (até 60 caracteres); a senha ou o cupom e a data e hora; um código aleatório do aparelho, guardado no navegador, usado para limitar abusos e devolver a mesma senha ou cupom a quem volta a escanear; e, quando há nome, o momento em que você concordou com o aviso e a versão do aviso que viu.',
           'Clientes (empresas): nome da empresa, plano, e-mail de contato e as faturas (valor, vencimento e forma de pagamento informada pela operação).',
+          'Mensagens do sistema por e-mail: para a equipe do painel e para o contato de cobrança, enviamos o link de recuperação de senha, as boas-vindas, o aviso de fatura e, se configurado, os avisos de TV fora do ar. O link vale por tempo limitado e de uma só vez, e o servidor guarda apenas uma impressão irreversível dele, não o link em si.',
           'Dados técnicos: o endereço IP é usado só na memória do servidor, para limitar a quantidade de pedidos por hora, e não é gravado no nosso banco de dados. Os provedores de hospedagem podem manter seus próprios registros de infraestrutura.',
         ],
         'Não pedimos dados sensíveis (origem racial, saúde, religião, biometria etc.). Pedimos que você não digite esse tipo de informação no campo do nome. O conteúdo que os clientes enviam (imagens, vídeos, textos) é de responsabilidade de quem o envia; se ele tiver dados pessoais, o cliente é o controlador desses dados.',
@@ -91,6 +92,7 @@ export function privacySections(c: LegalContext): LegalSection[] {
       blocks: [
         [
           'Provedores de infraestrutura (operadores): Supabase (banco de dados e arquivos), Render (servidor da aplicação) e Cloudflare (hospedagem do painel e do site de downloads).',
+          'Provedor de envio de e-mail (operador), quando o envio estiver ativado: recebe o endereço de destino e o texto das mensagens do sistema, só para entregá-las.',
           'Fontes públicas dos widgets (previsão do tempo, cotações e notícias): o nosso servidor as consulta sem enviar dado de nenhuma pessoa.',
           'Autoridades, quando a lei exigir.',
         ],

@@ -260,6 +260,10 @@ Variáveis de ambiente (no Blueprint, só as que não têm valor fixo no arquivo
 | `S3_ENDPOINT` | endpoint copiado do Supabase |
 | `S3_REGION` | região copiada do Supabase |
 | `S3_ACCESS_KEY` / `S3_SECRET_KEY` | chaves do Supabase |
+| `PANEL_URL` | (opcional) endereço do painel, sem barra no final; vai nos links dos e-mails e no QR Code da TV. Vazio = a primeira origem de `CORS_ALLOWED_ORIGINS` |
+| `MAIL_FROM` | (e-mail, opcional) remetente, por exemplo `Vyzzu <avisos@seudominio.com>`, validado no provedor. Sem ele não sai e-mail (o sistema funciona do mesmo jeito) |
+| `MAIL_API` / `MAIL_API_KEY` | (e-mail) `resend` ou `brevo` e a chave da API do provedor. **É a forma que funciona no plano gratuito do Render**, que bloqueia as portas de SMTP. Passo a passo em [`EMAIL.md`](EMAIL.md) |
+| `MAIL_HOST` / `MAIL_PORT` / `MAIL_USERNAME` / `MAIL_PASSWORD` | (e-mail por SMTP, só em hospedagem paga) servidor, porta (587 com STARTTLS), usuário e senha do provedor |
 
 4. **Create Web Service**. O primeiro build leva alguns minutos; o primeiro start pode levar mais de 1 minuto (0,1 vCPU). Teste `https://<servico>.onrender.com/api/v1/health`.
 

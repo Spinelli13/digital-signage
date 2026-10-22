@@ -34,6 +34,8 @@ const settings = (overrides: Partial<MonitoringSettings> = {}): MonitoringSettin
   notifyOnResolve: true,
   eventsRetentionDays: 90,
   playLogRetentionDays: 14,
+  alertEmail: null,
+  emailAvailable: true,
   ...overrides,
 });
 
@@ -119,6 +121,7 @@ describe('AlertsPage', () => {
       eventsRetentionDays: 90,
       playLogRetentionDays: 14,
       notifyOnResolve: true,
+      alertEmail: '',
     });
     request.flush(settings({ offlineAfterMinutes: 20, webhookConfigured: true, webhookHint: 'hooks.slack.com/…1234' }));
     expect(page.notice.text()).toBe('Configurações salvas.');
@@ -218,5 +221,93 @@ describe('AlertsPage', () => {
     await without.fixture.whenStable();
     expect((without.fixture.nativeElement as HTMLElement).textContent).not.toContain('Enviar teste');
     without.backend.verify();
+  });
+
+  describe('e-mail dos avisos', () => {
+    it('loads the saved address and sends the typed one (trimmed) with the other settings', () => {
+      const { page, backend } = setup(settings({ alertEmail: 'dono@loja.com' }));
+      expect(page.alertEmail()).toBe('dono@loja.com');
+      page.alertEmail.set('  dono@loja.com, gerente@loja.com ');
+
+      page.save();
+
+      const request = backend.expectOne(`${API}/alerts/settings`);
+      expect((request.request.body as { alertEmail: string }).alertEmail).toBe('dono@loja.com, gerente@loja.com');
+      request.flush(settings({ alertEmail: 'dono@loja.com, gerente@loja.com' }));
+      expect(page.alertEmail()).toBe('dono@loja.com, gerente@loja.com');
+      backend.verify();
+    });
+
+    it('removes the address by sending it empty', () => {
+      const { page, backend } = setup(settings({ alertEmail: 'dono@loja.com' }));
+      page.alertEmail.set('');
+
+      page.save();
+
+      const request = backend.expectOne(`${API}/alerts/settings`);
+      expect((request.request.body as { alertEmail: string }).alertEmail).toBe('');
+      request.flush(settings());
+      expect(page.alertEmail()).toBe('');
+      backend.verify();
+    });
+
+    it('keeps what was typed and shows the reason when the server refuses an address', () => {
+      const { page, backend } = setup();
+      const errors = TestBed.inject(ErrorService);
+      page.alertEmail.set('sem-arroba');
+
+      page.save();
+      backend.expectOne(`${API}/alerts/settings`).flush({ error: 'E-mail inválido: sem-arroba' }, { status: 400, statusText: 'Bad Request' });
+
+      expect(page.alertEmail()).toBe('sem-arroba');
+      expect(errors.errors()[0].message).toContain('sem-arroba');
+      backend.verify();
+    });
+
+    it('reports the outcome of the e-mail test', () => {
+      const { page, backend } = setup(settings({ alertEmail: 'dono@loja.com' }));
+
+      page.testEmail();
+      expect(page.testingEmail()).toBe(true);
+      backend.expectOne(`${API}/alerts/settings/test-email`).flush({ ok: true, status: 200, error: null });
+
+      expect(page.testingEmail()).toBe(false);
+      expect(page.emailTestResult()?.ok).toBe(true);
+      expect(page.emailTestMessage({ ok: true, status: 200, error: null })).toContain('E-mail de teste enviado');
+      page.testEmail();
+      backend.expectOne(`${API}/alerts/settings/test-email`).flush({ ok: false, status: 0, error: 'O provedor de e-mail recusou o envio' });
+      expect(page.emailTestResult()?.ok).toBe(false);
+      expect(page.emailTestMessage(page.emailTestResult()!)).toContain('recusou');
+      backend.verify();
+    });
+
+    it('warns that sending is off when the server has no e-mail provider, and hides the test button', async () => {
+      const { fixture, backend } = setup(settings({ alertEmail: 'dono@loja.com', emailAvailable: false }), [alert()], true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const element = fixture.nativeElement as HTMLElement;
+
+      expect(element.querySelector('[data-testid="email-unavailable"]')).not.toBeNull();
+      expect(element.textContent).not.toContain('Enviar e-mail de teste');
+      backend.verify();
+    });
+
+    it('offers the test button only when an address is saved and sending is on', async () => {
+      const saved = setup(settings({ alertEmail: 'dono@loja.com' }), [alert()], true);
+      saved.fixture.detectChanges();
+      await saved.fixture.whenStable();
+      const element = saved.fixture.nativeElement as HTMLElement;
+
+      expect(element.querySelector('[data-testid="email-unavailable"]')).toBeNull();
+      expect(element.textContent).toContain('Enviar e-mail de teste');
+      saved.backend.verify();
+      TestBed.resetTestingModule();
+
+      const empty = setup(settings(), [alert()], true);
+      empty.fixture.detectChanges();
+      await empty.fixture.whenStable();
+      expect((empty.fixture.nativeElement as HTMLElement).textContent).not.toContain('Enviar e-mail de teste');
+      empty.backend.verify();
+    });
   });
 });

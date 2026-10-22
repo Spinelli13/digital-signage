@@ -98,6 +98,32 @@ const REFRESH_MS = 15_000;
         </div>
       </div>
 
+      <h3 class="sub sec"><app-icon name="mail" [size]="18" />{{ 'Aviso por e-mail' | t }}</h3>
+      <p class="label">{{ 'Quando uma TV fica fora do ar, avisamos neste e-mail. Pode ser mais de um (até 3), separados por vírgula.' | t }}</p>
+      @if (settings() && !settings()?.emailAvailable) {
+        <div class="warn-box" role="status" data-testid="email-unavailable">
+          <app-icon name="triangle-alert" [size]="18" />
+          <span>{{ 'O envio de e-mail ainda não foi ativado neste servidor. Pode salvar o endereço: os avisos começam a sair assim que o envio for ativado.' | t }}</span>
+        </div>
+      }
+      <div class="field">
+        <label for="alert-email">{{ 'E-mail dos avisos' | t }}</label>
+        <input id="alert-email" type="text" inputmode="email" autocomplete="off" spellcheck="false" [placeholder]="emailPlaceholder"
+          [ngModel]="alertEmail()" (ngModelChange)="alertEmail.set($event)" />
+      </div>
+      @if (emailTestResult(); as result) {
+        <div [class]="result.ok ? 'success' : 'error'" role="status" data-testid="email-test-result">
+          <app-icon [name]="result.ok ? 'circle-check' : 'circle-alert'" [size]="18" />
+          <span>{{ emailTestMessage(result) }}</span>
+        </div>
+      }
+      @if (settings()?.alertEmail && settings()?.emailAvailable) {
+        <div class="actions">
+          <button class="secondary" (click)="testEmail()" [disabled]="saving() || testingEmail()"><app-icon name="send" [size]="16" />{{ (testingEmail() ? 'Enviando…' : 'Enviar e-mail de teste') | t }}</button>
+        </div>
+        <p class="label">{{ 'O teste usa o e-mail já salvo: salve antes de testar um endereço novo.' | t }}</p>
+      }
+
       <h3 class="sub sec"><app-icon name="send" [size]="18" />{{ 'Aviso externo (webhook)' | t }}</h3>
       <p class="label">
         {{ 'Cole o endereço de um webhook do Slack, Discord, Teams ou Zapier: cada alerta vira uma mensagem por lá.' | t }}
@@ -153,6 +179,8 @@ const REFRESH_MS = 15_000;
     /* rótulos de uma e de duas linhas: os campos alinham pela base, não pelo topo */
     .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 18px; align-items: end; }
     .sub { margin-top: 18px; }
+    .warn-box { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; padding: 11px 14px; border-radius: var(--r); background: var(--warn-bg); color: var(--warn-fg); border: 1px solid var(--warn-line); }
+    .warn-box app-icon { flex: none; margin-top: 1px; }
   `,
 })
 export class AlertsPage implements OnInit {
@@ -173,10 +201,14 @@ export class AlertsPage implements OnInit {
   readonly playLogRetentionDays = signal<number | null>(7);
   readonly notifyOnResolve = signal(true);
   readonly webhookUrl = signal('');
+  readonly alertEmail = signal('');
+  protected readonly emailPlaceholder = 'voce@empresa.com';
 
   readonly saving = signal(false);
   readonly testing = signal(false);
+  readonly testingEmail = signal(false);
   readonly testResult = signal<WebhookTestResult | null>(null);
+  readonly emailTestResult = signal<WebhookTestResult | null>(null);
 
   readonly label = (alert: Alert) => alertLabel(alert.type) + (alert.deviceName ? ` — ${alert.deviceName}` : '');
   /** Texto gerado pelo servidor (em português); as mensagens conhecidas aparecem traduzidas. */
@@ -192,6 +224,11 @@ export class AlertsPage implements OnInit {
   testMessage(result: WebhookTestResult): string {
     return result.ok
       ? tr('Mensagem de teste enviada. Confira no seu canal.')
+      : tr('O teste falhou: {reason}', { reason: result.error ? trServer(result.error) : tr('sem detalhes') });
+  }
+  emailTestMessage(result: WebhookTestResult): string {
+    return result.ok
+      ? tr('E-mail de teste enviado. Confira a caixa de entrada (e o spam).')
       : tr('O teste falhou: {reason}', { reason: result.error ? trServer(result.error) : tr('sem detalhes') });
   }
   readonly ago = (iso: string | null) => timeAgo(iso);
@@ -244,9 +281,22 @@ export class AlertsPage implements OnInit {
     });
   }
 
+  testEmail(): void {
+    this.testingEmail.set(true);
+    this.emailTestResult.set(null);
+    this.api.testAlertEmail().subscribe({
+      next: (result) => {
+        this.testingEmail.set(false);
+        this.emailTestResult.set(result);
+      },
+      error: () => this.testingEmail.set(false),
+    });
+  }
+
   private send(body: MonitoringSettingsRequest, message: string): void {
     this.saving.set(true);
     this.testResult.set(null);
+    this.emailTestResult.set(null);
     this.api.updateAlertSettings(body).subscribe({
       next: (saved) => {
         this.saving.set(false);
@@ -273,6 +323,7 @@ export class AlertsPage implements OnInit {
       eventsRetentionDays: this.eventsRetentionDays() as number,
       playLogRetentionDays: this.playLogRetentionDays() as number,
       notifyOnResolve: this.notifyOnResolve(),
+      alertEmail: this.alertEmail().trim(),
     };
   }
 
@@ -284,6 +335,7 @@ export class AlertsPage implements OnInit {
     this.eventsRetentionDays.set(settings.eventsRetentionDays);
     this.playLogRetentionDays.set(settings.playLogRetentionDays);
     this.notifyOnResolve.set(settings.notifyOnResolve);
+    this.alertEmail.set(settings.alertEmail ?? '');
   }
 
   private loadSettings(): void {

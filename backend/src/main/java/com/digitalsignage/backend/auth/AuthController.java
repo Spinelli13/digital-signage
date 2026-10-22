@@ -41,23 +41,32 @@ public class AuthController {
 	public record PasswordChange(@NotBlank String currentPassword, @NotBlank String newPassword) {
 	}
 
+	public record ForgotPassword(@NotBlank @jakarta.validation.constraints.Size(max = 255) String email) {
+	}
+
+	public record ResetPassword(@NotBlank String token, @NotBlank String newPassword) {
+	}
+
 	private final UserRepository userRepository;
 	private final TenantRepository tenantRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtService jwtService;
 	private final TenantSummary.Factory summaries;
+	private final PasswordResetService passwordResets;
 
 	public AuthController(
 			UserRepository userRepository,
 			TenantRepository tenantRepository,
 			PasswordEncoder passwordEncoder,
 			JwtService jwtService,
-			TenantSummary.Factory summaries) {
+			TenantSummary.Factory summaries,
+			PasswordResetService passwordResets) {
 		this.userRepository = userRepository;
 		this.tenantRepository = tenantRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.jwtService = jwtService;
 		this.summaries = summaries;
+		this.passwordResets = passwordResets;
 	}
 
 	@PostMapping("/api/v1/auth/login")
@@ -71,6 +80,20 @@ public class AuthController {
 		}
 
 		return ResponseEntity.ok(new LoginResponse(jwtService.generateToken(user.getEmail())));
+	}
+
+	/** "Esqueci a senha": a resposta é sempre a mesma, exista ou não uma conta com o e-mail (ninguém descobre quem é cliente). */
+	@PostMapping("/api/v1/auth/forgot-password")
+	public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPassword request) {
+		passwordResets.request(request.email());
+		return ResponseEntity.noContent().build();
+	}
+
+	/** Escolhe a senha nova com o link que chegou por e-mail (uso único, com prazo). */
+	@PostMapping("/api/v1/auth/reset-password")
+	public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPassword request) {
+		passwordResets.reset(request.token(), request.newPassword());
+		return ResponseEntity.noContent().build();
 	}
 
 	/** Cada pessoa troca a própria senha (precisa da atual, para que um computador esquecido logado não a troque por ela). */

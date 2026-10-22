@@ -23,6 +23,11 @@ public class PanelUrl {
 		return "";
 	}
 
+	/** Um endereço de dentro do painel (por exemplo "/redefinir-senha/abc"); nulo quando o painel não está configurado. */
+	public String link(String path) {
+		return base.isEmpty() ? null : base + path;
+	}
+
 	/** Endereço para a pessoa abrir com o celular; nulo quando o painel não está configurado. */
 	public String pairingUrl(String activationCode) {
 		return base.isEmpty() || activationCode == null ? null : base + "/parear/" + activationCode;

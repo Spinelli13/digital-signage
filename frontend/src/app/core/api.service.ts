@@ -511,6 +511,21 @@ export class ApiService {
     return this.http.post<WebhookTestResult>(this.url('/alerts/settings/test'), {});
   }
 
+  /** Manda um e-mail de teste aos endereços dos avisos. */
+  testAlertEmail(): Observable<WebhookTestResult> {
+    return this.http.post<WebhookTestResult>(this.url('/alerts/settings/test-email'), {});
+  }
+
+  /** "Esqueci a senha": a resposta é a mesma exista ou não uma conta com o e-mail. */
+  forgotPassword(email: string): Observable<void> {
+    return this.http.post<void>(this.url('/auth/forgot-password'), { email });
+  }
+
+  /** Escolhe a senha nova com o link recebido por e-mail. */
+  resetPassword(token: string, newPassword: string): Observable<void> {
+    return this.http.post<void>(this.url('/auth/reset-password'), { token, newPassword });
+  }
+
   uptimeReport(range: ReportRange, locationId?: number | null, groupId?: number | null): Observable<UptimeReport> {
     return this.http.get<UptimeReport>(this.url('/reports/uptime'), {
       params: queryParams({ from: range.from, to: range.to, locationId, groupId }),

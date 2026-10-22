@@ -35,6 +35,19 @@ app:
   # Endereço do painel, sem barra no final: vai no QR Code que a TV mostra para parear (Etapa 1.4). Vazio = a primeira
   # origem autorizada acima, que na nuvem é o próprio painel.
   panel-url: ${PANEL_URL:}
+  # E-mail do sistema (recuperar senha, boas-vindas, fatura, TV offline). Duas formas, sempre com MAIL_FROM: pela API HTTPS do
+  # provedor (MAIL_API=resend ou brevo + MAIL_API_KEY; é a que funciona no plano gratuito do Render, que bloqueia SMTP) ou por
+  # SMTP de qualquer provedor (MAIL_HOST). Sem nenhuma, nada é enviado e o sistema segue funcionando. Chaves e senhas só entram
+  # por variável de ambiente.
+  mail:
+    api: ${MAIL_API:}
+    api-key: ${MAIL_API_KEY:}
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    from: ${MAIL_FROM:}
+    starttls: ${MAIL_STARTTLS:true}
   jwt:
     secret: ${JWT_SECRET:dev-only-secret-change-me-before-any-real-deploy-0123456789}
     expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}
