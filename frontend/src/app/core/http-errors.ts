@@ -12,6 +12,7 @@ export const ACTIONS: [method: string, path: RegExp, label: string][] = [
   ['POST', /\/auth\/forgot-password$/, 'Pedir o link da senha nova'],
   ['POST', /\/auth\/reset-password$/, 'Escolher a senha nova'],
   ['POST', /\/alerts\/settings\/test-email$/, 'Testar o e-mail dos avisos'],
+  ['GET', /\/results$/, 'Carregar os resultados'],
   ['GET', /\/screen-alerts$/, 'Carregar os avisos em tela cheia'],
   ['POST', /\/screen-alerts$/, 'Enviar o aviso para as TVs'],
   ['POST', /\/screen-alerts\/\d+\/end$/, 'Encerrar o aviso'],

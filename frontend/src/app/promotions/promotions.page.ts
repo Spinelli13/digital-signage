@@ -5,12 +5,13 @@ import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
 import { dateInputToIso, isoToDateInput } from '../core/date-input';
 import { FDatePipe, TPipe, tr } from '../core/i18n';
-import { Promotion, PromotionCoupon, PromotionLookup, PromotionRequest } from '../core/models';
+import { Device, Promotion, PromotionCoupon, PromotionLookup, PromotionRequest } from '../core/models';
 import { Notice } from '../core/notice';
 import { PROMOTION_STATE_TONES, promotionCouponLabel, promotionStateLabel } from '../core/saas';
 import { QR_IMAGE_SIZE, drawQr } from '../media/qr';
 import { IconComponent } from '../shared/icon';
 import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent, SkeletonComponent } from '../shared/ui';
+import { cleanOrigin, linkWithOrigin, tvOrigin } from './qr-origin';
 
 /** Cupons para os clientes da loja: montar as promoções, o QR Code da TV e dar baixa no caixa. */
 @Component({
@@ -143,6 +144,20 @@ import { EmptyStateComponent, MenuComponent, PageHeaderComponent, PillComponent,
               <canvas #qrCanvas [width]="imageSize" [height]="imageSize" [attr.aria-label]="'QR Code da promoção' | t"></canvas>
               <div class="qr-side">
                 <p class="muted">{{ 'Mostre este QR Code na TV (envie a imagem para a Biblioteca) ou imprima. O endereço abaixo abre a mesma página.' | t }}</p>
+                <div class="field origin">
+                  <label for="qr-origin">{{ 'De onde é este QR Code?' | t }}</label>
+                  <select id="qr-origin" name="qrOrigin" [ngModel]="originChoice()" (ngModelChange)="originChoice.set($event)">
+                    <option value="">{{ 'QR Code geral (sem origem)' | t }}</option>
+                    @for (device of devices(); track device.id) {
+                      <option [value]="tvOrigin(device.id)">{{ 'TV: {name}' | t: { name: device.name } }}</option>
+                    }
+                    <option value="custom">{{ 'Outro lugar (balcão, panfleto…)' | t }}</option>
+                  </select>
+                  @if (originChoice() === 'custom') {
+                    <input name="qrOriginName" maxlength="40" [attr.aria-label]="'Nome do lugar' | t" [placeholder]="'Ex.: balcão' | t" [ngModel]="customOrigin()" (ngModelChange)="customOrigin.set($event)" />
+                  }
+                  <small class="muted">{{ 'Faça um QR Code para cada TV: assim os Resultados mostram quantos escaneamentos e cupons cada TV rendeu.' | t }}</small>
+                </div>
                 <input readonly [value]="publicLink()" [attr.aria-label]="'Endereço da promoção' | t" />
                 <div class="actions">
                   <button type="button" class="secondary small" (click)="copyLink()"><app-icon name="copy" [size]="15" />{{ 'Copiar o endereço' | t }}</button>
@@ -234,6 +249,15 @@ export class PromotionsPage implements OnInit {
   readonly active = signal(true);
 
   readonly imageSize = QR_IMAGE_SIZE;
+  readonly tvOrigin = tvOrigin;
+  /** As TVs, para fazer um QR Code por TV (carregadas na primeira vez que uma promoção é aberta). */
+  readonly devices = signal<Device[]>([]);
+  private devicesLoaded = false;
+  /** "" = QR geral; "tv-12" = a TV; "custom" = um lugar que a pessoa nomeia (balcão, panfleto). */
+  readonly originChoice = signal('');
+  readonly customOrigin = signal('');
+  /** A origem que vai no endereço do QR Code. */
+  readonly origin = computed(() => (this.originChoice() === 'custom' ? cleanOrigin(this.customOrigin()) : this.originChoice()));
   private readonly qrCanvas = viewChild<ElementRef<HTMLCanvasElement>>('qrCanvas');
   private started = false;
 
@@ -347,7 +371,19 @@ export class PromotionsPage implements OnInit {
     this.modal.set('edit');
   }
 
+  /** Carrega as TVs uma vez, para o seletor de "de onde é este QR Code". Falhar não atrapalha: só fica o QR geral. */
+  private loadDevices(): void {
+    if (this.devicesLoaded) {
+      return;
+    }
+    this.devicesLoaded = true;
+    this.api.devices().subscribe({ next: (devices) => this.devices.set(devices.filter((device) => device.status === 'ACTIVE')), error: () => undefined });
+  }
+
   openEdit(promotion: Promotion): void {
+    this.originChoice.set('');
+    this.customOrigin.set('');
+    this.loadDevices();
     this.editing = promotion;
     this.name.set(promotion.name);
     this.description.set(promotion.description ?? '');
@@ -415,7 +451,7 @@ export class PromotionsPage implements OnInit {
   /** O endereço público da promoção (o do QR Code): o painel e a página do cupom ficam no mesmo site. */
   publicLink(): string {
     const token = this.editing?.publicToken;
-    return token ? `${location.origin}/cupom/${token}` : '';
+    return token ? linkWithOrigin(`${location.origin}/cupom/${token}`, this.origin()) : '';
   }
 
   copyLink(): void {
@@ -441,7 +477,7 @@ export class PromotionsPage implements OnInit {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'qr-cupom.png';
+      link.download = this.origin() ? `qr-cupom-${this.origin()}.png` : 'qr-cupom.png';
       link.click();
       URL.revokeObjectURL(url);
     }, 'image/png');

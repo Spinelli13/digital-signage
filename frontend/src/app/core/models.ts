@@ -416,6 +416,69 @@ export interface ScreenAlertRequest {
   durationMinutes?: number;
 }
 
+/** "Resultados": o que o conteúdo e os QR Codes renderam no período (só números, sem dado de pessoa). */
+export interface ResultsDay {
+  day: string;
+  plays: number;
+  scans: number;
+  claimed: number;
+  redeemed: number;
+}
+
+export interface ResultsTv {
+  deviceId: number;
+  /** Nulo quando a TV foi excluída depois. */
+  name: string | null;
+  plays: number;
+  scans: number;
+  claimed: number;
+  redeemed: number;
+}
+
+/** Um QR Code que não é de uma TV (panfleto, balcão) ou o QR geral (origem vazia). */
+export interface ResultsOrigin {
+  origin: string;
+  scans: number;
+  claimed: number;
+  redeemed: number;
+}
+
+export interface ResultsPromotion {
+  id: number;
+  name: string;
+  scans: number;
+  claimed: number;
+  redeemed: number;
+}
+
+export interface ResultsTopMedia {
+  name: string;
+  type: string;
+  plays: number;
+}
+
+export interface ResultsReport {
+  from: string;
+  to: string;
+  timezone: string;
+  plays: number;
+  devicesWithPlays: number;
+  scans: number;
+  claimed: number;
+  redeemed: number;
+  days: ResultsDay[];
+  tvs: ResultsTv[];
+  origins: ResultsOrigin[];
+  promotions: ResultsPromotion[];
+  topMedia: ResultsTopMedia[];
+}
+
+export interface ResultsResponse {
+  /** O plano inclui cupons? Senão a tela esconde a parte de QR Code e cupons. */
+  couponsEnabled: boolean;
+  report: ResultsReport;
+}
+
 /** Datas no formato AAAA-MM-DD, no fuso do relatório; vazias = últimos 7 dias. */
 export interface ReportRange {
   from?: string;

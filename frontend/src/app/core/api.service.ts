@@ -47,6 +47,7 @@ import {
   MonitoringSettings,
   MonitoringSettingsRequest,
   ScreenAlert,
+  ResultsResponse,
   ScreenAlertRequest,
   PlatformOverview,
   Coupon,
@@ -585,6 +586,15 @@ export class ApiService {
     });
   }
 
+  /** "Resultados": exibições do conteúdo, QR Codes escaneados e cupons, por dia, TV e promoção. */
+  results(range: ReportRange, promotionId?: number | null): Observable<ResultsResponse> {
+    return this.http.get<ResultsResponse>(this.url('/results'), { params: queryParams({ from: range.from, to: range.to, promotionId }) });
+  }
+
+  resultsCsv(range: ReportRange, by: 'day' | 'tv' | 'promotion', promotionId?: number | null): Observable<Blob> {
+    return this.http.get(this.url('/results'), { params: queryParams({ from: range.from, to: range.to, promotionId, by, format: 'csv' }), responseType: 'blob' });
+  }
+
   // resumo do dashboard
   summary(silent = false): Observable<Summary> {
     return this.http.get<Summary>(this.url('/summary'), { context: new HttpContext().set(SILENT_ERRORS, silent) });
@@ -729,12 +739,17 @@ export class ApiService {
 
   // ---------- cupom pelo celular (páginas públicas: sem login, erros tratados pela própria página) ----------
 
-  publicPromotion(token: string): Observable<PublicPromotion> {
-    return this.http.get<PublicPromotion>(this.url(`/public/promotions/${token}`), { context: new HttpContext().set(SILENT_ERRORS, true) });
+  /** {@code origin}: de que QR Code veio ("tv-12", "balcao"), para contar o escaneamento por origem. */
+  publicPromotion(token: string, origin: string | null = null, deviceId: string | null = null): Observable<PublicPromotion> {
+    return this.http.get<PublicPromotion>(this.url(`/public/promotions/${token}`), {
+      context: new HttpContext().set(SILENT_ERRORS, true),
+      params: queryParams({ o: origin }),
+      ...(deviceId ? { headers: { 'X-Client-Id': deviceId } } : {}),
+    });
   }
 
-  claimPublicCoupon(token: string, customerName: string | null, deviceId: string, consent = false): Observable<PublicPromoCoupon> {
-    return this.http.post<PublicPromoCoupon>(this.url(`/public/promotions/${token}/coupons`), { customerName, consent }, {
+  claimPublicCoupon(token: string, customerName: string | null, deviceId: string, consent = false, origin: string | null = null): Observable<PublicPromoCoupon> {
+    return this.http.post<PublicPromoCoupon>(this.url(`/public/promotions/${token}/coupons`), { customerName, consent, ...(origin ? { origin } : {}) }, {
       context: new HttpContext().set(SILENT_ERRORS, true),
       headers: { 'X-Client-Id': deviceId },
     });

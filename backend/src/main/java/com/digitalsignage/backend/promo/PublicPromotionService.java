@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.digitalsignage.backend.common.RateLimitException;
@@ -40,21 +41,52 @@ public class PublicPromotionService {
 	private final Clock clock;
 	private final Map<String, Deque<Long>> recent = new ConcurrentHashMap<>();
 
-	public PublicPromotionService(JdbcTemplate jdbc, PromotionService promotions, Clock clock) {
+	/** O mesmo aparelho reabrindo a página dentro desta janela não conta de novo (recarregar a página não infla o número). */
+	static final long SCAN_DEDUPE_MS = 10 * 60 * 1000L;
+
+	private final java.time.ZoneId reportZone;
+	private final Map<String, Long> recentScans = new ConcurrentHashMap<>();
+
+	public PublicPromotionService(JdbcTemplate jdbc, PromotionService promotions, Clock clock,
+			@Value("${app.monitoring.report-timezone:America/Sao_Paulo}") String reportZone) {
 		this.jdbc = jdbc;
 		this.promotions = promotions;
 		this.clock = clock;
+		this.reportZone = java.time.ZoneId.of(reportZone);
 	}
 
 	private record Owner(long tenantId, long id) {
 	}
 
-	public PublicPromotion promotion(String token) {
+	/** Quem abre a página escaneou o QR Code: conta um escaneamento (por dia e origem) e devolve a promoção. */
+	public PublicPromotion promotion(String token, String origin, String device, String network) {
 		Owner owner = ownerOfPromotion(token);
+		countScan(owner, ScanOrigin.clean(origin), device != null && device.matches("[0-9a-zA-Z-]{8,64}") ? device : network);
 		return TenantContext.callAs(owner.tenantId(), () -> promotions.publicView(owner.id()));
 	}
 
-	public PublicCoupon claim(String token, String customerName, boolean consented, String network, String device) {
+	/** Um número por dia e origem, sem dado de pessoa. Nunca derruba a abertura da página: o aviso da promoção vale mais que o contador. */
+	private void countScan(Owner owner, String origin, String who) {
+		long now = clock.millis();
+		if (recentScans.size() > MAX_TRACKED_CLIENTS) {
+			recentScans.clear();
+		}
+		String key = owner.id() + "|" + origin + "|" + who;
+		Long last = recentScans.get(key);
+		if (last != null && now - last < SCAN_DEDUPE_MS) {
+			return;
+		}
+		recentScans.put(key, now);
+		try {
+			jdbc.update("INSERT INTO promotion_scans (promotion_id, tenant_id, day, origin, scans) VALUES (?, ?, ?, ?, 1) "
+					+ "ON CONFLICT (promotion_id, day, origin) DO UPDATE SET scans = promotion_scans.scans + 1",
+					owner.id(), owner.tenantId(), java.sql.Date.valueOf(clock.instant().atZone(reportZone).toLocalDate()), origin);
+		} catch (RuntimeException e) {
+			// o contador falhou: a pessoa ainda vê a promoção
+		}
+	}
+
+	public PublicCoupon claim(String token, String customerName, boolean consented, String network, String device, String origin) {
 		Owner owner = ownerOfPromotion(token);
 		String clientId = device != null && device.matches("[0-9a-zA-Z-]{8,64}") ? device : null;
 		return TenantContext.callAs(owner.tenantId(), () -> {
@@ -67,7 +99,7 @@ public class PublicPromotionService {
 			}
 			throttle(token + "|net|" + network, MAX_PER_NETWORK);
 			try {
-				return promotions.claim(owner.id(), customerName, consented, clientId);
+				return promotions.claim(owner.id(), customerName, consented, clientId, origin);
 			} catch (DataIntegrityViolationException e) {
 				// dois pedidos do mesmo aparelho ao mesmo tempo: o outro já criou o cupom
 				return promotions.existing(owner.id(), clientId).orElseThrow(() -> e);
@@ -120,6 +152,7 @@ public class PublicPromotionService {
 	/** Para os testes. */
 	public void forgetClients() {
 		recent.clear();
+		recentScans.clear();
 	}
 
 }

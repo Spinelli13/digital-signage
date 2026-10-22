@@ -53,6 +53,11 @@ public class PlanLimits {
 		}
 	}
 
+	/** O plano do cliente inclui este recurso? (Sem lançar erro: para a tela esconder o que não tem.) */
+	public boolean includes(long tenantId, Feature feature) {
+		return planOf(tenantId).includes(feature);
+	}
+
 	public void requireFeature(long tenantId, Feature feature) {
 		Plan plan = planOf(tenantId);
 		if (!plan.includes(feature)) {

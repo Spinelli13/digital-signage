@@ -717,6 +717,20 @@ Em **Cupons** (menu Operação) você cria promoções para os clientes da sua l
 
 **Dados pessoais:** o nome é opcional, aparece junto de um aviso de privacidade (a pessoa precisa marcar que concorda para informá-lo) e é apagado depois de 90 dias por padrão (o Administrador muda esse prazo em **Privacidade e dados**, seção 11.4); o cupom em si fica só com o código e as datas.
 
+**Um QR Code para cada TV:** ao abrir a promoção, o seletor **De onde é este QR Code?** escolhe a **TV** (ou **Outro lugar**, como "balcão" ou "panfleto"). O endereço do QR Code ganha uma etiqueta (`?o=tv-12`) e o arquivo baixado leva o nome da origem. Envie o QR Code de cada TV para a Biblioteca e ponha na playlist **daquela** TV: assim os **Resultados** mostram quantos escaneamentos e cupons cada TV rendeu. Sem escolher nada, vale o QR Code geral de sempre (os escaneamentos entram como "sem origem").
+
+### 10.6 Resultados: o conteúdo rodou X vezes, Y cupons foram usados
+
+Em **Resultados** (menu Monitoramento, para qualquer papel) o painel responde, numa frase e em números simples, o que o seu conteúdo e os QR Codes renderam no período (últimos 7, 30 ou 90 dias, ou as datas que você escolher):
+
+- **Exibições do conteúdo:** quantas vezes as mídias rodaram nas TVs (vem da comprovação de exibição; os totais diários ficam guardados por um ano).
+- **QR Codes escaneados:** quantas vezes a página da promoção foi aberta. O mesmo aparelho recarregando a página em até 10 minutos conta uma vez só.
+- **Cupons pegos** e **Cupons usados** (dados no caixa), com a **taxa de uso**.
+
+Abaixo: o gráfico e a tabela **por dia**, a tabela **por TV** (exibições, escaneamentos, cupons pegos e usados do QR Code daquela TV), **Outros QR Codes** (balcão, panfleto, QR geral), **por promoção** e **O que mais rodou**. O filtro **Promoção** olha uma promoção só. **Baixar CSV** (por dia, por TV ou por promoção) abre direto no Excel.
+
+> **O que os números significam:** é só contagem, sem nenhum dado de pessoa. "Escaneado" é uma abertura da página (não prova que a pessoa pegou o cupom). Cupons usados contam no dia em que o caixa deu baixa. Os dias seguem o horário de Brasília. Sem o recurso de cupons no plano, a tela mostra só as exibições.
+
 ## 11. Equipe e papéis
 
 Cada pessoa entra no painel com o **seu próprio e-mail e senha**, e o **papel** dela decide o que pode fazer. Assim o dono do cliente dá acesso à equipe sem entregar a senha de administrador.

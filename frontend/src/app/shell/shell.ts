@@ -87,6 +87,7 @@ import { UserMenuComponent } from '../shared/user-menu';import { WordmarkCompone
             }
           </a>
           <a routerLink="/relatorios" routerLinkActive="active"><app-icon name="chart-column" /><span>{{ 'Relatórios' | t }}</span></a>
+          <a routerLink="/resultados" routerLinkActive="active"><app-icon name="trending-up" /><span>{{ 'Resultados' | t }}</span></a>
         }
 
         <div class="section">{{ 'Administração' | t }}</div>

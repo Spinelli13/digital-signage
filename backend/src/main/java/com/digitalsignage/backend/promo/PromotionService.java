@@ -138,7 +138,7 @@ public class PromotionService {
 	}
 
 	/** O mesmo aparelho recebe sempre o mesmo cupom; outro aparelho recebe um novo, enquanto houver. */
-	public PublicCoupon claim(Long promotionId, String customerName, boolean consented, String clientId) {
+	public PublicCoupon claim(Long promotionId, String customerName, boolean consented, String clientId, String origin) {
 		Promotion promotion = find(promotionId);
 		Instant now = clock.instant();
 		if (clientId != null) {
@@ -160,6 +160,7 @@ public class PromotionService {
 		// o prazo de guarda do nome é do cliente (Privacidade); a limpeza horária também apaga, mesmo sem ninguém pegar cupom
 		coupons.forgetNamesBefore(now.minus(Duration.ofDays(privacy.couponNameRetentionDays())));
 		PromotionCoupon fresh = new PromotionCoupon(promotionId, freshCode(), name, clientId, now, expiryOf(promotion, now));
+		fresh.setOrigin(ScanOrigin.clean(origin));
 		if (name != null) {
 			fresh.recordConsent(now, PrivacyNotice.VERSION);
 		}

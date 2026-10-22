@@ -34,14 +34,14 @@ const coupon = (overrides: Partial<PublicPromoCoupon> = {}): PublicPromoCoupon =
   ...overrides,
 });
 
-function setup<T>(component: new () => T, token: string, render = false) {
+function setup<T>(component: new () => T, token: string, render = false, query: Record<string, string> = {}) {
   localStorage.clear();
   TestBed.configureTestingModule({
     providers: [
       provideHttpClient(withInterceptors([errorInterceptor])),
       provideHttpClientTesting(),
       provideRouter([]),
-      { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ token }) } } },
+      { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ token }), queryParamMap: convertToParamMap(query) } } },
     ],
   });
   TestBed.inject(ConfigService).apiBaseUrl = 'http://api.test';
@@ -55,6 +55,45 @@ function setup<T>(component: new () => T, token: string, render = false) {
 }
 
 const textOf = (fixture: { nativeElement: unknown }) => ((fixture.nativeElement as HTMLElement).textContent ?? '').replace(/\s+/g, ' ');
+
+describe('PromoClaimPage — de que QR Code a pessoa veio', () => {
+  afterEach(() => localStorage.clear());
+
+  it('sends the origin of the QR Code (?o=) and this device code when it opens, so the results count scans per TV', async () => {
+    const { fixture, backend } = setup(PromoClaimPage, PROMO_TOKEN, true, { o: 'tv-12' });
+
+    const request = backend.expectOne((r) => r.url === `${API}/public/promotions/${PROMO_TOKEN}`);
+    expect(request.request.params.get('o')).toBe('tv-12');
+    expect(request.request.headers.get('X-Client-Id')).toMatch(/^[0-9a-zA-Z-]{8,64}$/);
+    request.flush(promotion());
+    fixture.detectChanges();
+    await fixture.whenStable();
+  });
+
+  it('keeps the origin when claiming the coupon, and sends none for the general QR Code', async () => {
+    const { page, fixture, backend } = setup(PromoClaimPage, PROMO_TOKEN, true, { o: 'balcao' });
+    backend.expectOne((r) => r.url === `${API}/public/promotions/${PROMO_TOKEN}`).flush(promotion());
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    page.claim();
+    const claim = backend.expectOne(`${API}/public/promotions/${PROMO_TOKEN}/coupons`);
+    expect((claim.request.body as { origin?: string }).origin).toBe('balcao');
+    claim.flush(coupon());
+
+    TestBed.resetTestingModule();
+    const general = setup(PromoClaimPage, PROMO_TOKEN, true);
+    const open = general.backend.expectOne((r) => r.url === `${API}/public/promotions/${PROMO_TOKEN}`);
+    expect(open.request.params.has('o')).toBe(false);
+    open.flush(promotion());
+    general.fixture.detectChanges();
+    await general.fixture.whenStable();
+    general.page.claim();
+    const claimGeneral = general.backend.expectOne(`${API}/public/promotions/${PROMO_TOKEN}/coupons`);
+    expect('origin' in (claimGeneral.request.body as object)).toBe(false);
+    claimGeneral.flush(coupon());
+  });
+});
 
 describe('PromoClaimPage (QR Code da promoção)', () => {
   afterEach(() => {

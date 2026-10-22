@@ -56,6 +56,9 @@ public class PromotionCoupon {
 	@Column(name = "public_token", nullable = false, updatable = false)
 	private String publicToken = Tokens.random();
 
+	/** De que QR Code veio o cupom ("tv-12", "balcao"...); nulo = sem origem (ver {@link ScanOrigin}). */
+	private String origin;
+
 	@Column(name = "claimed_at", nullable = false, updatable = false)
 	private Instant claimedAt;
 
@@ -82,6 +85,14 @@ public class PromotionCoupon {
 	}
 
 	protected PromotionCoupon() {
+	}
+
+	public void setOrigin(String origin) {
+		this.origin = origin == null || origin.isEmpty() ? null : origin;
+	}
+
+	public String getOrigin() {
+		return origin;
 	}
 
 	public PromotionCoupon(Long promotionId, String code, String claimantName, String clientId, Instant claimedAt, Instant expiresAt) {
