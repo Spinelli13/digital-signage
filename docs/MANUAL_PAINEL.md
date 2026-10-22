@@ -157,7 +157,7 @@ Em todos: **Cores** (veja abaixo), **idioma** do texto do widget e **tempo na te
 
 ![Previsão do tempo de Campinas: escolhas à esquerda, como fica na TV à direita (captura real)](manual/img/painel-widget-clima.png)
 
-**Como os dados chegam à TV.** Clima, notícias e cotações vêm de serviços públicos gratuitos que **o servidor** consulta (Open-Meteo, os feeds RSS dos portais e o Banco Central Europeu via Frankfurter). A TV nunca fala com eles: pede ao servidor, a cada 10 minutos, e **guarda o último dado**. Resultado:
+**Como os dados chegam à TV.** Clima, notícias e cotações vêm de serviços públicos gratuitos que **o servidor** consulta (MET Norway para o clima, os feeds RSS dos portais e o Banco Central Europeu via Frankfurter). A TV nunca fala com eles: pede ao servidor, a cada 10 minutos, e **guarda o último dado**. Resultado:
 
 - **Sem internet, o widget continua na tela** com o último clima, as últimas manchetes e as últimas cotações recebidos (se estiverem velhos, aparece "atualizado há…" discreto no rodapé). Relógio, recado e contagem regressiva nem precisam de dados.
 - Cidades com a mesma localização compartilham a mesma consulta; o servidor guarda o clima por 30 minutos, as notícias por 15 e as cotações por 1 hora. Se o serviço de fora falhar, vale o último resultado por até 24 horas.

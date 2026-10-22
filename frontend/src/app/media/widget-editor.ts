@@ -109,6 +109,7 @@ const PREVIEW_DELAY_MS = 450;
                       <option [ngValue]="2">{{ 'Agora e os 2 dias seguintes' | t }}</option>
                       <option [ngValue]="3">{{ 'Agora e os 3 dias seguintes' | t }}</option>
                     </select>
+                    <p class="label">{{ 'Previsão do MET Norway (licença CC BY 4.0). Busca de cidades com dados do OpenStreetMap.' | t }}</p>
                   </div>
                 }
                 @case ('NEWS') {
@@ -614,6 +615,7 @@ export class WidgetEditorComponent {
       city: place.region ? `${place.name}, ${place.region}` : place.name,
       latitude: place.latitude,
       longitude: place.longitude,
+      timezone: place.timezone || null,
     }));
     this.places.set([]);
     this.searched.set(false);

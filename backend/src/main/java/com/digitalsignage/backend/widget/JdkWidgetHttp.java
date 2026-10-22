@@ -34,18 +34,25 @@ public class JdkWidgetHttp implements WidgetHttp {
 
 	@Override
 	public Response get(URI uri, boolean publicOnly) throws IOException {
+		return get(uri, publicOnly, null);
+	}
+
+	@Override
+	public Response get(URI uri, boolean publicOnly, String ifModifiedSince) throws IOException {
 		URI current = uri;
 		for (int hop = 0; hop <= MAX_REDIRECTS; hop++) {
 			if (publicOnly || hop > 0) { // um redirecionamento nunca pode levar à rede interna, nem num feed conhecido
 				urls.validate(current.toString(), "feed de notícias");
 			}
-			HttpRequest request = HttpRequest.newBuilder(current)
+			HttpRequest.Builder builder = HttpRequest.newBuilder(current)
 					.timeout(Duration.ofSeconds(8))
 					.header("User-Agent", USER_AGENT)
 					.header("Accept", "application/json, application/rss+xml, application/atom+xml, application/xml, text/xml, */*;q=0.5")
-					.header("Accept-Encoding", "gzip")
-					.GET()
-					.build();
+					.header("Accept-Encoding", "gzip");
+			if (ifModifiedSince != null) {
+				builder.header("If-Modified-Since", ifModifiedSince);
+			}
+			HttpRequest request = builder.GET().build();
 			HttpResponse<InputStream> response;
 			try {
 				response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
@@ -66,7 +73,8 @@ public class JdkWidgetHttp implements WidgetHttp {
 			try (InputStream raw = response.body()) {
 				boolean gzip = response.headers().firstValue("Content-Encoding").map(value -> value.toLowerCase().contains("gzip")).orElse(false);
 				InputStream in = gzip ? new GZIPInputStream(raw) : raw;
-				return new Response(status, readLimited(in), response.headers().firstValue("Content-Type").orElse(null));
+				return new Response(status, readLimited(in), response.headers().firstValue("Content-Type").orElse(null),
+						response.headers().firstValue("Last-Modified").orElse(null), response.headers().firstValue("Expires").orElse(null));
 			}
 		}
 		throw new IOException("Redirecionamentos demais");

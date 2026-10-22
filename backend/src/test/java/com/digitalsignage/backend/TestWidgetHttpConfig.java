@@ -29,11 +29,13 @@ public class TestWidgetHttpConfig {
 		/** Trecho do endereço -> resposta. O primeiro trecho contido no endereço vence. */
 		private final Map<String, Response> routes = new LinkedHashMap<>();
 		private final List<String> calls = new ArrayList<>();
+		private final List<String> conditions = new ArrayList<>();
 		private boolean failAll;
 
 		public void reset() {
 			routes.clear();
 			calls.clear();
+			conditions.clear();
 			failAll = false;
 		}
 
@@ -45,6 +47,11 @@ public class TestWidgetHttpConfig {
 			routes.put(urlPart, new Response(status, body, contentType));
 		}
 
+		/** Como {@link #on(String, String)}, com os cabeçalhos {@code Last-Modified} e {@code Expires} do provedor. */
+		public void on(String urlPart, String body, String lastModified, String expires) {
+			routes.put(urlPart, new Response(200, body.getBytes(StandardCharsets.UTF_8), "application/json", lastModified, expires));
+		}
+
 		public void failEverything(boolean value) {
 			this.failAll = value;
 		}
@@ -53,8 +60,24 @@ public class TestWidgetHttpConfig {
 			return calls;
 		}
 
+		/** O {@code If-Modified-Since} de cada consulta condicional (nulo na primeira consulta). */
+		public List<String> conditions() {
+			return conditions;
+		}
+
 		public long callsTo(String urlPart) {
 			return calls.stream().filter(call -> call.contains(urlPart)).count();
+		}
+
+		/** Responde 304 quando a pergunta traz o mesmo {@code Last-Modified} que a rota guarda, como o MET Norway faz. */
+		@Override
+		public Response get(URI uri, boolean publicOnly, String ifModifiedSince) throws IOException {
+			Response response = get(uri, publicOnly);
+			conditions.add(ifModifiedSince);
+			if (ifModifiedSince != null && ifModifiedSince.equals(response.lastModified())) {
+				return new Response(304, new byte[0], null, response.lastModified(), response.expires());
+			}
+			return response;
 		}
 
 		@Override

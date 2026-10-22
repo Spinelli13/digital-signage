@@ -42,7 +42,9 @@ public final class NewsFeeds {
 			new Preset("agenciabrasil", "Agência Brasil", "https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.xml"),
 			new Preset("bbc", "BBC News Brasil", "https://feeds.bbci.co.uk/portuguese/rss.xml"),
 			new Preset("cnn", "CNN Brasil", "https://www.cnnbrasil.com.br/feed/"),
-			new Preset("uol", "UOL Notícias", "https://rss.uol.com.br/feed/noticias.xml"));
+			new Preset("uol", "UOL Notícias", "https://rss.uol.com.br/feed/noticias.xml"),
+			// a política de uso da Agência Senado autoriza a reprodução com a fonte citada e a informação íntegra (docs/FONTES_DE_DADOS.md)
+			new Preset("agenciasenado", "Agência Senado", "https://www12.senado.leg.br/noticias/rss"));
 
 	private static final Pattern TAGS = Pattern.compile("<[^>]*>");
 	private static final Pattern CHARSET = Pattern.compile("charset=([\\w\\-]+)", Pattern.CASE_INSENSITIVE);

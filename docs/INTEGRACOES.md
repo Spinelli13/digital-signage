@@ -8,7 +8,7 @@ Documento de análise (item 8 do pedido da madrugada de 21/10/2026). Não promet
 |---|---|---|
 | **API REST** (`/api/v1/...`) | Tudo que o painel faz passa por ela: TVs, mídias, playlists, campanhas, layouts, preços, relatórios. | Autenticação por **login de usuário (JWT)**, com papéis (Visualizador, Editor, Administrador). Não há ainda **chave de API** para máquinas. |
 | **Alertas por webhook** (`WebhookNotifier`) | Avisa Slack, Discord e compatíveis quando uma TV cai ou o Player erra. | Só `https` e só endereços públicos (`WebhookUrlPolicy`), sem seguir redirecionamentos (proteção contra SSRF). A carga leva `text` e `content` mais os dados do evento. |
-| **Widgets de dados** | Clima (Open-Meteo), notícias (RSS), câmbio (Frankfurter), recado, relógio, contagem regressiva. | O servidor busca e guarda em cache; o Player só desenha. Já tem proteção contra SSRF e XXE e um conector HTTP trocável nos testes (`WidgetHttp`). **Open-Meteo gratuito é para uso não comercial**: contratar o plano comercial antes de vender. |
+| **Widgets de dados** | Clima (MET Norway), busca de cidades (Nominatim), notícias (RSS), câmbio (Frankfurter), recado, relógio, contagem regressiva. | O servidor busca e guarda em cache; o Player só desenha. Já tem proteção contra SSRF e XXE e um conector HTTP trocável nos testes (`WidgetHttp`). Licenças e termos de cada fonte: `docs/FONTES_DE_DADOS.md` (o clima já usa fonte de uso comercial gratuito; entre os feeds de notícia só a Agência Senado tem autorização clara). |
 | **Preços por planilha** | Importar e exportar CSV (`;` ou `,`, Excel brasileiro, Windows-1252). | É a ponte para ERP/PDV hoje: exporta-se do sistema da loja e importa-se no painel, à mão. |
 | **Comprovação de exibição** | Registro por TV, em milissegundos, com corrente de hashes (SHA-256) e relatório auditável (CSV). | Quem audita confere a corrente; **ainda não é assinada por TV** (ver 3.5). |
 | **Páginas da web e QR Code** | Uma TV pode abrir qualquer página `https` (Power BI, painel de vendas, cardápio online). | Já resolve muita integração "visual" sem código: o outro sistema só precisa publicar uma página. |
@@ -88,7 +88,7 @@ Hoje o pagamento é **registrado à mão** (fatura e baixa manual). Para escalar
 - **Segredos:** chaves de API e de terceiros **só no servidor**, nunca na TV nem no navegador; rotação e revogação visíveis no painel.
 - **Falha de terceiro não derruba a TV:** toda busca tem tempo limite, guarda o **último dado bom** e mostra um estado vazio claro (como os widgets fazem).
 - **Limites por plano:** cada integração que gera tráfego ou armazenamento entra nos limites do plano (já existem para TVs e disco).
-- **Termos de serviço:** conferir licença de cada fonte de dados antes de vender (exemplo já em aberto: Open-Meteo).
+- **Termos de serviço:** conferir licença de cada fonte de dados antes de vender (feito em `docs/FONTES_DE_DADOS.md`; sobram os feeds de notícia dos portais).
 
 ## 6. Ordem sugerida e decisões que são do dono
 

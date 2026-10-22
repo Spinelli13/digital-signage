@@ -36,6 +36,7 @@ export const WIDGETS: Record<string, string> = {
   Buscar: 'Search',
   'Cidade escolhida:': 'Chosen city:',
   'Nenhuma cidade encontrada. Tente outro nome.': 'No city found. Try another name.',
+  'Previsão do MET Norway (licença CC BY 4.0). Busca de cidades com dados do OpenStreetMap.': 'Forecast by MET Norway (CC BY 4.0 license). City search with OpenStreetMap data.',
   'Dias de previsão': 'Forecast days',
   'Só o tempo de agora': 'Only the current weather',
   'Agora e o dia seguinte': 'Now and the next day',

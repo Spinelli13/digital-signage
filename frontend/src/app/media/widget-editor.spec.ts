@@ -135,6 +135,7 @@ describe('WidgetEditorComponent', () => {
     expect(editor.places()).toHaveLength(0);
     const body = answerPreview(backend, { kind: 'WEATHER' });
     expect(body.settings['latitude']).toBe(-22.9);
+    expect(body.settings['timezone']).toBe('America/Sao_Paulo'); // o servidor usa o fuso da cidade para separar os dias da previsão
     expect(body.settings['longitude']).toBe(-47.06);
     expect(editor.problem()).toBeNull();
     backend.verify();
