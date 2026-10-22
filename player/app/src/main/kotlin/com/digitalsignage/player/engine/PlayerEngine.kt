@@ -1,6 +1,7 @@
 package com.digitalsignage.player.engine
 
 import com.digitalsignage.player.data.ApiException
+import com.digitalsignage.player.data.Hardware
 import com.digitalsignage.player.data.PlayerApi
 import com.digitalsignage.player.errors.ErrorMessages
 import com.digitalsignage.player.data.PlayerConfig
@@ -73,6 +74,8 @@ class PlayerEngine(
     private val onUpdateCheckRequested: (Long) -> Unit = {},
     /** Chamado a cada heartbeat que traz um pedido de diagnóstico (valor do pedido). */
     private val onDiagnosticRequested: (Long) -> Unit = {},
+    /** O equipamento para o inventário do painel (lido do aparelho uma vez; nulo nos testes). */
+    private val hardware: () -> Hardware? = { null },
     /** O que o Player conta ao servidor a cada heartbeat (ocorrências, mídia na tela, exibições). */
     private val telemetry: Telemetry = Telemetry.shared,
     /** O diário de exibição (comprovação): entregue ao servidor depois de cada heartbeat. */
@@ -212,7 +215,7 @@ class PlayerEngine(
             val report = telemetry.snapshot()
             val stored = store.load()
             val desired = try {
-                api.heartbeat(token(), playerVersion, stored?.configVersion ?: 0, report, stored?.plan?.untilMs ?: 0)
+                api.heartbeat(token(), playerVersion, stored?.configVersion ?: 0, report, stored?.plan?.untilMs ?: 0, hardware())
             } catch (e: ApiException) {
                 // HTTP 400: o servidor recusou este relato. Sem descartá-lo, o mesmo relato seria reenviado para
                 // sempre e nenhum heartbeat mais passaria (a TV pareceria offline). Outros erros mantêm o relato.

@@ -4,6 +4,14 @@ export type MediaType = 'IMAGE' | 'VIDEO' | 'WEB' | 'WIDGET';
 export type Connection = 'ONLINE' | 'OFFLINE' | 'NEVER' | 'PENDING' | 'DISABLED';
 
 export interface Device {
+  /** O equipamento que o Player informou (nulos até um Player novo contar). */
+  hardwareModel?: string | null;
+  androidVersion?: string | null;
+  ramMb?: number | null;
+  /** Preenchidos à mão pelo Administrador (outros papéis não recebem). */
+  serialNumber?: string | null;
+  installedOn?: string | null;
+  comodatoNote?: string | null;
   id: number;
   name: string;
   /** Nome do local (mantido por compatibilidade); o vínculo de verdade é locationId. */
@@ -107,6 +115,10 @@ export interface DeviceUpdateRequest {
   layoutId?: number;
   /** Como a TV foi instalada; ausente não muda (só o Administrador). */
   orientation?: ScreenOrientation;
+  /** Inventário (só o Administrador): ausente não muda; texto vazio apaga. */
+  serialNumber?: string | null;
+  installedOn?: string | null;
+  comodatoNote?: string | null;
 }
 
 /** O último relatório de diagnóstico que a TV mandou (nulos se nunca mandou) e quando o painel pediu o próximo. */
@@ -387,6 +399,14 @@ export interface UptimeReport {
 }
 
 export interface InventoryRow {
+  /** O equipamento que o Player informou (nulos até um Player novo contar). */
+  hardwareModel?: string | null;
+  androidVersion?: string | null;
+  ramMb?: number | null;
+  /** Preenchidos à mão pelo Administrador (outros papéis não recebem). */
+  serialNumber?: string | null;
+  installedOn?: string | null;
+  comodatoNote?: string | null;
   id: number;
   name: string;
   location: string | null;

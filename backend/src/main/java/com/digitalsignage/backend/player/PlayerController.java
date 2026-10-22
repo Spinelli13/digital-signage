@@ -127,6 +127,7 @@ public class PlayerController {
 		String previousVersion = device.getPlayerVersion();
 
 		device.recordHeartbeat(request.playerVersion(), request.configVersion(), now);
+		device.recordHardware(request.model(), request.androidVersion(), request.ramMb());
 		device.setOfflinePlanUntil(request.planUntilMs() == null || request.planUntilMs() <= 0 ? null : Instant.ofEpochMilli(request.planUntilMs()));
 		deviceRepository.save(device);
 

@@ -256,4 +256,35 @@ describe('DeviceHistoryPage — diagnóstico da TV', () => {
     expect(text(fixture)).not.toContain('Pedir diagnóstico agora');
   });
 });
+describe('DeviceHistoryPage — equipamento (inventário)', () => {
+  const text = (fixture: { detectChanges(): void; nativeElement: unknown }) => {
+    fixture.detectChanges();
+    return ((fixture.nativeElement as HTMLElement).textContent ?? '').replace(/\s+/g, ' ');
+  };
+
+  it('shows the equipment the Player reported and the notes the Administrator wrote', async () => {
+    const { fixture } = start([event(1)], true, tv({
+      hardwareModel: 'TCL 55S546', androidVersion: '11', ramMb: 1800, serialNumber: 'SN-1', installedOn: '2026-10-20', comodatoNote: 'Comodato Completo, contrato 0007',
+    }));
+    await fixture.whenStable();
+
+    const shown = text(fixture);
+    expect(shown).toContain('TCL 55S546');
+    expect(shown).toContain('Android 11');
+    expect(shown).toContain('1800 MB de memória');
+    expect(shown).toContain('Série SN-1');
+    expect(shown).toContain('Instalada em');
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="comodato"]')?.textContent).toContain('Comodato Completo, contrato 0007');
+  });
+
+  it('shows nothing about equipment for a TV whose Player has not told yet', async () => {
+    const { fixture } = start([event(1)], true);
+    await fixture.whenStable();
+
+    const shown = text(fixture);
+    expect(shown).not.toContain('Android');
+    expect(shown).not.toContain('MB de memória');
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="comodato"]')).toBeNull();
+  });
+});
 });

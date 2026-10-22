@@ -32,6 +32,8 @@ interface PlayerApi {
         report: HeartbeatReport = HeartbeatReport.EMPTY,
         /** Até quando vale a agenda offline guardada (0 = sem agenda): o painel mostra isso. */
         planUntilMs: Long = 0,
+        /** O equipamento (modelo, Android, memória) para o inventário do painel; nulo em quem não sabe. */
+        hardware: Hardware? = null,
     ): Desired
 
     /** Os dados mais recentes de um widget (clima, notícias, cotações): o JSON como o servidor mandou. */
@@ -73,8 +75,9 @@ class HttpPlayerApi(
         syncedConfigVersion: Long,
         report: HeartbeatReport,
         planUntilMs: Long,
+        hardware: Hardware?,
     ): Desired {
-        val body = Json.heartbeatBody(playerVersion, syncedConfigVersion, report, planUntilMs)
+        val body = Json.heartbeatBody(playerVersion, syncedConfigVersion, report, planUntilMs, hardware)
         return Json.parseDesired(send(post("/api/v1/player/heartbeat", body, token)))
     }
 

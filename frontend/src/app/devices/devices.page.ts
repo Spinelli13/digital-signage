@@ -323,6 +323,21 @@ type LocationChoice = string;
               <p class="label">{{ 'Escolha como a TV está na parede. O Player gira o conteúdo para ele ficar de pé para quem olha, mesmo que a caixa de TV mande o vídeo sempre deitado. Em TV vertical, o layout usa a versão em pé.' | t }}</p>
             </div>
           }
+          @if (modal() === 'edit' && auth.can('admin')) {
+            <div class="field">
+              <label for="serial">{{ 'Número de série' | t }}</label>
+              <input id="serial" name="serial" maxlength="80" [ngModel]="serialNumber()" (ngModelChange)="serialNumber.set($event)" />
+            </div>
+            <div class="field">
+              <label for="installed">{{ 'Instalada em' | t }}</label>
+              <input id="installed" name="installed" type="date" [ngModel]="installedOn()" (ngModelChange)="installedOn.set($event)" />
+            </div>
+            <div class="field">
+              <label for="comodato">{{ 'Comodato / observação' | t }}</label>
+              <textarea id="comodato" name="comodato" rows="2" maxlength="500" [placeholder]="'Ex.: Comodato Completo: TV 32 pol e stick, contrato 0007' | t" [ngModel]="comodatoNote()" (ngModelChange)="comodatoNote.set($event)"></textarea>
+              <p class="label">{{ 'Só o Administrador vê o número de série e a observação.' | t }}</p>
+            </div>
+          }
           @if (groups().length > 0 && auth.can('admin')) {
             <div class="field">
               <label>{{ 'Grupos' | t }}</label>
@@ -472,6 +487,9 @@ export class DevicesPage implements OnInit {
   readonly sample = 'Aa';
   readonly orientationBadge = orientationBadge;
   readonly orientationChoice = signal<ScreenOrientation>('AUTO');
+  readonly serialNumber = signal('');
+  readonly installedOn = signal('');
+  readonly comodatoNote = signal('');
   readonly orientationTurn = computed(() => orientationOption(this.orientationChoice()).turn);
   readonly orientationHint = computed(() => orientationOption(this.orientationChoice()).hint);
   readonly modalGroups = signal<Set<number>>(new Set());
@@ -725,6 +743,9 @@ export class DevicesPage implements OnInit {
     this.modalGroups.set(new Set(device.groupIds));
     this.layoutChoice.set(device.layoutId == null ? '' : String(device.layoutId));
     this.orientationChoice.set(device.orientation ?? 'AUTO');
+    this.serialNumber.set(device.serialNumber ?? '');
+    this.installedOn.set(device.installedOn ?? '');
+    this.comodatoNote.set(device.comodatoNote ?? '');
     this.editing = device;
     this.modal.set('edit');
   }
@@ -766,6 +787,8 @@ export class DevicesPage implements OnInit {
             ...(this.auth.can('admin') ? { groupIds, ...locationFields } : {}),
             // A orientação só vai quando mudou (o servidor só deixa o Administrador mexer nela).
             ...(this.auth.can('admin') && this.orientationChoice() !== (this.editing!.orientation ?? 'AUTO') ? { orientation: this.orientationChoice() } : {}),
+            // O inventário (série, instalação, comodato) é do Administrador e só vai o que mudou; a data não pode ser apagada, só trocada.
+            ...(this.auth.can('admin') ? this.inventoryChanges() : {}),
             ...(this.layoutChoice() === '' ? {} : { layoutId: Number(this.layoutChoice()) }),
           });
 
@@ -782,6 +805,19 @@ export class DevicesPage implements OnInit {
       // O aviso aparece por cima do formulário (interceptor de erros); o formulário continua aberto.
       error: () => this.busy.set(false),
     });
+  }
+
+  /** Os campos de inventário que a pessoa mudou na janela de edição (vazio = apagar; ausente = não mudar). */
+  private inventoryChanges(): { serialNumber?: string; comodatoNote?: string; installedOn?: string } {
+    const current = this.editing!;
+    const serial = this.serialNumber().trim();
+    const note = this.comodatoNote().trim();
+    const installed = this.installedOn();
+    return {
+      ...(serial !== (current.serialNumber ?? '') ? { serialNumber: serial } : {}),
+      ...(note !== (current.comodatoNote ?? '') ? { comodatoNote: note } : {}),
+      ...(installed && installed !== (current.installedOn ?? '') ? { installedOn: installed } : {}),
+    };
   }
 
   private finishModal(): void {

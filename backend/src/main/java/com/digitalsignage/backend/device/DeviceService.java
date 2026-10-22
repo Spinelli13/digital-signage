@@ -174,11 +174,37 @@ public class DeviceService {
 			}
 		}
 
+		if (request.serialNumber() != null || request.installedOn() != null || request.comodatoNote() != null) {
+			applyInventory(device, request);
+		}
+
 		if (request.groupIds() != null) {
 			replaceGroups(device, request.groupIds());
 		}
 
 		return deviceRepository.save(device);
+	}
+
+	/** Número de série, instalação e comodato são do Administrador (e só muda se o valor realmente mudou). */
+	private static void applyInventory(Device device, DeviceUpdateRequest request) {
+		String serial = request.serialNumber() == null ? device.getSerialNumber() : blankToNull(request.serialNumber());
+		String note = request.comodatoNote() == null ? device.getComodatoNote() : blankToNull(request.comodatoNote());
+		java.time.LocalDate installed = request.installedOn() == null ? device.getInstalledOn() : request.installedOn();
+		boolean changed = !java.util.Objects.equals(serial, device.getSerialNumber()) || !java.util.Objects.equals(note, device.getComodatoNote())
+				|| !java.util.Objects.equals(installed, device.getInstalledOn());
+		if (!changed) {
+			return;
+		}
+		if (!CurrentUser.isAtLeast(Role.ADMIN)) {
+			throw new ForbiddenException("O inventário da TV (número de série, instalação e comodato) é do Administrador.");
+		}
+		device.setSerialNumber(serial);
+		device.setComodatoNote(note);
+		device.setInstalledOn(installed);
+	}
+
+	private static String blankToNull(String text) {
+		return text == null || text.isBlank() ? null : text.strip();
 	}
 
 	/** Como a TV foi instalada é fato da instalação, não de conteúdo: o Editor não muda. */

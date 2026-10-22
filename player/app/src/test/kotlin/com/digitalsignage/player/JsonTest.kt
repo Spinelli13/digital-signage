@@ -122,6 +122,22 @@ class JsonTest {
     }
 
     @Test
+    fun `the equipment goes in the heartbeat only when known, trimmed to what the server accepts`() {
+        val without = Json.heartbeatBody("0.5.1", 12, HeartbeatReport.EMPTY)
+        assertFalse(without.has("model"))
+        assertFalse(without.has("ramMb"))
+
+        val with = Json.heartbeatBody("0.5.1", 12, HeartbeatReport.EMPTY, hardware = com.digitalsignage.player.data.Hardware("TCL 55S546", "11", 1800))
+        assertEquals("TCL 55S546", with.getString("model"))
+        assertEquals("11", with.getString("androidVersion"))
+        assertEquals(1800L, with.getLong("ramMb"))
+
+        val unknownMemory = Json.heartbeatBody("0.5.1", 12, HeartbeatReport.EMPTY, hardware = com.digitalsignage.player.data.Hardware("x".repeat(200), "11", 0))
+        assertEquals(80, unknownMemory.getString("model").length)
+        assertFalse(unknownMemory.has("ramMb"))
+    }
+
+    @Test
     fun `reads the diagnostic request token and treats its absence as none`() {
         val asked = Json.parseDesired("""{"playlistId":4,"configVersion":9,"serverTime":"x","diagnosticToken":1789000000456}""")
         assertEquals(1_789_000_000_456L, asked.diagnosticToken)

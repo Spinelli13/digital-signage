@@ -84,6 +84,26 @@ public class Device {
 	@Column(name = "update_requested_at")
 	private Instant updateRequestedAt;
 
+	/** Informados pelo próprio Player no heartbeat (nulos até um Player novo contar). */
+	@Column(name = "hardware_model")
+	private String hardwareModel;
+
+	@Column(name = "android_version")
+	private String androidVersion;
+
+	@Column(name = "ram_mb")
+	private Integer ramMb;
+
+	/** Preenchidos à mão no painel pelo Administrador: número de série, quando foi instalada e a observação de comodato. */
+	@Column(name = "serial_number")
+	private String serialNumber;
+
+	@Column(name = "installed_on")
+	private java.time.LocalDate installedOn;
+
+	@Column(name = "comodato_note")
+	private String comodatoNote;
+
 	/** Quando o painel pediu o relatório de diagnóstico; a TV percebe no próximo heartbeat. */
 	@Column(name = "diagnostic_requested_at")
 	private Instant diagnosticRequestedAt;
@@ -145,6 +165,55 @@ public class Device {
 		this.lastSeenAt = now;
 		this.playerVersion = playerVersion;
 		this.configVersion = syncedConfigVersion;
+	}
+
+	/** O equipamento, como o Player contou. Campo ausente (Player antigo) não apaga o que já se sabia. */
+	public void recordHardware(String model, String android, Integer ram) {
+		if (model != null && !model.isBlank()) {
+			this.hardwareModel = model.strip();
+		}
+		if (android != null && !android.isBlank()) {
+			this.androidVersion = android.strip();
+		}
+		if (ram != null && ram > 0) {
+			this.ramMb = ram;
+		}
+	}
+
+	public String getHardwareModel() {
+		return hardwareModel;
+	}
+
+	public String getAndroidVersion() {
+		return androidVersion;
+	}
+
+	public Integer getRamMb() {
+		return ramMb;
+	}
+
+	public String getSerialNumber() {
+		return serialNumber;
+	}
+
+	public void setSerialNumber(String serialNumber) {
+		this.serialNumber = serialNumber;
+	}
+
+	public java.time.LocalDate getInstalledOn() {
+		return installedOn;
+	}
+
+	public void setInstalledOn(java.time.LocalDate installedOn) {
+		this.installedOn = installedOn;
+	}
+
+	public String getComodatoNote() {
+		return comodatoNote;
+	}
+
+	public void setComodatoNote(String comodatoNote) {
+		this.comodatoNote = comodatoNote;
 	}
 
 	/** Pede que a TV mande agora um relatório de diagnóstico. */

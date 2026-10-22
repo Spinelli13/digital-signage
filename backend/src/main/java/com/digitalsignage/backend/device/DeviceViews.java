@@ -46,6 +46,7 @@ public class DeviceViews {
 	/** Para listas: as campanhas e os nomes das mídias são carregados uma vez só. */
 	public List<DeviceResponse> of(Collection<Device> devices) {
 		Instant now = clock.instant();
+		boolean inventoryVisible = com.digitalsignage.backend.security.CurrentUser.isAtLeast(com.digitalsignage.backend.user.Role.ADMIN);
 		Map<Long, CampaignService.Effective> effective = campaignService.effectiveForAll(devices);
 		List<Long> mediaIds = devices.stream().map(Device::getCurrentMediaId).filter(Objects::nonNull).distinct().toList();
 		Map<Long, String> mediaNames = mediaIds.isEmpty()
@@ -61,7 +62,8 @@ public class DeviceViews {
 						device.getCurrentMediaId() == null ? null : mediaNames.get(device.getCurrentMediaId()),
 						device.getLayoutId() == null ? null : layoutNames.get(device.getLayoutId()),
 						desired.get(device.getId()),
-						now))
+						now,
+						inventoryVisible))
 				.toList();
 	}
 

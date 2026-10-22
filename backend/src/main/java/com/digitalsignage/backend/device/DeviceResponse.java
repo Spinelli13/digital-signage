@@ -36,10 +36,18 @@ public record DeviceResponse(
 		List<Long> groupIds,
 		/** Até quando a agenda offline guardada na TV vale (vazio = a TV não tem agenda). */
 		Instant offlinePlanUntil,
+		/** O equipamento que o Player informou (nulos até um Player novo contar). */
+		String hardwareModel,
+		String androidVersion,
+		Integer ramMb,
+		/** Número de série, data de instalação e observação de comodato: preenchidos à mão e só aparecem para o Administrador. */
+		String serialNumber,
+		java.time.LocalDate installedOn,
+		String comodatoNote,
 		Instant createdAt,
 		Instant updatedAt) {
 
-	public static DeviceResponse from(Device device, CampaignService.Effective effective, String currentMediaName, String layoutName, long desiredConfigVersion, Instant now) {
+	public static DeviceResponse from(Device device, CampaignService.Effective effective, String currentMediaName, String layoutName, long desiredConfigVersion, Instant now, boolean inventoryVisible) {
 
 		return new DeviceResponse(
 				device.getId(),
@@ -64,6 +72,12 @@ public record DeviceResponse(
 				desiredConfigVersion,
 				device.getGroupIds().stream().sorted().toList(),
 				device.getOfflinePlanUntil(),
+				device.getHardwareModel(),
+				device.getAndroidVersion(),
+				device.getRamMb(),
+				inventoryVisible ? device.getSerialNumber() : null,
+				inventoryVisible ? device.getInstalledOn() : null,
+				inventoryVisible ? device.getComodatoNote() : null,
 				device.getCreatedAt(),
 				device.getUpdatedAt());
 	}
