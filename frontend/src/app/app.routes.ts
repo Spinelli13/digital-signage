@@ -40,6 +40,11 @@ export const routes: Routes = [
       { path: 'precos/:id', canActivate: [featureGuard('PRICES')], loadComponent: () => import('./prices/price-editor.page').then((m) => m.PriceEditorPage) },
       { path: 'locais', loadComponent: () => import('./locations/locations.page').then((m) => m.LocationsPage) },
       { path: 'grupos', loadComponent: () => import('./groups/groups.page').then((m) => m.GroupsPage) },
+      {
+        path: 'alertar-agora',
+        canActivate: [capabilityGuard('content')],
+        loadComponent: () => import('./screen-alert/screen-alert.page').then((m) => m.ScreenAlertPage),
+      },
       { path: 'biblioteca', loadComponent: () => import('./media/media.page').then((m) => m.MediaPage) },
       {
         path: 'equipe',

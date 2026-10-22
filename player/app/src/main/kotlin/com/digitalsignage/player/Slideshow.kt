@@ -49,6 +49,7 @@ class Slideshow(
     private var single: ZonePlayer? = null
     private var singleViews: ZoneViews? = null
     private var zones: List<ZonePlayer> = emptyList()
+    private var silenced = false
     private var layoutListener: View.OnLayoutChangeListener? = null
 
     fun start(config: PlayerConfig) {
@@ -83,6 +84,13 @@ class Slideshow(
         playerView.visibility = View.INVISIBLE
     }
 
+    /** Com um aviso em tela cheia no ar o som dos vídeos fica desligado (vale também para as zonas que começarem depois). */
+    fun silence(on: Boolean) {
+        silenced = on
+        single?.silence(on)
+        zones.forEach { it.silence(on) }
+    }
+
     /** O Android avisou que falta memória: cada zona solta o que não está à vista. */
     fun trimMemory(level: Int) {
         if (!TrimLevels.shouldRelease(level)) return
@@ -103,6 +111,7 @@ class Slideshow(
         zonesRoot.visibility = View.VISIBLE
         views.applyFit(zone.covers)
         val player = single ?: ZonePlayer(scope, cache, views, telemetry, onError = onError, profile = profile, recorder = recorder, zoneName = zone.name.ifBlank { "Principal" }, widgets = widgets, live = live).also { single = it }
+        player.silence(silenced)
         player.start(zone.items, context)
     }
 
@@ -156,7 +165,10 @@ class Slideshow(
                     zoneName = zone.name,
                     widgets = widgets,
                     live = live,
-                ).also { it.start(zone.items, context) }
+                ).also {
+                    it.silence(silenced)
+                    it.start(zone.items, context)
+                }
             }
         }
         if (zonesRoot.width > 0 && zonesRoot.height > 0) {

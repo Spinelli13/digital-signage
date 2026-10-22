@@ -129,6 +129,44 @@
             android:textSize="14sp" />
     </LinearLayout>
 
+    <!-- Aviso em tela cheia ("Alertar agora"): por cima de tudo, inclusive da tarja de erro. A cor vem da urgência (ver AlertLook). -->
+    <LinearLayout
+        android:id="@+id/alertOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#B3261E"
+        android:elevation="24dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="56dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/alertTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:letterSpacing="0.12"
+            android:textColor="#E6FFFFFF"
+            android:textSize="34sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/alertMessage"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="20dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            app:autoSizeMaxTextSize="140sp"
+            app:autoSizeMinTextSize="28sp"
+            app:autoSizeStepGranularity="2sp"
+            app:autoSizeTextType="uniform" />
+    </LinearLayout>
+
 </FrameLayout>
 
 </com.digitalsignage.player.RotatedFrame>

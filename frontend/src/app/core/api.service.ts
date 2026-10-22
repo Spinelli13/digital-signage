@@ -46,6 +46,8 @@ import {
   MediaUrl,
   MonitoringSettings,
   MonitoringSettingsRequest,
+  ScreenAlert,
+  ScreenAlertRequest,
   PlatformOverview,
   Coupon,
   CouponBatch,
@@ -514,6 +516,19 @@ export class ApiService {
   /** Manda um e-mail de teste aos endereços dos avisos. */
   testAlertEmail(): Observable<WebhookTestResult> {
     return this.http.post<WebhookTestResult>(this.url('/alerts/settings/test-email'), {});
+  }
+
+  /** "Alertar agora": os avisos em tela cheia no ar e os recentes. */
+  screenAlerts(): Observable<ScreenAlert[]> {
+    return this.http.get<ScreenAlert[]>(this.url('/screen-alerts'));
+  }
+
+  createScreenAlert(body: ScreenAlertRequest): Observable<ScreenAlert> {
+    return this.http.post<ScreenAlert>(this.url('/screen-alerts'), body);
+  }
+
+  endScreenAlert(id: number): Observable<ScreenAlert> {
+    return this.http.post<ScreenAlert>(this.url(`/screen-alerts/${id}/end`), {});
   }
 
   /** "Esqueci a senha": a resposta é a mesma exista ou não uma conta com o e-mail. */

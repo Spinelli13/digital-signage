@@ -18,11 +18,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.ui.PlayerView
+import com.digitalsignage.player.alert.AlertLook
 import com.digitalsignage.player.cache.MediaCache
 import com.digitalsignage.player.data.HttpPlayerApi
 import com.digitalsignage.player.diagnostics.Diagnostics
 import com.digitalsignage.player.diagnostics.DiagnosticsCollector
 import com.digitalsignage.player.diagnostics.DiagnosticsReport
+import com.digitalsignage.player.data.ScreenAlert
 import com.digitalsignage.player.data.ScreenOrientation
 import com.digitalsignage.player.data.Settings
 import com.digitalsignage.player.engine.EngineState
@@ -73,6 +75,10 @@ class MainActivity : AppCompatActivity() {
     private var pairingQrFor: String? = null
     private lateinit var serverInfo: TextView
     private lateinit var errorBanner: TextView
+    private lateinit var alertOverlay: View
+    private lateinit var alertTitle: TextView
+    private lateinit var alertMessage: TextView
+    private var alertTimer: Job? = null
     private lateinit var screen: RotatedFrame
     private val reporter = ErrorReporter.shared
 
@@ -90,6 +96,9 @@ class MainActivity : AppCompatActivity() {
         pairingQr = findViewById(R.id.pairingQr)
         serverInfo = findViewById(R.id.serverInfo)
         errorBanner = findViewById(R.id.errorBanner)
+        alertOverlay = findViewById(R.id.alertOverlay)
+        alertTitle = findViewById(R.id.alertTitle)
+        alertMessage = findViewById(R.id.alertMessage)
         screen = findViewById(R.id.screen)
 
         settings = Settings(this)
@@ -210,6 +219,12 @@ class MainActivity : AppCompatActivity() {
                 engine.state.collect { render(it) }
             }
         }
+        // O aviso em tela cheia ("Alertar agora") vem pelo heartbeat e cobre tudo até o painel encerrar ou o prazo acabar.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                engine.alert.collect { showAlert(it) }
+            }
+        }
         startEngine()
 
         // Atualização automática do próprio app pelo site de downloads (sem Google Play).
@@ -261,6 +276,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        // Com um aviso em tela cheia no ar o controle não abre nada por cima dele (só o Voltar, que sempre sai do app de propósito).
+        if (alertOverlay.visibility == View.VISIBLE && keyCode != KeyEvent.KEYCODE_BACK) return true
         val select = keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER
         if (select && overlay.visibility == View.VISIBLE) {
             showServerDialog()
@@ -272,6 +289,35 @@ class MainActivity : AppCompatActivity() {
             return true
         }
         return super.onKeyDown(keyCode, event)
+    }
+
+    /**
+     * Mostra (ou tira) o aviso em tela cheia. O prazo é contado pelo motor (relógio monotônico, a partir do que o servidor diz que
+     * falta): o aviso sai sozinho no fim, mesmo que a internet caia no meio. Enquanto está no ar, o som dos vídeos fica desligado.
+     */
+    private fun showAlert(alert: ScreenAlert?) {
+        alertTimer?.cancel()
+        if (alert == null || engine.alertRemainingMs() <= 0) {
+            hideAlert()
+            return
+        }
+        alertOverlay.setBackgroundColor(AlertLook.background(alert.tone))
+        val heading = AlertLook.heading(alert.title)
+        alertTitle.text = heading.orEmpty()
+        alertTitle.visibility = if (heading == null) View.GONE else View.VISIBLE
+        alertMessage.text = alert.message
+        alertOverlay.visibility = View.VISIBLE
+        slideshow.silence(true)
+        alertTimer = lifecycleScope.launch {
+            // o motor renova o prazo a cada heartbeat; aqui só se espera ele chegar a zero
+            while (engine.alertRemainingMs() > 0) delay(minOf(ALERT_TICK_MS, engine.alertRemainingMs()))
+            hideAlert()
+        }
+    }
+
+    private fun hideAlert() {
+        alertOverlay.visibility = View.GONE
+        slideshow.silence(false)
     }
 
     private fun startEngine() {
@@ -444,3 +490,6 @@ class MainActivity : AppCompatActivity() {
 
 /** O diagnóstico na tela fecha sozinho depois deste tempo (ninguém fica preso numa TV sem controle). */
 private const val DIAGNOSTICS_AUTO_CLOSE_MS = 90_000L
+
+/** De quanto em quanto tempo a tela confere se o prazo do aviso em tela cheia acabou. */
+private const val ALERT_TICK_MS = 1_000L

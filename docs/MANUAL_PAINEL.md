@@ -359,6 +359,24 @@ Quando existe uma versão nova do Player, as TVs descobrem sozinhas em até 30 m
 
 TVs com versão mais antiga que a última publicada aparecem com o selo **vX.Y.Z disponível** (ícone de download) na coluna "Último contato".
 
+### 5.8 Alertar agora: aviso em tela cheia
+
+Para avisar na hora quem está olhando para a TV (fechamos mais cedo, chame o gerente, evacuação), abra **Alertar agora** no menu (Administrador e Editor):
+
+1. Escreva a **mensagem** (até 300 caracteres) e, se quiser, um **título** curto (aparece em letras maiúsculas, como "ATENÇÃO").
+2. Escolha a **urgência**, que define a cor da tela: **Urgente** (vermelho), **Atenção** (âmbar) ou **Informativo** (violeta). O quadro "Assim aparece na TV" mostra o resultado antes de enviar.
+3. Escolha **para quem**: **Todas as TVs**, **Um grupo** ou **Uma TV**. A linha de cima do botão diz quantas TVs vão receber.
+4. Escolha **por quanto tempo** fica na tela: 5, 15 (padrão), 30 minutos, 1 ou 4 horas, ou **Até eu encerrar** (que vale no máximo 24 horas: nenhum aviso fica na TV para sempre).
+5. Clique em **Alertar agora**. Um clique só.
+
+O aviso cobre **toda a tela**, por cima da playlist, dos vídeos e dos widgets, e o som dos vídeos fica desligado enquanto ele estiver no ar. A TV percebe o aviso na próxima conferência com o servidor, **em até 30 segundos**. Ele sai **sozinho no fim do prazo** (mesmo se a internet da TV cair no meio) ou quando você clica em **Encerrar agora** em **No ar agora** (também em até 30 segundos).
+
+- Em **No ar agora** aparecem os avisos ativos, para quem foram, quantas TVs devem mostrá-los, quanto falta e quem mandou. **Avisos anteriores** guarda o histórico (encerrados e vencidos).
+- Pode haver até **5 avisos no ar** ao mesmo tempo. Se uma TV deve mostrar mais de um, aparece o **mais urgente** (entre iguais, o mais novo); ao encerrar esse, o outro volta.
+- O Visualizador consegue ver a tela, mas não enviar nem encerrar avisos.
+- **Precisa do Player novo na TV** (a partir da versão que traz esta função). Uma TV com Player antigo ignora o aviso e continua na playlist; o aviso fica registrado no histórico da TV quando ela o mostra.
+- Uma TV **sem internet** não recebe o aviso novo nem o encerramento: ela só segue o que já estava na tela.
+
 ---
 
 ## 6. Pontos & Locais

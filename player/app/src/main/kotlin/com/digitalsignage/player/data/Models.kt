@@ -168,7 +168,14 @@ data class Desired(
     val serverTimeMs: Long = 0,
     /** Muda quando o painel pede o diagnóstico da TV (0 = nunca pediu): a TV manda um relatório novo. */
     val diagnosticToken: Long = 0,
+    /** O aviso em tela cheia ("Alertar agora") que a TV deve mostrar agora; nulo = nenhum (ou servidor antigo). */
+    val alert: ScreenAlert? = null,
+    /** Quanto falta para o aviso acabar, segundo o servidor: a TV conta o tempo sozinha, sem depender do relógio dela. */
+    val alertRemainingSeconds: Long = 0,
 )
+
+/** O aviso em tela cheia: título opcional, o texto grande e a urgência (URGENT, WARNING ou INFO). */
+data class ScreenAlert(val id: Long, val title: String?, val message: String, val tone: String)
 
 /** O equipamento (inventário): o Player conta ao servidor modelo, versão do Android e memória em MB. */
 data class Hardware(val model: String, val androidVersion: String, val ramMb: Long)
@@ -308,6 +315,8 @@ object Json {
 
     fun parseDesired(raw: String): Desired {
         val json = JSONObject(raw)
+        val alertJson = json.optJSONObject("alert")
+        val alert = parseAlert(alertJson)
         return Desired(
             playlistId = if (json.isNull("playlistId")) null else json.getLong("playlistId"),
             configVersion = json.optLong("configVersion"),
@@ -316,7 +325,20 @@ object Json {
             campaignId = if (json.isNull("campaignId")) null else json.optLong("campaignId"),
             planVersion = json.optLong("planVersion", 0),
             serverTimeMs = parseServerTime(json.opt("serverTime")),
+            alert = alert,
+            alertRemainingSeconds = if (alert == null) 0 else alertJson?.optLong("remainingSeconds", 0) ?: 0,
         )
+    }
+
+    /** O aviso do heartbeat, ou nulo se não veio, está vazio ou sem texto (um aviso sem mensagem não cobre a tela). */
+    private fun parseAlert(json: JSONObject?): ScreenAlert? {
+        if (json == null || !json.has("id") || json.isNull("message")) return null
+        val message = json.optString("message", "").trim()
+        if (message.isEmpty()) return null
+        // um "null" explícito não pode virar o texto "null" (o Android devolve isso em optString)
+        val title = if (json.isNull("title")) null else json.optString("title", "").trim().ifEmpty { null }
+        val tone = if (json.isNull("tone")) "URGENT" else json.optString("tone", "URGENT")
+        return ScreenAlert(id = json.optLong("id"), title = title, message = message, tone = tone)
     }
 
     /** A hora do servidor: texto ISO em UTC ("2026-11-05T12:00:00.123456Z") ou número (segundos com fração). 0 se não entender. */
