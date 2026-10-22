@@ -153,6 +153,8 @@ Em todos: **Cores** (veja abaixo), **idioma** do texto do widget e **tempo na te
 
 **Cores do widget.** Escolha um **tema pronto** (Escuro, Claro, Violeta ou Verde) e, se quiser, personalize por cima dele em **Cores personalizadas**: **Fundo**, **Texto** e **Destaque**. Cada campo tem o seletor de cor e o código `#RRGGBB` (por exemplo `#8B5CF6`); deixe em branco para usar a cor do tema e clique em **Voltar às cores do tema** para limpar tudo. A pré-visualização muda na hora. Se as cores ficarem parecidas demais, o painel avisa ("Contraste baixo…") porque, de longe, na TV, o texto fica difícil de ler; o aviso não impede de salvar. Sem escolher a cor do texto, o widget usa texto claro em fundo escuro e texto escuro em fundo claro. As cores personalizadas valem para todos os tipos de widget (relógio, clima, notícias, cotações, recado, contagem, preços e chamadas). Exigem a **versão mais recente do Player** nas TVs (use **Atualizar app** em **Dispositivos**); um Player mais antigo mostra o tema pronto, sem as suas cores.
 
+![Recado com as cores personalizadas: fundo, texto e destaque à esquerda, como fica na TV à direita (captura real)](manual/img/painel-widget-cores.png)
+
 ![Previsão do tempo de Campinas: escolhas à esquerda, como fica na TV à direita (captura real)](manual/img/painel-widget-clima.png)
 
 **Como os dados chegam à TV.** Clima, notícias e cotações vêm de serviços públicos gratuitos que **o servidor** consulta (Open-Meteo, os feeds RSS dos portais e o Banco Central Europeu via Frankfurter). A TV nunca fala com eles: pede ao servidor, a cada 10 minutos, e **guarda o último dado**. Resultado:
@@ -587,7 +589,9 @@ Em **Biblioteca**, clique em **QR Code**. Digite o **endereço ou texto** (um ca
 
 ![Criando um QR Code: texto, título, legenda, cores e a pré-visualização (captura real)](manual/img/painel-qr-code.png)
 
-O código precisa ficar **mais escuro que o cartão** e com bom contraste (celulares só leem assim): se as cores escolhidas não permitirem, o painel explica e **não deixa salvar**. Ele guarda as suas cores para a próxima vez, neste navegador. Teste lendo o QR Code com o seu celular antes de publicar. Textos muito longos não cabem num QR Code: prefira um endereço curto.
+O código precisa ficar **mais escuro que o cartão** e com bom contraste (celulares só leem assim): se as cores escolhidas não permitirem, o painel explica e **não deixa salvar**. Ele guarda as suas cores para a próxima vez, neste navegador. Teste lendo o QR Code com o seu celular antes de publicar.
+
+![QR Code com cores personalizadas: fundo, texto, cartão do código e código (captura real)](manual/img/painel-qr-personalizado.png) Textos muito longos não cabem num QR Code: prefira um endereço curto.
 
 ### 10.3 Página da web
 
@@ -714,6 +718,10 @@ Em **Administração → Privacidade e dados** (só o **Administrador**, que é 
 5. Responda à pessoa em até **15 dias**.
 
 Cada cópia ou exclusão fica na lista **Pedidos atendidos** (tipo, quantidades, observação e quem atendeu). **O nome buscado não é guardado.** Nas páginas públicas, o aviso mostra o nome da sua empresa como responsável, o contato que você definiu, por quantos dias o nome fica e um link para a **Política de Privacidade**; a política e os **Termos de Uso** podem ser abertos por qualquer pessoa em `/privacidade` e `/termos`, sem entrar. O mapa completo dos dados está em `docs/LGPD.md`.
+
+![Privacidade e dados: contato, prazos de guarda e a busca de um titular com a cópia e a exclusão (captura real)](manual/img/painel-privacidade.png)
+
+![O aviso de privacidade na página pública da fila, com a caixa de concordância quando o nome é digitado (captura real no celular)](manual/img/painel-aviso-privacidade.png)
 
 ---
 
