@@ -9,6 +9,9 @@ export const REQUEST_TIMEOUT_MS = 120_000;
 
 export const ACTIONS: [method: string, path: RegExp, label: string][] = [
   ['POST', /\/auth\/login$/, 'Entrar'],
+  ['POST', /\/auth\/forgot-password$/, 'Pedir o link da senha nova'],
+  ['POST', /\/auth\/reset-password$/, 'Escolher a senha nova'],
+  ['POST', /\/alerts\/settings\/test-email$/, 'Testar o e-mail dos avisos'],
   ['GET', /\/devices$/, 'Carregar dispositivos'],
   ['POST', /\/devices\/activate$/, 'Ativar dispositivo'],
   ['PUT', /\/devices\/\d+$/, 'Salvar dispositivo'],

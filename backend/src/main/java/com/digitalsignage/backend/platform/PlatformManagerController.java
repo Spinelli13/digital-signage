@@ -60,10 +60,12 @@ public class PlatformManagerController {
 
 	private final UserRepository users;
 	private final PasswordEncoder encoder;
+	private final com.digitalsignage.backend.auth.PasswordResetService passwordResets;
 
-	public PlatformManagerController(UserRepository users, PasswordEncoder encoder) {
+	public PlatformManagerController(UserRepository users, PasswordEncoder encoder, com.digitalsignage.backend.auth.PasswordResetService passwordResets) {
 		this.users = users;
 		this.encoder = encoder;
+		this.passwordResets = passwordResets;
 	}
 
 	@GetMapping
@@ -83,7 +85,9 @@ public class PlatformManagerController {
 		// o gestor mora no mesmo cliente de quem o cadastrou (o cliente da própria operação)
 		User manager = new User(request.name().trim(), email, encoder.encode(request.password()), caller.homeTenantId(), Role.PLATFORM_ADMIN);
 		manager.setMustChangePassword(true);
-		return ManagerResponse.of(users.save(manager));
+		User saved = users.save(manager);
+		passwordResets.welcome(saved, null);
+		return ManagerResponse.of(saved);
 	}
 
 	@PutMapping("/{id}")

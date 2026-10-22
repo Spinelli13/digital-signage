@@ -52,3 +52,15 @@ describe('LoginPage — para onde volta depois de entrar', () => {
     expect(await signIn('https://evil.example')).toHaveBeenCalledWith('/dashboard');
   });
 });
+
+describe('LoginPage — esqueci a senha', () => {
+  it('links to the password recovery page', async () => {
+    setup(null);
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const link = (fixture.nativeElement as HTMLElement).querySelector('.forgot a');
+    expect(link?.getAttribute('href')).toBe('/esqueci-a-senha');
+  });
+});

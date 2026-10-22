@@ -60,11 +60,16 @@ public class UserController {
 	private final UserRepository users;
 	private final PasswordEncoder encoder;
 	private final PlanLimits planLimits;
+	private final com.digitalsignage.backend.auth.PasswordResetService passwordResets;
+	private final com.digitalsignage.backend.tenant.TenantRepository tenants;
 
-	public UserController(UserRepository users, PasswordEncoder encoder, PlanLimits planLimits) {
+	public UserController(UserRepository users, PasswordEncoder encoder, PlanLimits planLimits,
+			com.digitalsignage.backend.auth.PasswordResetService passwordResets, com.digitalsignage.backend.tenant.TenantRepository tenants) {
 		this.users = users;
 		this.encoder = encoder;
 		this.planLimits = planLimits;
+		this.passwordResets = passwordResets;
+		this.tenants = tenants;
 	}
 
 	@GetMapping
@@ -84,7 +89,9 @@ public class UserController {
 		requirePassword(request.password());
 		planLimits.requireRoomForUser(caller.tenantId());
 		User user = new User(request.name().trim(), email, encoder.encode(request.password()), caller.tenantId(), request.role());
-		return UserResponse.of(users.save(user));
+		User saved = users.save(user);
+		passwordResets.welcome(saved, tenants.findById(caller.tenantId()).map(com.digitalsignage.backend.tenant.Tenant::getName).orElse(null));
+		return UserResponse.of(saved);
 	}
 
 	@PutMapping("/{id}")

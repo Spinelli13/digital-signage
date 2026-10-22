@@ -57,7 +57,7 @@ public class SecurityConfig {
 						// Em servidor real, 4xx/5xx são reenviados internamente para /error. Sem liberar esse
 						// despacho, o status verdadeiro (400, 403, 500...) é mascarado como 401 anônimo.
 						.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-						.requestMatchers("/api/v1/health", "/api/v1/auth/login", "/api/v1/player/register").permitAll()
+						.requestMatchers("/api/v1/health", "/api/v1/auth/login", "/api/v1/auth/forgot-password", "/api/v1/auth/reset-password", "/api/v1/player/register").permitAll()
 						// Senha pelo celular: quem escaneia o QR Code não tem login (o segredo está no endereço).
 						.requestMatchers("/api/v1/public/**").permitAll()
 						// Player ainda não ativado só pode consultar o próprio estado (para exibir o código).

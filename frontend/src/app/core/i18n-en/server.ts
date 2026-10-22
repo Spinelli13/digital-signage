@@ -9,6 +9,12 @@ export const SERVER: Record<string, string> = {
   'A senha nova precisa ter pelo menos {n} caracteres': 'The new password must have at least {n} characters',
   'A senha precisa ter pelo menos {n} caracteres': 'The password must have at least {n} characters',
   'Já existe um usuário com o e-mail {email}': 'A user with the email {email} already exists',
+  'Este link não vale mais. Peça um novo em "Esqueci a senha".': 'This link is no longer valid. Request a new one under "Forgot password".',
+  'Informe o e-mail dos avisos antes de testar': 'Enter the notice email before testing',
+  'O envio de e-mail ainda não está configurado no servidor': 'Email sending is not configured on the server yet',
+  'O provedor de e-mail recusou o envio': 'The email provider refused to send',
+  'Informe no máximo 3 e-mails para os avisos': 'Enter at most 3 emails for the notices',
+  'E-mail inválido: {address}': 'Invalid email: {address}',
   'Você não pode desativar o seu próprio usuário': 'You cannot deactivate your own user',
   'Você não pode excluir o seu próprio usuário': 'You cannot delete your own user',
   'Este é o único administrador ativo do cliente: promova outro usuário a Administrador antes':

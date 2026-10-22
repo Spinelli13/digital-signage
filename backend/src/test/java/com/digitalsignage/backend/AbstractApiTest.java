@@ -38,7 +38,7 @@ import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import({ TestClockConfig.class, TestWidgetHttpConfig.class })
+@Import({ TestClockConfig.class, TestWidgetHttpConfig.class, TestMailConfig.class })
 public abstract class AbstractApiTest {
 
 	private static final EmbeddedPostgres POSTGRES = startPostgres();
@@ -84,6 +84,9 @@ public abstract class AbstractApiTest {
 	protected TestWidgetHttpConfig.StubWidgetHttp widgetHttp;
 
 	@Autowired
+	protected TestMailConfig.RecordingEmailSender mail;
+
+	@Autowired
 	protected com.digitalsignage.backend.widget.WidgetDataService widgetData;
 
 	@BeforeEach
@@ -91,9 +94,10 @@ public abstract class AbstractApiTest {
 		// O administrador (tabela users) é semeado na subida do contexto e precisa sobreviver.
 		clock.reset();
 		widgetHttp.reset();
+		mail.reset();
 		widgetData.clearCache();
-		jdbc.update("UPDATE monitoring_settings SET offline_after_minutes = 10, never_connected_after_hours = 24, error_burst_count = 5, webhook_url = NULL, notify_on_resolve = TRUE, events_retention_days = 90, play_log_retention_days = 7");
-		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media, locations, device_groups, campaigns, device_events, alerts, media_plays, layouts, price_lists, tickets, service_counters, service_queues, promotion_coupons, promotions, privacy_requests, privacy_settings RESTART IDENTITY CASCADE");
+		jdbc.update("UPDATE monitoring_settings SET offline_after_minutes = 10, never_connected_after_hours = 24, error_burst_count = 5, webhook_url = NULL, alert_email = NULL, notify_on_resolve = TRUE, events_retention_days = 90, play_log_retention_days = 7");
+		jdbc.execute("TRUNCATE playlist_items, device_playlists, devices, playlists, media, locations, device_groups, campaigns, device_events, alerts, media_plays, layouts, price_lists, tickets, service_counters, service_queues, promotion_coupons, promotions, privacy_requests, privacy_settings, password_resets RESTART IDENTITY CASCADE");
 		jdbc.update("UPDATE platform_settings SET legal_name = NULL, legal_document = NULL, privacy_contact_name = NULL, privacy_contact_email = NULL");
 		// Clientes, usuários e planos criados pelos testes (o cliente 1 = reserva e o 2 = original, com o administrador, ficam).
 		jdbc.update("DELETE FROM invoices");

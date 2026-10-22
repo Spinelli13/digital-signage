@@ -73,6 +73,7 @@ public class PlatformTenantController {
 	private final BillingService billing;
 	private final TenantSummary.Factory summaries;
 	private final UsageService usageService;
+	private final com.digitalsignage.backend.auth.PasswordResetService passwordResets;
 	private final Clock clock;
 
 	public PlatformTenantController(
@@ -83,6 +84,7 @@ public class PlatformTenantController {
 			BillingService billing,
 			TenantSummary.Factory summaries,
 			UsageService usageService,
+			com.digitalsignage.backend.auth.PasswordResetService passwordResets,
 			Clock clock) {
 		this.tenants = tenants;
 		this.plans = plans;
@@ -90,6 +92,7 @@ public class PlatformTenantController {
 		this.encoder = encoder;
 		this.billing = billing;
 		this.summaries = summaries;
+		this.passwordResets = passwordResets;
 		this.usageService = usageService;
 		this.clock = clock;
 	}
@@ -140,7 +143,8 @@ public class PlatformTenantController {
 		tenant.setBillingEmail(blankToNull(request.billingEmail()));
 		tenant.setDocument(blankToNull(request.document()));
 		tenant = tenants.save(tenant);
-		users.save(new User(request.adminName().trim(), email, encoder.encode(request.adminPassword()), tenant.getId(), Role.ADMIN));
+		User admin = users.save(new User(request.adminName().trim(), email, encoder.encode(request.adminPassword()), tenant.getId(), Role.ADMIN));
+		passwordResets.welcome(admin, tenant.getName());
 		return summaries.of(tenant);
 	}
 

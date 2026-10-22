@@ -5,6 +5,9 @@ import { capabilityGuard, featureGuard } from './core/role.guard';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./login/login.page').then((m) => m.LoginPage) },
+  // Recuperar a senha (e o link de boas-vindas): páginas abertas, a pessoa ainda não consegue entrar.
+  { path: 'esqueci-a-senha', loadComponent: () => import('./login/forgot-password.page').then((m) => m.ForgotPasswordPage) },
+  { path: 'redefinir-senha/:token', loadComponent: () => import('./login/reset-password.page').then((m) => m.ResetPasswordPage) },
   // Política de Privacidade e Termos de Uso: páginas abertas (o aviso das páginas públicas e o login apontam para elas).
   { path: 'privacidade', data: { legal: 'privacy' }, loadComponent: () => import('./legal/legal.page').then((m) => m.LegalPage) },
   { path: 'termos', data: { legal: 'terms' }, loadComponent: () => import('./legal/legal.page').then((m) => m.LegalPage) },

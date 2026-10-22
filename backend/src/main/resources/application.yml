@@ -35,6 +35,15 @@ app:
   # Endereço do painel, sem barra no final: vai no QR Code que a TV mostra para parear (Etapa 1.4). Vazio = a primeira
   # origem autorizada acima, que na nuvem é o próprio painel.
   panel-url: ${PANEL_URL:}
+  # E-mail do sistema (recuperar senha, boas-vindas, fatura, TV offline) por SMTP, de qualquer provedor. Sem MAIL_HOST e MAIL_FROM
+  # nada é enviado (o sistema segue funcionando). A senha do SMTP só entra por variável de ambiente.
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    from: ${MAIL_FROM:}
+    starttls: ${MAIL_STARTTLS:true}
   jwt:
     secret: ${JWT_SECRET:dev-only-secret-change-me-before-any-real-deploy-0123456789}
     expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}
