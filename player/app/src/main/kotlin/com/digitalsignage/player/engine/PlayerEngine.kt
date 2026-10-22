@@ -1,11 +1,13 @@
 package com.digitalsignage.player.engine
 
 import com.digitalsignage.player.data.ApiException
+import com.digitalsignage.player.data.Desired
 import com.digitalsignage.player.data.Hardware
 import com.digitalsignage.player.data.PlayerApi
 import com.digitalsignage.player.errors.ErrorMessages
 import com.digitalsignage.player.data.PlayerConfig
 import com.digitalsignage.player.data.PlayerStatus
+import com.digitalsignage.player.data.ScreenAlert
 import com.digitalsignage.player.data.UnauthorizedException
 import com.digitalsignage.player.plan.OfflinePlanner
 import com.digitalsignage.player.proof.PlayLog
@@ -89,6 +91,20 @@ class PlayerEngine(
 
     private val mutableState = MutableStateFlow<EngineState>(EngineState.Starting)
     val state: StateFlow<EngineState> = mutableState
+
+    private val mutableAlert = MutableStateFlow<ScreenAlert?>(null)
+
+    /**
+     * O aviso em tela cheia no ar ("Alertar agora"); nulo = nenhum. Só muda quando o aviso muda (o tempo que falta muda a cada
+     * heartbeat e vem de [alertRemainingMs]).
+     */
+    val alert: StateFlow<ScreenAlert?> = mutableAlert
+
+    /** Quando (no relógio monotônico) o aviso termina; 0 = sem aviso. */
+    @Volatile private var alertEndsAt = 0L
+
+    /** Quanto falta, em milissegundos, para o aviso sair do ar sozinho (0 = acabou ou não há aviso). */
+    fun alertRemainingMs(): Long = if (alertEndsAt == 0L) 0 else (alertEndsAt - clock.uptime()).coerceAtLeast(0)
 
     /** Quando (no relógio monotônico) o servidor respondeu pela última vez. */
     private var lastContactAt = 0L
@@ -226,6 +242,7 @@ class PlayerEngine(
             noteContact(desired.serverTimeMs)
             if (desired.updateCheckToken > 0) onUpdateCheckRequested(desired.updateCheckToken)
             if (desired.diagnosticToken > 0) onDiagnosticRequested(desired.diagnosticToken)
+            applyAlert(desired)
             uploadPlays()
 
             // A sincronização roda à parte para o heartbeat continuar mesmo durante downloads longos.
@@ -318,6 +335,25 @@ class PlayerEngine(
             throw e
         } catch (e: Exception) {
             // sem os dados novos, o widget mostra os últimos guardados ou o estado vazio
+        }
+    }
+
+    /**
+     * O heartbeat diz qual aviso deve estar na tela agora. O prazo é contado aqui, com o relógio monotônico, a partir do que o
+     * servidor diz que falta: o aviso sai sozinho no fim mesmo que a internet caia, e um relógio da TV errado não atrapalha.
+     */
+    private fun applyAlert(desired: Desired) {
+        val incoming = desired.alert
+        if (incoming == null) {
+            if (mutableAlert.value != null) telemetry.event(Level.INFO, "O aviso em tela cheia saiu do ar.")
+            mutableAlert.value = null
+            alertEndsAt = 0L
+            return
+        }
+        alertEndsAt = clock.uptime() + desired.alertRemainingSeconds.coerceAtLeast(1) * 1000
+        if (mutableAlert.value != incoming) {
+            telemetry.event(Level.INFO, "Aviso em tela cheia no ar: ${incoming.message.take(80)}")
+            mutableAlert.value = incoming
         }
     }
 

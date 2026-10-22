@@ -376,6 +376,40 @@ export interface WebhookTestResult {
   error: string | null;
 }
 
+/** "Alertar agora": a cor/urgência do aviso em tela cheia e para quem ele vai. */
+export type ScreenAlertTone = 'URGENT' | 'WARNING' | 'INFO';
+export type ScreenAlertTarget = 'ALL' | 'GROUP' | 'DEVICE';
+
+export interface ScreenAlert {
+  id: number;
+  title: string | null;
+  message: string;
+  tone: ScreenAlertTone;
+  targetType: ScreenAlertTarget;
+  targetId: number | null;
+  /** Nome do grupo ou da TV; nulo em "todas as TVs" ou se foi excluído depois. */
+  targetName: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  expiresAt: string;
+  endedAt: string | null;
+  endedBy: string | null;
+  /** ACTIVE (no ar), ENDED (encerrado por alguém) ou EXPIRED (o prazo acabou). */
+  state: 'ACTIVE' | 'ENDED' | 'EXPIRED';
+  /** Quantas TVs ativas devem mostrá-lo agora; nulo se não está no ar. */
+  devices: number | null;
+}
+
+export interface ScreenAlertRequest {
+  title?: string;
+  message: string;
+  tone: ScreenAlertTone;
+  targetType: ScreenAlertTarget;
+  targetId?: number | null;
+  /** 1 a 1440 minutos; ausente = 15. */
+  durationMinutes?: number;
+}
+
 /** Datas no formato AAAA-MM-DD, no fuso do relatório; vazias = últimos 7 dias. */
 export interface ReportRange {
   from?: string;

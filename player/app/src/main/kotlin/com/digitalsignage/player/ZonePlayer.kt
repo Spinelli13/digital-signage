@@ -71,6 +71,9 @@ class ZonePlayer(
     private var warnedSkippedVideo = false
     private var context = PlayContext.NONE
     private var player: ExoPlayer? = null
+
+    /** Um aviso em tela cheia está por cima: o som dos vídeos fica desligado enquanto durar. */
+    @Volatile private var silenced = false
     private var shownImage: File? = null
     private var lastFailure: String? = null
 
@@ -96,6 +99,12 @@ class ZonePlayer(
         stop()
         player?.release()
         player = null
+    }
+
+    /** Liga ou desliga o silêncio (o aviso em tela cheia cobre a imagem e não pode ter um vídeo falando por baixo). */
+    fun silence(on: Boolean) {
+        silenced = on
+        player?.volume = if (muted || on) 0f else 1f
     }
 
     private fun prefixed(message: String) = if (label == null) message else "Zona \"$label\": $message"
@@ -210,7 +219,7 @@ class ZonePlayer(
             player = it
             views.playerView.player = it
         }
-        exo.volume = if (muted) 0f else 1f
+        exo.volume = if (muted || silenced) 0f else 1f
         val done = CompletableDeferred<Boolean>()
         // A exibição começa quando o primeiro quadro aparece de fato (não quando mandamos tocar).
         var watch: Stopwatch? = null

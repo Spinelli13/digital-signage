@@ -11,6 +11,7 @@ Coisas que dependem de decisão, conta ou pagamento do dono e **não bloqueiam**
 | 5 | **Domínio próprio** (opcional, para o endereço do painel e do servidor) | Dono | O MET Norway pede um contato no `User-Agent`; hoje vale o endereço do painel | Se comprar domínio: avisar para trocar o endereço em `JdkWidgetHttp`, a política de privacidade e o `render.yaml` |
 | 6 | **TV extra a R$ 9/mês** (e se vale em todos os planos, inclusive os de comodato) | Dono decide | O modelo atual não comporta; o jeito manual (plano sob medida) e a proposta de implementação estão em `docs/PLANOS_E_PRECOS.md` | Responder sim/não à proposta; enquanto isso, cobrar com um plano sob medida |
 | 7 | **Desativar os planos antigos** (Grátis, Básico, Profissional) quando só a oferta nova valer | Dono decide | Os antigos seguem ativos e nenhum cliente foi mexido | Plataforma > Planos > desativar (clientes que já estão neles continuam) |
+| 8 | **Publicar o Player novo** (QR de pareamento, diagnóstico, inventário, "Alertar agora") | Dono autoriza (o Android pede um OK na TV) | O código está pronto e testado, mas **não publicado**: nenhuma TV recebeu | Dizer "pode publicar"; a atualização chega às TVs em até 30 minutos e alguém aperta OK no controle de cada uma |
 
 ## Decisões já tomadas (registro)
 

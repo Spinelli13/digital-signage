@@ -56,6 +56,9 @@ import { UserMenuComponent } from '../shared/user-menu';import { WordmarkCompone
           <a routerLink="/dispositivos" routerLinkActive="active"><app-icon name="monitor" /><span>{{ 'Dispositivos' | t }}</span></a>
           <a routerLink="/locais" routerLinkActive="active"><app-icon name="map-pin" /><span>{{ 'Pontos & Locais' | t }}</span></a>
           <a routerLink="/grupos" routerLinkActive="active"><app-icon name="layers" /><span>{{ 'Grupos' | t }}</span></a>
+          @if (auth.can('content')) {
+            <a routerLink="/alertar-agora" routerLinkActive="active"><app-icon name="zap" /><span>{{ 'Alertar agora' | t }}</span></a>
+          }
           @if (auth.has('QUEUE')) {
             <a routerLink="/atendimento" routerLinkActive="active"><app-icon name="hourglass" /><span>{{ 'Atendimento' | t }}</span></a>
           }
