@@ -45,10 +45,10 @@ class PlatformTest extends AbstractApiTest {
 	// ---------- planos ----------
 
 	@Test
-	void shipsFourPlansInOrderWithTheirLimits() throws Exception {
+	void shipsTheSevenOfferPlansAfterTheFourOriginalOnesInOrderWithTheirLimits() throws Exception {
 		mvc.perform(asAdmin(get("/api/v1/platform/plans")))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[*].code", contains("interno", "gratis", "basico", "profissional")))
+				.andExpect(jsonPath("$[*].code", contains("interno", "gratis", "basico", "profissional", "start", "pro", "business", "rede", "comodato-basico", "comodato-completo", "comodato-premium")))
 				.andExpect(jsonPath("$[0].maxDevices").doesNotExist()) // interno: sem limite
 				.andExpect(jsonPath("$[1].maxDevices").value(2))
 				.andExpect(jsonPath("$[2].priceCents").value(4900))
@@ -69,7 +69,7 @@ class PlatformTest extends AbstractApiTest {
 				"code", "outro-codigo", "name", "x", "priceCents", 1)))))
 				.andExpect(status().isConflict()).andExpect(jsonPath("$.error").value("O código de um plano não pode ser alterado"));
 		mvc.perform(asAdmin(delete("/api/v1/platform/plans/" + id))).andExpect(status().isNoContent());
-		mvc.perform(asAdmin(get("/api/v1/platform/plans"))).andExpect(jsonPath("$", hasSize(4)));
+		mvc.perform(asAdmin(get("/api/v1/platform/plans"))).andExpect(jsonPath("$", hasSize(11))); // os 4 originais e os 7 da oferta, sem o plano de teste apagado
 	}
 
 	@Test

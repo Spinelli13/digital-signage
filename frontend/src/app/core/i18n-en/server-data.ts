@@ -34,6 +34,20 @@ export const PLAN_TEXT: Record<string, string> = {
   'Pequenos negócios: até 5 TVs.': 'Small businesses: up to 5 TVs.',
   Profissional: 'Professional',
   'Várias lojas: até 25 TVs.': 'Several stores: up to 25 TVs.',
+  Start: 'Start',
+  'Para começar: até 2 TVs, com conteúdo e widgets.': 'To get started: up to 2 TVs, with content and widgets.',
+  Pro: 'Pro',
+  'Pequenos negócios: até 5 TVs, com fila de senhas, cupons com QR Code e tabelas de preços.': 'Small businesses: up to 5 TVs, with a ticket queue, QR Code coupons and price tables.',
+  Business: 'Business',
+  'Várias lojas: até 15 TVs, com todos os recursos.': 'Several stores: up to 15 TVs, with all features.',
+  Rede: 'Network',
+  'Redes e franquias: até 40 TVs, com todos os recursos.': 'Chains and franchises: up to 40 TVs, with all features.',
+  'Comodato Básico': 'Basic Loan',
+  'Uma TV por contrato, a TV é do cliente: com os recursos do Pro.': "One TV per contract, the TV belongs to the client: with the Pro features.",
+  'Comodato Completo': 'Complete Loan',
+  'Uma TV por contrato, com TV e stick em comodato: com os recursos do Pro.': 'One TV per contract, TV and stick on loan: with the Pro features.',
+  'Comodato Premium': 'Premium Loan',
+  'Uma TV por contrato, com TV nova de 32 polegadas em comodato: com os recursos do Pro.': 'One TV per contract, with a new 32-inch TV on loan: with the Pro features.',
 };
 
 export const MONITORING_MESSAGES: Record<string, string> = {
