@@ -265,7 +265,7 @@ class ReportsTest extends AbstractApiTest {
 				.andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("inventario-2026-11-05.csv")));
 		String text = csv(result);
 
-		assertTrue(text.startsWith("﻿ID;TV;Local;Grupos;Status;Conexão;Último contato;Versão do Player;Playlist exibida;Campanha;Mídia na tela;Ativada em\r\n"), text);
+		assertTrue(text.startsWith("﻿ID;TV;Local;Grupos;Status;Conexão;Último contato;Versão do Player;Playlist exibida;Campanha;Mídia na tela;Ativada em;Modelo;Android;Memória (MB);Nº de série;Instalada em;Comodato / observação\r\n"), text);
 		assertTrue(text.contains(";TV Vitrine;"), text);
 		assertTrue(text.contains(";ACTIVE;OFFLINE;"), text); // 15:02, último contato às 13:02
 	}

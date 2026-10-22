@@ -156,7 +156,7 @@ public class DeviceController {
 		return views.of(deviceRepository.save(device));
 	}
 
-	/** O último relatório de diagnóstico que a TV mandou, e quando o painel pediu o próximo. */
+/** O último relatório de diagnóstico que a TV mandou, e quando o painel pediu o próximo. */
 	@GetMapping("/{id}/diagnostic")
 	@Transactional(readOnly = true)
 	public DeviceDiagnosticService.Diagnostic diagnostic(@PathVariable Long id) {

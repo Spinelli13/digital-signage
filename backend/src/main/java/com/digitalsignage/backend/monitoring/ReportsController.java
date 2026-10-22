@@ -64,7 +64,9 @@ public class ReportsController {
 	public record InventoryRow(
 			Long id, String name, String location, List<String> groups, String status, String connection,
 			Instant lastSeenAt, String playerVersion, String playlist, String campaign, String currentMedia,
-			Instant activatedAt) {
+			Instant activatedAt,
+			/** O equipamento que o Player informou; nº de série, instalação e comodato só vão para o Administrador. */
+			String hardwareModel, String androidVersion, Integer ramMb, String serialNumber, java.time.LocalDate installedOn, String comodatoNote) {
 	}
 
 	public record EventRow(Long id, Long deviceId, String deviceName, String type, String level, String message, Instant occurredAt) {
@@ -173,6 +175,7 @@ public class ReportsController {
 		Map<Long, String> mediaNames = media.findAll().stream().collect(Collectors.toMap(Media::getId, Media::getName));
 		Map<Long, CampaignService.Effective> effective = campaigns.effectiveForAll(all);
 		Instant now = clock.instant();
+		boolean internal = com.digitalsignage.backend.security.CurrentUser.isAtLeast(com.digitalsignage.backend.user.Role.ADMIN);
 
 		List<InventoryRow> rows = all.stream().map(device -> {
 			CampaignService.Effective content = effective.get(device.getId());
@@ -183,14 +186,18 @@ public class ReportsController {
 					content.playlistId() == null ? null : playlistNames.get(content.playlistId()),
 					content.fromCampaign() ? content.campaign().getName() : null,
 					device.getCurrentMediaId() == null ? null : mediaNames.get(device.getCurrentMediaId()),
-					device.getActivatedAt());
+					device.getActivatedAt(),
+					device.getHardwareModel(), device.getAndroidVersion(), device.getRamMb(),
+					internal ? device.getSerialNumber() : null, internal ? device.getInstalledOn() : null, internal ? device.getComodatoNote() : null);
 		}).toList();
 
 		if (isCsv(format)) {
 			CsvWriter csv = new CsvWriter().row("ID", "TV", "Local", "Grupos", "Status", "Conexão", "Último contato", "Versão do Player",
-					"Playlist exibida", "Campanha", "Mídia na tela", "Ativada em");
+					"Playlist exibida", "Campanha", "Mídia na tela", "Ativada em", "Modelo", "Android", "Memória (MB)", "Nº de série", "Instalada em",
+					"Comodato / observação");
 			rows.forEach(row -> csv.row(row.id(), row.name(), row.location(), String.join(", ", row.groups()), row.status(), row.connection(),
-					row.lastSeenAt(), row.playerVersion(), row.playlist(), row.campaign(), row.currentMedia(), row.activatedAt()));
+					row.lastSeenAt(), row.playerVersion(), row.playlist(), row.campaign(), row.currentMedia(), row.activatedAt(), row.hardwareModel(), row.androidVersion(), row.ramMb(),
+					row.serialNumber(), row.installedOn(), row.comodatoNote()));
 			return csv(csv, "inventario-" + now.atZone(monitoring.reportZone()).toLocalDate() + ".csv");
 		}
 		return rows;

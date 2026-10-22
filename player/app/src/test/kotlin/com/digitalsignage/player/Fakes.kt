@@ -4,6 +4,7 @@ import com.digitalsignage.player.data.ConfigItem
 import com.digitalsignage.player.data.ConfigZone
 import com.digitalsignage.player.data.Desired
 import com.digitalsignage.player.data.FetchedConfig
+import com.digitalsignage.player.data.Hardware
 import com.digitalsignage.player.data.Json
 import com.digitalsignage.player.data.MediaDownloader
 import com.digitalsignage.player.data.OfflinePlan
@@ -110,6 +111,7 @@ class FakePlayerApi : PlayerApi {
     }
 
     /** Até quando a agenda offline guardada valia em cada heartbeat (0 = sem agenda). */
+    val hardwareSeen = mutableListOf<Hardware?>()
     val planUntilSeen = mutableListOf<Long>()
 
     /** O relato que cada heartbeat levou (mesmo os que o "servidor" recusou). */
@@ -135,7 +137,8 @@ class FakePlayerApi : PlayerApi {
         return acknowledged
     }
 
-    override suspend fun heartbeat(token: String, playerVersion: String, syncedConfigVersion: Long, report: HeartbeatReport, planUntilMs: Long): Desired {
+    override suspend fun heartbeat(token: String, playerVersion: String, syncedConfigVersion: Long, report: HeartbeatReport, planUntilMs: Long, hardware: Hardware?): Desired {
+        hardwareSeen += hardware
         heartbeatsSeenVersions += syncedConfigVersion
         planUntilSeen += planUntilMs
         reportsSeen += report

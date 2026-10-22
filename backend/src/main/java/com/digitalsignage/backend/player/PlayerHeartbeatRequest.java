@@ -19,7 +19,11 @@ public record PlayerHeartbeatRequest(
 		@Valid @Size(max = 30) List<PlayerEvent> events,
 		@Valid @Size(max = 100) List<PlayRecord> plays,
 		/** Até quando (milissegundos desde 1970) vale a agenda offline guardada na TV; ausente = a TV não tem agenda. */
-		Long planUntilMs) {
+		Long planUntilMs,
+		/** O equipamento (inventário): modelo, versão do Android e memória em MB. Ausentes em Players antigos. */
+		@Size(max = 80) String model,
+		@Size(max = 30) String androidVersion,
+		@jakarta.validation.constraints.Min(0) @jakarta.validation.constraints.Max(1_000_000) Integer ramMb) {
 
 	/** Uma ocorrência relatada pelo Player. {@code level}: INFO, WARN ou ERROR. {@code at}: quando aconteceu. */
 	public record PlayerEvent(@Size(max = 10) String level, @Size(max = 500) String message, Instant at) {

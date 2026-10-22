@@ -183,6 +183,26 @@ describe('ReportsPage', () => {
     backend.verify();
   });
 
+  it('shows the equipment and the notes in the inventory, and nothing for a TV that has none yet', async () => {
+    const { page, fixture, backend } = start(true);
+
+    page.select('inventory');
+    request(backend, '/reports/inventory').flush([
+      { ...INVENTORY[0], hardwareModel: 'TCL 55S546', androidVersion: '11', ramMb: 1800, serialNumber: 'SN-1', comodatoNote: 'Comodato Completo' },
+      { ...INVENTORY[0], id: 6, name: 'TV Balcão' },
+    ]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const text = ((fixture.nativeElement as HTMLElement).textContent ?? '').replace(/\s+/g, ' ');
+    expect(text).toContain('Equipamento');
+    expect(text).toContain('TCL 55S546');
+    expect(text).toContain('Android 11 · 1800 MB de memória');
+    expect(text).toContain('Série SN-1');
+    expect(text).toContain('Comodato Completo');
+    backend.verify();
+  });
+
   it('shows the inventory without a period filter', async () => {
     const { page, fixture, backend } = start(true);
 

@@ -608,6 +608,46 @@ describe('DevicesPage — activating and editing', () => {
     flushRefresh(backend);
   });
 
+  it('saves the inventory notes (serial number, installation date, loan note) only when they changed', () => {
+    page.openEdit(device({ serialNumber: 'SN-1', installedOn: '2026-10-20', comodatoNote: null }));
+    expect(page.serialNumber()).toBe('SN-1');
+    expect(page.installedOn()).toBe('2026-10-20');
+
+    page.submitModal();
+    const untouched = backend.expectOne(`${API}/devices/1`);
+    for (const key of ['serialNumber', 'comodatoNote', 'installedOn']) {
+      expect(untouched.request.body, key).not.toHaveProperty(key); // nada mudou: o inventário nem vai
+    }
+    untouched.flush(device());
+    flushRefresh(backend);
+
+    page.openEdit(device({ serialNumber: 'SN-1', installedOn: '2026-10-20', comodatoNote: null }));
+    page.serialNumber.set('  SN-2 ');
+    page.comodatoNote.set('Comodato Completo, contrato 0007');
+    page.installedOn.set('2026-10-22');
+    page.submitModal();
+
+    const request = backend.expectOne(`${API}/devices/1`);
+    expect(request.request.body).toMatchObject({ name: 'TV Recepção', serialNumber: 'SN-2', comodatoNote: 'Comodato Completo, contrato 0007', installedOn: '2026-10-22' });
+    request.flush(device());
+    flushRefresh(backend);
+  });
+
+  it('clears a note when the field is emptied, but never sends an empty installation date', () => {
+    page.openEdit(device({ serialNumber: 'SN-1', installedOn: '2026-10-20', comodatoNote: 'antigo' }));
+    page.serialNumber.set('');
+    page.comodatoNote.set('');
+    page.installedOn.set('');
+
+    page.submitModal();
+
+    const request = backend.expectOne(`${API}/devices/1`);
+    expect(request.request.body).toMatchObject({ serialNumber: '', comodatoNote: '' });
+    expect(request.request.body).not.toHaveProperty('installedOn');
+    request.flush(device());
+    flushRefresh(backend);
+  });
+
   /** Ao editar, "sem local" precisa ser dito explicitamente; omitir significaria "não mudar". */
   it('says "no location" explicitly when editing a TV that should have none', () => {
     page.openEdit(device({ locationId: 3 }));

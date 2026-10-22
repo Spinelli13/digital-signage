@@ -5,7 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
 import { connectionOf, deviceState, formatDateTime, timeAgo } from '../core/format';
-import { TPipe, trServer } from '../core/i18n';
+import { TPipe, currentLang, trServer } from '../core/i18n';
 import { EVENT_LABELS, EVENT_TYPES, eventLabel, eventTone, levelLabel } from '../core/monitoring-labels';
 import { Device, DeviceDiagnostic, DeviceEvent, EventLevel, EventType } from '../core/models';
 import { SITUATION } from '../shared/connection';
@@ -32,6 +32,21 @@ const REFRESH_MS = 15_000;
         @if (tv.playerVersion) {
           <app-pill icon="package">{{ 'Player v{version}' | t: { version: tv.playerVersion } }}</app-pill>
         }
+        @if (tv.hardwareModel) {
+          <app-pill icon="monitor">{{ tv.hardwareModel }}</app-pill>
+        }
+        @if (tv.androidVersion) {
+          <app-pill icon="package">{{ 'Android {version}' | t: { version: tv.androidVersion } }}</app-pill>
+        }
+        @if (tv.ramMb) {
+          <app-pill icon="gauge">{{ '{mb} MB de memória' | t: { mb: tv.ramMb } }}</app-pill>
+        }
+        @if (tv.serialNumber) {
+          <app-pill icon="badge-check">{{ 'Série {n}' | t: { n: tv.serialNumber } }}</app-pill>
+        }
+        @if (tv.installedOn) {
+          <app-pill icon="calendar">{{ 'Instalada em {date}' | t: { date: day(tv.installedOn) } }}</app-pill>
+        }
         @if (tv.currentMediaName) {
           <app-pill tone="brand" icon="play">{{ 'na tela:' | t }} {{ tv.currentMediaName }}</app-pill>
         }
@@ -39,6 +54,10 @@ const REFRESH_MS = 15_000;
           <app-pill tone="ok" icon="calendar-clock" [title]="'Se a internet cair, a TV segue as campanhas por horário até esta data. Enquanto tem internet, a agenda é renovada sozinha.' | t">{{ 'agenda offline até {date}' | t: { date: when(tv.offlinePlanUntil) } }}</app-pill>
         }
       </div>
+    }
+
+    @if (device()?.comodatoNote; as note) {
+      <p class="comodato" data-testid="comodato"><app-icon name="info" [size]="15" />{{ note }}</p>
     }
 
     <section class="card diag" data-testid="diagnostic">
@@ -119,6 +138,7 @@ const REFRESH_MS = 15_000;
     .back { margin: 0 0 10px; }
     .back a { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; text-decoration: none; }
     .facts { display: flex; gap: 8px; flex-wrap: wrap; margin: -8px 0 18px; }
+    .comodato { display: flex; align-items: center; gap: 8px; margin: -6px 0 16px; color: var(--muted); }
     .diag { margin-bottom: 14px; padding: 16px; }
     .diag-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .diag-head h2 { margin: 0; display: inline-flex; align-items: center; gap: 8px; font-size: 17px; }
@@ -184,6 +204,8 @@ export class DeviceHistoryPage implements OnInit {
   readonly tone = (event: DeviceEvent) => eventTone(event.type, event.level);
   readonly ago = (iso: string | null) => timeAgo(iso);
   readonly when = (iso: string | null) => formatDateTime(iso);
+  /** "2026-10-20" como data local (sem fuso: é um dia, não um instante). */
+  readonly day = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString(currentLang() === 'en' ? 'en' : 'pt-BR');
 
   private deviceId = 0;
 

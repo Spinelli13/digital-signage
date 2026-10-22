@@ -10,6 +10,7 @@ import android.os.Build
 import android.provider.Settings
 import com.digitalsignage.player.BootReceiver
 import com.digitalsignage.player.cache.MediaCache
+import com.digitalsignage.player.data.Hardware
 import com.digitalsignage.player.sync.ConfigStore
 
 /** Colhe, no aparelho, o que o relatório de diagnóstico precisa. Só lê: nunca altera nada. */
@@ -26,14 +27,23 @@ class DiagnosticsCollector(
     private val nowMs: () -> Long,
 ) {
 
+    /** O equipamento (modelo, Android, memória) para o inventário do painel: não muda enquanto o Player está aberto. */
+    val hardware: Hardware by lazy {
+        Hardware(
+            model = "${Build.MANUFACTURER} ${Build.MODEL}".trim(),
+            androidVersion = Build.VERSION.RELEASE ?: Build.VERSION.SDK_INT.toString(),
+            ramMb = totalRamMb(),
+        )
+    }
+
     fun collect(): DiagnosticsInput {
         val config = store.load()
         val missing = config?.retainable()?.filter { it.hasFile && !cache.isCached(it) }.orEmpty()
         return DiagnosticsInput(
             version = versionName,
-            model = "${Build.MANUFACTURER} ${Build.MODEL}".trim(),
-            androidRelease = Build.VERSION.RELEASE ?: Build.VERSION.SDK_INT.toString(),
-            ramMb = totalRamMb(),
+            model = hardware.model,
+            androidRelease = hardware.androidVersion,
+            ramMb = hardware.ramMb,
             serverUrl = serverUrl(),
             internet = hasInternet(),
             contactAgoSec = contactAgoSec(),

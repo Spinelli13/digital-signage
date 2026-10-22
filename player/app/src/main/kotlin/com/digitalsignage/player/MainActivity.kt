@@ -159,6 +159,7 @@ class MainActivity : AppCompatActivity() {
             onError = { reporter.report(it) },
             onUpdateCheckRequested = updateTrigger::onHeartbeat,
             onDiagnosticRequested = diagnosticTrigger::onHeartbeat,
+            hardware = { diagnostics.hardware },
             plays = playLog,
             clock = clock,
             widgets = WidgetRefresher(api, widgetStore),

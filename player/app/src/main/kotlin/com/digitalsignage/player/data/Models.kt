@@ -170,6 +170,9 @@ data class Desired(
     val diagnosticToken: Long = 0,
 )
 
+/** O equipamento (inventário): o Player conta ao servidor modelo, versão do Android e memória em MB. */
+data class Hardware(val model: String, val androidVersion: String, val ramMb: Long)
+
 /** Config junto com o JSON original, que é o que fica persistido no aparelho. */
 data class FetchedConfig(val config: PlayerConfig, val raw: String)
 
@@ -263,9 +266,19 @@ object Json {
      * Corpo do heartbeat. Os campos de monitoramento só entram quando há o que dizer: um servidor mais antigo
      * ignora o que não conhece, e o heartbeat de uma TV sem novidades continua do tamanho de sempre.
      */
-    fun heartbeatBody(playerVersion: String, syncedConfigVersion: Long, report: HeartbeatReport, planUntilMs: Long = 0): JSONObject {
+    fun heartbeatBody(
+        playerVersion: String,
+        syncedConfigVersion: Long,
+        report: HeartbeatReport,
+        planUntilMs: Long = 0,
+        hardware: Hardware? = null,
+    ): JSONObject {
         val body = JSONObject().put("playerVersion", playerVersion).put("configVersion", syncedConfigVersion)
         if (planUntilMs > 0) body.put("planUntilMs", planUntilMs)
+        if (hardware != null) {
+            body.put("model", hardware.model.take(80)).put("androidVersion", hardware.androidVersion.take(30))
+            if (hardware.ramMb > 0) body.put("ramMb", hardware.ramMb)
+        }
         report.currentMediaId?.let { body.put("currentMediaId", it) }
         if (report.events.isNotEmpty()) {
             val events = JSONArray()

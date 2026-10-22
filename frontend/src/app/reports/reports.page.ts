@@ -184,13 +184,27 @@ export const TABS: { id: ReportTab; label: string; icon: IconName }[] = [
               <app-empty-state icon="monitor-play" [title]="'Nenhuma TV cadastrada ainda.' | t" [text]="'Quando você ativar as TVs, o inventário completo aparece aqui.' | t" />
             } @else {
               <table class="stack">
-                <tr><th>{{ 'TV' | t }}</th><th>{{ 'Local / grupos' | t }}</th><th>{{ 'Situação' | t }}</th><th>{{ 'Player' | t }}</th><th>{{ 'Exibindo' | t }}</th></tr>
+                <tr><th>{{ 'TV' | t }}</th><th>{{ 'Local / grupos' | t }}</th><th>{{ 'Situação' | t }}</th><th>{{ 'Player' | t }}</th><th>{{ 'Equipamento' | t }}</th><th>{{ 'Exibindo' | t }}</th></tr>
                 @for (row of rows; track row.id) {
                   <tr>
                     <td class="first"><b>{{ row.name }}</b><small class="sub">{{ 'ativada' | t }} {{ when(row.activatedAt) }}</small></td>
                     <td [attr.data-label]="'Local / grupos' | t"><span class="col">{{ row.location || ('Sem local' | t) }}@if (row.groups.length > 0) {<small class="sub">{{ row.groups.join(', ') }}</small>}</span></td>
                     <td [attr.data-label]="'Situação' | t"><span class="col"><app-pill [tone]="sit(row.connection).tone" [icon]="sit(row.connection).icon">{{ stateOf(row.connection).label }}</app-pill><small class="sub">{{ 'contato' | t }} {{ when(row.lastSeenAt) }}</small></span></td>
                     <td [attr.data-label]="'Player' | t"><span class="num">{{ row.playerVersion ? 'v' + row.playerVersion : '—' }}</span></td>
+                    <td [attr.data-label]="'Equipamento' | t">
+                      <span class="col">
+                        {{ row.hardwareModel || '—' }}
+                        @if (row.androidVersion || row.ramMb) {
+                          <small class="sub">{{ [row.androidVersion ? ('Android {version}' | t: { version: row.androidVersion }) : '', row.ramMb ? ('{mb} MB de memória' | t: { mb: row.ramMb }) : ''].filter(present).join(' · ') }}</small>
+                        }
+                        @if (row.serialNumber) {
+                          <small class="sub">{{ 'Série {n}' | t: { n: row.serialNumber } }}</small>
+                        }
+                        @if (row.comodatoNote) {
+                          <small class="sub">{{ row.comodatoNote }}</small>
+                        }
+                      </span>
+                    </td>
                     <td [attr.data-label]="'Exibindo' | t">
                       <span class="col">
                         {{ row.playlist || ('Sem playlist' | t) }}
@@ -301,6 +315,7 @@ export class ReportsPage implements OnInit {
   readonly uptime = signal<UptimeReport | null>(null);
   readonly plays = signal<PlaysReport | null>(null);
   readonly inventory = signal<InventoryRow[] | null>(null);
+  readonly present = (text: string) => text !== '';
   readonly events = signal<EventRow[] | null>(null);
   readonly downloading = signal(false);
 

@@ -18,5 +18,9 @@ public record DeviceUpdateRequest(
 		Long layoutId,
 		List<Long> groupIds,
 		/** Como a TV foi instalada (AUTO, LANDSCAPE, LANDSCAPE_FLIPPED, PORTRAIT_TOP_RIGHT ou PORTRAIT_TOP_LEFT); ausente não muda. */
-		String orientation) {
+		String orientation,
+		/** Inventário (só o Administrador): ausente não muda; texto vazio apaga. */
+		@jakarta.validation.constraints.Size(max = 80) String serialNumber,
+		java.time.LocalDate installedOn,
+		@jakarta.validation.constraints.Size(max = 500) String comodatoNote) {
 }
