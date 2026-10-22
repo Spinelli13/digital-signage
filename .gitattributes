@@ -1,3 +1,4 @@
 player/gradlew text eol=lf
 player/gradlew.bat text eol=crlf
 player/gradle/wrapper/gradle-wrapper.jar binary
+*.sh text eol=lf

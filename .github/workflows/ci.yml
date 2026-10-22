@@ -53,3 +53,28 @@ jobs:
       # O runner ubuntu já traz o Android SDK com as licenças aceitas.
       - run: chmod +x gradlew
       - run: ./gradlew testDebugUnitTest assembleDebug
+
+  backup-scripts:
+    name: Scripts de backup (copia, restaura e confere)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: teste
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      # O pg_dump precisa ser da mesma versão do servidor (o Supabase usa o 17).
+      - run: |
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-17
+          # o runner já traz o cliente 16 no caminho; o pg_dump 16 recusa falar com um servidor 17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+      - run: scripts/backup/selftest.sh "postgresql://postgres:teste@localhost:5432"

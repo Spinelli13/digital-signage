@@ -6,8 +6,9 @@ services:
     name: signage-backend
     runtime: docker
     plan: free
-    # Mesma região do projeto Supabase (us-east-1 = Virgínia): cada consulta ao banco fica rápida.
-    region: virginia
+    # A região real do serviço em produção é Oregon (o endereço do serviço fica gravado nas TVs, então ele não muda de região).
+    # O banco deve ficar na MESMA região: plano de migração em docs/MIGRACAO_PRODUCAO.md.
+    region: oregon
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     healthCheckPath: /api/v1/health

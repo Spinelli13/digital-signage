@@ -1,0 +1,32 @@
+name: Monitor de disponibilidade
+
+# A cada 10 minutos pergunta ao servidor se ele está de pé. Se não responder (3 tentativas), o fluxo FALHA e o GitHub manda
+# e-mail para quem alterou por último o horário deste arquivo (o dono, depois do merge). Custo zero.
+# Bônus: como o servidor do plano gratuito do Render dorme depois de 15 min sem uso, esta consulta o mantém acordado.
+#
+# O endereço vem da variável do repositório HEALTH_URL (Settings → Secrets and variables → Actions → Variables); sem ela vale
+# o padrão abaixo. Depois do plano pago do Render (que não dorme) este fluxo continua útil como alarme.
+# O monitor externo com alerta por e-mail e celular (UptimeRobot, gratuito): docs/MIGRACAO_PRODUCAO.md, seção 6.
+# Atenção: o GitHub desliga fluxos agendados de repositório público depois de 60 dias sem nenhuma atividade no repositório.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  health:
+    name: O servidor responde?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Consulta /api/v1/health
+        env:
+          URL: ${{ vars.HEALTH_URL || 'https://signage-backend-1l0l.onrender.com/api/v1/health' }}
+        run: |
+          # --retry cobre o servidor acordando (o plano gratuito leva ~1 min para voltar); 200 e {"status":"ok"} ou falha
+          body="$(curl --silent --show-error --fail --max-time 90 --retry 3 --retry-delay 20 --retry-all-errors "$URL")"
+          echo "$body"
+          echo "$body" | grep -q '"status":"ok"'
