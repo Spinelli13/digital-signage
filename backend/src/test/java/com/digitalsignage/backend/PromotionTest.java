@@ -76,7 +76,7 @@ class PromotionTest extends AbstractApiTest {
 	/** Sem login: é como o celular de quem escaneou o QR Code chama. */
 	private ResultActions claim(String token, String name, String device, String network) throws Exception {
 		MockHttpServletRequestBuilder request = post("/api/v1/public/promotions/" + token + "/coupons").contentType(MediaType.APPLICATION_JSON)
-				.content(json.writeValueAsString(name == null ? Map.of() : Map.of("customerName", name)));
+				.content(json.writeValueAsString(name == null ? Map.of() : Map.of("customerName", name, "consent", true)));
 		if (device != null) {
 			request.header("X-Client-Id", device);
 		}

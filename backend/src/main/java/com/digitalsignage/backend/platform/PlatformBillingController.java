@@ -56,15 +56,21 @@ public class PlatformBillingController {
 			@Size(max = 150) String companyName,
 			@Size(max = 2000) String paymentInstructions,
 			@Size(max = 255) String supportEmail,
+			@Size(max = 160) String legalName,
+			@Size(max = 30) String legalDocument,
+			@Size(max = 120) String privacyContactName,
+			@Size(max = 255) String privacyContactEmail,
 			@Min(0) @Max(90) Integer trialDays,
 			@Min(0) @Max(60) Integer graceDays,
 			@Min(0) @Max(30) Integer invoiceLeadDays) {
 	}
 
-	public record SettingsResponse(String companyName, String paymentInstructions, String supportEmail, int trialDays, int graceDays, int invoiceLeadDays) {
+	public record SettingsResponse(String companyName, String paymentInstructions, String supportEmail, String legalName, String legalDocument,
+			String privacyContactName, String privacyContactEmail, int trialDays, int graceDays, int invoiceLeadDays) {
 
 		static SettingsResponse of(PlatformSettings settings) {
 			return new SettingsResponse(settings.getCompanyName(), settings.getPaymentInstructions(), settings.getSupportEmail(),
+					settings.getLegalName(), settings.getLegalDocument(), settings.getPrivacyContactName(), settings.getPrivacyContactEmail(),
 					settings.getTrialDays(), settings.getGraceDays(), settings.getInvoiceLeadDays());
 		}
 	}
@@ -164,6 +170,18 @@ public class PlatformBillingController {
 		}
 		if (request.supportEmail() != null) {
 			current.setSupportEmail(request.supportEmail().isBlank() ? null : request.supportEmail().trim());
+		}
+		if (request.legalName() != null) {
+			current.setLegalName(request.legalName().isBlank() ? null : request.legalName().trim());
+		}
+		if (request.legalDocument() != null) {
+			current.setLegalDocument(request.legalDocument().isBlank() ? null : request.legalDocument().trim());
+		}
+		if (request.privacyContactName() != null) {
+			current.setPrivacyContactName(request.privacyContactName().isBlank() ? null : request.privacyContactName().trim());
+		}
+		if (request.privacyContactEmail() != null) {
+			current.setPrivacyContactEmail(request.privacyContactEmail().isBlank() ? null : request.privacyContactEmail().trim());
 		}
 		if (request.trialDays() != null) {
 			current.setTrialDays(request.trialDays());

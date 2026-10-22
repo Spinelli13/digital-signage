@@ -1,6 +1,6 @@
 # Vyzzu
 
-Vyzzu é uma plataforma de comunicação audiovisual e sinalização digital (digital signage) para controlar remotamente conteúdo exibido em TVs, painéis de LED e totens. A identidade visual está em [docs/MARCA_VYZZU.md](./docs/MARCA_VYZZU.md).
+Vyzzu é uma plataforma de comunicação audiovisual e sinalização digital (digital signage) para controlar remotamente conteúdo exibido em TVs, painéis de LED e totens. A identidade visual está em [docs/MARCA_VYZZU.md](./docs/MARCA_VYZZU.md). Privacidade e LGPD (inventário dos dados, pedidos de titulares e pendências): [docs/LGPD.md](./docs/LGPD.md).
 Contexto e decisões completas em [PROJETO_DIGITAL_SIGNAGE_CONTEXTO_CLAUDE.md](./PROJETO_DIGITAL_SIGNAGE_CONTEXTO_CLAUDE.md).
 
 ## Estrutura

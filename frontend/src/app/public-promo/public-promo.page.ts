@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -7,6 +7,7 @@ import { FDatePipe, TPipe } from '../core/i18n';
 import { PublicPromoCoupon, PublicPromotion } from '../core/models';
 import { IconComponent } from '../shared/icon';
 import { PreferencesBar } from '../shared/preferences';
+import { PrivacyNoticeComponent } from '../shared/privacy-notice';
 import { WordmarkComponent } from '../shared/wordmark';
 import { deviceId, reasonOf } from '../public-ticket/public-ticket.page';
 
@@ -52,7 +53,7 @@ const PROMO_CSS = `
 /** A página aberta pelo QR Code da TV: a promoção e o botão para pegar o cupom. */
 @Component({
   selector: 'app-promo-claim',
-  imports: [FormsModule, TPipe, FDatePipe, IconComponent, PreferencesBar, WordmarkComponent],
+  imports: [FormsModule, TPipe, FDatePipe, IconComponent, PreferencesBar, WordmarkComponent, PrivacyNoticeComponent],
   template: `
     <div class="prefs-corner"><app-preferences /></div>
     <main class="wrap">
@@ -74,8 +75,9 @@ const PROMO_CSS = `
               <label for="name">{{ 'Seu nome (opcional)' | t }}</label>
               <input id="name" name="name" maxlength="60" autocomplete="given-name" [ngModel]="customerName()" (ngModelChange)="customerName.set($event)" />
             </div>
+            <app-privacy-notice [notice]="info.notice" purpose="coupon" [hasName]="hasName()" [(consent)]="consent" />
             <div class="actions">
-              <button class="primary" [disabled]="busy()" (click)="claim()"><app-icon name="ticket" />{{ 'Pegar meu cupom' | t }}</button>
+              <button class="primary" [disabled]="busy() || (hasName() && !consent())" (click)="claim()"><app-icon name="ticket" />{{ 'Pegar meu cupom' | t }}</button>
             </div>
           } @else {
             <p class="muted">{{ 'Esta promoção não está disponível agora. Pode ter acabado. Procure o atendimento da loja.' | t }}</p>
@@ -102,6 +104,9 @@ export class PromoClaimPage implements OnInit {
   readonly problem = signal<string | null>(null);
   readonly busy = signal(false);
   readonly customerName = signal('');
+  /** A pessoa concordou com o aviso de privacidade (só vale, e só é pedido, quando ela digita um nome). */
+  readonly consent = signal(false);
+  readonly hasName = computed(() => this.customerName().trim().length > 0);
 
   private get token(): string {
     return this.route.snapshot.paramMap.get('token') ?? '';
@@ -129,7 +134,7 @@ export class PromoClaimPage implements OnInit {
   claim(): void {
     this.busy.set(true);
     this.problem.set(null);
-    this.api.claimPublicCoupon(this.token, this.customerName().trim() || null, deviceId()).subscribe({
+    this.api.claimPublicCoupon(this.token, this.customerName().trim() || null, deviceId(), this.hasName() && this.consent()).subscribe({
       next: (coupon) => {
         this.busy.set(false);
         remember(this.token, coupon.token);

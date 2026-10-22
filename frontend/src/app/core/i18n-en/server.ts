@@ -208,4 +208,11 @@ export const SERVER: Record<string, string> = {
   'O endereço do webhook precisa começar com https://': 'The webhook address must start with https://',
   'O endereço do webhook não pode apontar para a rede interna': 'The webhook address cannot point to the internal network',
   'Não foi possível encontrar o endereço do webhook ({host})': 'Could not find the webhook address ({host})',
+
+  // privacidade e dados pessoais (LGPD)
+  'Digite pelo menos {n} caracteres para buscar': 'Type at least {n} characters to search',
+  'O texto buscado aceita no máximo {n} caracteres': 'The searched text accepts at most {n} characters',
+  'Para informar o nome, é preciso concordar com o aviso de privacidade': 'To enter your name you need to agree to the privacy notice',
+  'O e-mail de contato não parece válido': 'The contact email does not look valid',
+  'Cor inválida: use o formato #RRGGBB (por exemplo, #8B5CF6)': 'Invalid color: use the #RRGGBB format (for example, #8B5CF6)',
 };

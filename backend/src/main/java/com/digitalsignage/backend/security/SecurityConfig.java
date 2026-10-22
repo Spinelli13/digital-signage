@@ -71,6 +71,8 @@ public class SecurityConfig {
 						.requestMatchers("/api/v1/auth/**").hasRole("VIEWER")
 						// Equipe e cobrança: só quem administra o cliente (nem para consultar).
 						.requestMatchers("/api/v1/users/**", "/api/v1/billing/**").hasRole("ADMIN")
+						// Privacidade e dados pessoais (prazos, busca, cópia e exclusão dos dados de uma pessoa): só o ADMIN, até para consultar.
+						.requestMatchers("/api/v1/privacy/**").hasRole("ADMIN")
 						// Montar widgets (busca de cidades, pré-visualização dos dados): quem edita conteúdo.
 						.requestMatchers("/api/v1/widgets/**").hasRole("EDITOR")
 						// Consultar: qualquer papel.

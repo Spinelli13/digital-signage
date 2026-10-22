@@ -7,6 +7,7 @@ import { TPipe, tr, trServer } from '../core/i18n';
 import { PublicQueue, PublicTicket } from '../core/models';
 import { IconComponent } from '../shared/icon';
 import { PreferencesBar } from '../shared/preferences';
+import { PrivacyNoticeComponent } from '../shared/privacy-notice';
 import { WordmarkComponent } from '../shared/wordmark';
 
 const STORAGE_PREFIX = 'smartplay.myticket.';
@@ -94,7 +95,7 @@ const LAYOUT_CSS = `
 /** A página aberta pelo QR Code da fila: o nome da fila, quantos esperam e o botão para pegar a senha. */
 @Component({
   selector: 'app-queue-take',
-  imports: [FormsModule, TPipe, IconComponent, PreferencesBar, WordmarkComponent],
+  imports: [FormsModule, TPipe, IconComponent, PreferencesBar, WordmarkComponent, PrivacyNoticeComponent],
   template: `
     <div class="prefs-corner"><app-preferences /></div>
     <main class="wrap">
@@ -108,8 +109,9 @@ const LAYOUT_CSS = `
               <label for="name">{{ 'Seu nome (opcional)' | t }}</label>
               <input id="name" name="name" maxlength="60" autocomplete="given-name" [ngModel]="customerName()" (ngModelChange)="customerName.set($event)" />
             </div>
+            <app-privacy-notice [notice]="info.notice" purpose="queue" [hasName]="hasName()" [(consent)]="consent" />
             <div class="actions">
-              <button class="primary" [disabled]="busy()" (click)="take()"><app-icon name="hourglass" />{{ 'Pegar minha senha' | t }}</button>
+              <button class="primary" [disabled]="busy() || (hasName() && !consent())" (click)="take()"><app-icon name="hourglass" />{{ 'Pegar minha senha' | t }}</button>
             </div>
           } @else {
             <p class="muted">{{ 'Esta fila não está recebendo senhas pelo celular agora. Procure o atendimento.' | t }}</p>
@@ -136,6 +138,9 @@ export class QueueTakePage implements OnInit {
   readonly problem = signal<string | null>(null);
   readonly busy = signal(false);
   readonly customerName = signal('');
+  /** A pessoa concordou com o aviso de privacidade (só vale, e só é pedido, quando ela digita um nome). */
+  readonly consent = signal(false);
+  readonly hasName = computed(() => this.customerName().trim().length > 0);
 
   private get token(): string {
     return this.route.snapshot.paramMap.get('token') ?? '';
@@ -163,7 +168,7 @@ export class QueueTakePage implements OnInit {
   take(): void {
     this.busy.set(true);
     this.problem.set(null);
-    this.api.takePublicTicket(this.token, this.customerName().trim() || null, deviceId()).subscribe({
+    this.api.takePublicTicket(this.token, this.customerName().trim() || null, deviceId(), this.hasName() && this.consent()).subscribe({
       next: (ticket) => {
         this.busy.set(false);
         if (ticket.ticketToken) {

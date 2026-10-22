@@ -12,7 +12,8 @@ const API = 'http://api.test/api/v1';
 const QUEUE_TOKEN = 'a'.repeat(32);
 const TICKET_TOKEN = 'b'.repeat(32);
 
-const queue = (overrides: Partial<PublicQueue> = {}): PublicQueue => ({ name: 'Atendimento geral', open: true, waiting: 3, ...overrides });
+const notice = { controllerName: 'Loja Aurora', contactEmail: 'privacidade@loja.com', retentionDays: 30, version: '2026-10-21' };
+const queue = (overrides: Partial<PublicQueue> = {}): PublicQueue => ({ name: 'Atendimento geral', open: true, waiting: 3, notice, ...overrides });
 
 const ticket = (overrides: Partial<PublicTicket> = {}): PublicTicket => ({
   ticketToken: TICKET_TOKEN,
@@ -64,11 +65,12 @@ describe('QueueTakePage (QR Code da fila)', () => {
     expect(textOf(fixture)).toContain('Atendimento geral');
     expect(textOf(fixture)).toContain('3 pessoa(s) aguardando agora.');
     page.customerName.set('  Maria ');
+    page.consent.set(true);
     page.take();
 
     const request = backend.expectOne(`${API}/public/queues/${QUEUE_TOKEN}/tickets`);
     expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({ customerName: 'Maria' });
+    expect(request.request.body).toEqual({ customerName: 'Maria', consent: true });
     // o código deste aparelho vai junto (e é sempre o mesmo neste celular)
     expect(request.request.headers.get('X-Client-Id')).toBe(deviceId());
     request.flush(ticket());
@@ -84,7 +86,48 @@ describe('QueueTakePage (QR Code da fila)', () => {
 
     page.take();
 
-    expect(backend.expectOne(`${API}/public/queues/${QUEUE_TOKEN}/tickets`).request.body).toEqual({ customerName: null });
+    expect(backend.expectOne(`${API}/public/queues/${QUEUE_TOKEN}/tickets`).request.body).toEqual({ customerName: null, consent: false });
+  });
+
+  it('shows the privacy notice and only asks for agreement when a name is typed', async () => {
+    const { page, fixture, backend } = setup(QueueTakePage, QUEUE_TOKEN, true);
+    backend.expectOne(`${API}/public/queues/${QUEUE_TOKEN}`).flush(queue());
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(textOf(fixture)).toContain('O nome serve só para chamar a sua senha.');
+    expect(textOf(fixture)).toContain('Loja Aurora é a responsável por esse dado e o apaga em 30 dia(s).');
+    expect(textOf(fixture)).toContain('privacidade@loja.com');
+    expect(root.querySelector('a[href="/privacidade"]')).not.toBeNull();
+    // sem nome não há o que concordar e a pessoa pega a senha
+    expect(root.querySelector('input[name=consent]')).toBeNull();
+    expect((root.querySelector('button.primary') as HTMLButtonElement).disabled).toBe(false);
+
+    // com um nome, é preciso concordar antes
+    page.customerName.set('Maria');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(root.querySelector('input[name=consent]')).not.toBeNull();
+    expect((root.querySelector('button.primary') as HTMLButtonElement).disabled).toBe(true);
+
+    page.consent.set(true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect((root.querySelector('button.primary') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('never sends the agreement without a name, even if the box was ticked before the name was erased', () => {
+    const { page, backend } = setup(QueueTakePage, QUEUE_TOKEN);
+    page.ngOnInit();
+    backend.expectOne(`${API}/public/queues/${QUEUE_TOKEN}`).flush(queue());
+    page.customerName.set('Maria');
+    page.consent.set(true);
+    page.customerName.set('');
+
+    page.take();
+
+    expect(backend.expectOne(`${API}/public/queues/${QUEUE_TOKEN}/tickets`).request.body).toEqual({ customerName: null, consent: false });
   });
 
   it('goes straight to the ticket the person already took, without asking the server for a new one', () => {

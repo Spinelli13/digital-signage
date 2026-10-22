@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.digitalsignage.backend.common.ConflictException;
+import com.digitalsignage.backend.privacy.PrivacyNotice;
+import com.digitalsignage.backend.privacy.PrivacyService;
 import com.digitalsignage.backend.promo.PromotionModels.CouponLookup;
 import com.digitalsignage.backend.promo.PromotionModels.CouponResponse;
 import com.digitalsignage.backend.promo.PromotionModels.PromotionRequest;
@@ -33,21 +35,21 @@ import com.digitalsignage.backend.promo.PromotionModels.PublicPromotion;
 @Transactional
 public class PromotionService {
 
-	/** O nome que a pessoa digitou some depois disto (é dado pessoal). */
-	static final Duration NAME_RETENTION = Duration.ofDays(90);
 	private static final int LATEST_COUPONS = 200;
 	private static final String ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 	private static final SecureRandom RANDOM = new SecureRandom();
 
 	private final PromotionRepository promotions;
 	private final PromotionCouponRepository coupons;
+	private final PrivacyService privacy;
 	private final Clock clock;
 	private final ZoneId zone;
 
-	public PromotionService(PromotionRepository promotions, PromotionCouponRepository coupons, Clock clock,
+	public PromotionService(PromotionRepository promotions, PromotionCouponRepository coupons, PrivacyService privacy, Clock clock,
 			@Value("${app.billing.timezone:America/Sao_Paulo}") String zone) {
 		this.promotions = promotions;
 		this.coupons = coupons;
+		this.privacy = privacy;
 		this.clock = clock;
 		this.zone = ZoneId.of(zone);
 	}
@@ -131,11 +133,12 @@ public class PromotionService {
 	@Transactional(readOnly = true)
 	public PublicPromotion publicView(Long promotionId) {
 		Promotion promotion = find(promotionId);
-		return new PublicPromotion(promotion.getName(), promotion.getDescription(), openAt(promotion, clock.instant()), promotion.getValidUntil(), promotion.getClaimDays());
+		return new PublicPromotion(promotion.getName(), promotion.getDescription(), openAt(promotion, clock.instant()), promotion.getValidUntil(), promotion.getClaimDays(),
+				privacy.couponNotice());
 	}
 
 	/** O mesmo aparelho recebe sempre o mesmo cupom; outro aparelho recebe um novo, enquanto houver. */
-	public PublicCoupon claim(Long promotionId, String customerName, String clientId) {
+	public PublicCoupon claim(Long promotionId, String customerName, boolean consented, String clientId) {
 		Promotion promotion = find(promotionId);
 		Instant now = clock.instant();
 		if (clientId != null) {
@@ -147,12 +150,20 @@ public class PromotionService {
 		if (!openAt(promotion, now)) {
 			throw new ConflictException(promotion.isActive() ? "Os cupons desta promoção acabaram." : "Esta promoção não está aberta agora.");
 		}
+		String name = customerName == null || customerName.isBlank() ? null : customerName.trim();
+		if (name != null && !consented) {
+			throw new IllegalArgumentException("Para informar o nome, é preciso concordar com o aviso de privacidade");
+		}
 		if (promotions.claimSlot(promotionId) == 0) {
 			throw new ConflictException("Os cupons desta promoção acabaram.");
 		}
-		coupons.forgetNamesBefore(now.minus(NAME_RETENTION));
-		String name = customerName == null || customerName.isBlank() ? null : customerName.trim();
-		PromotionCoupon coupon = coupons.saveAndFlush(new PromotionCoupon(promotionId, freshCode(), name, clientId, now, expiryOf(promotion, now)));
+		// o prazo de guarda do nome é do cliente (Privacidade); a limpeza horária também apaga, mesmo sem ninguém pegar cupom
+		coupons.forgetNamesBefore(now.minus(Duration.ofDays(privacy.couponNameRetentionDays())));
+		PromotionCoupon fresh = new PromotionCoupon(promotionId, freshCode(), name, clientId, now, expiryOf(promotion, now));
+		if (name != null) {
+			fresh.recordConsent(now, PrivacyNotice.VERSION);
+		}
+		PromotionCoupon coupon = coupons.saveAndFlush(fresh);
 		return toPublic(coupon, promotion, now);
 	}
 

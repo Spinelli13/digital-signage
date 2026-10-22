@@ -43,8 +43,8 @@ public final class AttendanceModels {
 		}
 	}
 
-	/** O que a pessoa vê na página pública da fila (sem entrar no painel). */
-	public record PublicQueue(String name, boolean open, long waiting) {
+	/** O que a pessoa vê na página pública da fila (sem entrar no painel); {@code notice} é o aviso de privacidade do nome. */
+	public record PublicQueue(String name, boolean open, long waiting, com.digitalsignage.backend.privacy.PrivacyNotice.Info notice) {
 	}
 
 	/** O que a pessoa vê da própria senha: nunca o nome nem os dados de outras pessoas. */

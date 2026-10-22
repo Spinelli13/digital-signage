@@ -54,7 +54,7 @@ public class PublicPromotionService {
 		return TenantContext.callAs(owner.tenantId(), () -> promotions.publicView(owner.id()));
 	}
 
-	public PublicCoupon claim(String token, String customerName, String network, String device) {
+	public PublicCoupon claim(String token, String customerName, boolean consented, String network, String device) {
 		Owner owner = ownerOfPromotion(token);
 		String clientId = device != null && device.matches("[0-9a-zA-Z-]{8,64}") ? device : null;
 		return TenantContext.callAs(owner.tenantId(), () -> {
@@ -67,7 +67,7 @@ public class PublicPromotionService {
 			}
 			throttle(token + "|net|" + network, MAX_PER_NETWORK);
 			try {
-				return promotions.claim(owner.id(), customerName, clientId);
+				return promotions.claim(owner.id(), customerName, consented, clientId);
 			} catch (DataIntegrityViolationException e) {
 				// dois pedidos do mesmo aparelho ao mesmo tempo: o outro já criou o cupom
 				return promotions.existing(owner.id(), clientId).orElseThrow(() -> e);

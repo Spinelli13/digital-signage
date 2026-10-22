@@ -5,6 +5,9 @@ import { capabilityGuard, featureGuard } from './core/role.guard';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./login/login.page').then((m) => m.LoginPage) },
+  // Política de Privacidade e Termos de Uso: páginas abertas (o aviso das páginas públicas e o login apontam para elas).
+  { path: 'privacidade', data: { legal: 'privacy' }, loadComponent: () => import('./legal/legal.page').then((m) => m.LegalPage) },
+  { path: 'termos', data: { legal: 'terms' }, loadComponent: () => import('./legal/legal.page').then((m) => m.LegalPage) },
   // Senha pelo celular: páginas abertas a quem escaneia o QR Code da fila (sem login e fora do menu do painel).
   { path: 'fila/:token', loadComponent: () => import('./public-ticket/public-ticket.page').then((m) => m.QueueTakePage) },
   { path: 'senha/:token', loadComponent: () => import('./public-ticket/public-ticket.page').then((m) => m.TicketStatusPage) },
@@ -38,6 +41,11 @@ export const routes: Routes = [
         path: 'equipe',
         canActivate: [capabilityGuard('admin')],
         loadComponent: () => import('./team/team.page').then((m) => m.TeamPage),
+      },
+      {
+        path: 'dados-pessoais',
+        canActivate: [capabilityGuard('admin')],
+        loadComponent: () => import('./privacy/privacy.page').then((m) => m.PrivacyPage),
       },
       {
         path: 'plano',

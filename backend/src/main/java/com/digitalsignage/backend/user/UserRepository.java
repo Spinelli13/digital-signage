@@ -21,4 +21,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	List<User> findByRoleOrderByName(String role);
 
+	/** Pedido de titular: a equipe do cliente com o nome ou o e-mail buscado (o termo já vem com os curingas do LIKE escapados). */
+	@org.springframework.data.jpa.repository.Query("select u from User u where u.tenantId = :tenantId and (lower(u.name) like lower(concat('%', :term, '%')) escape '\\' or lower(u.email) like lower(concat('%', :term, '%')) escape '\\') order by u.name")
+	List<User> forPrivacy(@org.springframework.data.repository.query.Param("tenantId") Long tenantId, @org.springframework.data.repository.query.Param("term") String term);
+
 }

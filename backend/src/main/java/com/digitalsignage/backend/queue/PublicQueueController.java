@@ -21,7 +21,8 @@ import jakarta.validation.constraints.Size;
 @RequestMapping("/api/v1/public")
 public class PublicQueueController {
 
-	public record TakeRequest(@Size(max = 60) String customerName) {
+	/** {@code consent}: a pessoa concordou com o aviso de privacidade (obrigatório para o nome ser guardado). */
+	public record TakeRequest(@Size(max = 60) String customerName, Boolean consent) {
 	}
 
 	private final PublicQueueService service;
@@ -38,7 +39,8 @@ public class PublicQueueController {
 	@PostMapping("/queues/{token}/tickets")
 	@ResponseStatus(HttpStatus.CREATED)
 	public PublicTicket take(@PathVariable String token, @Valid @RequestBody(required = false) TakeRequest request, HttpServletRequest http) {
-		return service.issue(token, request == null ? null : request.customerName(), clientOf(http), http.getHeader("X-Client-Id"));
+		return service.issue(token, request == null ? null : request.customerName(), request != null && Boolean.TRUE.equals(request.consent()), clientOf(http),
+				http.getHeader("X-Client-Id"));
 	}
 
 	@GetMapping("/tickets/{token}")

@@ -28,6 +28,19 @@ public class PlatformSettings {
 	@Column(name = "support_email")
 	private String supportEmail;
 
+	/** Quem responde pelo tratamento de dados (LGPD): aparece na Política de Privacidade. */
+	@Column(name = "legal_name")
+	private String legalName;
+
+	@Column(name = "legal_document")
+	private String legalDocument;
+
+	@Column(name = "privacy_contact_name")
+	private String privacyContactName;
+
+	@Column(name = "privacy_contact_email")
+	private String privacyContactEmail;
+
 	@Column(name = "trial_days", nullable = false)
 	private int trialDays = 14;
 
@@ -71,6 +84,38 @@ public class PlatformSettings {
 
 	public void setSupportEmail(String supportEmail) {
 		this.supportEmail = supportEmail;
+	}
+
+	public String getLegalName() {
+		return legalName;
+	}
+
+	public void setLegalName(String legalName) {
+		this.legalName = legalName;
+	}
+
+	public String getLegalDocument() {
+		return legalDocument;
+	}
+
+	public void setLegalDocument(String legalDocument) {
+		this.legalDocument = legalDocument;
+	}
+
+	public String getPrivacyContactName() {
+		return privacyContactName;
+	}
+
+	public void setPrivacyContactName(String privacyContactName) {
+		this.privacyContactName = privacyContactName;
+	}
+
+	public String getPrivacyContactEmail() {
+		return privacyContactEmail;
+	}
+
+	public void setPrivacyContactEmail(String privacyContactEmail) {
+		this.privacyContactEmail = privacyContactEmail;
 	}
 
 	public int getTrialDays() {

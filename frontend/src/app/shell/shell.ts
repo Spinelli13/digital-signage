@@ -90,6 +90,7 @@ import { UserMenuComponent } from '../shared/user-menu';import { WordmarkCompone
         @if (auth.can('admin') && auth.me()) {
           <a routerLink="/equipe" routerLinkActive="active" [class.hidden]="blocked()"><app-icon name="users" /><span>{{ 'Equipe' | t }}</span></a>
           <a routerLink="/plano" routerLinkActive="active"><app-icon name="credit-card" /><span>{{ 'Plano e cobrança' | t }}</span></a>
+          <a routerLink="/dados-pessoais" routerLinkActive="active" [class.hidden]="blocked()"><app-icon name="shield-check" /><span>{{ 'Privacidade e dados' | t }}</span></a>
         }
         <a routerLink="/downloads" routerLinkActive="active"><app-icon name="download" /><span>{{ 'Downloads e manuais' | t }}</span></a>
 

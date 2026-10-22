@@ -35,7 +35,8 @@ public class PublicPromotionController {
 	@PostMapping("/promotions/{token}/coupons")
 	@ResponseStatus(HttpStatus.CREATED)
 	public PublicCoupon claim(@PathVariable String token, @Valid @RequestBody(required = false) ClaimRequest request, HttpServletRequest http) {
-		return service.claim(token, request == null ? null : request.customerName(), network(http), http.getHeader("X-Client-Id"));
+		return service.claim(token, request == null ? null : request.customerName(), request != null && Boolean.TRUE.equals(request.consent()), network(http),
+				http.getHeader("X-Client-Id"));
 	}
 
 	@GetMapping("/coupons/{token}")

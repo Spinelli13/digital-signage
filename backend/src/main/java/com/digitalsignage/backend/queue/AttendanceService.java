@@ -27,6 +27,8 @@ import com.digitalsignage.backend.queue.AttendanceModels.Overview;
 import com.digitalsignage.backend.queue.AttendanceModels.QueueResponse;
 import com.digitalsignage.backend.queue.AttendanceModels.Today;
 import com.digitalsignage.backend.queue.AttendanceModels.TicketResponse;
+import com.digitalsignage.backend.privacy.PrivacyNotice;
+import com.digitalsignage.backend.privacy.PrivacyService;
 import com.digitalsignage.backend.queue.AttendanceModels.WaitingResponse;
 
 import jakarta.validation.constraints.NotBlank;
@@ -44,8 +46,6 @@ public class AttendanceService {
 
 	/** Depois de tantas chamadas prioritárias seguidas, a próxima é uma senha normal (se houver). */
 	static final int PRIORITY_STREAK = 3;
-	/** O nome que a pessoa informou é dado pessoal: as senhas somem depois disto. */
-	public static final int RETENTION_DAYS = 30;
 	private static final int MAX_WAITING_LISTED = 200;
 	private static final String DEFAULT_ZONE = "America/Sao_Paulo";
 
@@ -59,12 +59,15 @@ public class AttendanceService {
 	private final ServiceQueueRepository queues;
 	private final ServiceCounterRepository counters;
 	private final TicketRepository tickets;
+	private final PrivacyService privacy;
 	private final Clock clock;
 
-	public AttendanceService(ServiceQueueRepository queues, ServiceCounterRepository counters, TicketRepository tickets, Clock clock) {
+	public AttendanceService(ServiceQueueRepository queues, ServiceCounterRepository counters, TicketRepository tickets, PrivacyService privacy,
+			Clock clock) {
 		this.queues = queues;
 		this.counters = counters;
 		this.tickets = tickets;
+		this.privacy = privacy;
 		this.clock = clock;
 	}
 
@@ -165,6 +168,11 @@ public class AttendanceService {
 	/** Emite a próxima senha da fila. {@code source}: PANEL (o atendente) ou REMOTE (a pessoa, pelo celular). */
 	@Transactional
 	public Ticket issue(Long queueId, String customerName, String source) {
+		return issue(queueId, customerName, source, null);
+	}
+
+	/** {@code consentVersion}: a versão do aviso de privacidade que a pessoa viu e aceitou ao informar o nome (nulo no balcão). */
+	private Ticket issue(Long queueId, String customerName, String source, String consentVersion) {
 		ServiceQueue queue = findQueue(queueId);
 		if (!queue.isActive()) {
 			throw new ConflictException("A fila \"" + queue.getName() + "\" está desativada");
@@ -177,10 +185,14 @@ public class AttendanceService {
 		if (number == 1) {
 			// Primeira senha do dia nesta fila: o que sobrou de ontem sai da fila e as senhas antigas são apagadas.
 			tickets.cancelStale(queueId, day, now);
-			tickets.deleteBefore(day.minusDays(RETENTION_DAYS));
+			// o prazo de guarda é do cliente (Privacidade); a limpeza horária também apaga, mesmo sem ninguém emitir senha
+			tickets.deleteBefore(day.minusDays(privacy.ticketRetentionDays()));
 		}
 		String label = queue.getPrefix() + String.format("%03d", number);
 		Ticket ticket = new Ticket(queueId, day, number, label, cleanCustomer(customerName), source, now);
+		if (consentVersion != null && ticket.getCustomerName() != null) {
+			ticket.recordConsent(now, consentVersion);
+		}
 		if ("REMOTE".equals(source)) {
 			ticket.assignPublicToken(Tokens.random());
 		}
@@ -195,19 +207,23 @@ public class AttendanceService {
 	@Transactional(readOnly = true)
 	public AttendanceModels.PublicQueue publicQueue(Long queueId) {
 		ServiceQueue queue = findQueue(queueId);
-		return new AttendanceModels.PublicQueue(queue.getName(), queue.isActive() && queue.isRemoteEnabled(), openWaiting(queue));
+		return new AttendanceModels.PublicQueue(queue.getName(), queue.isActive() && queue.isRemoteEnabled(), openWaiting(queue), privacy.ticketNotice());
 	}
 
 	@Transactional
-	public AttendanceModels.PublicTicket issueRemote(Long queueId, String customerName) {
+	public AttendanceModels.PublicTicket issueRemote(Long queueId, String customerName, boolean consented) {
 		ServiceQueue queue = findQueue(queueId);
+		String name = cleanCustomer(customerName);
+		if (name != null && !consented) {
+			throw new IllegalArgumentException("Para informar o nome, é preciso concordar com o aviso de privacidade");
+		}
 		if (!queue.isRemoteEnabled() || !queue.isActive()) {
 			throw new NoSuchElementException("Este QR Code não está mais ativo. Procure o atendimento.");
 		}
 		if (tickets.remoteWaiting(queueId) >= MAX_REMOTE_WAITING) {
 			throw new com.digitalsignage.backend.common.RateLimitException("A fila está cheia no momento. Procure o atendimento.");
 		}
-		return publicTicket(issue(queueId, customerName, "REMOTE"));
+		return publicTicket(issue(queueId, name, "REMOTE", name == null ? null : PrivacyNotice.VERSION));
 	}
 
 	@Transactional(readOnly = true)

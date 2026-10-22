@@ -62,6 +62,11 @@ import {
   PlatformPlan,
   PlatformPlanRequest,
   PlatformSettings,
+  PrivacyErase,
+  PrivacyRequestEntry,
+  PrivacySearch,
+  PrivacySettings,
+  PublicPrivacy,
   PlatformTenantRequest,
   PlatformTenantUpdate,
   Playlist,
@@ -326,6 +331,38 @@ export class ApiService {
 
   updatePlatformSettings(body: Partial<PlatformSettings>): Observable<PlatformSettings> {
     return this.http.put<PlatformSettings>(this.url('/platform/settings'), body);
+  }
+
+  // ---------- privacidade e dados pessoais (LGPD) ----------
+
+  /** Quem responde pelo tratamento de dados (Política de Privacidade e Termos de Uso: páginas abertas, sem login). */
+  publicPrivacy(): Observable<PublicPrivacy> {
+    return this.http.get<PublicPrivacy>(this.url('/public/privacy'), { context: new HttpContext().set(SILENT_ERRORS, true) });
+  }
+
+  privacySettings(): Observable<PrivacySettings> {
+    return this.http.get<PrivacySettings>(this.url('/privacy/settings'));
+  }
+
+  updatePrivacySettings(body: Partial<PrivacySettings>): Observable<PrivacySettings> {
+    return this.http.put<PrivacySettings>(this.url('/privacy/settings'), body);
+  }
+
+  privacySearch(term: string): Observable<PrivacySearch> {
+    return this.http.get<PrivacySearch>(this.url('/privacy/search'), { params: { q: term } });
+  }
+
+  /** A cópia dos dados da pessoa (arquivo JSON); o pedido fica registrado no servidor. */
+  privacyExport(term: string, note: string | null): Observable<Blob> {
+    return this.http.post(this.url('/privacy/export'), { term, note }, { responseType: 'blob' });
+  }
+
+  privacyErase(term: string, note: string | null): Observable<PrivacyErase> {
+    return this.http.post<PrivacyErase>(this.url('/privacy/erase'), { term, note });
+  }
+
+  privacyRequests(): Observable<PrivacyRequestEntry[]> {
+    return this.http.get<PrivacyRequestEntry[]>(this.url('/privacy/requests'));
   }
 
   // layouts (fase 5)
@@ -597,8 +634,8 @@ export class ApiService {
   }
 
   /** O código do aparelho vai junto: o servidor limita as senhas por aparelho sem confundir os clientes que dividem o mesmo Wi-Fi. */
-  takePublicTicket(token: string, customerName: string | null, deviceId: string): Observable<PublicTicket> {
-    return this.http.post<PublicTicket>(this.url(`/public/queues/${token}/tickets`), { customerName }, {
+  takePublicTicket(token: string, customerName: string | null, deviceId: string, consent = false): Observable<PublicTicket> {
+    return this.http.post<PublicTicket>(this.url(`/public/queues/${token}/tickets`), { customerName, consent }, {
       context: new HttpContext().set(SILENT_ERRORS, true),
       headers: { 'X-Client-Id': deviceId },
     });
@@ -649,8 +686,8 @@ export class ApiService {
     return this.http.get<PublicPromotion>(this.url(`/public/promotions/${token}`), { context: new HttpContext().set(SILENT_ERRORS, true) });
   }
 
-  claimPublicCoupon(token: string, customerName: string | null, deviceId: string): Observable<PublicPromoCoupon> {
-    return this.http.post<PublicPromoCoupon>(this.url(`/public/promotions/${token}/coupons`), { customerName }, {
+  claimPublicCoupon(token: string, customerName: string | null, deviceId: string, consent = false): Observable<PublicPromoCoupon> {
+    return this.http.post<PublicPromoCoupon>(this.url(`/public/promotions/${token}/coupons`), { customerName, consent }, {
       context: new HttpContext().set(SILENT_ERRORS, true),
       headers: { 'X-Client-Id': deviceId },
     });

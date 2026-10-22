@@ -55,13 +55,13 @@ public class PublicQueueService {
 		return TenantContext.callAs(owner.tenantId(), () -> attendance.publicQueue(owner.id()));
 	}
 
-	public PublicTicket issue(String queueToken, String customerName, String network, String device) {
+	public PublicTicket issue(String queueToken, String customerName, boolean consented, String network, String device) {
 		Owner owner = ownerOfQueue(queueToken);
 		throttle(queueToken + "|net|" + network, MAX_PER_NETWORK);
 		if (device != null && device.matches("[0-9a-zA-Z-]{8,64}")) {
 			throttle(queueToken + "|dev|" + device, MAX_PER_DEVICE);
 		}
-		return TenantContext.callAs(owner.tenantId(), () -> attendance.issueRemote(owner.id(), customerName));
+		return TenantContext.callAs(owner.tenantId(), () -> attendance.issueRemote(owner.id(), customerName, consented));
 	}
 
 	public PublicTicket ticket(String ticketToken) {

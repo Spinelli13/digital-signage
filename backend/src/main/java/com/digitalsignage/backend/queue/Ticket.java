@@ -76,6 +76,13 @@ public class Ticket {
 	@Column(name = "call_count", nullable = false)
 	private int callCount;
 
+	/** Quando a pessoa concordou com o aviso de privacidade ao informar o nome pelo celular, e qual versão do aviso viu. */
+	@Column(name = "consent_at")
+	private Instant consentAt;
+
+	@Column(name = "consent_notice")
+	private String consentNotice;
+
 	/** O segredo de quem pegou a senha pelo celular (acompanhar e sair da fila); nulo nas senhas emitidas no balcão. */
 	@Column(name = "public_token", updatable = false)
 	private String publicToken;
@@ -99,6 +106,19 @@ public class Ticket {
 
 	public String getPublicToken() {
 		return publicToken;
+	}
+
+	public void recordConsent(Instant at, String noticeVersion) {
+		this.consentAt = at;
+		this.consentNotice = noticeVersion;
+	}
+
+	public Instant getConsentAt() {
+		return consentAt;
+	}
+
+	public String getConsentNotice() {
+		return consentNotice;
 	}
 
 	public void call(Long counterId, Instant now) {

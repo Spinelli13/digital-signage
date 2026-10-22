@@ -640,7 +640,7 @@ A senha pelo celular aparece na **Fila de espera** como as outras (com o nome, q
 
 **Quem pode o quê.** O **Visualizador** só acompanha; o **Editor** emite, chama e conclui senhas; o **Administrador** monta as filas e os guichês. Por enquanto o atendente precisa do papel **Editor** (que também mexe em conteúdo); um papel só para atendimento é um próximo passo.
 
-**Privacidade.** O nome digitado na senha é um dado pessoal: as senhas são **apagadas depois de 30 dias**. Prefira não pedir o nome quando não for necessário.
+**Privacidade.** O nome digitado na senha é um dado pessoal: as senhas são **apagadas depois de 30 dias** (o Administrador muda esse prazo em **Privacidade e dados**, seção 11.4). Quem pega a senha **pelo celular** vê um aviso de privacidade e só consegue informar o nome se marcar que concorda; sem nome, nada é coletado. Prefira não pedir o nome quando não for necessário.
 
 > **Requisito:** o painel de chamadas na TV exige o Player **0.14 ou mais novo** (Dispositivos > **Atualizar app**). **Limites desta versão:** o aviso é um **duplo bip** (a TV não fala o número); a TV precisa de internet para se atualizar (sem internet ela mostra a última chamada que recebeu).
 
@@ -658,7 +658,7 @@ Em **Cupons** (menu Operação) você cria promoções para os clientes da sua l
 
 **Acompanhar:** a lista mostra, por promoção, os cupons pegos, os usados, a validade e a situação (*No ar*, *Programada*, *Encerrada*, *Cupons esgotados*, *Desligada*); **Ver os cupons** lista os códigos com a situação. Para encerrar uma promoção sem apagar o histórico, **desligue-a** (quem já pegou o cupom continua com ele). Uma promoção que já teve cupons pegos não se exclui.
 
-**Dados pessoais:** o nome é opcional e é apagado depois de 90 dias; o cupom em si fica só com o código e as datas.
+**Dados pessoais:** o nome é opcional, aparece junto de um aviso de privacidade (a pessoa precisa marcar que concorda para informá-lo) e é apagado depois de 90 dias por padrão (o Administrador muda esse prazo em **Privacidade e dados**, seção 11.4); o cupom em si fica só com o código e as datas.
 
 ## 11. Equipe e papéis
 
@@ -696,6 +696,24 @@ Em **Equipe** estão todas as pessoas do cliente, com o papel e a situação de 
 Em qualquer papel, clique no seu **nome** (pé do menu à esquerda; no celular, a bolinha do alto) e em **Minha conta**, digite a **senha atual** e a **nova senha duas vezes** (mínimo de 8 caracteres). O **tema** e o **idioma** ficam no mesmo menu (seção 2.2 e 2.3).
 
 ![Janela "Minha conta" com a troca de senha (captura real)](manual/img/painel-minha-conta.png)
+
+### 11.4 Privacidade e dados (LGPD)
+
+Em **Administração → Privacidade e dados** (só o **Administrador**, que é quem lida com a LGPD na empresa). A tela tem três partes:
+
+**Contato do aviso de privacidade.** O nome e o e-mail de quem responde pelos dados da sua empresa. Eles aparecem no aviso das páginas públicas da fila e do cupom, para a pessoa saber com quem falar.
+
+**Por quanto tempo guardamos.** Quatro prazos, em dias: **senhas da fila** (a senha inteira, com o nome, é apagada; padrão 30), **nome nos cupons** (o cupom fica, sem identificar a pessoa; padrão 90), **histórico das TVs** (padrão 90) e **exibições detalhadas** (padrão 14). Passado o prazo, o que é pessoal é apagado **sozinho** (a limpeza roda de hora em hora). Prazos menores guardam menos dados.
+
+**Pedido de um titular.** Quando uma pessoa pedir cópia ou exclusão dos dados dela:
+
+1. Confirme quem está pedindo (o sistema não faz isso por você).
+2. Digite o **nome**, o **e-mail** ou o **código do cupom** (pelo menos 3 caracteres) e clique em **Buscar**: aparecem as **senhas da fila**, os **cupons** e os usuários da **equipe** que combinam. Confira.
+3. Escreva uma **observação** (por exemplo, o protocolo do pedido) e clique em **Baixar cópia dos dados (JSON)** para entregar à pessoa, ou em **Apagar dados pessoais encontrados** (pede confirmação e **não tem volta**): o nome, o aparelho e a concordância somem das senhas e dos cupons, que continuam existindo, sem identificar ninguém, para os números do atendimento.
+4. Para tirar um usuário do painel, use **Equipe**: nesta tela ele só entra na cópia dos dados.
+5. Responda à pessoa em até **15 dias**.
+
+Cada cópia ou exclusão fica na lista **Pedidos atendidos** (tipo, quantidades, observação e quem atendeu). **O nome buscado não é guardado.** Nas páginas públicas, o aviso mostra o nome da sua empresa como responsável, o contato que você definiu, por quantos dias o nome fica e um link para a **Política de Privacidade**; a política e os **Termos de Uso** podem ser abertos por qualquer pessoa em `/privacidade` e `/termos`, sem entrar. O mapa completo dos dados está em `docs/LGPD.md`.
 
 ---
 
@@ -825,6 +843,7 @@ Em **Plataforma → Cupons de assinatura** o gestor cria os cupons que os client
 - **Dias de teste:** duração do teste de um cliente novo (14 por padrão).
 - **Dias de tolerância:** quantos dias após o vencimento o cliente ainda usa o painel antes de ser **suspenso** (7 por padrão).
 - **Antecedência da fatura:** quantos dias antes do fim do período a fatura do mês seguinte é emitida (5 por padrão).
+- **Privacidade (LGPD):** a **razão social**, o **CNPJ** e o **encarregado de dados (DPO)** com e-mail. Aparecem na Política de Privacidade e nos Termos de Uso, que qualquer pessoa abre sem entrar (`/privacidade` e `/termos`). Sem o e-mail do encarregado, a política mostra o e-mail de suporte.
 
 ---
 

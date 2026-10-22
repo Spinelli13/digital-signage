@@ -42,8 +42,16 @@ public class PromotionCoupon {
 	@Column(name = "claimant_name")
 	private String claimantName;
 
-	@Column(name = "client_id", updatable = false)
+	/** O aparelho que pegou (código aleatório guardado pela página). Some quando a pessoa pede a exclusão dos dados dela. */
+	@Column(name = "client_id")
 	private String clientId;
+
+	/** Quando a pessoa concordou com o aviso de privacidade ao informar o nome, e qual versão do aviso viu. */
+	@Column(name = "consent_at")
+	private Instant consentAt;
+
+	@Column(name = "consent_notice")
+	private String consentNotice;
 
 	@Column(name = "public_token", nullable = false, updatable = false)
 	private String publicToken = Tokens.random();
@@ -59,6 +67,19 @@ public class PromotionCoupon {
 
 	@Column(name = "redeemed_by")
 	private String redeemedBy;
+
+	public void recordConsent(Instant at, String noticeVersion) {
+		this.consentAt = at;
+		this.consentNotice = noticeVersion;
+	}
+
+	public Instant getConsentAt() {
+		return consentAt;
+	}
+
+	public String getConsentNotice() {
+		return consentNotice;
+	}
 
 	protected PromotionCoupon() {
 	}

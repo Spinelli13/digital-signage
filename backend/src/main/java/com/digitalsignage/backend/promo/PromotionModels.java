@@ -46,15 +46,17 @@ public final class PromotionModels {
 			Instant claimedAt, Instant expiresAt, Instant redeemedAt) {
 	}
 
-	/** O que o consumidor vê ao escanear o QR Code da promoção. */
-	public record PublicPromotion(String name, String description, boolean open, Instant validUntil, Integer claimDays) {
+	/** O que o consumidor vê ao escanear o QR Code da promoção; {@code notice} é o aviso de privacidade do nome. */
+	public record PublicPromotion(String name, String description, boolean open, Instant validUntil, Integer claimDays,
+			com.digitalsignage.backend.privacy.PrivacyNotice.Info notice) {
 	}
 
 	/** O cupom do consumidor: o código para mostrar no caixa. */
 	public record PublicCoupon(String code, String status, String promotionName, String promotionDescription, Instant expiresAt, Instant redeemedAt, String token) {
 	}
 
-	public record ClaimRequest(@Size(max = 60) String customerName) {
+	/** {@code consent}: a pessoa concordou com o aviso de privacidade (obrigatório para o nome ser guardado). */
+	public record ClaimRequest(@Size(max = 60) String customerName, Boolean consent) {
 	}
 
 }

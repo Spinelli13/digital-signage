@@ -58,7 +58,7 @@ class PublicTicketTest extends AbstractApiTest {
 
 	private ResultActions take(String queueToken, String name, String ip, String device) throws Exception {
 		MockHttpServletRequestBuilder request = post("/api/v1/public/queues/" + queueToken + "/tickets").contentType(MediaType.APPLICATION_JSON)
-				.content(json.writeValueAsString(name == null ? Map.of() : Map.of("customerName", name)));
+				.content(json.writeValueAsString(name == null ? Map.of() : Map.of("customerName", name, "consent", true)));
 		if (ip != null) {
 			request.header("X-Forwarded-For", ip);
 		}

@@ -594,10 +594,19 @@ export interface QueueRequest {
 }
 
 /** O que a pessoa vê ao escanear o QR Code da fila. */
+/** O aviso de privacidade mostrado a quem informa o nome nas páginas públicas (senha da fila e cupom). */
+export interface PrivacyNoticeInfo {
+  controllerName: string;
+  contactEmail: string | null;
+  retentionDays: number;
+  version: string;
+}
+
 export interface PublicQueue {
   name: string;
   open: boolean;
   waiting: number;
+  notice: PrivacyNoticeInfo;
 }
 
 /** A própria senha de quem a pegou pelo celular (sem nome nem dados de outras pessoas). */
@@ -1071,6 +1080,10 @@ export interface PlatformSettings {
   companyName: string;
   paymentInstructions: string | null;
   supportEmail: string | null;
+  legalName: string | null;
+  legalDocument: string | null;
+  privacyContactName: string | null;
+  privacyContactEmail: string | null;
   trialDays: number;
   graceDays: number;
   invoiceLeadDays: number;
@@ -1151,6 +1164,85 @@ export interface PublicPromotion {
   open: boolean;
   validUntil: string | null;
   claimDays: number | null;
+  notice: PrivacyNoticeInfo;
+}
+
+/** Quem responde pelo tratamento de dados na plataforma (Política de Privacidade e Termos de Uso, páginas abertas). */
+export interface PublicPrivacy {
+  companyName: string;
+  legalName: string | null;
+  legalDocument: string | null;
+  contactName: string | null;
+  contactEmail: string | null;
+  supportEmail: string | null;
+  version: string;
+}
+
+/** Privacidade do cliente (a loja): contato e prazos de guarda. Os dois últimos prazos são os mesmos da tela de alertas. */
+export interface PrivacySettings {
+  contactName: string | null;
+  contactEmail: string | null;
+  ticketRetentionDays: number;
+  couponNameRetentionDays: number;
+  eventsRetentionDays: number;
+  playLogRetentionDays: number;
+}
+
+export interface PrivacyTicketMatch {
+  id: number;
+  queue: string;
+  label: string;
+  day: string;
+  name: string;
+  source: string;
+  status: string;
+  issuedAt: string;
+  consentAt: string | null;
+}
+
+export interface PrivacyCouponMatch {
+  id: number;
+  code: string;
+  promotion: string;
+  name: string | null;
+  status: string;
+  claimedAt: string;
+  expiresAt: string | null;
+  redeemedAt: string | null;
+  consentAt: string | null;
+}
+
+export interface PrivacyUserMatch {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface PrivacySearch {
+  tickets: PrivacyTicketMatch[];
+  coupons: PrivacyCouponMatch[];
+  users: PrivacyUserMatch[];
+  truncated: boolean;
+}
+
+export interface PrivacyErase {
+  tickets: number;
+  coupons: number;
+  usersFound: number;
+}
+
+export interface PrivacyRequestEntry {
+  id: number;
+  kind: 'EXPORT' | 'ERASE';
+  tickets: number;
+  coupons: number;
+  users: number;
+  note: string | null;
+  performedBy: string;
+  performedAt: string;
 }
 
 /** O cupom do consumidor (o código para mostrar no caixa). */

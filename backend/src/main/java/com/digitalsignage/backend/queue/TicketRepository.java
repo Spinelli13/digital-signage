@@ -50,6 +50,15 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 	@Query("delete from Ticket t where t.day < :before")
 	int deleteBefore(@Param("before") LocalDate before);
 
+	/** Pedido de titular: as senhas com o nome buscado (o termo já vem com os curingas do LIKE escapados). */
+	@Query("select t from Ticket t where t.customerName is not null and lower(t.customerName) like lower(concat('%', :term, '%')) escape '\\' order by t.issuedAt desc, t.id desc")
+	List<Ticket> withNameLike(@Param("term") String term, Pageable page);
+
+	/** Apaga só os dados pessoais (nome e concordância); a senha fica para os números do atendimento. */
+	@Modifying(clearAutomatically = true, flushAutomatically = true)
+	@Query("update Ticket t set t.customerName = null, t.consentAt = null, t.consentNotice = null where t.id in :ids")
+	int forgetPersonalData(@Param("ids") Collection<Long> ids);
+
 	@Query("select count(t) from Ticket t where t.queueId = :queueId and t.status in ('WAITING', 'CALLING', 'SERVING')")
 	long openCount(@Param("queueId") Long queueId);
 

@@ -32,9 +32,18 @@ public interface PromotionCouponRepository extends JpaRepository<PromotionCoupon
 	@Query("update PromotionCoupon c set c.status = 'REDEEMED', c.redeemedAt = :now, c.redeemedBy = :by where c.id = :id and c.status = 'ISSUED' and (c.expiresAt is null or c.expiresAt > :now)")
 	int redeem(@Param("id") Long id, @Param("now") Instant now, @Param("by") String by);
 
+	/** Pedido de titular: os cupons com o nome buscado ou com o código informado (o termo já vem com os curingas do LIKE escapados). */
+	@Query("select c from PromotionCoupon c where (c.claimantName is not null and lower(c.claimantName) like lower(concat('%', :term, '%')) escape '\\') or c.code = :code order by c.claimedAt desc, c.id desc")
+	List<PromotionCoupon> forPrivacy(@Param("term") String term, @Param("code") String code, Pageable page);
+
+	/** Apaga os dados pessoais (nome, aparelho e concordância); o cupom e o resgate ficam para os números e para o caixa. */
+	@Modifying(clearAutomatically = true, flushAutomatically = true)
+	@Query("update PromotionCoupon c set c.claimantName = null, c.clientId = null, c.consentAt = null, c.consentNotice = null where c.id in :ids")
+	int forgetPersonalData(@Param("ids") java.util.Collection<Long> ids);
+
 	/** O nome da pessoa é dado pessoal: some depois do prazo, o cupom em si fica para os números. */
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
-	@Query("update PromotionCoupon c set c.claimantName = null where c.claimantName is not null and c.claimedAt < :before")
+	@Query("update PromotionCoupon c set c.claimantName = null, c.consentAt = null, c.consentNotice = null where c.claimantName is not null and c.claimedAt < :before")
 	int forgetNamesBefore(@Param("before") Instant before);
 
 }

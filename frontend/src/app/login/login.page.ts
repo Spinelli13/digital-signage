@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../core/auth.service';
 import { BRAND } from '../core/brand';
@@ -11,7 +11,7 @@ import { PreferencesBar } from '../shared/preferences';import { WordmarkComponen
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, TPipe, PreferencesBar, IconComponent, WordmarkComponent],
+  imports: [FormsModule, RouterLink, TPipe, PreferencesBar, IconComponent, WordmarkComponent],
   template: `
     <div class="prefs-corner"><app-preferences /></div>
 
@@ -58,6 +58,10 @@ import { PreferencesBar } from '../shared/preferences';import { WordmarkComponen
             <app-icon name="arrow-right" [size]="18" />
           }
         </button>
+        <p class="legal">
+          <a routerLink="/privacidade">{{ 'Política de Privacidade' | t }}</a>
+          <a routerLink="/termos">{{ 'Termos de Uso' | t }}</a>
+        </p>
       </form>
     </main>
   `,
@@ -81,6 +85,9 @@ import { PreferencesBar } from '../shared/preferences';import { WordmarkComponen
     .box { width: 100%; max-width: 400px; }
     .mobile-brand { display: none; align-items: center; gap: 12px; font-size: 28px; }
     h1 { font-size: 30px; }
+    .legal { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin: 22px 0 0; font-size: 13.5px; }
+    .legal a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+    .legal a:hover { color: var(--link); }
     .lead { color: var(--muted); margin: 6px 0 26px; }
     .input-icon { position: relative; }
     .input-icon > app-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }

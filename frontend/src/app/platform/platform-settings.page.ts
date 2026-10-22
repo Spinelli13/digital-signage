@@ -34,6 +34,28 @@ import { PageHeaderComponent } from '../shared/ui';
           [ngModel]="paymentInstructions()" (ngModelChange)="paymentInstructions.set($event)"></textarea>
       </div>
 
+      <h3 class="sub sec"><app-icon name="shield-check" [size]="18" />{{ 'Privacidade (LGPD)' | t }}</h3>
+      <p class="label">{{ 'Quem responde pelo tratamento de dados. Aparece na Política de Privacidade e nos Termos de Uso, que qualquer pessoa pode abrir sem entrar.' | t }}</p>
+      <div class="two">
+        <div class="field">
+          <label for="s-legal-name">{{ 'Razão social' | t }}</label>
+          <input id="s-legal-name" name="legalName" maxlength="160" [ngModel]="legalName()" (ngModelChange)="legalName.set($event)" />
+        </div>
+        <div class="field">
+          <label for="s-legal-doc">{{ 'CNPJ' | t }}</label>
+          <input id="s-legal-doc" name="legalDocument" maxlength="30" placeholder="00.000.000/0001-00" [ngModel]="legalDocument()" (ngModelChange)="legalDocument.set($event)" />
+        </div>
+        <div class="field">
+          <label for="s-priv-name">{{ 'Encarregado de dados (DPO)' | t }}</label>
+          <input id="s-priv-name" name="privacyContactName" maxlength="120" [ngModel]="privacyContactName()" (ngModelChange)="privacyContactName.set($event)" />
+        </div>
+        <div class="field">
+          <label for="s-priv-email">{{ 'E-mail do encarregado' | t }}</label>
+          <input id="s-priv-email" name="privacyContactEmail" type="email" maxlength="255" [ngModel]="privacyContactEmail()" (ngModelChange)="privacyContactEmail.set($event)" />
+          <small>{{ 'Sem este e-mail, a política mostra o e-mail de suporte.' | t }}</small>
+        </div>
+      </div>
+
       <h3 class="sub sec"><app-icon name="receipt-text" [size]="18" />{{ 'Cobrança automática' | t }}</h3>
       <div class="three">
         <div class="field">
@@ -61,6 +83,7 @@ import { PageHeaderComponent } from '../shared/ui';
     .sec app-icon { color: var(--primary); }
     :host-context(:root[data-theme='dark']) .sec app-icon { color: var(--link); }
     .three { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+    .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
   `,
 })
 export class PlatformSettingsPage implements OnInit {
@@ -72,6 +95,10 @@ export class PlatformSettingsPage implements OnInit {
   readonly companyName = signal('');
   readonly supportEmail = signal('');
   readonly paymentInstructions = signal('');
+  readonly legalName = signal('');
+  readonly legalDocument = signal('');
+  readonly privacyContactName = signal('');
+  readonly privacyContactEmail = signal('');
   readonly trialDays = signal(14);
   readonly graceDays = signal(7);
   readonly invoiceLeadDays = signal(5);
@@ -83,6 +110,10 @@ export class PlatformSettingsPage implements OnInit {
         this.companyName.set(settings.companyName);
         this.supportEmail.set(settings.supportEmail ?? '');
         this.paymentInstructions.set(settings.paymentInstructions ?? '');
+        this.legalName.set(settings.legalName ?? '');
+        this.legalDocument.set(settings.legalDocument ?? '');
+        this.privacyContactName.set(settings.privacyContactName ?? '');
+        this.privacyContactEmail.set(settings.privacyContactEmail ?? '');
         this.trialDays.set(settings.trialDays);
         this.graceDays.set(settings.graceDays);
         this.invoiceLeadDays.set(settings.invoiceLeadDays);
@@ -101,6 +132,10 @@ export class PlatformSettingsPage implements OnInit {
         companyName: this.companyName().trim(),
         supportEmail: this.supportEmail().trim(),
         paymentInstructions: this.paymentInstructions().trim(),
+        legalName: this.legalName().trim(),
+        legalDocument: this.legalDocument().trim(),
+        privacyContactName: this.privacyContactName().trim(),
+        privacyContactEmail: this.privacyContactEmail().trim(),
         trialDays: this.trialDays(),
         graceDays: this.graceDays(),
         invoiceLeadDays: this.invoiceLeadDays(),

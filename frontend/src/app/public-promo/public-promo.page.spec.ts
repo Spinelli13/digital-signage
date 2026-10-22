@@ -19,6 +19,7 @@ const promotion = (overrides: Partial<PublicPromotion> = {}): PublicPromotion =>
   open: true,
   validUntil: null,
   claimDays: 7,
+  notice: { controllerName: 'Loja Aurora', contactEmail: null, retentionDays: 90, version: '2026-10-21' },
   ...overrides,
 });
 
@@ -71,11 +72,12 @@ describe('PromoClaimPage (QR Code da promoção)', () => {
     expect(textOf(fixture)).toContain('Válido para compras acima de R$ 50');
     expect(textOf(fixture)).toContain('O cupom vale por 7 dia(s) depois de pego.');
     page.customerName.set('  Maria ');
+    page.consent.set(true);
     page.claim();
 
     const request = backend.expectOne(`${API}/public/promotions/${PROMO_TOKEN}/coupons`);
     expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({ customerName: 'Maria' });
+    expect(request.request.body).toEqual({ customerName: 'Maria', consent: true });
     expect(request.request.headers.get('X-Client-Id')).toBe(deviceId());
     request.flush(coupon());
     expect(rememberedCoupon(PROMO_TOKEN)).toBe(COUPON_TOKEN);
@@ -90,7 +92,25 @@ describe('PromoClaimPage (QR Code da promoção)', () => {
 
     page.claim();
 
-    expect(backend.expectOne(`${API}/public/promotions/${PROMO_TOKEN}/coupons`).request.body).toEqual({ customerName: null });
+    expect(backend.expectOne(`${API}/public/promotions/${PROMO_TOKEN}/coupons`).request.body).toEqual({ customerName: null, consent: false });
+  });
+
+  it('shows the privacy notice of the coupon and asks for agreement only when a name is typed', async () => {
+    const { page, fixture, backend } = setup(PromoClaimPage, PROMO_TOKEN, true);
+    backend.expectOne(`${API}/public/promotions/${PROMO_TOKEN}`).flush(promotion());
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(textOf(fixture)).toContain('O nome serve só para a loja achar o seu cupom no caixa.');
+    expect(textOf(fixture)).toContain('Loja Aurora é a responsável por esse dado e o apaga em 90 dia(s).');
+    expect(root.querySelector('input[name=consent]')).toBeNull();
+
+    page.customerName.set('Maria');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(root.querySelector('input[name=consent]')).not.toBeNull();
+    expect((root.querySelector('button.primary') as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('goes straight to the coupon already claimed on this phone (scanning again does not issue another)', () => {
