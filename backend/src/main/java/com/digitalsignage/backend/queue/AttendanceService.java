@@ -237,6 +237,10 @@ public class AttendanceService {
 		return publicTicket(cancel(ticketId));
 	}
 
+	private static Instant inMicros(Instant instant) {
+		return Instant.ofEpochSecond(instant.getEpochSecond(), Math.round(instant.getNano() / 1000.0) * 1000L);
+	}
+
 	private AttendanceModels.PublicTicket publicTicket(Ticket ticket) {
 		ServiceQueue queue = findQueue(ticket.getQueueId());
 		String counter = null;
@@ -244,8 +248,11 @@ public class AttendanceService {
 			counter = counters.findById(ticket.getCounterId()).map(ServiceCounter::getName).orElse(null);
 		}
 		List<Ticket> waiting = tickets.waitingIn(List.of(queue.getId()));
+		// O banco guarda microssegundos (arredonda); a senha recém-criada ainda tem os nanossegundos do relógio. Compara no que o banco
+		// guarda, senão duas senhas emitidas no mesmo instante podiam sair com a posição errada.
+		Instant mine = inMicros(ticket.getIssuedAt());
 		int ahead = ticket.getStatus() == Ticket.Status.WAITING
-				? (int) waiting.stream().filter(other -> other.getIssuedAt().isBefore(ticket.getIssuedAt()) || (other.getIssuedAt().equals(ticket.getIssuedAt()) && other.getId() < ticket.getId())).count()
+				? (int) waiting.stream().filter(other -> inMicros(other.getIssuedAt()).isBefore(mine) || (inMicros(other.getIssuedAt()).equals(mine) && other.getId() < ticket.getId())).count()
 				: 0;
 		return new AttendanceModels.PublicTicket(ticket.getPublicToken(), ticket.getLabel(), queue.getName(), ticket.getStatus().name(), counter, ahead,
 				waiting.size(), ticket.getCalledAt() == null ? null : ticket.getCalledAt().toEpochMilli(), ticket.getCallCount());
