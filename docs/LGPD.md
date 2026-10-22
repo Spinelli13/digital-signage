@@ -1,6 +1,6 @@
 # LGPD no Vyzzu: registro das operações de tratamento e como operar
 
-Este documento é o **mapa dos dados pessoais** do Vyzzu (o "registro das operações de tratamento", LGPD art. 37), o procedimento para atender pedidos de titulares e a lista do que ainda depende de decisão ou de revisão jurídica. Foi escrito a partir do código e da configuração de hospedagem em 2026-10-21 (versão do aviso `2026-10-21`).
+Este documento é o **mapa dos dados pessoais** do Vyzzu (o "registro das operações de tratamento", LGPD art. 37), o procedimento para atender pedidos de titulares e a lista do que ainda depende de decisão ou de revisão jurídica. Foi escrito a partir do código e da configuração de hospedagem em 2026-10-21 (versão do aviso `2026-10-22`).
 
 > **Não é parecer jurídico.** A Política de Privacidade e os Termos de Uso publicados no painel (`/privacidade` e `/termos`) são texto-base e **precisam de revisão de um advogado** antes de valer como documento jurídico. As bases legais abaixo são sugestões técnicas para essa revisão.
 
@@ -50,7 +50,7 @@ Consequência: o Vyzzu precisa de um **contrato de tratamento de dados com cada 
 | Provedor | Para quê | Região |
 |---|---|---|
 | Supabase | Banco de dados (PostgreSQL) e arquivos | `us-east-1` (EUA) |
-| Render | Servidor da aplicação (backend) | Virgínia (EUA) |
+| Render | Servidor da aplicação (backend) | **Oregon (EUA)** (conferido na configuração do serviço em 22/10/2026; o `render.yaml` pede a Virgínia, mas o serviço em uso foi criado em Oregon) |
 | Cloudflare Pages | Painel (site estático) e site de downloads | Global (rede de distribuição) |
 
 A transferência para os EUA é necessária para executar o serviço contratado (LGPD, art. 33, IX, combinado com o art. 7º, V). As fontes públicas dos widgets (previsão do tempo, cotações, notícias) são consultadas pelo servidor sem enviar dado de pessoas.

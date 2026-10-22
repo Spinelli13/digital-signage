@@ -77,7 +77,7 @@ describe('LegalPage (Política de Privacidade e Termos de Uso)', () => {
 
   it('names every personal data the system really keeps and the retention periods, so the text and the code do not drift apart', () => {
     const all = JSON.stringify(privacySections(legalContext(INFO)));
-    for (const fact of ['nome', 'e-mail', 'código aleatório do aparelho', '30 dias', '90 dias', '14 dias', 'hash', 'Supabase', 'Render', 'Cloudflare', 'us-east-1', 'IP']) {
+    for (const fact of ['nome', 'e-mail', 'código aleatório do aparelho', '30 dias', '90 dias', '14 dias', 'hash', 'Supabase', 'Render', 'Cloudflare', 'us-east-1', 'Oregon', 'IP']) {
       expect(all, fact).toContain(fact);
     }
     expect(JSON.stringify(termsSections(legalContext(INFO)))).toContain('Privacidade e dados');

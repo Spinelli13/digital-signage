@@ -100,7 +100,7 @@ export function privacySections(c: LegalContext): LegalSection[] {
     {
       title: '7. Transferência internacional',
       blocks: [
-        'Os dados ficam em servidores nos Estados Unidos (o banco de dados no Supabase, região us-east-1, e o servidor da aplicação no Render, na Virgínia). Essa transferência é necessária para executar o serviço contratado (LGPD, art. 33, IX, combinado com o art. 7º, V).',
+        'Os dados ficam em servidores nos Estados Unidos (o banco de dados no Supabase, região us-east-1, e o servidor da aplicação no Render, na região de Oregon). Essa transferência é necessária para executar o serviço contratado (LGPD, art. 33, IX, combinado com o art. 7º, V).',
       ],
     },
     {
