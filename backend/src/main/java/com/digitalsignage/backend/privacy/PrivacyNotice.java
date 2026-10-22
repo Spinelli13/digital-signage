@@ -7,7 +7,7 @@ package com.digitalsignage.backend.privacy;
 public final class PrivacyNotice {
 
 	/** Muda sempre que o texto do aviso (ou da Política de Privacidade) muda. */
-	public static final String VERSION = "2026-10-22";
+	public static final String VERSION = "2026-10-22.2";
 
 	private PrivacyNotice() {
 	}

@@ -79,7 +79,7 @@ export function privacySections(c: LegalContext): LegalSection[] {
         [
           'Nome na senha da fila: 30 dias, por padrão. A loja pode escolher de 1 a 365 dias. Passado o prazo, a senha inteira é apagada.',
           'Nome no cupom: 90 dias, por padrão (a loja escolhe de 1 a 365). Passado o prazo, o nome e a concordância são apagados e o cupom fica sem identificar ninguém.',
-          'Histórico das TVs e alertas: 90 dias por padrão; detalhe de cada exibição: 14 dias por padrão (o resumo diário fica por um ano). Não identificam pessoas.',
+          'Histórico das TVs e alertas: 90 dias por padrão; detalhe de cada exibição: 7 dias por padrão (o resumo diário e o resumo por mídia ficam por um ano). Não identificam pessoas.',
           'Conta da equipe: enquanto existir; ao ser excluída pelo administrador, deixa de existir no painel.',
           'Faturas e dados de cobrança: pelo prazo que a legislação fiscal e contábil exigir.',
         ],

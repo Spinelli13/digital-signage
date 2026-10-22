@@ -131,7 +131,7 @@ class PrivacyTest extends AbstractApiTest {
 				.andExpect(jsonPath("$.ticketRetentionDays").value(30))
 				.andExpect(jsonPath("$.couponNameRetentionDays").value(90))
 				.andExpect(jsonPath("$.eventsRetentionDays").value(90))
-				.andExpect(jsonPath("$.playLogRetentionDays").value(14))
+				.andExpect(jsonPath("$.playLogRetentionDays").value(7))
 				.andExpect(jsonPath("$.contactEmail").doesNotExist());
 	}
 

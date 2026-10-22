@@ -109,6 +109,28 @@ public class PlayProofReportController {
 		return service.daily(first, last, deviceId);
 	}
 
+	/** Quantas vezes cada mídia (e campanha) rodou em cada dia, por TV: dura um ano, mesmo depois do detalhe ser apagado. */
+	@GetMapping("/daily-media")
+	public Object dailyByMedia(
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+			@RequestParam(required = false) Long deviceId,
+			@RequestParam(required = false) String format) {
+		LocalDate last = to == null ? clock.instant().atZone(monitoring.reportZone()).toLocalDate() : to;
+		LocalDate first = from == null ? last.minusDays(29) : from;
+		if (first.isAfter(last)) {
+			throw new IllegalArgumentException("A data inicial não pode ser depois da data final");
+		}
+		List<PlayProofService.MediaDailyRow> rows = service.dailyByMedia(first, last, deviceId);
+		if ("csv".equalsIgnoreCase(format)) {
+			CsvWriter csv = new CsvWriter().row("Dia", "TV", "Mídia", "Tipo", "Campanha", "Exibições", "Completas", "Tempo no ar (s)");
+			rows.forEach(row -> csv.row(row.day().toString(), row.deviceName(), row.mediaName(), row.mediaType(), row.campaignName(), row.plays(),
+					row.completed(), row.totalMs() / 1000));
+			return csv(csv, "exibicoes-por-midia-" + first + "-a-" + last + ".csv");
+		}
+		return rows;
+	}
+
 	private static PlayProofService.Filter filter(LocalDate first, LocalDate last, Long deviceId, Long mediaId, Long campaignId, ZoneId zone) {
 		Instant start = first.atStartOfDay(zone).toInstant();
 		Instant end = last.plusDays(1).atStartOfDay(zone).toInstant();

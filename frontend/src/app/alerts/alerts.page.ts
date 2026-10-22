@@ -170,7 +170,7 @@ export class AlertsPage implements OnInit {
   readonly neverConnectedAfterHours = signal<number | null>(24);
   readonly errorBurstCount = signal<number | null>(5);
   readonly eventsRetentionDays = signal<number | null>(90);
-  readonly playLogRetentionDays = signal<number | null>(14);
+  readonly playLogRetentionDays = signal<number | null>(7);
   readonly notifyOnResolve = signal(true);
   readonly webhookUrl = signal('');
 
