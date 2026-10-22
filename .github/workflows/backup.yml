@@ -1,0 +1,107 @@
+name: Backup do banco e das mídias
+
+# Todo dia às 06:00 UTC (03:00 em Brasília) e quando pedido à mão (Actions → Backup → Run workflow).
+# Sem os segredos abaixo o fluxo não faz nada (não falha): só passa a trabalhar quando o dono os cadastrar.
+# Passo a passo e como restaurar: docs/MIGRACAO_PRODUCAO.md (seções 4 e 5).
+#
+# Segredos do repositório (Settings → Secrets and variables → Actions):
+#   BACKUP_DB_URL        endereço do banco de produção (Supabase, "Session pooler"), com usuário e senha
+#   BACKUP_PASSPHRASE    frase que criptografa a cópia (openssl rand -base64 32). Guarde também no gerenciador de senhas:
+#                        sem ela a cópia não abre.
+#   Opcional, para copiar as mídias e guardar a cópia do banco fora do GitHub (recomendado):
+#   BACKUP_SRC_S3_ENDPOINT, BACKUP_SRC_S3_REGION, BACKUP_SRC_S3_ACCESS_KEY, BACKUP_SRC_S3_SECRET_KEY  (o bucket "media")
+#   BACKUP_DST_S3_ENDPOINT, BACKUP_DST_S3_ACCESS_KEY, BACKUP_DST_S3_SECRET_KEY, BACKUP_DST_S3_BUCKET  (um bucket privado
+#                        de outro provedor: Cloudflare R2, Backblaze B2...)
+# Variável do repositório (não é segredo): BACKUP_ARTIFACT=true guarda a cópia criptografada por 30 dias aqui no GitHub.
+# Este repositório é PÚBLICO: a cópia é criptografada com AES-256, mas o recomendado é o destino privado acima.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: Copia, restaura num banco de teste e confere
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HAS_DB: ${{ secrets.BACKUP_DB_URL != '' && secrets.BACKUP_PASSPHRASE != '' }}
+      HAS_DST: ${{ secrets.BACKUP_DST_S3_BUCKET != '' && secrets.BACKUP_SRC_S3_ENDPOINT != '' }}
+      BACKUP_DB_URL: ${{ secrets.BACKUP_DB_URL }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+    services:
+      # banco descartável onde a cópia é restaurada e conferida a cada execução (mesma versão do Supabase)
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: teste
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sem segredos cadastrados, nada a fazer
+        if: env.HAS_DB != 'true'
+        run: echo "::notice::BACKUP_DB_URL e BACKUP_PASSPHRASE não estão cadastrados; o backup ainda não está ligado (docs/MIGRACAO_PRODUCAO.md)."
+
+      - name: Instala o cliente do Postgres 17
+        if: env.HAS_DB == 'true'
+        run: |
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-17
+
+      - name: Copia o banco (criptografada)
+        if: env.HAS_DB == 'true'
+        run: |
+          echo "::add-mask::$BACKUP_DB_URL"
+          file="$(scripts/backup/backup-db.sh backup-out)"
+          echo "DUMP_FILE=$file" >> "$GITHUB_ENV"
+          echo "COUNTS_FILE=${file%.dump.enc}.counts.txt" >> "$GITHUB_ENV"
+          ls -la backup-out
+
+      - name: Restaura num banco de teste e confere
+        if: env.HAS_DB == 'true'
+        run: |
+          restore_url="postgresql://postgres:teste@localhost:5432/restore_test"
+          psql "postgresql://postgres:teste@localhost:5432/postgres" -c "create database restore_test"
+          scripts/backup/restore-db.sh "$DUMP_FILE" "$restore_url"
+          scripts/backup/verify-restore.sh "$COUNTS_FILE" "$restore_url"
+
+      - name: Guarda a cópia criptografada no GitHub (30 dias)
+        if: env.HAS_DB == 'true' && vars.BACKUP_ARTIFACT == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-banco
+          path: backup-out/
+          retention-days: 30
+
+      - name: Copia as mídias e a cópia do banco para o destino privado
+        if: env.HAS_DB == 'true' && env.HAS_DST == 'true'
+        env:
+          RCLONE_CONFIG_SRC_TYPE: s3
+          RCLONE_CONFIG_SRC_PROVIDER: Other
+          RCLONE_CONFIG_SRC_ENDPOINT: ${{ secrets.BACKUP_SRC_S3_ENDPOINT }}
+          RCLONE_CONFIG_SRC_REGION: ${{ secrets.BACKUP_SRC_S3_REGION }}
+          RCLONE_CONFIG_SRC_ACCESS_KEY_ID: ${{ secrets.BACKUP_SRC_S3_ACCESS_KEY }}
+          RCLONE_CONFIG_SRC_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_SRC_S3_SECRET_KEY }}
+          RCLONE_CONFIG_DST_TYPE: s3
+          RCLONE_CONFIG_DST_PROVIDER: Other
+          RCLONE_CONFIG_DST_ENDPOINT: ${{ secrets.BACKUP_DST_S3_ENDPOINT }}
+          RCLONE_CONFIG_DST_ACCESS_KEY_ID: ${{ secrets.BACKUP_DST_S3_ACCESS_KEY }}
+          RCLONE_CONFIG_DST_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_DST_S3_SECRET_KEY }}
+          DST_BUCKET: ${{ secrets.BACKUP_DST_S3_BUCKET }}
+        run: |
+          sudo apt-get install -y rclone
+          # "copy" (e não "sync"): se alguém apagar uma mídia na origem, a cópia continua com ela
+          rclone copy SRC:media "DST:$DST_BUCKET/media" --transfers 4 --checksum
+          rclone copy backup-out "DST:$DST_BUCKET/db" --transfers 2
+          rclone lsf "DST:$DST_BUCKET/db" | tail -3
