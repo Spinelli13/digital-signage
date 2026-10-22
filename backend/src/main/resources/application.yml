@@ -32,6 +32,9 @@ app:
   cors:
     # Origens do painel web autorizadas a chamar a API (separadas por vírgula).
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+  # Endereço do painel, sem barra no final: vai no QR Code que a TV mostra para parear (Etapa 1.4). Vazio = a primeira
+  # origem autorizada acima, que na nuvem é o próprio painel.
+  panel-url: ${PANEL_URL:}
   jwt:
     secret: ${JWT_SECRET:dev-only-secret-change-me-before-any-real-deploy-0123456789}
     expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}

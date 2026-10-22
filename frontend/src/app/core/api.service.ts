@@ -7,6 +7,7 @@ import { SILENT_ERRORS } from './http-errors';
 import { filtersToParams } from './device-filters';
 import {
   ActivateRequest,
+  PairingInfo,
   Alert,
   BulkRequest,
   Campaign,
@@ -123,6 +124,11 @@ export class ApiService {
   // dispositivos
   devices(filters: DeviceFilters = {}): Observable<Device[]> {
     return this.http.get<Device[]>(this.url('/devices'), { params: filtersToParams(filters) });
+  }
+
+  /** Confere o código que o QR Code da TV trouxe (404 se não existe, expirou ou já foi pareado). */
+  devicePairing(code: string): Observable<PairingInfo> {
+    return this.http.get<PairingInfo>(this.url(`/devices/pairing/${encodeURIComponent(code)}`));
   }
 
   activateDevice(body: ActivateRequest): Observable<Device> {

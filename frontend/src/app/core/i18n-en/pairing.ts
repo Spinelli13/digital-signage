@@ -1,0 +1,20 @@
+/** Inglês: pareamento da TV por QR Code. */
+export const PAIRING: Record<string, string> = {
+  'Parear TV': 'Pair TV',
+  'Vincule a TV que mostra este QR Code ao cliente.': 'Link the TV showing this QR Code to the client.',
+  'Conferindo o código da TV…': 'Checking the TV code…',
+  'De qual cliente é esta TV?': 'Which client does this TV belong to?',
+  'Você é da plataforma: escolha o cliente e a TV é vinculada a ele.': 'You are on the platform team: choose the client and the TV is linked to it.',
+  'TV encontrada': 'TV found',
+  'Nome da TV': 'TV name',
+  'Já vem sugerido: é só tocar em Ativar. Dá para mudar depois.': 'A name is already suggested: just tap Activate. You can change it later.',
+  'Ativar TV': 'Activate TV',
+  'TV ativada': 'TV activated',
+  '{name} já está vinculada e começa a receber o conteúdo em instantes.': '{name} is linked and starts receiving content in a moment.',
+  'Ver dispositivos': 'View devices',
+  'Só o Administrador pode parear TVs': 'Only the Administrator can pair TVs',
+  'Entre com uma conta de Administrador do cliente e abra o QR Code de novo.': 'Sign in with a client Administrator account and open the QR Code again.',
+  'Código inválido ou expirado': 'Invalid or expired code',
+  'A TV mostra um código novo quando reinicia. Escaneie o QR Code atual ou digite o código em Dispositivos > Adicionar dispositivo.': 'The TV shows a new code when it restarts. Scan the current QR Code or type the code under Devices > Add device.',
+  'Ir para Dispositivos': 'Go to Devices',
+};

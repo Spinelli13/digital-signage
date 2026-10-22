@@ -148,6 +148,6 @@ class FakePlayerApi : PlayerApi {
     }
 }
 
-fun pending(code: String = "ABC123") = PlayerStatus(1, "PENDING", code, "Novo dispositivo")
+fun pending(code: String = "ABC123", pairingUrl: String? = null) = PlayerStatus(1, "PENDING", code, "Novo dispositivo", pairingUrl)
 fun active() = PlayerStatus(1, "ACTIVE", null, "TV")
 fun disabled() = PlayerStatus(1, "DISABLED", null, "TV")

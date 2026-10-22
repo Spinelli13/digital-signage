@@ -24,6 +24,7 @@ import com.digitalsignage.player.engine.EngineState
 import com.digitalsignage.player.errors.ErrorMessages
 import com.digitalsignage.player.errors.ErrorReporter
 import com.digitalsignage.player.engine.PlayerEngine
+import com.digitalsignage.player.pairing.QrCode
 import com.digitalsignage.player.memory.MemoryProfile
 import com.digitalsignage.player.proof.PlayLog
 import com.digitalsignage.player.telemetry.Level
@@ -60,6 +61,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var messageTitle: TextView
     private lateinit var messageBody: TextView
     private lateinit var code: TextView
+    private lateinit var pairingRow: View
+    private lateinit var pairingQr: ImageView
+    private var pairingQrFor: String? = null
     private lateinit var serverInfo: TextView
     private lateinit var errorBanner: TextView
     private lateinit var screen: RotatedFrame
@@ -75,6 +79,8 @@ class MainActivity : AppCompatActivity() {
         messageTitle = findViewById(R.id.messageTitle)
         messageBody = findViewById(R.id.messageBody)
         code = findViewById(R.id.code)
+        pairingRow = findViewById(R.id.pairingRow)
+        pairingQr = findViewById(R.id.pairingQr)
         serverInfo = findViewById(R.id.serverInfo)
         errorBanner = findViewById(R.id.errorBanner)
         screen = findViewById(R.id.screen)
@@ -274,7 +280,8 @@ class MainActivity : AppCompatActivity() {
         val (title, body) = when (state) {
             EngineState.Starting -> R.string.starting_title to R.string.starting_body
             EngineState.ConnectionError -> R.string.error_title to R.string.error_body
-            is EngineState.WaitingActivation -> R.string.activation_title to R.string.activation_body
+            is EngineState.WaitingActivation ->
+                R.string.activation_title to (if (state.pairingUrl != null) R.string.activation_body_qr else R.string.activation_body)
             EngineState.Disabled -> R.string.disabled_title to R.string.disabled_body
             EngineState.NoContent -> R.string.no_content_title to R.string.no_content_body
             is EngineState.Playing -> return
@@ -284,11 +291,28 @@ class MainActivity : AppCompatActivity() {
 
         if (state is EngineState.WaitingActivation) {
             code.text = state.code
-            code.visibility = View.VISIBLE
+            pairingRow.visibility = View.VISIBLE
         } else {
-            code.visibility = View.GONE
+            pairingRow.visibility = View.GONE
         }
+        showPairingQr((state as? EngineState.WaitingActivation)?.pairingUrl)
         serverInfo.text = serverInfoText()
+    }
+
+    /** O QR Code de pareamento (o código de 6 letras continua na tela como alternativa). Uma imagem só por endereço. */
+    private fun showPairingQr(url: String?) {
+        if (url == null) {
+            pairingQr.visibility = View.GONE
+            pairingQrFor = null
+            return
+        }
+        if (pairingQrFor != url) {
+            runCatching { QrCode.bitmap(url, 600) }.onSuccess { bitmap ->
+                pairingQr.setImageBitmap(bitmap)
+                pairingQrFor = url
+            }
+        }
+        pairingQr.visibility = if (pairingQrFor == url) View.VISIBLE else View.GONE
     }
 
     /** Endereço do servidor, versão e (para diagnóstico na TV) o último resultado da atualização automática. */
