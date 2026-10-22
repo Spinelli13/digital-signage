@@ -21,7 +21,8 @@ public record SummaryResponse(
 	public record CampaignCounts(long total, long activeNow) {
 	}
 
-	public record DeviceCounts(long total, long online, long offline, long never, long pending, long disabled) {
+	/** {@code withContent}: TVs já ativadas com uma playlist ou um layout escolhido (o último passo do "primeiros passos" do painel). */
+	public record DeviceCounts(long total, long online, long offline, long never, long pending, long disabled, long withContent) {
 	}
 
 	/** {@code id} nulo = TVs sem local. */

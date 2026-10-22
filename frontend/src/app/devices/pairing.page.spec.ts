@@ -1,5 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpRequest } from '@angular/common/http';
+import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 
@@ -39,15 +40,30 @@ const text = (fixture: { detectChanges(): void; nativeElement: unknown }) => {
   return ((fixture.nativeElement as HTMLElement).textContent ?? '').replace(/\s+/g, ' ');
 };
 
+/**
+ * Espera a requisição chegar e a tira da fila (como expectOne). A página pede o próximo dado numa continuação assíncrona; contar
+ * "voltas" fixas de estabilidade deixava o teste dependente do ritmo da máquina.
+ */
+async function ask(backend: HttpTestingController, match: string | ((request: HttpRequest<unknown>) => boolean)): Promise<TestRequest> {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const found = backend.match(match as never);
+    if (found.length > 0) {
+      return found[0];
+    }
+    await new Promise((resolve) => setTimeout(resolve));
+  }
+  throw new Error('a requisição esperada não chegou');
+}
+
 const FOUND = { code: 'ABC234', playerVersion: '0.14.69', waitingSince: '2026-10-22T10:00:00Z' };
 
 /** Responde às consultas que a página faz quando o código é bom. */
 async function flushFound(backend: HttpTestingController, fixture: { whenStable(): Promise<unknown>; detectChanges(): void }, devices: Device[] = [device(1, 3), device(2, 3), device(3, null)]) {
   await settle(fixture);
-  backend.expectOne(`${API}/devices/pairing/ABC234`).flush(FOUND);
+  (await ask(backend, `${API}/devices/pairing/ABC234`)).flush(FOUND);
   await settle(fixture);
-  backend.expectOne(`${API}/locations`).flush([location(3, 'Loja Centro'), location(4, 'Recepção')]);
-  backend.expectOne((request) => request.url === `${API}/devices`).flush(devices);
+  (await ask(backend, `${API}/locations`)).flush([location(3, 'Loja Centro'), location(4, 'Recepção')]);
+  (await ask(backend, (request) => request.url === `${API}/devices`)).flush(devices);
   await settle(fixture);
 }
 
@@ -72,7 +88,7 @@ describe('PairingPage (QR Code da TV)', () => {
     expect(page.name()).toBe('Loja Centro - TV 3'); // já há duas TVs nesse local
 
     const done = page.activate();
-    const request = backend.expectOne(`${API}/devices/activate`);
+    const request = (await ask(backend, `${API}/devices/activate`));
     expect(request.request.body).toEqual({ activationCode: 'ABC234', name: 'Loja Centro - TV 3', locationId: 3, location: null });
     request.flush(device(9, 3));
     await done;
@@ -95,7 +111,7 @@ describe('PairingPage (QR Code da TV)', () => {
     expect(page.name()).toBe('TV da vitrine');
 
     const done = page.activate();
-    const request = backend.expectOne(`${API}/devices/activate`);
+    const request = (await ask(backend, `${API}/devices/activate`));
     expect(request.request.body).toEqual({ activationCode: 'ABC234', name: 'TV da vitrine', locationId: null, location: 'Filial Norte' });
     request.flush(device(1, null));
     await done;
@@ -108,7 +124,7 @@ describe('PairingPage (QR Code da TV)', () => {
     fixture.detectChanges();
     await settle(fixture);
 
-    backend.expectOne(`${API}/devices/pairing/ZZZZZZ`).flush({ error: 'Código de ativação inválido ou expirado' }, { status: 404, statusText: 'Not Found' });
+    (await ask(backend, `${API}/devices/pairing/ZZZZZZ`)).flush({ error: 'Código de ativação inválido ou expirado' }, { status: 404, statusText: 'Not Found' });
     await settle(fixture);
 
     expect(page.step()).toBe('invalid');
@@ -122,7 +138,7 @@ describe('PairingPage (QR Code da TV)', () => {
     fixture.detectChanges();
     await settle(fixture);
 
-    backend.expectOne(`${API}/devices/pairing/ABC234`).flush({ error: 'forbidden' }, { status: 403, statusText: 'Forbidden' });
+    (await ask(backend, `${API}/devices/pairing/ABC234`)).flush({ error: 'forbidden' }, { status: 403, statusText: 'Forbidden' });
     await settle(fixture);
 
     expect(page.step()).toBe('forbidden');
@@ -136,7 +152,7 @@ describe('PairingPage (QR Code da TV)', () => {
     await settle(fixture);
 
     const clients = [tenantFixture({ id: 5, name: 'Barbearia Call' }), tenantFixture({ id: 6, name: 'Pizzaria Sol' })];
-    backend.expectOne(`${API}/platform/tenants`).flush(clients);
+    (await ask(backend, `${API}/platform/tenants`)).flush(clients);
     await settle(fixture);
     expect(page.step()).toBe('client');
     expect(text(fixture)).toContain('Barbearia Call');
@@ -144,10 +160,10 @@ describe('PairingPage (QR Code da TV)', () => {
     const chosen = page.chooseClient(clients[0]);
     await settle(fixture);
     expect(auth.actingTenantId()).toBe(5);
-    backend.expectOne(`${API}/devices/pairing/ABC234`).flush(FOUND);
+    (await ask(backend, `${API}/devices/pairing/ABC234`)).flush(FOUND);
     await settle(fixture);
-    backend.expectOne(`${API}/locations`).flush([]);
-    backend.expectOne((request) => request.url === `${API}/devices`).flush([]);
+    (await ask(backend, `${API}/locations`)).flush([]);
+    (await ask(backend, (request) => request.url === `${API}/devices`)).flush([]);
     await chosen;
     await settle(fixture);
 
