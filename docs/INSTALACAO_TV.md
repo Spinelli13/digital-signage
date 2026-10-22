@@ -29,8 +29,8 @@ Como instalar o aplicativo **Vyzzu** em uma **TV TCL com Android TV** e em um **
 **Como o processo funciona, em 4 passos:**
 
 1. Instalar o Player na TV.
-2. Abrir o Player: ele mostra na tela um **código de 6 letras/números**.
-3. No painel: **Dispositivos → Adicionar dispositivo** e digitar o código.
+2. Abrir o Player: ele mostra na tela um **QR Code** e um **código de 6 letras/números**.
+3. Com o celular: escanear o QR Code, escolher o cliente (equipe da plataforma) e o local, tocar em **Ativar TV**. Ou, no painel: **Dispositivos → Adicionar dispositivo** e digitar o código.
 4. No painel: enviar as mídias, montar uma **playlist** e escolhê-la para a TV.
 
 ![Os 4 passos: instalar, ver o código na TV, ativar no painel e enviar a playlist](manual/img/fluxo-geral.svg)
