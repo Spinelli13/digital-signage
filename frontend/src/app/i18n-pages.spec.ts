@@ -109,7 +109,7 @@ describe('painel em inglês', () => {
     setLang('en');
     const { fixture, backend } = show(DashboardPage);
     backend.expectOne(`${API}/summary`).flush({
-      devices: { total: 3, online: 1, offline: 1, never: 1, pending: 0, disabled: 0 },
+      devices: { total: 3, online: 1, offline: 1, never: 1, pending: 0, disabled: 0, withContent: 1 },
       locations: 1,
       groups: 0,
       media: 2,

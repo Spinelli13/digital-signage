@@ -35,6 +35,7 @@ class SummaryTest extends AbstractApiTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.devices.total").value(0))
 				.andExpect(jsonPath("$.devices.online").value(0))
+				.andExpect(jsonPath("$.devices.withContent").value(0))
 				.andExpect(jsonPath("$.byLocation", hasSize(0)))
 				.andExpect(jsonPath("$.attention", hasSize(0)));
 	}
@@ -55,9 +56,12 @@ class SummaryTest extends AbstractApiTest {
 		state(disabled, "DISABLED", "now()");
 		mvc.perform(asAdmin(post("/api/v1/groups")
 				.contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Todos\"}"))).andExpect(status().isCreated());
-		createPlaylist("P", List.of(uploadPng("img")));
+		long playlist = createPlaylist("P", List.of(uploadPng("img")));
+		assignPlaylist(online, "A online", playlist);
+		assignPlaylist(offline, "C offline", playlist);
 
 		mvc.perform(asAdmin(get("/api/v1/summary")))
+				.andExpect(jsonPath("$.devices.withContent").value(2)) // as duas TVs com playlist escolhida (para o "primeiros passos")
 				.andExpect(jsonPath("$.devices.total").value(6))
 				.andExpect(jsonPath("$.devices.online").value(2))
 				.andExpect(jsonPath("$.devices.offline").value(1))

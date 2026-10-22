@@ -73,7 +73,9 @@ public class SummaryController {
 				count(connections, DeviceConnection.OFFLINE),
 				count(connections, DeviceConnection.NEVER),
 				count(connections, DeviceConnection.PENDING),
-				count(connections, DeviceConnection.DISABLED));
+				count(connections, DeviceConnection.DISABLED),
+				devices.stream().filter(device -> connections.get(device.getId()) != DeviceConnection.PENDING
+						&& (device.getCurrentPlaylistId() != null || device.getLayoutId() != null)).count());
 
 		return new SummaryResponse(
 				counts,

@@ -13,7 +13,7 @@ import { EmptyStateComponent, PageHeaderComponent, PillComponent } from '../shar
 const REFRESH_MS = 10_000;
 
 const EMPTY: Summary = {
-  devices: { total: 0, online: 0, offline: 0, never: 0, pending: 0, disabled: 0 },
+  devices: { total: 0, online: 0, offline: 0, never: 0, pending: 0, disabled: 0, withContent: 0 },
   locations: 0,
   groups: 0,
   media: 0,
@@ -32,23 +32,32 @@ const EMPTY: Summary = {
       <a class="primary" routerLink="/dispositivos"><app-icon name="plus" />{{ 'Adicionar dispositivo' | t }}</a>
     </app-page-header>
 
-    @if (summary().devices.total === 0 && loaded()) {
-      <section class="card onboarding">
+    @if (showChecklist()) {
+      <section class="card onboarding" data-testid="checklist">
         <div class="ob-head">
           <span class="ob-icon"><app-icon name="rocket" [size]="26" [stroke]="1.8" /></span>
           <div>
-            <h2>{{ 'Vamos colocar a sua primeira tela no ar' | t }}</h2>
-            <p>{{ 'Em quatro passos a sua propaganda aparece na TV.' | t }}</p>
+            <h2>{{ (summary().devices.total === 0 ? 'Vamos colocar a sua primeira tela no ar' : 'Primeiros passos') | t }}</h2>
+            <p>{{ 'Faltam {n} de 4 passos para a sua propaganda aparecer na TV.' | t: { n: pendingCount() } }}</p>
           </div>
         </div>
         <ol class="steps">
-          <li><span class="n">1</span><div><b>{{ 'Ative a TV' | t }}</b><small>{{ 'Abra o app Player na TV: ele mostra um código. Digite-o em Dispositivos.' | t }}</small></div><a class="secondary small" routerLink="/dispositivos">{{ 'Dispositivos' | t }}<app-icon name="arrow-right" [size]="15" /></a></li>
-          <li><span class="n">2</span><div><b>{{ 'Envie as mídias' | t }}</b><small>{{ 'Imagens, vídeos, páginas da web ou QR Codes.' | t }}</small></div><a class="secondary small" routerLink="/biblioteca">{{ 'Biblioteca' | t }}<app-icon name="arrow-right" [size]="15" /></a></li>
-          <li><span class="n">3</span><div><b>{{ 'Monte uma playlist' | t }}</b><small>{{ 'Escolha a ordem e o tempo de cada mídia.' | t }}</small></div><a class="secondary small" routerLink="/playlists">{{ 'Playlists' | t }}<app-icon name="arrow-right" [size]="15" /></a></li>
-          <li><span class="n">4</span><div><b>{{ 'Escolha o que a TV exibe' | t }}</b><small>{{ 'Selecione a playlist na lista de dispositivos.' | t }}</small></div><a class="secondary small" routerLink="/dispositivos">{{ 'Dispositivos' | t }}<app-icon name="arrow-right" [size]="15" /></a></li>
+          @for (step of steps(); track step.id; let i = $index) {
+            <li [class.done]="step.done" [class.next]="step.id === nextStep()?.id">
+              <span class="n">@if (step.done) { <app-icon name="check" [size]="16" [stroke]="2.4" /> } @else { {{ i + 1 }} }</span>
+              <div><b>{{ step.title }}</b><small>{{ step.text }}</small></div>
+              @if (step.done) {
+                <small class="ok">{{ 'Feito' | t }}</small>
+              } @else {
+                <a [class]="step.id === nextStep()?.id ? 'primary small' : 'secondary small'" [routerLink]="step.link">{{ step.action }}<app-icon name="arrow-right" [size]="15" /></a>
+              }
+            </li>
+          }
         </ol>
       </section>
-    } @else {
+    }
+
+    @if (showMain()) {
       <section class="hero">
         <div class="ring" [class.empty]="health() === null" role="img" [attr.aria-label]="ringLabel()">
           <svg viewBox="0 0 120 120">
@@ -220,6 +229,10 @@ const EMPTY: Summary = {
     .ob-icon { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 17px; color: #fff; background: var(--grad-primary); box-shadow: var(--sh-2); }
     .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
     .steps li { display: flex; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel-2); }
+    .steps li.done { opacity: 0.8; }
+    .steps li.done .n { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-line); }
+    .steps li.next { border-color: var(--primary-line); background: var(--primary-soft); }
+    .steps .ok { color: var(--ok-fg); font-weight: 600; }
     .steps .n { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; font-weight: 700; color: var(--primary); background: var(--primary-soft); border: 1px solid var(--primary-line); }
     .steps li > div { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 
@@ -249,6 +262,26 @@ export class DashboardPage implements OnInit {
   readonly stateOf = stateOfConnection;
   readonly ago = (iso: string | null) => timeAgo(iso);
   readonly sit = (connection: Connection) => SITUATION[connection];
+
+  /** Os quatro primeiros passos (o checklist some quando todos estão feitos). */
+  readonly steps = computed(() => {
+    const s = this.summary();
+    return [
+      { id: 'tv', done: s.devices.total - s.devices.pending > 0, title: tr('Ative a TV'), text: tr('Abra o Player na TV e escaneie o QR Code com o celular (ou digite o código em Dispositivos).'), action: tr('Adicionar dispositivo'), link: '/dispositivos' },
+      { id: 'media', done: s.media > 0, title: tr('Envie as mídias'), text: tr('Imagens, vídeos, páginas da web ou QR Codes.'), action: tr('Enviar mídias'), link: '/biblioteca' },
+      { id: 'playlist', done: s.playlists > 0, title: tr('Monte uma playlist'), text: tr('Escolha a ordem e o tempo de cada mídia.'), action: tr('Criar playlist'), link: '/playlists/nova' },
+      { id: 'apply', done: s.devices.withContent > 0, title: tr('Escolha o que a TV exibe'), text: tr('Selecione a playlist na lista de dispositivos.'), action: tr('Escolher na TV'), link: '/dispositivos' },
+    ];
+  });
+
+  readonly pendingCount = computed(() => this.steps().filter((step) => !step.done).length);
+  readonly nextStep = computed(() => this.steps().find((step) => !step.done) ?? null);
+
+  /** Só quem pode montar conteúdo vê o checklist, e só enquanto falta algum passo. */
+  readonly showChecklist = computed(() => this.loaded() && this.auth.can('content') && this.pendingCount() > 0);
+
+  /** Sem nenhuma TV, o checklist ocupa o lugar do painel da rede (que estaria vazio). */
+  readonly showMain = computed(() => !(this.summary().devices.total === 0 && this.showChecklist()));
 
   /** TVs que deveriam estar no ar (ativas): as que aguardam ativação ou foram desativadas não entram na conta. */
   readonly active = computed(() => {

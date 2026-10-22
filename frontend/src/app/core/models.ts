@@ -189,7 +189,7 @@ export interface BulkRequest {
 }
 
 export interface Summary {
-  devices: { total: number; online: number; offline: number; never: number; pending: number; disabled: number };
+  devices: { total: number; online: number; offline: number; never: number; pending: number; disabled: number; withContent: number };
   locations: number;
   groups: number;
   media: number;
